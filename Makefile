@@ -21,8 +21,8 @@ IPSET_LIB_DIR:=$(DESTDIR)$(LIBDIR)/ipset
 RELEASE_DIR:=/tmp
 
 COPT_FLAGS:=-O2
-CFLAGS:=$(COPT_FLAGS) -Wall -Wunused -I$(KERNEL_DIR)/include -I. -g -DIPSET_DEBUG #-pg # -DIPTC_DEBUG
-
+CFLAGS:=$(COPT_FLAGS) -Wall -Wunused -I$(KERNEL_DIR)/include -I. #-g -DIPSET_DEBUG #-pg # -DIPTC_DEBUG
+SH_CFLAGS:=$(CFLAGS) -fPIC
 SETTYPES:=ipmap portmap macipmap iphash
 
 PROGRAMS=ipset
@@ -46,7 +46,7 @@ ipset: ipset.o
 
 #Pooltypes
 ipset_%.o: ipset_%.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(SH_CFLAGS) -o $@ -c $<
 
 libipset_%.so: ipset_%.o
 	$(LD) -shared -o $@ $<
