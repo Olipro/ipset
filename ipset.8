@@ -270,6 +270,39 @@ different random initvals (default 8).
 .BI "--factor " number
 The starting hash size is so many times the number of the entries
 (default 4).
+.SH NETFILTER MATCH AND TARGET
+The IP set package adds the `set' match and `SET' target to netfilter:
+.SS set
+The match provides the following option:
+.TP
+.BR "--set " "setname[:flag,...] flag[,flag]"
+where flags are
+.BR "src"
+and/or
+.BR "dst" .
+Hence the command
+.nf
+ iptables -A FORWARD -m set --set test:src dst
+.fi
+will match packets, for which there is a child-set under the set named
+as test at the source address or port (depending on the type of the set)
+of the packet, and the destination address or port of the 
+packet (depending of the type of the child set) is set in the child set.
+.SS SET
+The target provides the following option:
+.TP
+.BR "--add-set " "setname[:flag,...] flag[,flag]"
+add the address(es)/port(s) of the packet to the (child)set
+.TP
+.BR "--del-set " "setname[:flag,...] flag[,flag]"
+delete the address(es)/port(s) of the packet from the (child)set,
+where flags are
+.BR "src"
+and/or
+.BR "dst" .
+The flags in the second argument can be preceded by an optional `+' sign, 
+which will force overwriting already existing elements in the target set
+when adding elements to a hash type set.
 .SH DIAGNOSTICS
 Various error messages are printed to standard error.  The exit code
 is 0 for correct functioning.  Errors which appear to be caused by
