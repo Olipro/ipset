@@ -8,14 +8,14 @@ ifndef KERNEL_DIR
 KERNEL_DIR=/usr/src/linux
 endif
 
-IPSET_VERSION:=2.1.0
+IPSET_VERSION:=2.1.1
 
 PREFIX:=/usr/local
 LIBDIR:=$(PREFIX)/lib
 BINDIR:=$(PREFIX)/sbin
 MANDIR:=$(PREFIX)/man
 INCDIR:=$(PREFIX)/include
-IPSET_LIB_DIR:=$(DESTDIR)$(LIBDIR)/ipset
+IPSET_LIB_DIR:=$(LIBDIR)/ipset
 
 # directory for new iptables releases
 RELEASE_DIR:=/tmp
@@ -35,7 +35,7 @@ all: $(PROGRAMS) $(SHARED_LIBS)
 install: all $(INSTALL)
 
 clean: $(EXTRA_CLEANS)
-	rm -rf $(PROGRAMS) $(SHARED_LIBS) *.o
+	rm -rf $(PROGRAMS) $(SHARED_LIBS) *.o *~
 
 #The ipset(8) self
 ipset.o: ipset.c

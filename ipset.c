@@ -11,9 +11,12 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <sys/socket.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <arpa/inet.h>
 #include <stdarg.h>
 #include <netdb.h>
@@ -41,6 +44,8 @@ void *restore_data = NULL;
 struct ip_set_restore *restore_set = NULL;
 size_t restore_offset = 0, restore_size;
 unsigned line = 0;
+
+#define TEMPFILE_PATTERN	"/ipsetXXXXXX"
 
 #ifdef IPSET_DEBUG
 int option_debug = 0;
@@ -1220,10 +1225,44 @@ static void build_argv(int line, char *buffer) {
 	}
 }
 
+static FILE *create_tempfile(void)
+{
+	char buffer[1024];	
+	char *tmpdir = NULL;
+	char *filename;
+	int fd;
+	FILE *file;
+	
+	if (!(tmpdir = getenv("TMPDIR")) && !(tmpdir = getenv("TMP")))
+		tmpdir = "/tmp";
+	filename = malloc(strlen(tmpdir) + strlen(TEMPFILE_PATTERN) + 1);
+	if (!filename)
+		exit_error(OTHER_PROBLEM, "Could not malloc temporary filename.");
+	strcpy(filename, tmpdir);
+	strcpy(filename, TEMPFILE_PATTERN);
+	
+	(void) umask(077);	/* Create with restrictive permissions */
+	fd = mkstemp(filename);
+	if (fd == -1)
+		exit_error(OTHER_PROBLEM, "Could not create temporary file.");
+	if (!(file = fdopen(fd, "r+")))
+		exit_error(OTHER_PROBLEM, "Could not open temporary file.");
+	if (unlink(filename) == -1)
+		exit_error(OTHER_PROBLEM, "Could not unlink temporary file.");
+	free(filename);
+
+	while (fgets(buffer, sizeof(buffer), stdin)) {
+		fputs(buffer, file);
+	}
+	fseek(file, 0L, SEEK_SET);
+
+	return file;
+}
+
 /*
  * Performs a restore from a file
  */
-static void set_restore(FILE *in, char *argv0)
+static void set_restore(char *argv0)
 {
 	char buffer[1024];	
 	char *ptr, *name = NULL;
@@ -1232,7 +1271,11 @@ static void set_restore(FILE *in, char *argv0)
 	struct settype *settype = NULL;
 	struct ip_set_req_setnames *header;
 	ip_set_id_t index;
+	FILE *in;
 	int res;
+	
+	/* Create and store stdin in temporary file */
+	in = create_tempfile();
 	
 	/* Load existing sets from kernel */
 	load_set_list(IPSET_TOKEN_ALL, &index,
@@ -1286,7 +1329,7 @@ static void set_restore(FILE *in, char *argv0)
 			        exit_error(PARAMETER_PROBLEM,
 			        	   "Missing settype in line %u\n",
 		        		   line);
-			if (restore)
+			if (bindings)
 			        exit_error(PARAMETER_PROBLEM,
 			        	   "Invalid line %u: create must precede bindings\n",
 		        		   line);
@@ -1297,12 +1340,13 @@ static void set_restore(FILE *in, char *argv0)
 			break; 
 		}
 		case 'A': {
-			if (strncmp(name, ptr, sizeof(name)) != 0)
+			if (name == NULL
+			    || strncmp(name, ptr, sizeof(name)) != 0)
 			        exit_error(PARAMETER_PROBLEM,
 			        	   "Add IP to set %s in line %u without "
 					   "preceding corresponding create set line\n",
 		        		   ptr, line);
-			if (restore)
+			if (bindings)
 			        exit_error(PARAMETER_PROBLEM,
 			        	   "Invalid line %u: adding entries must precede bindings\n",
 		        		   line);
@@ -1335,10 +1379,7 @@ static void set_restore(FILE *in, char *argv0)
 	restore_offset = sizeof(struct ip_set_req_setnames);
 
 	/* Rewind to scan the file again */
-	res = fseek(in, 0L, SEEK_SET);
-	if (res)
-		exit_error(PARAMETER_PROBLEM,
-			   "Cannot rewind stdin: %s", strerror(errno));
+	fseek(in, 0L, SEEK_SET);
 	first_pass = line;
 	line = 0;
 	
@@ -1848,8 +1889,6 @@ int parse_commandline(int argc, char *argv[])
 	unsigned options = 0;
 	int c;
 	
-	FILE *in = stdin;		/* -R */
-
 	char *name = NULL;		/* All except -H, -R */
 	char *newname = NULL;		/* -E, -W */
 	char *adt = NULL;		/* -A, -D, -T, -B, -U */
@@ -2110,7 +2149,7 @@ int parse_commandline(int argc, char *argv[])
 		break;
 
 	case CMD_RESTORE:
-		set_restore(in, argv[0]);
+		set_restore(argv[0]);
 		break;
 
 	case CMD_ADD:

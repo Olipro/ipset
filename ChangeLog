@@ -1,3 +1,12 @@
+2.1.1
+ - Locking bug in ip_set_nethash.c (Clifford Wolf and Rob Carlson)
+ - Makefile contained an unnecessary variable in IPSET_LIB_DIR (Clifford
+   Wolf)
+ - Safety checkings of restore in ipset was incomplete (Robin H. Johnson)
+ - More careful resizing by avoiding locking completely
+ - stdin stored internally in a temporary file, so we can feed 'ipset -R'
+   from a pipe
+
 2.1
  - Lock debugging used with debugless lock definiton (Piotr Chytla and
    others).
