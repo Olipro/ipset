@@ -259,10 +259,10 @@ void saveheader(struct set *set, unsigned options)
 	struct ip_set_macipmap *mysetdata =
 	    (struct ip_set_macipmap *) set->settype->header;
 
-	printf("-N %s %s --from: %s",
+	printf("-N %s %s --from %s",
 	       set->name, set->settype->typename,
 	       ip_tostring(mysetdata->first_ip, options));
-	printf(" --to: %s", ip_tostring(mysetdata->last_ip, options));
+	printf(" --to %s", ip_tostring(mysetdata->last_ip, options));
 
 	if (mysetdata->flags & IPSET_MACIP_MATCHUNSET)
 		printf(" --matchunset");

@@ -1,3 +1,7 @@
+2.0.1
+ - Cut'n'paste bug at saving macipmap types fixed
+   Thanks to Vincent Bernat for the bugreport.
+
 2.0
  - Chaining of sets are changed: child sets replaced by bindings
  - Kernel-userspace communication reorganized to minimize the number
