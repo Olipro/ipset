@@ -1,0 +1,6 @@
+1.0
+ - Renamed to ipset					  (Jozsef Kadlecsik)
+ - Rewritten to support child pools			  (Jozsef Kadlecsik)
+ - portmap, iphash pool support added			  (Jozsef Kadlecsik)
+ - too much other mods here and there to list...	  (Jozsef Kadlecsik)
+
