@@ -1,25 +1,16 @@
-/* Copyright 2000-2004 Joakim Axelsson (gozem@linux.nu)
+/* Copyright 2000-2002 Joakim Axelsson (gozem@linux.nu)
  *                     Patrick Schaaf (bof@bof.de)
- *                     Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
+ * Copyright 2003-2004 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
  * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License as published by   
- * the Free Software Foundation; either version 2 of the License, or      
- * (at your option) any later version.                                    
- *                                                                         
- * This program is distributed in the hope that it will be useful,        
- * but WITHOUT ANY WARRANTY; without even the implied warranty of         
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          
- * GNU General Public License for more details.                           
- *                                                                         
- * You should have received a copy of the GNU General Public License      
- * along with this program; if not, write to the Free Software            
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * it under the terms of the GNU General Public License version 2 as 
+ * published by the Free Software Foundation.
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include <sys/socket.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -31,68 +22,50 @@
 
 #include "ipset.h"
 
-/* The list of all sets */
-static struct set *all_sets = NULL;
+char program_name[] = "ipset";
+char program_version[] = IPSET_VERSION;
 
 /* The list of loaded set types */
 static struct settype *all_settypes = NULL;
 
+/* Array of sets */
+struct set **set_list = NULL;
+ip_set_id_t max_sets = 0;
+
 /* Suppress output to stdout and stderr? */
 static int option_quiet = 0;
 
-/* Data from the command line: */
-static char *set_name = NULL;			/* Name of the set */
-static char *set_typename[IP_SET_LEVELS];	/* Set typenames */
-static unsigned int set_typename_level = 0;	/* Size of set_typename */
-static ip_set_ip_t set_ip[IP_SET_LEVELS];	/* IP addresses of child set */
-static unsigned int set_level = 0;		/* Size of set_ip */
-static unsigned int ip_level = 0;		/* Size of add/del/test addresses */
+/* Data for restore mode */
+static int restore = 0;
+void *restore_data = NULL;
+struct ip_set_restore *restore_set = NULL;
+size_t restore_offset = 0, restore_size;
+unsigned line = 0;
 
-/* Max size of a set when hinting. */
-#define MAX_HINT_SIZE	65536
-
-#ifdef IP_SET_DEBUG
+#ifdef IPSET_DEBUG
 int option_debug = 0;
 #endif
 
 #define OPTION_OFFSET 256
 static unsigned int global_option_offset = 0;
 
-/* Now most of these command parsing functions are borrowed from iptables.c */
+/* Most of these command parsing functions are borrowed from iptables.c */
 
-/* Commands */
-#define CMD_NONE	0x0000U
-#define CMD_CREATE	0x0001U		/* -N */
-#define CMD_DESTROY	0x0002U		/* -X */
-#define CMD_FLUSH	0x0004U		/* -F */
-#define CMD_RENAME	0x0008U		/* -E */
-#define CMD_SWAP	0x0010U		/* -W */
-#define CMD_LIST	0x0020U		/* -L */
-#define CMD_SAVE	0x0040U		/* -S */
-#define CMD_RESTORE	0x0080U		/* -R */
-#define CMD_ADD		0x0100U		/* -A */
-#define CMD_DEL		0x0200U		/* -D */
-#define CMD_TEST	0x0400U		/* -T */
-#define CMD_HELP	0x0800U		/* -H */
-#define CMD_VERSION	0x1000U		/* -V */
-#define CMD_CREATE_CHILD 0x2000U	/* -N !!! */
-#define NUMBER_OF_CMD 13
-static const char cmdflags[] = { 
+static const char cmdflags[] = { ' ',			/* CMD_NONE */ 
 	'N', 'X', 'F', 'E', 'W', 'L', 'S', 'R', 
-	'A', 'D', 'T', 'H', 'V',
+	'A', 'D', 'T', 'B', 'U', 'H', 'V',
 };
 
 /* Options */
-#define OPT_NONE	0x0000U
-#define OPT_NUMERIC	0x0001U		/* -n */
-#define OPT_SORTED	0x0002U		/* -s */
-#define OPT_QUIET	0x0004U		/* -q */
-#define OPT_DEBUG	0x0008U		/* -z */
-#define OPT_CHILDSETS	0x0010U		/* -c */
-#define OPT_HINT	0x0020U		/* -i */
-#define NUMBER_OF_OPT 6
+#define OPT_NONE		0x0000U
+#define OPT_NUMERIC		0x0001U		/* -n */
+#define OPT_SORTED		0x0002U		/* -s */
+#define OPT_QUIET		0x0004U		/* -q */
+#define OPT_DEBUG		0x0008U		/* -z */
+#define OPT_BINDING		0x0010U		/* -b */
+#define NUMBER_OF_OPT 5
 static const char optflags[] =
-    { 'n', 's', 'q', 'z', 'c', 'i' };
+    { 'n', 's', 'q', 'z', 'b' };
 
 static struct option opts_long[] = {
 	/* set operations */
@@ -111,14 +84,17 @@ static struct option opts_long[] = {
 	{"del",     1, 0, 'D'},
 	{"test",    1, 0, 'T'},
 	
+	/* binding operations */
+	{"bind",    1, 0, 'B'},
+	{"unbind",  1, 0, 'U'},
+	
 	/* free options */
 	{"numeric", 0, 0, 'n'},
 	{"sorted",  0, 0, 's'},
 	{"quiet",   0, 0, 'q'},
-	{"childsets",0, 0, 'c'},
-	{"hint",    0, 0, 'i'},
+	{"binding", 1, 0, 'b'},
 
-#ifdef IP_SET_DEBUG
+#ifdef IPSET_DEBUG
 	/* debug (if compiled with it) */
 	{"debug",   0, 0, 'z'},
 #endif
@@ -132,11 +108,10 @@ static struct option opts_long[] = {
 };
 
 static char opts_short[] =
-    "-N:X::F::E:W:L::S::RA:D:T:nsqzciVh::H::";
+    "-N:X::F::E:W:L::S::RA:D:T:B:U:nsqzb:Vh::H::";
 
-/* Table of legal combinations of commands and options.  If any of the
- * given commands make an option legal, that option is legal (applies to
- * CMD_LIST and CMD_ZERO only).
+/* Table of legal combinations of commands and options. If any of the
+ * given commands make an option legal, that option is legal.
  * Key:
  *  +  compulsory
  *  x  illegal
@@ -144,21 +119,26 @@ static char opts_short[] =
  */
 
 static char commands_v_options[NUMBER_OF_CMD][NUMBER_OF_OPT] = {
-	/*            -n   -s   -q   -z   -c   -i*/
-	 /*CREATE*/  {'x', 'x', ' ', ' ', ' ', 'x'},
-	 /*DESTROY*/ {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*FLUSH*/   {'x', 'x', ' ', ' ', ' ', 'x'},
-	 /*RENAME*/  {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*SWAP*/    {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*LIST*/    {' ', ' ', 'x', ' ', ' ', 'x'},
-	 /*SAVE*/    {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*RESTORE*/ {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*ADD*/     {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*DEL*/     {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*TEST*/    {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*HELP*/    {'x', 'x', 'x', ' ', 'x', ' '},
-	 /*VERSION*/ {'x', 'x', 'x', ' ', 'x', 'x'},
+	/*            -n   -s   -q   -z   -b  */
+	 /*CREATE*/  {'x', 'x', ' ', ' ', 'x'},
+	 /*DESTROY*/ {'x', 'x', ' ', ' ', 'x'},
+	 /*FLUSH*/   {'x', 'x', ' ', ' ', 'x'},
+	 /*RENAME*/  {'x', 'x', ' ', ' ', 'x'},
+	 /*SWAP*/    {'x', 'x', ' ', ' ', 'x'},
+	 /*LIST*/    {' ', ' ', 'x', ' ', 'x'},
+	 /*SAVE*/    {'x', 'x', ' ', ' ', 'x'},
+	 /*RESTORE*/ {'x', 'x', ' ', ' ', 'x'},
+	 /*ADD*/     {'x', 'x', ' ', ' ', 'x'},
+	 /*DEL*/     {'x', 'x', ' ', ' ', 'x'},
+	 /*TEST*/    {'x', 'x', ' ', ' ', ' '},
+	 /*BIND*/    {'x', 'x', ' ', ' ', '+'},
+	 /*UNBIND*/  {'x', 'x', ' ', ' ', 'x'},
+	 /*HELP*/    {'x', 'x', 'x', ' ', 'x'},
+	 /*VERSION*/ {'x', 'x', 'x', ' ', 'x'},
 };
+
+/* Main parser function */
+int parse_commandline(int argc, char *argv[]);
 
 void exit_tryhelp(int status)
 {
@@ -178,6 +158,8 @@ void exit_error(enum exittype status, char *msg, ...)
 		vfprintf(stderr, msg, args);
 		va_end(args);
 		fprintf(stderr, "\n");
+		if (line)
+			fprintf(stderr, "Restore failed at line %u:\n", line);
 		if (status == PARAMETER_PROBLEM)
 			exit_tryhelp(status);
 		if (status == VERSION_PROBLEM)
@@ -212,18 +194,18 @@ static void generic_opt_check(int command, int options)
 	for (i = 0; i < NUMBER_OF_OPT; i++) {
 		legal = 0;	/* -1 => illegal, 1 => legal, 0 => undecided. */
 
-		for (j = 0; j < NUMBER_OF_CMD; j++) {
-			if (!(command & (1 << j)))
+		for (j = 1; j <= NUMBER_OF_CMD; j++) {
+			if (command != j)
 				continue;
 
 			if (!(options & (1 << i))) {
-				if (commands_v_options[j][i] == '+')
+				if (commands_v_options[j-1][i] == '+')
 					exit_error(PARAMETER_PROBLEM,
 						   "You need to supply the `-%c' "
 						   "option for this command\n",
 						   optflags[i]);
 			} else {
-				if (commands_v_options[j][i] != 'x')
+				if (commands_v_options[j-1][i] != 'x')
 					legal = 1;
 				else if (legal == 0)
 					legal = -1;
@@ -246,17 +228,164 @@ static char opt2char(int option)
 
 static char cmd2char(int option)
 {
-	const char *ptr;
-	for (ptr = cmdflags; option > 1; option >>= 1, ptr++);
+	if (option <= CMD_NONE || option > NUMBER_OF_CMD)
+		return ' '; 
 
-	return *ptr;
+	return cmdflags[option];
+}
+
+static int kernel_getsocket(void)
+{
+	int sockfd = -1;
+
+	sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+	if (sockfd < 0)
+		exit_error(OTHER_PROBLEM,
+			   "You need to be root to perform this command.");
+
+	return sockfd;
+}
+
+static void kernel_error(unsigned cmd, int err)
+{
+	unsigned int i;
+	struct translate_error {
+		int err;
+		unsigned cmd;
+		char *message;
+	} table[] =
+	{ /* Generic error codes */
+	  { EPERM, 0, "Missing capability" },
+	  { EBADF, 0, "Invalid socket option" },
+	  { EINVAL, 0, "Size mismatch for expected socket data" },
+	  { ENOMEM, 0, "Not enough memory" },
+	  { EFAULT, 0, "Failed to copy data" },
+	  { EPROTO, 0, "ipset kernel/userspace version mismatch" },
+	  { EBADMSG, 0, "Unknown command" },
+	  /* Per command error codes */
+	  /* Reserved ones for add/del/test to handle internally: 
+	   * 	EEXIST
+	   */
+	  { ENOENT, CMD_CREATE, "Unknown set type" },
+	  { ENOENT, 0, "Unknown set" },
+	  { EAGAIN, 0, "Sets are busy, try again later" },
+	  { ERANGE, CMD_CREATE, "No free slot remained to add a new set" },
+	  { ERANGE, 0, "IP/port is outside of the set" },
+	  { ENOEXEC, CMD_CREATE, "Invalid parameters to create a set" },
+	  { ENOEXEC, CMD_SWAP, "Sets with different types cannot be swapped" },
+	  { EEXIST, CMD_CREATE, "Set already exists" },
+	  { EEXIST, CMD_RENAME, "Set with new name already exists" },
+	  { EBUSY, 0, "Set is in use, operation not permitted" },
+	  };
+	for (i = 0; i < sizeof(table)/sizeof(struct translate_error); i++) {
+		if ((table[i].cmd == cmd || table[i].cmd == 0)
+		    && table[i].err == err)
+		    	exit_error(err == EPROTO ? VERSION_PROBLEM
+		    				 : OTHER_PROBLEM, 
+				   table[i].message);
+	}
+	exit_error(OTHER_PROBLEM, "Error from kernel: %s", strerror(err));
+}
+
+static void kernel_getfrom(unsigned cmd, void *data, size_t * size)
+{
+	int res;
+	int sockfd = kernel_getsocket();
+
+	/* Send! */
+	res = getsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
+
+	DP("res=%d errno=%d", res, errno);
+
+	if (res != 0)
+		kernel_error(cmd, errno);
+}
+
+static int kernel_sendto_handleerrno(unsigned cmd, unsigned op,
+				     void *data, size_t size)
+{
+	int res;
+	int sockfd = kernel_getsocket();
+
+	/* Send! */
+	res = setsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
+
+	DP("res=%d errno=%d", res, errno);
+
+	if (res != 0) {
+		if (errno == EEXIST)
+			return -1;
+		else
+			kernel_error(cmd, errno);
+	}
+
+	return 0; /* all ok */
+}
+
+static void kernel_sendto(unsigned cmd, void *data, size_t size)
+{
+	int res;
+	int sockfd = kernel_getsocket();
+
+	/* Send! */
+	res = setsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
+
+	DP("res=%d errno=%d", res, errno);
+
+	if (res != 0)
+		kernel_error(cmd, errno);
+}
+
+static int kernel_getfrom_handleerrno(unsigned cmd, void *data, size_t * size)
+{
+	int res;
+	int sockfd = kernel_getsocket();
+
+	/* Send! */
+	res = getsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
+
+	DP("res=%d errno=%d", res, errno);
+
+	if (res != 0) {
+		if (errno == EAGAIN)
+			return -1;
+		else
+			kernel_error(cmd, errno);
+	}
+
+	return 0; /* all ok */
+}
+
+static void check_protocolversion(void)
+{
+	struct ip_set_req_version req_version;
+	size_t size = sizeof(struct ip_set_req_version);
+	int sockfd = kernel_getsocket();
+	int res;
+
+	req_version.op = IP_SET_OP_VERSION;
+	res = getsockopt(sockfd, SOL_IP, SO_IP_SET, &req_version, &size);
+
+	if (res != 0) {
+		ipset_printf("I'm of protocol version %u.\n"
+			     "Kernel module is not loaded in, "
+			     "cannot verify kernel version.",
+			     IP_SET_PROTOCOL_VERSION);
+		return;
+	}
+	if (req_version.version != IP_SET_PROTOCOL_VERSION)
+		exit_error(OTHER_PROBLEM,
+			   "Kernel ipset code is of protocol version %u."
+			   "I'm of protocol version %u.\n"
+			   "Please upgrade your kernel and/or ipset(8) utillity.",
+			   req_version.version, IP_SET_PROTOCOL_VERSION);
 }
 
 static void set_command(int *cmd, const int newcmd)
 {
 	if (*cmd != CMD_NONE)
 		exit_error(PARAMETER_PROBLEM, "Can't use -%c with -%c\n",
-			   cmd2char(newcmd), cmd2char(newcmd));
+			   cmd2char(*cmd), cmd2char(newcmd));
 	*cmd = newcmd;
 }
 
@@ -277,7 +406,7 @@ void *ipset_malloc(size_t size)
 		return NULL;
 
 	if ((p = malloc(size)) == NULL) {
-		perror("ipset: malloc failed");
+		perror("ipset: not enough memory");
 		exit(1);
 	}
 	return p;
@@ -320,8 +449,6 @@ static char *ip_tohost(const struct in_addr *addr)
 {
 	struct hostent *host;
 
-	DP("ip_tohost()");
-
 	if ((host = gethostbyaddr((char *) addr,
 				  sizeof(struct in_addr),
 				  AF_INET)) != NULL) {
@@ -336,11 +463,11 @@ static char *ip_tonetwork(const struct in_addr *addr)
 {
 	struct netent *net;
 
-	DP("ip_tonetwork()");
-
 	if ((net = getnetbyaddr((long) ntohl(addr->s_addr), 
-				AF_INET)) != NULL)
+				AF_INET)) != NULL) {
+		DP("%s", net->n_name);
 		return (char *) net->n_name;
+	}
 
 	return (char *) NULL;
 }
@@ -370,17 +497,13 @@ void parse_ip(const char *str, ip_set_ip_t * ip)
 	struct hostent *host;
 	struct in_addr addr;
 
+	DP("%s", str);
+	
 	if (inet_aton(str, &addr) != 0) {
 		*ip = ntohl(addr.s_addr);	/* We want host byte order */
-
-#ifdef IP_SET_DEBUG
-		{
-			/*DEBUG*/ char *p = (char *) ip;
-			DP("PARSE_IP %x %x %x %x %x %x", *ip, 0xC10BF8A6,
-			   p[0], p[1], p[2], p[3]);
-		}
-#endif
-
+		if (!*ip)
+			exit_error(PARAMETER_PROBLEM,
+				   "Zero valued IP address `%s' specified", str);
 		return;
 	}
 
@@ -397,15 +520,10 @@ void parse_ip(const char *str, ip_set_ip_t * ip)
 				   "Please specify one.", str);
 
 		*ip = ntohl(((struct in_addr *) host->h_addr_list[0])->s_addr);
-
-#ifdef IP_SET_DEBUG
-		{
-			/*DEBUG*/ char *p = (char *) ip;
-			DP("PARSE_IP %x %x %x %x %x %x", *ip, 0xC10BF8A6,
-			   p[0], p[1], p[2], p[3]);
-		}
-#endif
-
+		if (!*ip)
+			exit_error(PARAMETER_PROBLEM,
+				   "Zero valued IP address `%s' specified",
+				   str);
 		return;
 	}
 
@@ -418,7 +536,7 @@ void parse_mask(const char *str, ip_set_ip_t * mask)
 	struct in_addr addr;
 	unsigned int bits;
 
-	DP("parse_mask %s", str);
+	DP("%s", str);
 
 	if (str == NULL) {
 		/* no mask at all defaults to 32 bits */
@@ -460,13 +578,13 @@ parse_ipandmask(const char *str, ip_set_ip_t * ip, ip_set_ip_t * mask)
 	else
 		parse_ip(buf, ip);
 
-	DP("parse_ipandmask: %s ip: %08X (%s) mask: %08X",
+	DP("%s ip: %08X (%s) mask: %08X",
 	   str, *ip, ip_tostring(*ip, 0), *mask);
 
 	/* Apply the netmask */
 	*ip &= *mask;
 
-	DP("parse_ipandmask: %s ip: %08X (%s) mask: %08X",
+	DP("%s ip: %08X (%s) mask: %08X",
 	   str, *ip, ip_tostring(*ip, 0), *mask);
 }
 
@@ -479,10 +597,10 @@ char *port_tostring(ip_set_ip_t port, unsigned options)
 	struct servent *service;
 	static char name[] = "65535";
 	
-	if (!(options & OPT_NUMERIC)
-	    && (service = getservbyport(htons(port), "tcp")))
-		return service->s_name;
-	
+	if (!(options & OPT_NUMERIC)) {
+		if ((service = getservbyport(htons(port), "tcp")))
+			return service->s_name;
+	}
 	sprintf(name, "%u", port);
 	return name;
 }
@@ -524,15 +642,23 @@ string_to_port(const char *str, ip_set_ip_t *port)
 void parse_port(const char *str, ip_set_ip_t *port)
 {	
 	if ((string_to_number(str, 0, 65535, port) != 0)
-	    && (string_to_port(str, port) != 0))
-		exit_error(PARAMETER_PROBLEM, "Invalid TCP port `%s' specified", str);
+	      && (string_to_port(str, port) != 0))
+		exit_error(PARAMETER_PROBLEM, 
+		           "Invalid TCP port `%s' specified", str);
+	
+	if (!*port)
+		exit_error(PARAMETER_PROBLEM, 
+		           "Zero valued port `%s' specified", str);
 }
 
+/* 
+ * Settype functions
+ */
 static struct settype *settype_find(const char *typename)
 {
 	struct settype *runner = all_settypes;
 
-	DP("settype %s", typename);
+	DP("%s", typename);
 
 	while (runner != NULL) {
 		if (strncmp(runner->typename, typename, 
@@ -576,392 +702,140 @@ static struct settype *settype_load(const char *typename)
 	return NULL;		/* Never executed, but keep compilers happy */
 }
 
+static char *check_set_name(char *setname)
+{
+	if (strlen(setname) > IP_SET_MAXNAMELEN - 1)
+		exit_error(PARAMETER_PROBLEM,
+			   "Setname '%s' too long, max %d characters.",
+			   setname, IP_SET_MAXNAMELEN - 1);
+
+	return setname;
+}
+
+static struct settype *check_set_typename(const char *typename)
+{
+	if (strlen(typename) > IP_SET_MAXNAMELEN - 1)
+		exit_error(PARAMETER_PROBLEM,
+			   "Typename '%s' too long, max %d characters.",
+			   typename, IP_SET_MAXNAMELEN - 1);
+
+	return settype_load(typename);
+}
+
+#define MAX(a,b)	((a) > (b) ? (a) : (b))
+
 /* Register a new set type */
 void settype_register(struct settype *settype)
 {
 	struct settype *chk;
+	size_t size;
 
-	DP("register_settype '%s'\n", settype->typename);
+	DP("%s", settype->typename);
 
 	/* Check if this typename already exists */
 	chk = settype_find(settype->typename);
 
 	if (chk != NULL)
 		exit_error(OTHER_PROBLEM,
-			   "Set type '%s' already registred!\n",
+			   "Set type '%s' already registered!\n",
 			   settype->typename);
 
 	/* Check version */
 	if (settype->protocol_version != IP_SET_PROTOCOL_VERSION)
 		exit_error(OTHER_PROBLEM,
-			   "Set type is of wrong protocol version %u!"
-			   " I'm am of version %u.\n", settype->typename,
+			   "Set type %s is of wrong protocol version %u!"
+			   " I'm of version %u.\n", settype->typename,
 			   settype->protocol_version,
 			   IP_SET_PROTOCOL_VERSION);
 
+	/* Initialize internal data */
+	settype->header = ipset_malloc(settype->header_size);
+	size = MAX(settype->create_size, settype->adt_size);
+	settype->data = ipset_malloc(size);
+
 	/* Insert first */
 	settype->next = all_settypes;
-	settype->data = ipset_malloc(settype->create_size);
 	all_settypes = settype;
 
-	DP("ip_set: register settype end '%s'\n", settype->typename);
+	DP("%s registered", settype->typename);
 }
 
-static int kernel_getsocket(void)
+/* Find set functions */
+static struct set *set_find_byid(ip_set_id_t id)
 {
-	int sockfd = -1;
-
-	sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-	if (sockfd < 0)
-		exit_error(OTHER_PROBLEM,
-			   "You need to be root to perform this command.");
-
-	return sockfd;
-}
-
-static void kernel_error(int err)
-{
-	/* translate errnos, as returned by our *sockopt() functions */
-	exit_error(OTHER_PROBLEM, "Error from kernel: %s", strerror(err));
-}
-
-static void kernel_sendto(void *data, size_t size)
-{
-	int res;
-	int sockfd = kernel_getsocket();
-
-	/* Send! */
-	res = setsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
-
-	DP("kernel_sendto() res=%d errno=%d\n", res, errno);
-
-	if (res != 0)
-		kernel_error(errno);
-}
-
-/* Used by addip and delip that has to handle the EEXIST error better */
-static int kernel_sendto_handleexist(void *data, size_t size)
-{
-	int res;
-	int sockfd = kernel_getsocket();
-
-	/* Send! */
-	res = setsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
-
-	DP("kernel_sendto_handleexist() res=%d errno=%d\n", res, errno);
-
-	if (res != 0 && errno == EEXIST)
-		return -1;
-	else if (res != 0)
-		kernel_error(errno);
-
-	return 0;		/* all ok */
-}
-
-static void kernel_getfrom(void *data, size_t * size)
-{
-	int res;
-	int sockfd = kernel_getsocket();
-
-	/* Send! */
-	res = getsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
-
-	DP("kernel_getfrom() res=%d errno=%d\n", res, errno);
-
-	if (res != 0)
-		kernel_error(errno);
-}
-
-static int get_protocolversion(void)
-{
-	struct ip_set_req_version req_version;
-	size_t size = sizeof(struct ip_set_req_version);
-
-	req_version.op = IP_SET_OP_VERSION;
-
-	kernel_getfrom(&req_version, &size);
-
-	DP("get_protocolversion() ver=%d", req_version.version);
-
-	return req_version.version;
-}
-
-static void set_append(struct set *set)
-{
-	struct set *entry = all_sets;
+	struct set *set = NULL;
+	ip_set_id_t i;
 	
-	while (entry != NULL && entry->next != NULL)
-		entry = entry->next;
-	
-	if (entry == NULL)
-		all_sets = set;
-	else
-		entry->next = set;
-}
-
-static void get_sets(void)
-{
-	void *data = NULL;
-	struct ip_set_req_listing_size req_list;
-	int sockfd = kernel_getsocket();
-	size_t size;
-	size_t eaten = 0;
-	int i, res;
-
-	DP("get_sets()");
-	for (i = 0; i < LIST_TRIES; i++) {
-		req_list.op = IP_SET_OP_LISTING_SIZE;
-		size = sizeof(req_list);
-		kernel_getfrom(&req_list, &size);
-		size = req_list.size;
-
-		DP("got size: %d", size);
-
-		if (req_list.size == 0)
-			return;		/* No sets in kernel */
-
-		data = ipset_malloc(size);
-		((struct ip_set_req_base *) data)->op = IP_SET_OP_LISTING;
-
-		/* Get! */
-		res = getsockopt(sockfd, SOL_IP, SO_IP_SET, data, &size);
-		DP("list_get getsockopt() res=%d errno=%d\n", res, errno);
-
-		if (res == 0)
-			goto got_sets;	/* all OK */
-		else if (errno != ENOMEM)
-			break;		/* Not a memory error */
-
-		DP("not enough mem, looping again");
-		free(data);
-	}
-
-	if (errno == ENOMEM)
-		exit_error(OTHER_PROBLEM,
-			   "Tried to list sets from kernel %d times"
-			   " and failed. Please try again when the load on"
-			   " the sets has gone down.", LIST_TRIES);
-	else
-		kernel_error(errno);
-
-    got_sets:
-
-	DP("get_sets() - size=%d data=%p", size, data);
-	/* Handle the data */
-	while (eaten < size) {
-		struct ip_set_req_listing *header =
-		    (struct ip_set_req_listing *) (data + eaten);
-		struct set *set = ipset_malloc(sizeof(struct set));
-
-		memset(set, 0, sizeof(struct set));
-		
-		DP("fillin %d %p", eaten, header);
-
-#ifdef IP_SET_DEBUG
-		/* DEBUG */
-		{
-			void *i;
-
-			DP("SET DATA:");
-
-			for (i = data + eaten;
-			     i <
-			     data + eaten +
-			     sizeof(struct ip_set_req_listing); i += 4) {
-				unsigned *j = (unsigned *) i;
-				DP("%x", *j);
-			}
-		}
-#endif
-
-		/* Fill in data */
-		DP("Processing set '%s'", header->name);
-		strcpy(set->name, header->name);
-		set->id = header->id;
-		set->levels = header->levels;
-		set->ref = header->ref;
-		for (i = 0; i < set->levels; i++) {
-			set->settype[i] = settype_load(header->typename[i]);
-			set->private[i].adt = 
-				ipset_malloc(set->settype[i]->req_size);
-		}
-
-		eaten += sizeof(struct ip_set_req_listing);
-
-		DP("insert in list");
-		set_append(set);
-	}
-
-	DP("free");
-
-	free(data);
-
-	DP("get_sets() eaten = %d, size = %d", eaten, size);
-
-	if (eaten != size)
-		exit_error(OTHER_PROBLEM,
-			   "Desynched in listing of sets from kernel. "
-			   "Read %d bytes. Worked %d bytes.", size, eaten);
-}
-
-struct set *set_find(const char *setname)
-{
-	struct set *set = all_sets;
-
-	DP("%s", setname);
-
-	while (set != NULL) {
-		if (strcmp(setname, set->name) == 0)
-			return set;
-		set = set->next;
-	}
-	return NULL;
-}
-
-static struct set *set_checkname(const char *setname)
-{
-	char *saved = strdup(setname);
-	char *ptr, *tmp = saved;
-	struct set *set;
-	int i;
-
-	DP("%s", setname);
-
-	/* Cleanup */
-	if (set_name != NULL)
-		free(set_name);
-	
-	for (i = 0; i < IP_SET_SETIP_LEVELS; i++)
-		set_ip[i] = 0;
-	set_level = 0;
-
-	/* name[:ip,...] */
-	ptr = strsep(&tmp, ":");
-	if (strlen(ptr) > IP_SET_MAXNAMELEN - 1)
-		exit_error(PARAMETER_PROBLEM,
-			   "Setname '%s' in '%s' too long. Max %d characters.",
-			   ptr, setname, IP_SET_MAXNAMELEN - 1);
-
-	DP("%s (%s)", ptr, tmp);
-	set = set_find(ptr);
-	if (!set && tmp)
-		exit_error(PARAMETER_PROBLEM,
-			   "Set '%s' not found for '%s'\n",
-			   ptr, setname);
-	
-	set_name = strdup(ptr);
-
-	while (set_level < IP_SET_SETIP_LEVELS && tmp) {
-		ptr = strsep(&tmp, ",");
-		switch (set->settype[set_level]->typecode) {
-		case IPSET_TYPE_IP:
-			parse_ip(ptr, &set_ip[set_level++]);
+	for (i = 0; i < max_sets; i++)
+		if (set_list[i] && set_list[i]->id == id) {
+			set = set_list[i];
 			break;
-		case IPSET_TYPE_PORT:
-			parse_port(ptr, &set_ip[set_level++]);
-			break;
-		default:
-			; /* Keep compilers happy */
-		}		
-		if (set->levels <= set_level)
-			exit_error(PARAMETER_PROBLEM, 
-				   "Subset definition is too deep for set '%s'\n",
-				   set_name);
 	}
-
-	free(saved);
+			
+	if (set == NULL)
+	    	exit_error(PARAMETER_PROBLEM,
+	    		   "Set identified by id %u is not found", id);
 	return set;
 }
 
-static inline struct set *set_find_byname(const char *setname)
+static struct set *set_find_byname(const char *name)
 {
-	struct set *set = set_checkname(setname);
-
-	if (!set)
-		exit_error(PARAMETER_PROBLEM, 
-			   "Set '%s' not found\n", setname);
+	struct set *set = NULL;
+	ip_set_id_t i;
+	
+	for (i = 0; i < max_sets; i++)
+		if (set_list[i]
+		    && strncmp(set_list[i]->name, name,
+		    	       IP_SET_MAXNAMELEN) == 0) {
+			set = set_list[i];
+			break;
+		}
+	if (set == NULL)
+	    	exit_error(PARAMETER_PROBLEM,
+	    		   "Set %s is not found", name);
 	return set;
 }
 
-static void set_checktype(const char *typename)
+static ip_set_id_t set_find_free_index(const char *name)
 {
-	char *saved = strdup(typename);
-	char *ptr, *tmp = saved;
-	int i;
+	ip_set_id_t i, index = IP_SET_INVALID_ID;
 
-	/* Cleanup */
-	for (i = 0; i < IP_SET_LEVELS; i++)
-		if (set_typename[i] != NULL)
-			free(set_typename[i]);
-
-	/* typename[,...] */
-	set_typename_level = 0;
-	while (set_typename_level < IP_SET_LEVELS && tmp) {
-		ptr = strsep(&tmp, ",");
-		DP("settype '%s', level %i", ptr, set_typename_level);
-		if (strlen(ptr) > IP_SET_MAXNAMELEN - 1)
+	for (i = 0; i < max_sets; i++) {
+		if (index == IP_SET_INVALID_ID
+		    && set_list[i] == NULL)
+			index = i;
+		if (set_list[i] != NULL
+		    && strncmp(set_list[i]->name, name,
+			       IP_SET_MAXNAMELEN) == 0)
 			exit_error(PARAMETER_PROBLEM,
-				   "Typename '%s' in '%s' too long. Max %d characters.",
-				   ptr, typename, IP_SET_MAXNAMELEN - 1);
-		set_typename[set_typename_level++] = strdup(ptr);
+   				   "Set %s is already defined, cannot be restored",
+   				   name);
 	}
-	DP("tmp '%s', level %i", tmp, set_typename_level);
-	if (set_typename_level >= IP_SET_LEVELS || tmp)	
+			
+	if (index == IP_SET_INVALID_ID)		
 		exit_error(PARAMETER_PROBLEM,
-			   "More than %d settypes in '%s'.",
-			   IP_SET_LEVELS - 1 , typename);
-	free(saved);
+	   		   "Set %s cannot be restored, "
+	   		   "max number of set %u reached",
+	   		   name, max_sets);
+
+	return index;
 }
 
-/* Get setid from kernel. */
-static void
-set_get_setid(struct set *set)
-{
-	struct ip_set_req_get req_get;
-	size_t size = sizeof(struct ip_set_req_get);
-
-	DP("set_get_setid()");
-
-	req_get.op = IP_SET_OP_GETSET_BYNAME;
-	strcpy(req_get.name, set->name);
-
-	/* Result in the id-field */
-	kernel_getfrom(&req_get, &size);
-
-	if (size != sizeof(struct ip_set_req_get))
-		exit_error(OTHER_PROBLEM,
-			   "Incorrect return size from kernel."
-			   "Should be %d but was %d.",
-			   sizeof(struct ip_set_req_get), size);
-
-	DP("set_get_setid() result=%u", req_get.id);
-
-	if (req_get.id < 0)
-		exit_error(OTHER_PROBLEM,
-			   "Set %s cannot be found.",
-			   set->name);
-
-	set->id = req_get.id;
-	set->ref = req_get.ref;
-}
-
-/* Send create set order to kernel */
-static void
-set_create(struct set *set)
+/* 
+ * Send create set order to kernel
+ */
+static void set_create(const char *name, struct settype *settype)
 {
 	struct ip_set_req_create req_create;
-	struct settype *settype = set->settype[0];
 	size_t size;
 	void *data;
-	int i;
 
-	DP("set_create()");
+	DP("%s %s", name, settype->typename);
 
 	req_create.op = IP_SET_OP_CREATE;
-	strcpy(req_create.name, set->name);
-	for (i = 0; i < set_typename_level; i++)
-		strcpy(req_create.typename[i], set->settype[i]->typename);
-	req_create.levels = set_typename_level;
+	req_create.version = IP_SET_PROTOCOL_VERSION;
+	strcpy(req_create.name, name);
+	strcpy(req_create.typename, settype->typename);
 
 	/* Final checks */
 	settype->create_final(settype->data, settype->flags);
@@ -975,652 +849,865 @@ set_create(struct set *set)
 	memcpy(data + sizeof(struct ip_set_req_create),
 	       settype->data, settype->create_size);
 
-#ifdef IP_SET_DEBUG
-	/* DEBUG */
-	{
-		void *i;
-
-		DP("CMD_CREATE");
-		DP("OP %u", req_create.op);
-		DP("Name: %s", req_create.name);
-		DP("Typename: %s", req_create.typename[0]);
-		DP("All data");
-
-		for (i = data; i < data + size; i += 4) {
-			unsigned *j = (unsigned *) i;
-			DP("%x", *j);
-		}
-	}
-#endif
-
-	kernel_sendto(data, size);
+	kernel_sendto(CMD_CREATE, data, size);
 	free(data);
-	
-	/* Get set id from kernel */
-	set_get_setid(set);
-	/* Success! */
-	set_append(set);
 }
 
-/* Send create childset order to kernel */
-static void
-set_create_childset(const struct set *set, unsigned options)
+static void set_restore_create(const char *name, struct settype *settype)
 {
-	struct ip_set_req_sub req_sub;
-	struct settype *settype = set->settype[set_level];
-	size_t size;
-	void *data;
-	int i;
+	struct set *set;
+	
+	DP("%s %s %u %u %u %u", name, settype->typename,
+	   restore_offset, sizeof(struct ip_set_restore),
+	   settype->create_size, restore_size);
 
-	DP("childset_create()");
-
-	req_sub.op = IP_SET_OP_CREATE_CHILD;
-	req_sub.id = set->id;
-	for (i = 0; i < set_level; i++)
-		req_sub.ip[i] = set_ip[i];
-	req_sub.level = set_level;
-	req_sub.childsets = options & OPT_CHILDSETS;
-
+	/* Sanity checking */
+	if (restore_offset
+	    + sizeof(struct ip_set_restore)
+	    + settype->create_size > restore_size)
+	    	exit_error(PARAMETER_PROBLEM,
+	    		   "Giving up, restore file is screwed up!");
+	    		   
 	/* Final checks */
 	settype->create_final(settype->data, settype->flags);
 
-	/* Alloc memory for the data to send */
-	size = sizeof(struct ip_set_req_sub) + settype->create_size;
-	data = ipset_malloc(size);
+	/* Fill out restore_data */
+	restore_set = (struct ip_set_restore *) 
+			(restore_data + restore_offset);
+	strcpy(restore_set->name, name);
+	strcpy(restore_set->typename, settype->typename);
+	restore_set->index = set_find_free_index(name);
+	restore_set->header_size = settype->create_size;
+	restore_set->members_size = 0;
 
-	/* Add up ip_set_req_sub and the settype data */
-	memcpy(data, &req_sub, sizeof(struct ip_set_req_sub));
-	memcpy(data + sizeof(struct ip_set_req_sub),
+	DP("name %s, restore index %u", restore_set->name, restore_set->index);
+	/* Add settype data */
+	
+	memcpy(restore_data + restore_offset + sizeof(struct ip_set_restore),
 	       settype->data, settype->create_size);
 
-#ifdef IP_SET_DEBUG
-	/* DEBUG */
-	{
-		void *i;
-
-		DP("CMD_CREATE_CHILD");
-		DP("OP %u", req_sub.op);
-		DP("Id: %u", req_sub.id);
-		DP("All data");
-
-		for (i = data; i < data + size; i += 4) {
-			unsigned *j = (unsigned *) i;
-			DP("%x", *j);
-		}
-	}
-#endif
-
-	kernel_sendto(data, size);
-	free(data);
-}
-
-static void set_del(struct set *set)
-{
-	int i;
+	restore_offset += sizeof(struct ip_set_restore)
+			  + settype->create_size;	
 	
-	for (i = 0; i < set->levels; i++) {
-		if (set->private[i].setdata)
-			set->settype[i]->killmembers(&set->private[i].setdata);
-		ipset_free(&set->private[i].bitmap);
-	}
-		
-	free(set);
+	/* Add set to set_list */
+	set = ipset_malloc(sizeof(struct set));
+	strcpy(set->name, name);
+	set->settype = settype;
+	set->index = restore_set->index;
+	set_list[restore_set->index] = set;
 }
 
-/* Sends destroy order to kernel for one or all sets
- * All sets: set == NULL
+/*
+ * Send destroy/flush order to kernel for one or all sets
  */
-static void set_destroy(struct set *set)
+static void set_destroy(const char *name, unsigned op, unsigned cmd)
 {
-	struct ip_set_req_std req_destroy;
+	struct ip_set_req_std req;
 
-	req_destroy.op = IP_SET_OP_DESTROY;
+	DP("%s %s", cmd == CMD_DESTROY ? "destroy" : "flush", name);
 
-	if (set == NULL) {
-		/* Do them all */
-		
-		while (all_sets != NULL) {
-			set = all_sets;
-			all_sets = set->next;
-			req_destroy.id = set->id;
-			req_destroy.level = 0;
-			kernel_sendto(&req_destroy,
-				      sizeof(struct ip_set_req_std));
-			set_del(set);
-		}
-	} else {
-		int i;
-		
-		DP("destroy %s", set->name);
+	req.op = op;
+	req.version = IP_SET_PROTOCOL_VERSION;
+	strcpy(req.name, name);
 
-		/* Only destroy one */
-		req_destroy.id = set->id;
-		for (i = 0; i < set_level; i++)
-			req_destroy.ip[i] = set_ip[i];
-		req_destroy.level = set_level;	
-		kernel_sendto(&req_destroy,
-			      sizeof(struct ip_set_req_std));
-		if (set_level == 0) {
-			if (set == all_sets)
-				all_sets = set->next;
-			else {
-				struct set *entry = all_sets;
-			
-				while (entry && entry->next && entry->next != set)
-					entry = entry->next;
-				if (entry->next == set)
-					entry->next = set->next;
-			}				
-			set_del(set);
-		}
-	}
+	kernel_sendto(cmd, &req, sizeof(struct ip_set_req_std));
 }
 
-/* Sends flush order to kernel for one or all sets
- * All sets: set = NULL
+/*
+ * Send rename/swap order to kernel
  */
-static void set_flush(const struct set *set, unsigned options)
+static void set_rename(const char *name, const char *newname,
+		       unsigned op, unsigned cmd)
 {
-	struct ip_set_req_sub req_flush;
+	struct ip_set_req_create req;
 
-	DP("flush");
+	DP("%s %s %s", cmd == CMD_RENAME ? "rename" : "swap",
+		       name, newname);
 
-	req_flush.op = IP_SET_OP_FLUSH;
+	req.op = op;
+	req.version = IP_SET_PROTOCOL_VERSION;
+	strcpy(req.name, name);
+	strcpy(req.typename, newname);
 
-	if (set == NULL) {
-		/* Do them all */
-		struct set *entry = all_sets;
-		
-		while (entry != NULL) {
-			req_flush.id = entry->id;
-			req_flush.level = 0;
-			req_flush.childsets = options & OPT_CHILDSETS;
-			kernel_sendto(&req_flush,
-				      sizeof(struct ip_set_req_sub));
-			entry = entry->next;
-		}
-	} else {
-		int i;
-
-		/* Only one */
-		req_flush.id = set->id;
-		for (i = 0; i < set_level; i++)
-			req_flush.ip[i] = set_ip[i];
-		req_flush.level = set_level;	
-		req_flush.childsets = options & OPT_CHILDSETS;
-		kernel_sendto(&req_flush, sizeof(struct ip_set_req_sub));
-	}
+	kernel_sendto(cmd, &req,
+		      sizeof(struct ip_set_req_create));
 }
 
-/* Sends rename order to kernel */
-static void set_rename(struct set *set, const char *newname)
+/*
+ * Send MAX_SETS, LIST_SIZE and/or SAVE_SIZE orders to kernel
+ */
+static size_t load_set_list(const char name[IP_SET_MAXNAMELEN],
+			    ip_set_id_t *index,
+			    unsigned op, unsigned cmd)
 {
-	struct ip_set_req_rename req_rename;
-
-	DP("rename");
-
-	req_rename.op = IP_SET_OP_RENAME;
-	req_rename.id = set->id;
-	strncpy(req_rename.newname, newname, IP_SET_MAXNAMELEN);
-
-	DP("rename - send");
-	kernel_sendto(&req_rename, sizeof(struct ip_set_req_rename));
-	
-	strncpy(set->name, newname, IP_SET_MAXNAMELEN);
-}
-
-/* Sends swap order to kernel for two sets */
-static void set_swap(struct set *from, struct set *to)
-{
-	struct ip_set_req_swap req_swap;
-
-	DP("swap");
-
-	req_swap.op = IP_SET_OP_SWAP;
-	req_swap.id = from->id;
-	req_swap.to = to->id;
-
-	DP("swap - send");
-	kernel_sendto(&req_swap, sizeof(struct ip_set_req_swap));
-	
-	from->id = req_swap.to;
-	to->id = req_swap.id;
-}
-
-static void *list_get(int opsize, int opget, ip_set_ip_t id,
-		      int *size, ip_set_ip_t *ip, unsigned level)
-{
-	int res, i;
-	struct ip_set_req_list req_list;
-	struct ip_set_req_std *req_data;
-	int sockfd = kernel_getsocket();
 	void *data = NULL;
+	struct ip_set_req_max_sets req_max_sets;
+	struct ip_set_name_list *name_list;
+	struct set *set;
+	ip_set_id_t i;
+	size_t size, req_size;
+	int repeated = 0, res = 0;
 
-	req_list.op = opsize;
-	req_list.id = id;
-	req_list.level = level;
-	for (i = 0; i < level; i++)
-		req_list.ip[i] = ip[i];
-
-	*size = sizeof(req_list);
-	kernel_getfrom(&req_list, size);
-
-	DP("got size: %d", req_list.size);
-
-	if (req_list.size == 0)
-		return data;
-
-	*size = sizeof(struct ip_set_req_std) > req_list.size ?
-		sizeof(struct ip_set_req_std) : req_list.size;
-
-	data = ipset_malloc(*size);
-	req_data = (struct ip_set_req_std *) data;
-	req_data->op = opget;
-	req_data->id = id;
-	req_data->level = level;
-	for (i = 0; i < level; i++)
-		req_data->ip[i] = ip[i];
-
-	/* Get! */
-	res = getsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
-	DP("list_get getsockopt() res=%d errno=%d\n", res, errno);
-
-	if (res != 0)
-		kernel_error(errno);
-
-	/* All OK, return */
-	return data;
-}
-
-static void list_getheaders(struct set *set, ip_set_ip_t *ip, unsigned level)
-{
-	void *data;
-	size_t size;
-
-	data = list_get(IP_SET_OP_LIST_HEADER_SIZE,
-			IP_SET_OP_LIST_HEADER, 
-			set->id, &size, ip, level);
-
-	if (size == 0)
-		exit_error(OTHER_PROBLEM,
-			   "Kernel returned zero header size. "
-			   "Something screwed up.");
-			   
-	/* Cleanup setdata */
-	if (set->private[level].setdata)
-		set->settype[level]->killmembers(&set->private[level].setdata);
-
-	/* Handle the data */
-	set->settype[level]->initheader(&set->private[level].setdata,
-					data, size);
-
-	ipset_free(&data);
-}
-
-static void list_getmembers(struct set *set, ip_set_ip_t *ip, unsigned level)
-{
-	void *data;
-	size_t size;
-
-	data = list_get(IP_SET_OP_LIST_MEMBERS_SIZE,
-			IP_SET_OP_LIST_MEMBERS, 
-			set->id, &size, ip, level);
-			
-	if (size == 0)
-		exit_error(OTHER_PROBLEM,
-			   "Kernel returned zero header size. "
-			   "Something screwed up.");
-			   
-	/* Handle the data */
-	set->settype[level]->initmembers(set->private[level].setdata,
-					   data, size);
-
-	/* Next list_getheaders or set_del frees the data */
-}
-
-static void list_getchildsets(struct set *set, ip_set_ip_t *ip, unsigned level)
-{
-	void *data;
-	size_t size;
-
-	data = list_get(IP_SET_OP_LIST_CHILDSETS_SIZE,
-			IP_SET_OP_LIST_CHILDSETS, 
-			set->id, &size, ip, level);
-
-	/* Cleanup */
-	ipset_free(&set->private[level].bitmap);
-	set->private[level].bitmap = NULL;
+	DP("%s %s", cmd == CMD_MAX_SETS ? "MAX_SETS"
+		    : cmd == CMD_LIST_SIZE ? "LIST_SIZE"
+		    : "SAVE_SIZE",
+		    name);
 	
-	if (size == 0)
-		return;	/* No child set */
-		
-	/* Handle the data */
-	set->private[level].bitmap = data;
+tryagain:
+	if (set_list) {
+		for (i = 0; i < max_sets; i++)
+			if (set_list[i])
+				free(set_list[i]);
+		free(set_list);
+		set_list = NULL;
+	}
+	/* Get max_sets */
+	req_max_sets.op = IP_SET_OP_MAX_SETS;
+	req_max_sets.version = IP_SET_PROTOCOL_VERSION;
+	strcpy(req_max_sets.set.name, name);
+	size = sizeof(req_max_sets);
+	kernel_getfrom(CMD_MAX_SETS, &req_max_sets, &size);
 
-	/* Next list_getchildsets or set_del frees the data */
+	DP("got MAX_SETS: sets %d, max_sets %d",
+	   req_max_sets.sets, req_max_sets.max_sets);
+
+	max_sets = req_max_sets.max_sets;
+	set_list = ipset_malloc(max_sets * sizeof(struct set *));
+	memset(set_list, 0, max_sets * sizeof(struct set *));
+	*index = req_max_sets.set.index;
+
+	if (req_max_sets.sets == 0)
+		/* No sets in kernel */
+		return 0;
+
+	/* Get setnames */
+	size = req_size = sizeof(struct ip_set_req_setnames) 
+			  + req_max_sets.sets * sizeof(struct ip_set_name_list);
+	data = ipset_malloc(size);
+	((struct ip_set_req_setnames *) data)->op = op;
+	((struct ip_set_req_setnames *) data)->index = *index;
+
+	res = kernel_getfrom_handleerrno(cmd, data, &size);
+
+	if (res != 0 || size != req_size) {
+		free(data);
+		if (repeated++ < LIST_TRIES)
+			goto tryagain;
+		exit_error(OTHER_PROBLEM,
+			   "Tried to get sets from kernel %d times"
+			   " and failed. Please try again when the load on"
+			   " the sets has gone down.", LIST_TRIES);
+	}
+		
+	/* Load in setnames */
+	size = sizeof(struct ip_set_req_setnames);			
+	while (size + sizeof(struct ip_set_name_list) <= req_size) {
+		name_list = (struct ip_set_name_list *)
+			(data + size);
+		set = ipset_malloc(sizeof(struct set));
+		strcpy(set->name, name_list->name);
+		set->index = name_list->index;
+		set->settype = settype_load(name_list->typename);
+		set_list[name_list->index] = set;
+		DP("loaded %s, type %s, index %u",
+		   set->name, set->settype->typename, set->index);
+		size += sizeof(struct ip_set_name_list);
+	}
+	/* Size to get set members, bindings */
+	size = ((struct ip_set_req_setnames *)data)->size;
+	free(data);
+	
+	return size;
 }
 
-/* Print a child set */
-static void set_list_childset(struct set *set,
-			      unsigned options,
-			      ip_set_ip_t *ip,
-			      unsigned level)
+/*
+ * Save operation
+ */
+static size_t save_bindings(void *data, size_t offset, size_t len)
+{
+	struct ip_set_hash_save *hash =
+		(struct ip_set_hash_save *) (data + offset);
+	struct set *set;
+	char * (*printip)(ip_set_ip_t ip, unsigned options);
+
+	DP("offset %u, len %u", offset, len);
+	if (offset + sizeof(struct ip_set_hash_save) > len)
+		exit_error(OTHER_PROBLEM,
+			   "Save operation failed, try again later.");
+
+	set = set_find_byid(hash->id);
+	if (!(set && set_list[hash->binding]))
+		exit_error(OTHER_PROBLEM,
+			   "Save binding failed, try again later.");
+	printip = set->settype->typecode == IPSET_TYPE_IP ?
+			ip_tostring : port_tostring;
+	printf("-B %s %s -b %s\n",
+		set->name,
+		printip(hash->ip, OPT_NUMERIC),
+		set_list[hash->binding]->name);
+
+	return sizeof(struct ip_set_hash_save);
+}		
+
+static size_t save_set(void *data, int *bindings,
+		       size_t offset, size_t len)
+{
+	struct ip_set_save *set_save =
+		(struct ip_set_save *) (data + offset);
+	struct set *set;
+	struct settype *settype;
+	size_t used;
+	
+	DP("offset %u, len %u", offset, len);
+	if (offset + sizeof(struct ip_set_save) > len
+	    || offset + sizeof(struct ip_set_save)
+	       + set_save->header_size + set_save->members_size > len)
+		exit_error(OTHER_PROBLEM,
+			   "Save operation failed, try again later.");
+
+	if (set_save->index == IP_SET_INVALID_ID) {
+		/* Marker */
+		*bindings = 1;
+		return sizeof(struct ip_set_save);
+	}
+	set = set_list[set_save->index];
+	if (!set)
+		exit_error(OTHER_PROBLEM,
+			   "Save set failed, try again later.");
+	settype = set->settype;
+
+	/* Init set header */
+	used = sizeof(struct ip_set_save);
+	settype->initheader(set, data + offset + used);
+
+	/* Print create set */
+	settype->saveheader(set, OPT_NUMERIC);
+
+	/* Print add IPs */
+	used += set_save->header_size;
+	settype->saveips(set, data + offset + used,
+			 set_save->members_size, OPT_NUMERIC);
+
+	return (used + set_save->members_size);
+}
+
+static size_t save_default_bindings(void *data, int *bindings)
+{
+	struct ip_set_save *set_save = (struct ip_set_save *) data;
+	struct set *set;
+	
+	if (set_save->index == IP_SET_INVALID_ID) {
+		/* Marker */
+		*bindings = 1;
+		return sizeof(struct ip_set_save);
+	}
+
+	set = set_list[set_save->index];
+	DP("%s, binding %u", set->name, set_save->binding);
+	if (set_save->binding != IP_SET_INVALID_ID) {
+		if (!set_list[set_save->binding])
+			exit_error(OTHER_PROBLEM,
+				   "Save set failed, try again later.");
+
+		printf("-B %s %s -b %s\n",
+			set->name, IPSET_TOKEN_DEFAULT, 
+			set_list[set_save->binding]->name);
+	}
+	return (sizeof(struct ip_set_save)
+	        + set_save->header_size
+	        + set_save->members_size);
+}
+
+static int try_save_sets(const char name[IP_SET_MAXNAMELEN])
+{
+	void *data = NULL;
+	size_t size, req_size = 0;
+	ip_set_id_t index;
+	int res = 0, bindings = 0;
+	time_t now = time(NULL);
+
+	/* Load set_list from kernel */
+	size = load_set_list(name, &index,
+			     IP_SET_OP_SAVE_SIZE, CMD_SAVE);
+	
+	if (size) {
+		/* Get sets, bindings and print them */
+		/* Take into account marker */
+		req_size = (size += sizeof(struct ip_set_save));
+		data = ipset_malloc(size);
+		((struct ip_set_req_list *) data)->op = IP_SET_OP_SAVE;
+		((struct ip_set_req_list *) data)->index = index;
+		res = kernel_getfrom_handleerrno(CMD_SAVE, data, &size);
+
+		if (res != 0 || size != req_size) {
+			free(data);
+			return -EAGAIN;
+		}
+	}
+
+	printf("# Generated by ipset %s on %s", IPSET_VERSION, ctime(&now));
+	size = 0;
+	while (size < req_size) {
+		DP("size: %u, req_size: %u", size, req_size);
+		if (bindings)
+			size += save_bindings(data, size, req_size);
+		else
+			size += save_set(data, &bindings, size, req_size);
+	}
+	/* Re-read data to save default bindings */
+	bindings = 0;
+	size = 0;
+	while (size < req_size && bindings == 0)
+		size += save_default_bindings(data + size, &bindings);
+
+	printf("COMMIT\n");
+	now = time(NULL);
+	printf("# Completed on %s", ctime(&now));
+	ipset_free(&data);
+	return res;
+}
+
+/*
+ * Performs a save to stdout
+ */
+static void set_save(const char name[IP_SET_MAXNAMELEN])
 {
 	int i;
-	ip_set_ip_t id;
-	
-	/* Load the set header, member and childset data */
-	list_getheaders(set, ip, level);
-	list_getmembers(set, ip, level);
-	list_getchildsets(set, ip, level);
 
-	/* Pretty print the childset */
-	printf("Childset %s %s", 
-	       set->private[level].bitmap != NULL ? "+" : "-",
-	       set->name);
-	for (i = 0; i < level; i++) {
-		switch (set->settype[i]->typecode) {
-		case IPSET_TYPE_IP:
-			printf("%s%s", i == 0 ? ":" : ",",
-				       ip_tostring(ip[i], options));
+	DP("%s", name);
+	for (i = 0; i < LIST_TRIES; i++)
+		if (try_save_sets(name) == 0)
+			return;
+
+	if (errno == EAGAIN)
+		exit_error(OTHER_PROBLEM,
+			   "Tried to save sets from kernel %d times"
+			   " and failed. Please try again when the load on"
+			   " the sets has gone down.", LIST_TRIES);
+	else
+		kernel_error(CMD_SAVE, errno);
+}
+
+/*
+ * Restore operation
+ */
+
+/* global new argv and argc */
+static char *newargv[255];
+static int newargc = 0;
+
+/* Build faked argv from parsed line */
+static void build_argv(int line, char *buffer) {
+	char *ptr;
+	int i;
+
+	/* Reset */	
+	for (i = 1; i < newargc; i++)
+		free(newargv[i]);
+	newargc = 1;
+
+	ptr = strtok(buffer, " \t\n");
+	newargv[newargc++] = strdup(ptr);
+	while ((ptr = strtok(NULL, " \t\n")) != NULL) {
+		if ((newargc + 1) < sizeof(newargv)/sizeof(char *))
+			newargv[newargc++] = strdup(ptr);
+		else
+			exit_error(PARAMETER_PROBLEM,
+				   "Line %d is too long to restore\n", line);
+	}
+}
+
+/*
+ * Performs a restore from a file
+ */
+static void set_restore(FILE *in, char *argv0)
+{
+	char buffer[1024];	
+	char *ptr, *name = NULL;
+	char cmd = ' ';
+	int line = 0, first_pass, i, bindings = 0;
+	struct settype *settype = NULL;
+	struct ip_set_req_setnames *header;
+	ip_set_id_t index;
+	int res;
+	
+	/* Load existing sets from kernel */
+	load_set_list(IPSET_TOKEN_ALL, &index,
+		      IP_SET_OP_LIST_SIZE, CMD_RESTORE);
+	
+	restore_size = sizeof(struct ip_set_req_setnames)/* header */
+		       + sizeof(struct ip_set_restore);  /* marker */
+	DP("restore_size: %u", restore_size);
+	/* First pass: calculate required amount of data */
+	while (fgets(buffer, sizeof(buffer), in)) {
+		line++;
+
+		if (buffer[0] == '\n')
+			continue;
+		else if (buffer[0] == '#')
+			continue;
+		else if (strcmp(buffer, "COMMIT\n") == 0) {
+			/* Enable restore mode */
+			restore = 1;
 			break;
-		case IPSET_TYPE_PORT:
-			printf("%s%s", i == 0 ? ":" : ",",
-				       port_tostring(ip[i], options));
+		}
+			
+		/* -N, -A or -B */
+		ptr = strtok(buffer, " \t\n");
+		DP("ptr: %s", ptr);
+		if (ptr == NULL
+		    || ptr[0] != '-'
+		    || !(ptr[1] == 'N'
+		         || ptr[1] == 'A'
+			 || ptr[1] == 'B')
+		    || ptr[2] != '\0') {
+			exit_error(PARAMETER_PROBLEM,
+				   "Line %u does not start as a valid restore command\n",
+				   line);
+		}
+		cmd = ptr[1];		
+		/* setname */
+		ptr = strtok(NULL, " \t\n");
+		DP("setname: %s", ptr);
+		if (ptr == NULL)
+		        exit_error(PARAMETER_PROBLEM,
+		        	   "Missing set name in line %u\n",
+		        	   line);
+		DP("cmd %c", cmd);
+		switch (cmd) {
+		case 'N': {
+			name = check_set_name(ptr);
+			/* settype */
+			ptr = strtok(NULL, " \t\n");
+			if (ptr == NULL)
+			        exit_error(PARAMETER_PROBLEM,
+			        	   "Missing settype in line %u\n",
+		        		   line);
+			if (restore)
+			        exit_error(PARAMETER_PROBLEM,
+			        	   "Invalid line %u: create must precede bindings\n",
+		        		   line);
+			settype = check_set_typename(ptr);
+			restore_size += sizeof(struct ip_set_restore)
+					+ settype->create_size;
+			DP("restore_size (N): %u", restore_size);
+			break; 
+		}
+		case 'A': {
+			if (strncmp(name, ptr, sizeof(name)) != 0)
+			        exit_error(PARAMETER_PROBLEM,
+			        	   "Add IP to set %s in line %u without "
+					   "preceding corresponding create set line\n",
+		        		   ptr, line);
+			if (restore)
+			        exit_error(PARAMETER_PROBLEM,
+			        	   "Invalid line %u: adding entries must precede bindings\n",
+		        		   line);
+			restore_size += settype->adt_size;
+			DP("restore_size (A): %u", restore_size);
+			break;
+		}
+		case 'B': {
+			bindings = 1;
+			restore_size += sizeof(struct ip_set_hash_save);
+			DP("restore_size (B): %u", restore_size);
+			break;
+		}
+		default: {
+			exit_error(PARAMETER_PROBLEM,
+		       		   "Unrecognized restore command in line %u\n",
+				   line);
+		}
+		} /* end of switch */
+	}			
+	/* Sanity checking */
+	if (!restore)
+		exit_error(PARAMETER_PROBLEM,
+		      	   "Missing COMMIT line\n");
+	DP("restore_size: %u", restore_size);
+	restore_data = ipset_malloc(restore_size);
+	header = (struct ip_set_req_setnames *) restore_data;
+	header->op = IP_SET_OP_RESTORE; 
+	header->size = restore_size; 
+	restore_offset = sizeof(struct ip_set_req_setnames);
+
+	/* Rewind to scan the file again */
+	res = fseek(in, 0L, SEEK_SET);
+	if (res)
+		exit_error(PARAMETER_PROBLEM,
+			   "Cannot rewind stdin: %s", strerror(errno));
+	first_pass = line;
+	line = 0;
+	
+	/* Initialize newargv/newargc */
+	newargv[newargc++] = strdup(argv0);
+	
+	/* Second pass: build up restore request */
+	while (fgets(buffer, sizeof(buffer), in)) {		
+		line++;
+
+		if (buffer[0] == '\n')
+			continue;
+		else if (buffer[0] == '#')
+			continue;
+		else if (strcmp(buffer, "COMMIT\n") == 0)
+			goto do_restore;
+		DP("restoring: %s", buffer);
+		/* Build faked argv, argc */
+		build_argv(line, buffer);
+		for (i = 0; i < newargc; i++)
+			DP("argv[%u]: %s", i, newargv[i]);
+		
+		/* Parse line */
+		parse_commandline(newargc, newargv);
+	}
+	exit_error(PARAMETER_PROBLEM,
+	      	   "Broken restore file\n");
+   do_restore:
+   	if (bindings == 0
+   	    && restore_size == 
+   	       (restore_offset + sizeof(struct ip_set_restore))) {
+   		/* No bindings */
+		struct ip_set_restore *marker = 
+			(struct ip_set_restore *) (restore_data + restore_offset);
+
+		DP("restore marker");
+		marker->index = IP_SET_INVALID_ID;
+		marker->header_size = marker->members_size = 0;
+		restore_offset += sizeof(struct ip_set_restore);
+	}
+	if (restore_size != restore_offset)
+		exit_error(PARAMETER_PROBLEM,
+		    	   "Giving up, restore file is screwed up!");
+	res = kernel_getfrom_handleerrno(CMD_RESTORE, restore_data, &restore_size);
+
+	if (res != 0) {
+		if (restore_size != sizeof(struct ip_set_req_setnames))
+			exit_error(PARAMETER_PROBLEM,
+			    	   "Communication with kernel failed (%u %u)!",
+			    	   restore_size, sizeof(struct ip_set_req_setnames));
+		/* Check errors  */
+		header = (struct ip_set_req_setnames *) restore_data;
+		if (header->size != 0) 
+			exit_error(PARAMETER_PROBLEM,
+			    	   "Committing restoring failed at line %u!",
+		    		   header->size);
+	}
+}
+
+/*
+ * Send ADT_GET order to kernel for a set
+ */
+static struct set *set_adt_get(const char *name)
+{
+	struct ip_set_req_adt_get req_adt_get;
+	struct set *set;
+	size_t size;
+
+	DP("%s", name);
+
+	req_adt_get.op = IP_SET_OP_ADT_GET;
+	req_adt_get.version = IP_SET_PROTOCOL_VERSION;
+	strcpy(req_adt_get.set.name, name);
+	size = sizeof(struct ip_set_req_adt_get);
+
+	kernel_getfrom(CMD_ADT_GET, &req_adt_get, &size);
+
+	set = ipset_malloc(sizeof(struct set));
+	strcpy(set->name, name);
+	set->index = req_adt_get.set.index;	
+	set->settype = settype_load(req_adt_get.typename);
+
+	return set;
+}	
+
+/*
+ * Send add/del/test order to kernel for a set
+ */
+static int set_adtip(struct set *set, const char *adt, 
+		     unsigned op, unsigned cmd)
+{
+	struct ip_set_req_adt *req_adt;
+	size_t size;
+	void *data;
+	int res = 0;
+
+	DP("%s -> %s", set->name, adt);
+
+	/* Alloc memory for the data to send */
+	size = sizeof(struct ip_set_req_adt) + set->settype->adt_size ;
+	DP("alloc size %i", size);
+	data = ipset_malloc(size);
+
+	/* Fill out the request */
+	req_adt = (struct ip_set_req_adt *) data;
+	req_adt->op = op;
+	req_adt->index = set->index;
+	memcpy(data + sizeof(struct ip_set_req_adt),
+	       set->settype->data, set->settype->adt_size);
+	
+	if (kernel_sendto_handleerrno(cmd, op, data, size) == -1)
+		switch (op) {
+		case IP_SET_OP_ADD_IP:
+			exit_error(OTHER_PROBLEM, "%s is already in set %s.",
+				   adt, set->name);
+			break;
+		case IP_SET_OP_DEL_IP:
+			exit_error(OTHER_PROBLEM, "%s is not in set %s.",
+				   adt, set->name);
+			break;
+		case IP_SET_OP_TEST_IP:
+			ipset_printf("%s is in set %s.", adt, set->name);
+			res = 0;
 			break;
 		default:
-			;
+			break;
 		}
-	}
-	printf("\n");
-
-	/* Pretty print the type header */
-	set->settype[level]->printheader(set->private[level].setdata, options);
-
-	/* Pretty print all IPs */
-	if (options & OPT_SORTED)
-		set->settype[level]->printips_sorted(set->private[level].setdata, options);
 	else
-		set->settype[level]->printips(set->private[level].setdata, options);
-
-	/* Pretty print all childsets. */
-	if (!(set->private[level].bitmap != NULL && (options & OPT_CHILDSETS)))
-		return;
-
-	for (id = 0; 
-	     id < set->settype[level]->sizeid(set->private[level].setdata);
-	     id++) {
-		if (test_bit(id, set->private[level].bitmap)) {
-			ip[level] = set->settype[level]->getipbyid(
-					set->private[level].setdata, id);
-			set_list_childset(set, options, ip, level+1);
+		switch (op) {
+		case IP_SET_OP_TEST_IP:
+			ipset_printf("%s is NOT in set %s.", adt, set->name);
+			res = 1;
+			break;
+		default:
+			break;
 		}
+	free(data);
+
+	return res;
+}
+
+static void set_restore_add(struct set *set, const char *adt)
+{
+	DP("%s %s", set->name, adt);
+	/* Sanity checking */
+	if (restore_offset + set->settype->adt_size > restore_size)
+	    	exit_error(PARAMETER_PROBLEM,
+	    		   "Giving up, restore file is screwed up!");
+	    		   
+	memcpy(restore_data + restore_offset,
+	       set->settype->data, set->settype->adt_size);
+	restore_set->members_size += set->settype->adt_size;
+	restore_offset += set->settype->adt_size;
+}
+
+/*
+ * Send bind/unbind/test binding order to kernel for a set
+ */
+static int set_bind(struct set *set, const char *adt,
+		    const char *binding,
+		    unsigned op, unsigned cmd)
+{
+	struct ip_set_req_bind *req_bind;
+	size_t size;
+	void *data;
+	int res = 0;
+
+	/* set may be null: '-U :all: :all:|:default:' */
+	DP("(%s, %s) -> %s", set ? set->name : IPSET_TOKEN_ALL, adt, binding);
+
+	/* Alloc memory for the data to send */
+	size = sizeof(struct ip_set_req_bind);
+	if (op != IP_SET_OP_UNBIND_SET && adt[0] == ':')
+		/* Set default binding */
+		size += IP_SET_MAXNAMELEN;
+	else if (!(op == IP_SET_OP_UNBIND_SET && set == NULL))
+		size += set->settype->adt_size;
+	DP("alloc size %i", size);
+	data = ipset_malloc(size);
+
+	/* Fill out the request */
+	req_bind = (struct ip_set_req_bind *) data;
+	req_bind->op = op;
+	req_bind->index = set ? set->index : IP_SET_INVALID_ID;
+	if (adt[0] == ':') {
+		/* ':default:' and ':all:' */
+		strncpy(req_bind->binding, adt, IP_SET_MAXNAMELEN);
+		if (op != IP_SET_OP_UNBIND_SET && adt[0] == ':')
+			strncpy(data + sizeof(struct ip_set_req_bind),
+				binding, IP_SET_MAXNAMELEN);
+	} else {
+		strncpy(req_bind->binding, binding, IP_SET_MAXNAMELEN);
+		memcpy(data + sizeof(struct ip_set_req_bind),
+		       set->settype->data, set->settype->adt_size);
+	}
+
+	if (op == IP_SET_OP_TEST_BIND_SET) {
+		if (kernel_sendto_handleerrno(cmd, op, data, size) == -1) {
+			ipset_printf("%s in set %s is bound to %s.",
+				     adt, set->name, binding);
+			res = 0;
+		} else {
+			ipset_printf("%s in set %s is NOT bound to %s.",
+				     adt, set->name, binding);
+			res = 1;
+		}
+	} else 	
+		kernel_sendto(cmd, data, size);
+	free(data);
+
+	return res;
+}
+
+static void set_restore_bind(struct set *set,
+			     const char *adt,
+			     const char *binding)
+{
+	struct ip_set_hash_save *hash_restore;
+
+	if (restore == 1) {
+		/* Marker */
+		struct ip_set_restore *marker = 
+			(struct ip_set_restore *) (restore_data + restore_offset);
+
+		DP("restore marker");
+		if (restore_offset + sizeof(struct ip_set_restore) 
+		    > restore_size)
+		    	exit_error(PARAMETER_PROBLEM,
+		    		   "Giving up, restore file is screwed up!");
+		marker->index = IP_SET_INVALID_ID;
+		marker->header_size = marker->members_size = 0;
+		restore_offset += sizeof(struct ip_set_restore);
+		restore = 2;
+	}
+	/* Sanity checking */
+	if (restore_offset + sizeof(struct ip_set_hash_save) > restore_size)
+	    	exit_error(PARAMETER_PROBLEM,
+	    		   "Giving up, restore file is screwed up!");
+
+	hash_restore = (struct ip_set_hash_save *) (restore_data + restore_offset);
+	DP("%s -> %s", adt, binding);
+	if (strcmp(adt, IPSET_TOKEN_DEFAULT) == 0)
+		hash_restore->ip = 0;
+	else if (set->settype->typecode == IPSET_TYPE_IP)
+		parse_ip(adt, &hash_restore->ip); 
+	else
+		parse_port(adt, &hash_restore->ip);
+	hash_restore->id = set->index;	    		   
+	hash_restore->binding = (set_find_byname(binding))->index;	
+	DP("id %u, ip %u, binding %u",
+	   hash_restore->id, hash_restore->ip, hash_restore->binding);
+	restore_offset += sizeof(struct ip_set_hash_save);
+}
+
+/*
+ * Print operation
+ */
+
+static void print_bindings(void *data, size_t size, unsigned options,
+			   char * (*printip)(ip_set_ip_t ip, unsigned options))
+{
+	size_t offset = 0;
+	struct ip_set_hash_list *hash;
+
+	while (offset < size) {
+		hash = (struct ip_set_hash_list *) (data + offset);
+		printf("%s -> %s\n", 
+			printip(hash->ip, options),
+			set_list[hash->binding]->name);
+		offset += sizeof(struct ip_set_hash_list);
 	}
 }
 
 /* Help function to set_list() */
-static void set_list_oneset(struct set *set,
-			      unsigned options)
+static size_t print_set(void *data, unsigned options)
 {
-	int i;
-	
-	/* Pretty print the set */
-	printf("Name %s\n", set->name);
-	printf("Type %s", set->settype[0]->typename);
-	for (i = 1; i < set->levels; i++)
-		printf(",%s", set->settype[i]->typename);
-	printf("\n");
-	printf("References %d\n", set->ref);
+	struct ip_set_list *setlist = (struct ip_set_list *) data;
+	struct set *set = set_list[setlist->index];
+	struct settype *settype = set->settype;
+	size_t offset;
 
-	/* Pretty print the childset */
-	set_list_childset(set, options, set_ip, set_level);
+	/* Pretty print the set */
+	printf("Name: %s\n", set->name);
+	printf("Type: %s\n", settype->typename);
+	printf("References: %d\n", setlist->ref);
+	printf("Default binding: %s\n",
+	       setlist->binding == IP_SET_INVALID_ID ? ""
+	       : set_list[setlist->binding]->name);
+
+	/* Init header */
+	offset = sizeof(struct ip_set_list);
+	settype->initheader(set, data + offset);
+
+	/* Pretty print the type header */
+	printf("Header:");
+	settype->printheader(set, options);
+
+	/* Pretty print all IPs */
+	printf("Members:\n");
+	offset += setlist->header_size;
+	if (options & OPT_SORTED)
+		settype->printips_sorted(set, data + offset,
+					 setlist->members_size, options);
+	else
+		settype->printips(set, data + offset,
+				  setlist->members_size, options);
+
+	/* Print bindings */
+	printf("Bindings:\n");
+	offset += setlist->members_size;
+	print_bindings(data + offset, setlist->bindings_size, options,
+		       settype->typecode == IPSET_TYPE_IP ?
+		       ip_tostring : port_tostring);
 
 	printf("\n");		/* One newline between sets */
+	
+	return (offset + setlist->bindings_size);
+}
+
+static int try_list_sets(const char name[IP_SET_MAXNAMELEN],
+			 unsigned options)
+{
+	void *data = NULL;
+	ip_set_id_t index;
+	size_t size, req_size;
+	int res = 0;
+
+	DP("%s", name);
+	/* Load set_list from kernel */
+	size = req_size = load_set_list(name, &index,
+					IP_SET_OP_LIST_SIZE, CMD_LIST);
+
+	if (size) {
+		/* Get sets and print them */
+		data = ipset_malloc(size);
+		((struct ip_set_req_list *) data)->op = IP_SET_OP_LIST;
+		((struct ip_set_req_list *) data)->index = index;
+		res = kernel_getfrom_handleerrno(CMD_LIST, data, &size);
+		DP("get_lists getsockopt() res=%d errno=%d", res, errno);
+
+		if (res != 0 || size != req_size) {
+			free(data);
+			return -EAGAIN;
+		}
+		size = 0;
+	}
+	while (size != req_size)
+		size += print_set(data + size, options);
+
+	ipset_free(&data);
+	return res;
 }
 
 /* Print a set or all sets
- * All sets: set = NULL
+ * All sets: name = NULL
  */
-static void set_list(struct set *set, unsigned options)
+static void list_sets(const char name[IP_SET_MAXNAMELEN], unsigned options)
 {
-	if (set == NULL) {
-		set = all_sets;
-		
-		while (set != NULL) {
-			set_list_oneset(set, options);
-			set = set->next;
-		}
-	} else
-		set_list_oneset(set, options);
-}
-
-/* Performs a save to stdout
- * All sets are marked with set.name[0] == '\0'
- * Area pointed by 'set' will be changed
- */
-static void set_save(const struct set *set)
-{
-	DP("set_save() not yet implemented");
-}
-
-/* Performs a restore from stdin */
-static void set_restore()
-{
-	DP("set_restore() not yet implemented");
-}
-
-static void parse_adt_ip(int cmd, struct set *set, const char *adt_ip)
-{
-	char *saved = strdup(adt_ip);
-	char *ptr, *tmp = saved;
-
-	ip_level = set_level;
-			
-	while (ip_level <= set->levels && tmp) {
-
-		if (ip_level > set_level)
-			list_getheaders(set, set_ip, ip_level);
-
-		ptr = strsep(&tmp, ",");
-
-		/* Call the parser function */
-		set_ip[ip_level] = set->settype[ip_level]->adt_parser(
-					cmd, ptr,
-					set->private[ip_level].adt,
-			 		set->private[ip_level].setdata);
-		DP("%i: (%s)", ip_level, ip_tostring(set_ip[ip_level], 0));
-		ip_level++;
-	}
-
-	if (tmp || ip_level > set->levels)
-		exit_error(PARAMETER_PROBLEM,
-			   "Specified (child) set and IP levels together"
-			   " are deeper than %s set (%i).", 
-			   set->name, set->levels);
-			   
-	free(saved);
-}
-
-/* Sends addip order to kernel for a set */
-static void set_addip(struct set *set, const char *adt_ip)
-{
-	struct ip_set_req_std req_addip;
-	size_t size, offset;
-	void *data;
 	int i;
 
-	DP("set_addip() %p", set);
+	DP("%s", name);
+	for (i = 0; i < LIST_TRIES; i++)
+		if (try_list_sets(name, options) == 0)
+			return;
 
-	list_getheaders(set, set_ip, set_level);
-
-	parse_adt_ip(ADT_ADD, set, adt_ip);
-
-	req_addip.op = IP_SET_OP_ADD_IP;
-	req_addip.id = set->id;
-	for (i = 0; i < set_level; i++)
-		req_addip.ip[i] = set_ip[i];
-	req_addip.level = set_level;
-
-	DP("%i %i", set_level, ip_level);
-	/* Alloc memory for the data to send */
-	DP("alloc");
-	size = sizeof(struct ip_set_req_std);
-	for (i = set_level; i < ip_level; i++) {
-		size += set->settype[i]->req_size;
-		DP("i: %i, size: %u", i, size);
-	}
-	data = ipset_malloc(size);
-
-	/* Add up req_addip and the settype data */
-	DP("mem");
-	memcpy(data, &req_addip, sizeof(struct ip_set_req_std));
-	offset = sizeof(struct ip_set_req_std);
-	for (i = set_level; i < ip_level; i++) {
-		memcpy(data + offset,
-		       set->private[i].adt,
-		       set->settype[i]->req_size);
-		offset += set->settype[i]->req_size;
-	}
-
-#ifdef IP_SET_DEBUG
-	/* DEBUG */
-	{
-		void *i;
-
-		DP("CMD_ADDIP");
-		DP("OP %u", req_addip.op);
-		DP("Id: %u", req_addip.id);
-		DP("All data");
-
-		for (i = data; i < data + size; i += 4) {
-			unsigned *j = (unsigned *) i;
-			DP("%x", *j);
-		}
-	}
-#endif
-
-	if (kernel_sendto_handleexist(data, size) == -1)
-		/* Arghh, we can't get the commandline string anymore, oh well */
-		exit_error(OTHER_PROBLEM, "Already added in set %s.",
-			   set->name);
-	free(data);
-}
-
-/* Sends delip order to kernel for a set */
-static void set_delip(struct set *set, const char *adt_ip, unsigned options)
-{
-	struct ip_set_req_std req_delip;
-	size_t size, offset;
-	void *data;
-	int i;
-
-	DP("set_delip()");
-
-	list_getheaders(set, set_ip, set_level);
-
-	parse_adt_ip(ADT_DEL, set, adt_ip);
-
-	req_delip.op = IP_SET_OP_DEL_IP;
-	req_delip.id = set->id;
-	for (i = 0; i < set_level; i++)
-		req_delip.ip[i] = set_ip[i];
-	req_delip.level = set_level;
-
-	/* Alloc memory for the data to send */
-	size = sizeof(struct ip_set_req_std);
-	for (i = set_level; i < ip_level; i++)
-		size += set->settype[i]->req_size;
-	data = ipset_malloc(size);
-
-	/* Add up req_sub and the settype data */
-	memcpy(data, &req_delip, sizeof(struct ip_set_req_std));
-	offset = sizeof(struct ip_set_req_std);
-	for (i = set_level; i < ip_level; i++) {
-		memcpy(data + offset,
-		       set->private[i].adt,
-		       set->settype[i]->req_size);
-		offset += set->settype[i]->req_size;
-	}
-
-#ifdef IP_SET_DEBUG
-	/* DEBUG */
-	{
-		void *i;
-
-		DP("CMD_DELIP");
-		DP("OP %u", req_delip.op);
-		DP("Id: %u", req_delip.id);
-		DP("All data");
-
-		for (i = data; i < data + size; i += 4) {
-			unsigned *j = (unsigned *) i;
-			DP("%x", *j);
-		}
-	}
-#endif
-
-	if (kernel_sendto_handleexist(data, size) == -1)
-		/* Arghh, we can't get the commandline string anymore, oh well */
-		exit_error(OTHER_PROBLEM, "Doesn't exist in set %s.",
-			   set->name);
-	free(data);
-}
-
-/* Sends test order to kernel for a set */
-static int
-set_testip(struct set *set, const char *name, const char *adt_ip)
-{
-	int i, res;
-	struct ip_set_req_test req_test;
-	void *data;
-	size_t size, offset;
-
-	list_getheaders(set, set_ip, set_level);
-
-	parse_adt_ip(ADT_TEST, set, adt_ip);
-
-	req_test.op = IP_SET_OP_TEST_IP;
-	req_test.id = set->id;
-	for (i = 0; i < set_level; i++)
-		req_test.ip[i] = set_ip[i];
-	req_test.level = set_level;
-
-	/* Alloc memory for the data to send */
-	size = sizeof(struct ip_set_req_test);
-	for (i = set_level; i < ip_level; i++)
-		size += set->settype[i]->req_size;
-	data = ipset_malloc(size);
-
-	/* Add up req_test and the settype data */
-	memcpy(data, &req_test, sizeof(struct ip_set_req_test));
-	offset = sizeof(struct ip_set_req_test);
-	for (i = set_level; i < ip_level; i++) {
-		memcpy(data + offset,
-		       set->private[i].adt,
-		       set->settype[i]->req_size);
-		offset += set->settype[i]->req_size;
-	}
-	/* Result in the op-field */
-	kernel_getfrom(data, &size);
-
-	if (size != sizeof(struct ip_set_req_test))
+	if (errno == EAGAIN)
 		exit_error(OTHER_PROBLEM,
-			   "Incorrect return size from kernel."
-			   "Should be %d but was %d.",
-			   sizeof(struct ip_set_req_test), size);
-
-	DP("set_testip() result=%x", req_test.op);
-
-	if (((struct ip_set_req_test *)data)->reply > 0) {
-		ipset_printf("%s is in set %s.", adt_ip, name);
-		res = 0;	/* Return value for the program */
-	} else {
-		ipset_printf("%s is NOT in set %s.", adt_ip, name);
-		res = 1;
-	}
-
-	free(data);
-	return res;
+			   "Tried to list sets from kernel %d times"
+			   " and failed. Please try again when the load on"
+			   " the sets has gone down.", LIST_TRIES);
+	else
+		kernel_error(CMD_LIST, errno);
 }
 
 /* Prints help
@@ -1628,9 +1715,9 @@ set_testip(struct set *set, const char *name, const char *adt_ip)
  */
 static void set_help(const struct settype *settype)
 {
-#ifdef IP_SET_DEBUG
+#ifdef IPSET_DEBUG
 	char debughelp[] =
-	       "  --debug      -z              Enable debugging\n\n";
+	       "  --debug      -z   Enable debugging\n\n";
 #else
 	char debughelp[] = "\n";
 #endif
@@ -1639,39 +1726,47 @@ static void set_help(const struct settype *settype)
 	       "Usage: %s -N new-set settype [options]\n"
 	       "       %s -[XFLSH] [set] [options]\n"
 	       "       %s -[EW] from-set to-set\n"
-	       "       %s -[ADT] set entry\n"
+	       "       %s -[ADTU] set IP\n"
+	       "       %s -B set IP option\n"
 	       "       %s -R\n"
 	       "       %s -h (print this help information)\n\n",
-	       program_name, program_version, program_name, program_name,
-	       program_name, program_name, program_name, program_name);
+	       program_name, program_version, 
+	       program_name, program_name, program_name,
+	       program_name, program_name, program_name,
+	       program_name);
 
 	printf("Commands:\n"
 	       "Either long or short options are allowed.\n"
-	       "  --create  -N setname settype0[,settype1,...] <options>\n"
+	       "  --create  -N setname settype <options>\n"
 	       "                    Create a new set\n"
-	       "  --create  -N setname:IP[,IP...] settype <options>\n"
-	       "                    Create childset at setname:IP[,IP...]\n"
-	       "  --destroy -X [setname:IP,....]\n"
-	       "                    Destroy a (child)set or all sets\n"
-	       "  --flush   -F [setname:IP,...] [options]\n"
-	       "                    Delete a (child)set or all sets\n"
+	       "  --destroy -X [setname]\n"
+	       "                    Destroy a set or all sets\n"
+	       "  --flush   -F [setname]\n"
+	       "                    Flush a set or all sets\n"
 	       "  --rename  -E from-set to-set\n"
 	       "                    Rename from-set to to-set\n"
 	       "  --swap    -W from-set to-set\n"
 	       "                    Swap the content of two existing sets\n"
-	       "  --list    -L [setname:IP,...] [options]\n"
-	       "                    List the entries in a (child)set or all sets\n"
+	       "  --list    -L [setname] [options]\n"
+	       "                    List the IPs in a set or all sets\n"
 	       "  --save    -S [setname]\n"
 	       "                    Save the set or all sets to stdout\n"
-	       "  --restore -R\n"
-	       "                    Restores from stdin a saved state\n"
-	       "  --add     -A setname[:IP,...] entry[,entry...]\n"
-	       "                    Add an entry to a (child)set\n"
-	       "  --del     -D setname[:IP,...] entry[,entry...]\n"
-	       "                    Deletes an entry from a (child)set\n"
-	       "  --test    -T setname[:IP,...] entry[,entry...]\n"
-	       "                    Tests if an entry exists in a (child)set.\n"
-	       "  --help    -H [settype] [options]]\n"
+	       "  --restore -R [option]\n"
+	       "                    Restores a saved state\n"
+	       "  --add     -A setname IP\n"
+	       "                    Add an IP to a set\n"
+	       "  --del     -D setname IP\n"
+	       "                    Deletes an IP from a set\n"
+	       "  --test    -T setname IP \n"
+	       "                    Tests if an IP exists in a set.\n"
+	       "  --bind    -B setname IP|:default: -b bind-setname\n"
+	       "                    Bind the IP in setname to bind-setname.\n"
+	       "  --unbind  -U setname IP|:all:|:default:\n"
+	       "                    Delete binding belonging to IP,\n"
+	       "                    all bindings or default binding of setname.\n"
+	       "  --unbind  -U :all: :all:|:default:\n"
+	       "                    Delete all bindings or all default bindings.\n"
+	       "  --help    -H [settype]\n"
 	       "                    Prints this help, and settype specific help\n"
 	       "  --version -V\n"
 	       "                    Prints version information\n\n"
@@ -1679,8 +1774,7 @@ static void set_help(const struct settype *settype)
 	       "  --sorted     -s   Numeric sort of the IPs in -L\n"
 	       "  --numeric    -n   Numeric output of addresses in a -L\n"
 	       "  --quiet      -q   Suppress any output to stdout and stderr.\n"
-	       "  --childsets  -c   Operation valid for child sets\n"
-	       "  --hint       -i   Hint best settype initialization parameters\n");
+	       "  --binding    -b   Specifies the binding for -B\n");
 	printf(debughelp);
 
 	if (settype != NULL) {
@@ -1689,470 +1783,222 @@ static void set_help(const struct settype *settype)
 	}
 }
 
-/* Hint various infos on a given settype */
-static int
-settype_hint(const struct settype *settype, unsigned options)
+static int find_cmd(const char option)
 {
-	char buffer[1024];
-	ip_set_ip_t ip[MAX_HINT_SIZE];
-	ip_set_ip_t id = 0;
+	int i;
 	
-	if (!settype->hint)
-		return 0;
-	
-	while (fgets(buffer, sizeof(buffer), stdin) != NULL
-	       && id < MAX_HINT_SIZE) {
-		if (buffer[0] == '\n' || buffer[0] == '#')
-			continue;
-		switch (settype->typecode) {
-		case IPSET_TYPE_IP:
-			parse_ip(buffer, &ip[id++]);
-			break;
-		case IPSET_TYPE_PORT:
-			parse_port(buffer, &ip[id++]);
-			break;
-		default:
-			;
-		}
-	}
-	if (id >= MAX_HINT_SIZE)
-		exit_error(OTHER_PROBLEM,
-			   "More than %ld entries, exiting.",
-			   MAX_HINT_SIZE);
-	if (id < 1)
-		exit_error(OTHER_PROBLEM,
-			   "No input, no hint.");
-
-	settype->hint(settype->data, ip, id);
-	
-	return 0;
+	for (i = 1; i <= NUMBER_OF_CMD; i++)
+		if (cmdflags[i] == option)
+			return i;
+			
+	return CMD_NONE;
 }
 
-static void init_sets(void)
+static int parse_adt_cmdline(unsigned command,
+			     const char *name,
+			     char *adt,
+			     struct set **set,
+			     struct settype **settype)
 {
-	int version;
-	static int done = 0;
-	
-	if (done)
-		return;
-	
-	version = get_protocolversion();
-	if (version != IP_SET_PROTOCOL_VERSION)
-		exit_error(OTHER_PROBLEM,
-			   "Kernel ipset code is of protocol version %u."
-			   "I'm of protocol version %u.\n"
-			   "Please upgrade your kernel and/or ipset(8) utillity.",
-			   version, IP_SET_PROTOCOL_VERSION);
+	int res = 0;
 
-	/* Get the list of existing sets from the kernel */
-	get_sets();
-	done = 1;
+	/* -U :all: :all:|:default: */
+	if (command == CMD_UNBIND) {
+		if (strcmp(name, IPSET_TOKEN_ALL) == 0) {
+			if (strcmp(adt, IPSET_TOKEN_DEFAULT) == 0
+			    || strcmp(adt, IPSET_TOKEN_ALL) == 0) {
+			    	*set = NULL;
+			    	*settype = NULL;
+			    	return 1;
+			} else
+				exit_error(PARAMETER_PROBLEM,
+					   "-U %s requires %s or %s as binding name",
+					   IPSET_TOKEN_ALL,
+					   IPSET_TOKEN_DEFAULT,
+					   IPSET_TOKEN_ALL);
+		}
+	}
+	*set = restore ? set_find_byname(name)
+		       : set_adt_get(name);
+					
+	/* Reset space for adt data */
+	*settype = (*set)->settype;
+	memset((*settype)->data, 0, (*settype)->adt_size);
+
+	if ((command == CMD_TEST
+	     || command == CMD_BIND
+	     || command == CMD_UNBIND)
+	    && (strcmp(adt, IPSET_TOKEN_DEFAULT) == 0
+		|| strcmp(adt, IPSET_TOKEN_ALL) == 0))
+		res = 1;
+	else
+		res = (*settype)->adt_parser(
+				command,
+				adt,
+				(*settype)->data);
+
+	return res;
 }
 
 /* Main worker function */
-int parse_commandline(int argc, char *argv[], int exec_restore)
+int parse_commandline(int argc, char *argv[])
 {
 	int res = 0;
-	unsigned command = 0;
+	unsigned command = CMD_NONE;
 	unsigned options = 0;
 	int c;
+	
+	FILE *in = stdin;		/* -R */
 
-	struct set *set = NULL;
-	struct set *set_to = NULL;		/* Used by -W */
-	struct settype *settype = NULL;		/* Used by -H */
-	char *name = NULL;			/* Used by -E */
-	char *entries = NULL;			/* Used by -A, -D, -T */
+	char *name = NULL;		/* All except -H, -R */
+	char *newname = NULL;		/* -E, -W */
+	char *adt = NULL;		/* -A, -D, -T, -B, -U */
+	char *binding = NULL;		/* -B */
+	struct set *set = NULL;		/* -A, -D, -T, -B, -U */
+	struct settype *settype = NULL;	/* -N, -H */
+	char all_sets[] = IPSET_TOKEN_ALL;
 	
 	struct option *opts = opts_long;
 
 	/* Suppress error messages: we may add new options if we
 	   demand-load a protocol. */
 	opterr = 0;
-
+	/* Reset optind to 0 for restore */
+	optind = 0;
+	
 	while ((c = getopt_long(argc, argv, opts_short, opts, NULL)) != -1) {
 
 		DP("commandline parsed: opt %c (%s)", c, argv[optind]);
 
 		switch (c) {
 			/*
-			 * Command selection.
+			 * Command selection
 			 */
 		case 'h':
-		case 'H':{	/* Help */
+		case 'H':{	/* Help: -H [typename [options]] */
+				check_protocolversion();
 				set_command(&command, CMD_HELP);
 				
 				if (optarg)
-					set_checktype(optarg);
+					settype = check_set_typename(optarg);
 				else if (optind < argc
 					 && argv[optind][0] != '-')
-					set_checktype(argv[optind++]);
-
-				if (!set_typename_level)
-					break;
-					
-				if (set_typename_level != 1)
-					exit_error(PARAMETER_PROBLEM,
-						   "-%c requires one settype as argument",
-						   cmd2char(CMD_HELP));
-				
-				settype = settype_load(set_typename[0]);
-
-				/* Merge the hint options */
-				if (settype->hint_parse) {
-					opts = merge_options(opts,
-						     settype->hint_opts,
-						     &settype->option_offset);
-								
-					/* Reset space for settype create data */
-					memset(settype->data, 0, settype->hint_size);
-
-					/* Zero the flags */
-					settype->flags = 0;
-
-					DP("call hint_init");
-					/* Call the settype hint_init */
-					settype->hint_init(settype->data);
-				}
+					settype = check_set_typename(argv[optind++]);
 				
 				break;
 			}
 
 		case 'V':{	/* Version */
-				/* Dont display kernel protocol version because 
-				 * that might generate errors if the ipset module 
-				 * is not loaded in.*/
 				printf("%s v%s Protocol version %u.\n",
 				       program_name, program_version,
 				       IP_SET_PROTOCOL_VERSION);
+				check_protocolversion();
 				exit(0);
 			}
-			
-		case 'N':{	/* Create */
-				char *typename = NULL;
-				int i;
+
+		case 'N':{	/* Create: -N name typename options */
+				set_command(&command, CMD_CREATE);
+
+				name = check_set_name(optarg);
 				
-				init_sets();
+				/* Protect reserved names (binding) */
+				if (name[0] == ':')
+					exit_error(PARAMETER_PROBLEM,
+						   "setname might not start with colon",
+						   cmd2char(CMD_CREATE));
 				
-				DP("check setname");
-				/* setname */
-				set = set_checkname(optarg);
-				
-				if (set_level == 0) {
-					/* New set to be created */
-
-					DP(" new set, set_level == 0");
-
-					if (set != NULL) 
-						exit_error(OTHER_PROBLEM,
-							   "Set %s already exists.",
-							   set_name);
-					set = ipset_malloc(sizeof(struct set));
-					memset(set, 0, sizeof(struct set));
-					
-					set_command(&command, CMD_CREATE);
-
-					/* typename */
-					if (optind < argc
-					    && argv[optind][0] != '-')
-						typename = argv[optind++];
-					else
-						exit_error(PARAMETER_PROBLEM,
-							   "-%c requires new-setname and settype",
-							   cmd2char(CMD_CREATE));
-
-					DP(" check typename");
-					set_checktype(typename);
-					
-					strcpy(set->name, set_name);
-					set->levels = set_typename_level;
-
-					DP("load the settypes");
-					for (i = 0; i < set_typename_level; i++)
-						set->settype[i] = settype_load(set_typename[i]);
-
-				} else {/* set_level != 0 */
-					/* New childset to be created */
-
-					DP(" new childset, set_level != 0");
-
-					if (set == NULL) 
-						exit_error(OTHER_PROBLEM,
-							   "Set %s does not exist.",
-							   set_name);
-					set_command(&command, CMD_CREATE_CHILD);
-
-					/* typename */
-					if (optind < argc
-					    && argv[optind][0] != '-')
-						typename = argv[optind++];
-					else
-						exit_error(PARAMETER_PROBLEM,
-							   "-%c requires new-setname and settype",
-							   cmd2char(CMD_CREATE));
-
-					DP(" check typename");
-					set_checktype(typename);
-					if (set_typename_level > 1)
-						exit_error(PARAMETER_PROBLEM,
-							   "-%c requires single settype specified",
-							   cmd2char(CMD_CREATE));
-					else if (set_level >= set->levels)
-						exit_error(PARAMETER_PROBLEM,
-							   "specified childset is deeper than "
-							   "%s set itself.", set->name);
-					else if (strcmp(typename, set->settype[set_level]->typename))
-						exit_error(PARAMETER_PROBLEM,
-							   "settype '%s' must be used instead of "
-							   "'%s' in childset '%s'",
-							   set->settype[set_level]->typename,
-							   typename, optarg);
-				}
+				if (optind < argc
+				    && argv[optind][0] != '-')
+					settype = check_set_typename(argv[optind++]);
+				else
+					exit_error(PARAMETER_PROBLEM,
+						   "-%c requires setname and settype",
+						   cmd2char(CMD_CREATE));
 
 				DP("merge options");
 				/* Merge the create options */
 				opts = merge_options(opts,
-					     set->settype[set_level]->create_opts,
-					     &set->settype[set_level]->option_offset);
+					     settype->create_opts,
+					     &settype->option_offset);
 
-				/* Reset space for settype create data */
-				memset(set->settype[set_level]->data, 0,
-				       set->settype[set_level]->create_size);
+				/* Reset space for create data */
+				memset(settype->data, 0, settype->create_size);
 
 				/* Zero the flags */
-				set->settype[set_level]->flags = 0;
+				settype->flags = 0;
 
 				DP("call create_init");
 				/* Call the settype create_init */
-				set->settype[set_level]->create_init(
-						set->settype[set_level]->data);
+				settype->create_init(settype->data);
 
 				break;
 			}
 
-		case 'X':{	/* Destroy */
-				init_sets();
-				
-				set_command(&command, CMD_DESTROY);
+		case 'X': 	/* Destroy */
+		case 'F':	/* Flush */
+		case 'L':	/* List */
+		case 'S':{	/* Save */
+				set_command(&command, find_cmd(c));
 
 				if (optarg)
-					set = set_find_byname(optarg);
+					name = check_set_name(optarg);
 				else if (optind < argc
 					   && argv[optind][0] != '-')
-					set = set_find_byname(argv[optind++]);
+					name = check_set_name(argv[optind++]);
 				else
-					set = NULL;	/* Mark to destroy all (empty) sets */
+					name = all_sets;
 
-				if (set && set_level >= set->levels)
-					exit_error(PARAMETER_PROBLEM,
-						   "specified childset is deeper than "
-						   "%s set itself.", set->name);
 				break;
 			}
 
-		case 'F':{	/* Flush */
-				init_sets();
-				
-				set_command(&command, CMD_FLUSH);
+		case 'R':{	/* Restore */
+				set_command(&command, find_cmd(c));
 
-				DP("flush: %s", optarg);
-
-				if (optarg)
-					set = set_find_byname(optarg);
-				else if (optind < argc
-					   && argv[optind][0] != '-')
-					set = set_find_byname(argv[optind++]);
-				else
-					set = NULL;	/* Mark to flush all */
-
-				if (set && set_level >= set->levels)
-					exit_error(PARAMETER_PROBLEM,
-						   "specified childset is deeper than "
-						   "%s set itself.", set->name);
 				break;
 			}
 
-		case 'E':{	/* Rename */
-				init_sets();
-				
-				set_command(&command, CMD_RENAME);
-
-				set = set_find_byname(optarg);
-				if (set_level)
-					exit_error(PARAMETER_PROBLEM,
-						   "childsets cannot be swapped");
+		case 'E':	/* Rename */
+		case 'W':{	/* Swap */
+				set_command(&command, find_cmd(c));
+				name = check_set_name(optarg);
 
 				if (optind < argc
 				    && argv[optind][0] != '-')
-					name = argv[optind++];
+					newname = check_set_name(argv[optind++]);
 				else
 					exit_error(PARAMETER_PROBLEM,
 						   "-%c requires a setname "
 						   "and the new name for that set",
 						   cmd2char(CMD_RENAME));
-				if (strlen(name) > IP_SET_MAXNAMELEN - 1)
-					exit_error(PARAMETER_PROBLEM,
-						   "Setname '%s' is too long. Max %d characters.",
-						   name, IP_SET_MAXNAMELEN - 1);
-
-				/* Set with new name must not exist. */
-				set_to = set_checkname(name);
-				if (set_to)
-					exit_error(PARAMETER_PROBLEM,
-						   "Set already exists, cannot rename to %s",
-						   name);
-				if (set_level)
-					exit_error(PARAMETER_PROBLEM,
-						   "childsets cannot be swapped");
 
 				break;
 			}
 
-		case 'W':{	/* Swap */
-				char *name = NULL;
+		case 'A':	/* Add IP */
+		case 'D':	/* Del IP */
+		case 'T':	/* Test IP */
+		case 'B':	/* Bind IP */
+		case 'U':{	/* Unbind IP */
+				set_command(&command, find_cmd(c));
 
-				init_sets();
-				
-				set_command(&command, CMD_SWAP);
+				name = check_set_name(optarg);
 
-				set = set_find_byname(optarg);
-				if (set_level)
-					exit_error(PARAMETER_PROBLEM,
-						   "childsets cannot be swapped");
-
+				/* IP */
 				if (optind < argc
 				    && argv[optind][0] != '-')
-					name = argv[optind++];
+					adt = argv[optind++];
 				else
 					exit_error(PARAMETER_PROBLEM,
-						   "-%c requires the names of two "
-						   "existing sets",
-						   cmd2char(CMD_SWAP));
-				if (strlen(name) > IP_SET_MAXNAMELEN - 1)
+						   "-%c requires setname and IP",
+						   c);
+
+				res = parse_adt_cmdline(command, name, adt,
+							&set, &settype);
+
+				if (!res)
 					exit_error(PARAMETER_PROBLEM,
-						   "Setname '%s' is too long. Max %d characters.",
-						   name, IP_SET_MAXNAMELEN - 1);
-
-				/* Both sets must exist. */
-				set_to = set_find_byname(name);
-				if (set_level)
-					exit_error(PARAMETER_PROBLEM,
-						   "childsets cannot be swapped");
-
-				break;
-			}
-
-		case 'L':{	/* List */
-				init_sets();
-				
-				set_command(&command, CMD_LIST);
-				if (optarg)
-					set = set_find_byname(optarg);
-				else if (optind < argc
-					   && argv[optind][0] != '-')
-					set = set_find_byname(argv[optind++]);
-				else
-					set = NULL;	/* Mark all */
-
-				if (set && set_level >= set->levels)
-					exit_error(PARAMETER_PROBLEM,
-						   "specified childset is deeper than "
-						   "%s set itself.", set->name);
-				break;
-			}
-
-		case 'S':{	/* Save */
-				init_sets();
-				
-				set_command(&command, CMD_SAVE);
-				if (optarg)
-					set = set_find_byname(optarg);
-				else if (optind < argc
-					   && argv[optind][0] != '-')
-					set = set_find_byname(argv[optind++]);
-				else
-					set = NULL;	/* Mark to save all */
-
-				if (set && set_level >= set->levels)
-					exit_error(PARAMETER_PROBLEM,
-						   "specified childset is deeper than "
-						   "%s set itself.", set->name);
-				break;
-			}
-
-		case 'R':{	/* Restore */
-				init_sets();
-				
-				set_command(&command, CMD_RESTORE);
-				break;
-			}
-
-		case 'A':{	/* Add IP */
-				init_sets();
-				
-				set_command(&command, CMD_ADD);
-
-				set = set_find_byname(optarg);
-
-				if (set_level >= set->levels)
-					exit_error(PARAMETER_PROBLEM,
-						   "specified childset is deeper than "
-						   "%s set itself.", set->name);
-
-				/* entries */
-				if (optind < argc
-				    && argv[optind][0] != '-')
-					entries = argv[optind++];
-				else
-					exit_error(PARAMETER_PROBLEM,
-						   "-%c requires setname and entries",
-						   cmd2char(CMD_ADD));
-
-				break;
-			}
-
-		case 'D':{	/* Del IP */
-				init_sets();
-				
-				set_command(&command, CMD_DEL);
-
-				set = set_find_byname(optarg);
-
-				if (set_level >= set->levels)
-					exit_error(PARAMETER_PROBLEM,
-						   "specified childset is deeper than "
-						   "%s set itself.", set->name);
-
-				if (optind < argc
-				    && argv[optind][0] != '-')
-					entries = argv[optind++];
-				else
-					exit_error(PARAMETER_PROBLEM,
-						   "-%c requires setname and entries",
-						   cmd2char(CMD_DEL));
-
-				break;
-			}
-
-		case 'T':{	/* Test IP */
-				init_sets();
-				
-				set_command(&command, CMD_TEST);
-
-				set = set_find_byname(optarg);
-				name = optarg;
-
-				if (set_level >= set->levels)
-					exit_error(PARAMETER_PROBLEM,
-						   "specified childset is deeper than "
-						   "%s set itself.", set->name);
-
-				if (optind < argc
-				    && argv[optind][0] != '-')
-					entries = argv[optind++];
-				else
-					exit_error(PARAMETER_PROBLEM,
-						   "-%c requires setname and entries",
-						   cmd2char(CMD_TEST));
+						   "Unknown arg `%s'",
+						   argv[optind - 1]);
 
 				break;
 			}
@@ -2172,19 +2018,16 @@ int parse_commandline(int argc, char *argv[], int exec_restore)
 			option_quiet = 1;
 			break;
 
-#ifdef IP_SET_DEBUG
+#ifdef IPSET_DEBUG
 		case 'z':	/* debug */
 			add_option(&options, OPT_DEBUG);
 			option_debug = 1;
 			break;
 #endif
 
-		case 'c':
-			add_option(&options, OPT_CHILDSETS);
-			break;
-
-		case 'i':
-			add_option(&options, OPT_HINT);
+		case 'b':
+			add_option(&options, OPT_BINDING);
+			binding = check_set_name(optarg);
 			break;
 
 		case 1:	/* non option */
@@ -2197,31 +2040,13 @@ int parse_commandline(int argc, char *argv[], int exec_restore)
 
 				switch (command) {
 				case CMD_CREATE:
-					res = set->settype[set_level]->create_parse(
-					    		c - set->settype[set_level]->option_offset,
-							argv,
-							set->settype[set_level]->data,
-							&set->settype[set_level]->flags);
-					break;
-
-				case CMD_CREATE_CHILD:
-					res = set->settype[set_level]->create_parse(
-					    		c - set->settype[set_level]->option_offset,
-							argv,
-							set->settype[set_level]->data,
-							&set->settype[set_level]->flags);
-					break;
-
-				case CMD_HELP: {
-					if (!(settype && settype->hint_parse))
-						break;
-							
-					res = settype->hint_parse(
+					res = settype->create_parse(
 					    		c - settype->option_offset,
 							argv,
-							settype->data);
+							settype->data,
+							&settype->flags);
 					break;
-					}
+
 				default:
 					res = 0;	/* failed */
 				}	/* switch (command) */
@@ -2243,75 +2068,90 @@ int parse_commandline(int argc, char *argv[], int exec_restore)
 	if (optind < argc)
 		exit_error(PARAMETER_PROBLEM,
 			   "unknown arguments found on commandline");
-	if (!command)
+	if (command == CMD_NONE)
 		exit_error(PARAMETER_PROBLEM, "no command specified");
 
 	/* Check options */
-	generic_opt_check(command == CMD_CREATE_CHILD ? CMD_CREATE : command, options);
+	generic_opt_check(command, options);
 
 	DP("cmd: %c", cmd2char(command));
 
 	switch (command) {
 	case CMD_CREATE:
 		DP("CMD_CREATE");
-		set_create(set);
-		break;
-
-	case CMD_CREATE_CHILD:
-		DP("CMD_CREATE_CHILD");
-		set_create_childset(set, options);
+		if (restore)
+			set_restore_create(name, settype);
+		else
+			set_create(name, settype);
 		break;
 
 	case CMD_DESTROY:
-		set_destroy(set);
+		set_destroy(name, IP_SET_OP_DESTROY, CMD_DESTROY);
 		break;
 
 	case CMD_FLUSH:
-		set_flush(set, options);
+		set_destroy(name, IP_SET_OP_FLUSH, CMD_FLUSH);
 		break;
 
 	case CMD_RENAME:
-		set_rename(set, name);
+		set_rename(name, newname, IP_SET_OP_RENAME, CMD_RENAME);
 		break;
 
 	case CMD_SWAP:
-		set_swap(set, set_to);
+		set_rename(name, newname, IP_SET_OP_SWAP, CMD_SWAP);
 		break;
 
 	case CMD_LIST:
-		set_list(set, options);
+		list_sets(name, options);
 		break;
 
 	case CMD_SAVE:
-		set_save(set);
+		set_save(name);
 		break;
 
 	case CMD_RESTORE:
-		set_restore();
+		set_restore(in, argv[0]);
 		break;
 
 	case CMD_ADD:
-		set_addip(set, entries);
+		if (restore)
+			set_restore_add(set, adt);
+		else
+			set_adtip(set, adt, IP_SET_OP_ADD_IP, CMD_ADD);
 		break;
 
 	case CMD_DEL:
-		set_delip(set, entries, options);
+		set_adtip(set, adt, IP_SET_OP_DEL_IP, CMD_DEL);
 		break;
 
 	case CMD_TEST:
-		res = set_testip(set, name, entries);
+		if (binding)
+			res = set_bind(set, adt, binding, 
+				       IP_SET_OP_TEST_BIND_SET, CMD_TEST);
+		else
+			res = set_adtip(set, adt, 
+					IP_SET_OP_TEST_IP, CMD_TEST);
+		break;
+
+	case CMD_BIND:
+		if (restore)
+			set_restore_bind(set, adt, binding);
+		else
+			set_bind(set, adt, binding,
+				 IP_SET_OP_BIND_SET, CMD_BIND);
+		break;
+
+	case CMD_UNBIND:
+		set_bind(set, adt, "", IP_SET_OP_UNBIND_SET, CMD_UNBIND);
 		break;
 
 	case CMD_HELP:
-		if (options & OPT_HINT)
-			res = settype_hint(settype, options);
-		else
-			set_help(settype);
+		set_help(settype);
 		break;
 
 	default:
 		/* Will never happen */
-		; /* Keep the compiler happy */
+		break; /* Keep the compiler happy */
 
 	}	/* switch( command ) */
 
@@ -2320,7 +2160,7 @@ int parse_commandline(int argc, char *argv[], int exec_restore)
 
 
 int main(int argc, char *argv[])
-{
-	return parse_commandline(argc, argv, 0);
+{	
+	return parse_commandline(argc, argv);
 
 }

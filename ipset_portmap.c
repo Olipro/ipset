@@ -17,6 +17,7 @@
 
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -114,134 +115,82 @@ static struct option create_opts[] = {
 };
 
 /* Add, del, test parser */
-ip_set_ip_t adt_parser(int cmd, const char *optarg,
-		       void *data, const void *setdata)
+ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 {
 	struct ip_set_req_portmap *mydata =
 	    (struct ip_set_req_portmap *) data;
-	struct ip_set_portmap *mysetdata =
-	    (struct ip_set_portmap *) setdata;
-
-	DP("portmap: %p %p", data, setdata);
 
 	parse_port(optarg, &mydata->port);
-
-	DP("from %s", port_tostring(mysetdata->first_port, 0));
-	DP("to   %s", port_tostring(mysetdata->last_port, 0));
-	DP("port %s", port_tostring(mydata->port, 0));
-
-	if (mydata->port < mysetdata->first_port ||
-	    mydata->port > mysetdata->last_port)
-		exit_error(PARAMETER_PROBLEM, "Port '%s' is out of range\n",
-			   port_tostring(mydata->port, 0));
+	DP("%s", port_tostring(mydata->port, 0));
 
 	return mydata->port;	
 }
 
-ip_set_ip_t getportbyid(const void *setdata, ip_set_ip_t id)
-{
-	struct ip_set_portmap *mysetdata =
-	    (struct ip_set_portmap *) setdata;
+/*
+ * Print and save
+ */
 
-	return (mysetdata->first_port + id);
-}
-
-ip_set_ip_t sizeid(const void *setdata)
-{
-	struct ip_set_portmap *mysetdata =
-	    (struct ip_set_portmap *) setdata;
-
-	return (mysetdata->last_port - mysetdata->first_port + 1);
-}
-
-void initheader(void **setdata, void *data, size_t len)
+void initheader(struct set *set, const void *data)
 {
 	struct ip_set_req_portmap_create *header =
 	    (struct ip_set_req_portmap_create *) data;
+	struct ip_set_portmap *map =
+		(struct ip_set_portmap *) set->settype->header;
 
-	DP("portmap: initheader() 1");
-
-	if (len != sizeof(struct ip_set_req_portmap_create))
-		exit_error(OTHER_PROBLEM,
-			   "Portmap: incorrect size of header. "
-			   "Got %d, wanted %d.", len,
-			   sizeof(struct ip_set_req_portmap_create));
-
-	*setdata = ipset_malloc(sizeof(struct ip_set_portmap));
-
-	DP("portmap: initheader() 2");
-
-	((struct ip_set_portmap *) *setdata)->first_port =
-	    header->from;
-	((struct ip_set_portmap *) *setdata)->last_port = header->to;
-
+	memset(map, 0, sizeof(struct ip_set_portmap));
+	map->first_port = header->from;
+	map->last_port = header->to;
 }
 
-void initmembers(void *setdata, void *data, size_t len)
+void printheader(struct set *set, unsigned options)
 {
 	struct ip_set_portmap *mysetdata =
-	    (struct ip_set_portmap *) setdata;
-	size_t size;
-
-	DP("portmap: initmembers()");
-
-	/* Check so we get the right amount of memberdata */
-	size = bitmap_bytes(mysetdata->first_port, mysetdata->last_port);
-
-	if (len != size)
-		exit_error(OTHER_PROBLEM,
-			   "Portmap: incorrect size of members. "
-			   "Got %d, wanted %d.", len, size);
-
-	mysetdata->members = data;
-}
-
-void killmembers(void **setdata)
-{
-	struct ip_set_portmap *mysetdata =
-	    (struct ip_set_portmap *) *setdata;
-
-	DP("portmap: killmembers()");
-
-	if (mysetdata->members != NULL)
-		ipset_free(&mysetdata->members);
-	
-	ipset_free(setdata);
-}
-
-
-void printheader(const void *setdata, unsigned options)
-{
-	struct ip_set_portmap *mysetdata =
-	    (struct ip_set_portmap *) setdata;
+	    (struct ip_set_portmap *) set->settype->header;
 
 	printf(" from: %s", port_tostring(mysetdata->first_port, options));
 	printf(" to: %s\n", port_tostring(mysetdata->last_port, options));
 }
 
-void printports_sorted(const void *setdata, unsigned options)
+void printports_sorted(struct set *set, void *data, size_t len, unsigned options)
 {
 	struct ip_set_portmap *mysetdata =
-	    (struct ip_set_portmap *) setdata;
-
+	    (struct ip_set_portmap *) set->settype->header;
 	u_int32_t addr = mysetdata->first_port;
 
+	DP("%u -- %u", mysetdata->first_port, mysetdata->last_port);
 	while (addr <= mysetdata->last_port) {
-		if (test_bit(addr - mysetdata->first_port, mysetdata->members))
+		if (test_bit(addr - mysetdata->first_port, data))
 			printf("%s\n", port_tostring(addr, options));
 		addr++;
 	}
 }
 
-void saveheader(const void *setdata)
+void saveheader(struct set *set, unsigned options)
 {
-	return;
+	struct ip_set_portmap *mysetdata =
+	    (struct ip_set_portmap *) set->settype->header;
+
+	printf("-N %s %s --from %s", 
+	       set->name,
+	       set->settype->typename,
+	       port_tostring(mysetdata->first_port, options));
+	printf(" --to %s\n", 
+	       port_tostring(mysetdata->last_port, options));
 }
 
-/* Print save for an IP */
-void saveports(const void *setdata)
+void saveports(struct set *set, void *data, size_t len, unsigned options)
 {
-	return;
+	struct ip_set_portmap *mysetdata =
+	    (struct ip_set_portmap *) set->settype->header;
+	u_int32_t addr = mysetdata->first_port;
+
+	while (addr <= mysetdata->last_port) {
+		if (test_bit(addr - mysetdata->first_port, data))
+			printf("-A %s %s\n",
+			       set->name,
+			       port_tostring(addr, options));
+		addr++;
+	}
 }
 
 void usage(void)
@@ -266,24 +215,18 @@ static struct settype settype_portmap = {
 	.create_opts = create_opts,
 
 	/* Add/del/test */
-	.req_size = sizeof(struct ip_set_req_portmap),
+	.adt_size = sizeof(struct ip_set_req_portmap),
 	.adt_parser = &adt_parser,
 
-	/* Get an IP address by id */
-	.getipbyid = &getportbyid,
-	.sizeid = &sizeid,
-
 	/* Printing */
+	.header_size = sizeof(struct ip_set_portmap),
 	.initheader = &initheader,
-	.initmembers = &initmembers,
-	.killmembers = &killmembers,
 	.printheader = &printheader,
 	.printips = &printports_sorted,	/* We only have sorted version */
 	.printips_sorted = &printports_sorted,
 	.saveheader = &saveheader,
 	.saveips = &saveports,
 	.usage = &usage,
-	.hint = NULL,
 };
 
 void _init(void)

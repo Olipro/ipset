@@ -175,119 +175,47 @@ static void parse_mac(const char *mac, unsigned char *ethernet)
 }
 
 /* Add, del, test parser */
-ip_set_ip_t adt_parser(int cmd, const char *optarg,
-		       void *data, const void *setdata)
+ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 {
 	struct ip_set_req_macipmap *mydata =
 	    (struct ip_set_req_macipmap *) data;
-	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) setdata;
 	char *saved = strdup(optarg);
 	char *ptr, *tmp = saved;
 
-	DP("macipmap: %p %p", data, setdata);
+	DP("macipmap: %p %p", optarg, data);
 
 	ptr = strsep(&tmp, "%");
 	parse_ip(ptr, &mydata->ip);
-
-	if (cmd == ADT_ADD && !tmp)
-		exit_error(PARAMETER_PROBLEM,
-			   "Need to specify ip[mac]\n");
 
 	if (tmp)
 		parse_mac(tmp, mydata->ethernet);
 	else
 		memset(mydata->ethernet, 0, ETH_ALEN);	
 
-	DP("from %s", ip_tostring(mysetdata->first_ip, 0));
-	DP("to   %s", ip_tostring(mysetdata->last_ip, 0));
-	DP("ip   %s", ip_tostring(mydata->ip, 0));
-
-	if (mydata->ip < mysetdata->first_ip ||
-	    mydata->ip > mysetdata->last_ip)
-		exit_error(PARAMETER_PROBLEM, "IP '%s' is out of range\n",
-			   ip_tostring(mydata->ip, 0));
-
-	free(saved);
-
 	return mydata->ip;	
 }
 
-ip_set_ip_t getipbyid(const void *setdata, ip_set_ip_t id)
-{
-	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) setdata;
+/*
+ * Print and save
+ */
 
-	return (mysetdata->first_ip + id);
-}
-
-ip_set_ip_t sizeid(const void *setdata)
-{
-	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) setdata;
-
-	return (mysetdata->last_ip - mysetdata->first_ip + 1);
-}
-
-void initheader(void **setdata, void *data, size_t len)
+void initheader(struct set *set, const void *data)
 {
 	struct ip_set_req_macipmap_create *header =
 	    (struct ip_set_req_macipmap_create *) data;
+	struct ip_set_macipmap *map =
+		(struct ip_set_macipmap *) set->settype->header;
 
-	DP("macipmap: initheader() 1");
-
-	if (len != sizeof(struct ip_set_req_macipmap_create))
-		exit_error(OTHER_PROBLEM,
-			   "Macipmap: incorrect size of header. "
-			   "Got %d, wanted %d.", len,
-			   sizeof(struct ip_set_req_macipmap_create));
-
-	*setdata = ipset_malloc(sizeof(struct ip_set_macipmap));
-
-	DP("bitmap: initheader() 2");
-
-	((struct ip_set_macipmap *) *setdata)->first_ip = header->from;
-	((struct ip_set_macipmap *) *setdata)->last_ip = header->to;
-	((struct ip_set_macipmap *) *setdata)->flags = header->flags;
+	memset(map, 0, sizeof(struct ip_set_macipmap));
+	map->first_ip = header->from;
+	map->last_ip = header->to;
+	map->flags = header->flags;
 }
 
-void initmembers(void *setdata, void *data, size_t len)
+void printheader(struct set *set, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) setdata;
-	size_t size;
-
-	DP("macipmap: initmembers()");
-
-	/* Check so we get the right amount of memberdata */
-	size = (mysetdata->last_ip - mysetdata->first_ip) 
-		* sizeof(struct ip_set_macip);
-
-	if (len != size)
-		exit_error(OTHER_PROBLEM,
-			   "Macipmap: incorrect size of members. "
-			   "Got %d, wanted %d.", len, size);
-
-	mysetdata->members = data;
-}
-
-void killmembers(void **setdata)
-{
-	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) *setdata;
-
-	DP("macipmap: killmembers()");
-
-	if (mysetdata->members != NULL)
-		ipset_free(&mysetdata->members);
-	
-	ipset_free(setdata);
-}
-
-void printheader(const void *setdata, unsigned options)
-{
-	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) setdata;
+	    (struct ip_set_macipmap *) set->settype->header;
 
 	printf(" from: %s", ip_tostring(mysetdata->first_ip, options));
 	printf(" to: %s", ip_tostring(mysetdata->last_ip, options));
@@ -306,18 +234,18 @@ static void print_mac(unsigned char macaddress[ETH_ALEN])
 		printf(":%02X", macaddress[i]);
 }
 
-void printips_sorted(const void *setdata, unsigned options)
+void printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) setdata;
+	    (struct ip_set_macipmap *) set->settype->header;
 	struct ip_set_macip *table =
-	    (struct ip_set_macip *) mysetdata->members;
+	    (struct ip_set_macip *) data;
 	u_int32_t addr = mysetdata->first_ip;
 
 	while (addr <= mysetdata->last_ip) {
 		if (test_bit(IPSET_MACIP_ISSET,
-			     &table[addr - mysetdata->first_ip].flags)) {
-			printf("%s%s", ip_tostring(addr, options), "%");
+			     (void *)&table[addr - mysetdata->first_ip].flags)) {
+			printf("%s%%", ip_tostring(addr, options));
 			print_mac(table[addr - mysetdata->first_ip].
 				  ethernet);
 			printf("\n");
@@ -326,15 +254,40 @@ void printips_sorted(const void *setdata, unsigned options)
 	}
 }
 
-void saveheader(const void *setdata)
+void saveheader(struct set *set, unsigned options)
 {
-	return;
+	struct ip_set_macipmap *mysetdata =
+	    (struct ip_set_macipmap *) set->settype->header;
+
+	printf("-N %s %s --from: %s",
+	       set->name, set->settype->typename,
+	       ip_tostring(mysetdata->first_ip, options));
+	printf(" --to: %s", ip_tostring(mysetdata->last_ip, options));
+
+	if (mysetdata->flags & IPSET_MACIP_MATCHUNSET)
+		printf(" --matchunset");
+	printf("\n");
 }
 
-/* Print save for an IP */
-void saveips(const void *setdata)
+void saveips(struct set *set, void *data, size_t len, unsigned options)
 {
-	return;
+	struct ip_set_macipmap *mysetdata =
+	    (struct ip_set_macipmap *) set->settype->header;
+	struct ip_set_macip *table =
+	    (struct ip_set_macip *) data;
+	u_int32_t addr = mysetdata->first_ip;
+
+	while (addr <= mysetdata->last_ip) {
+		if (test_bit(IPSET_MACIP_ISSET,
+			     (void *)&table[addr - mysetdata->first_ip].flags)) {
+			printf("-A %s %s%%",
+			       set->name, ip_tostring(addr, options));
+			print_mac(table[addr - mysetdata->first_ip].
+				  ethernet);
+			printf("\n");
+		}
+		addr++;
+	}
 }
 
 void usage(void)
@@ -360,24 +313,18 @@ static struct settype settype_macipmap = {
 	.create_opts = create_opts,
 
 	/* Add/del/test */
-	.req_size = sizeof(struct ip_set_req_macipmap),
+	.adt_size = sizeof(struct ip_set_req_macipmap),
 	.adt_parser = &adt_parser,
 
-	/* Get an IP address by id */
-	.getipbyid = &getipbyid,
-	.sizeid = &sizeid,
-
 	/* Printing */
+	.header_size = sizeof(struct ip_set_macipmap),
 	.initheader = &initheader,
-	.initmembers = &initmembers,
-	.killmembers = &killmembers,
 	.printheader = &printheader,
 	.printips = &printips_sorted,	/* We only have sorted version */
 	.printips_sorted = &printips_sorted,
 	.saveheader = &saveheader,
 	.saveips = &saveips,
 	.usage = &usage,
-	.hint = NULL,
 };
 
 void _init(void)

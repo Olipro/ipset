@@ -1,6 +1,13 @@
+2.0
+ - Chaining of sets are changed: child sets replaced by bindings
+ - Kernel-userspace communication reorganized to minimize the number
+   of syscalls
+ - Save and restore functionality implemented
+ - iphash type reworked: clashing resolved by double-hashing and by
+   dynamically growing the set
 1.0
- - Renamed to ipset					  (Jozsef Kadlecsik)
- - Rewritten to support child pools			  (Jozsef Kadlecsik)
- - portmap, iphash pool support added			  (Jozsef Kadlecsik)
- - too much other mods here and there to list...	  (Jozsef Kadlecsik)
+ - Renamed to ipset
+ - Rewritten to support child pools
+ - portmap, iphash pool support added
+ - too much other mods here and there to list...
 

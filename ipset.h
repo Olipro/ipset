@@ -26,20 +26,12 @@
 
 #include <linux/netfilter_ipv4/ip_set.h>
 
-char program_name[] = "ipset";
-char program_version[] = "1.0";
-
 #define IPSET_LIB_NAME "/libipset_%s.so"
 #define PROC_SYS_MODPROBE "/proc/sys/kernel/modprobe"
 
 #define LIST_TRIES 5
 
-/* FIXME: move this to Makefile ? */
-#if 1
-#define IP_SET_DEBUG
-#endif
-
-#ifdef IP_SET_DEBUG
+#ifdef IPSET_DEBUG
 extern int option_debug;
 #define DP(format, args...) if (option_debug) 			\
 	do {							\
@@ -50,33 +42,46 @@ extern int option_debug;
 #define DP(format, args...)
 #endif
 
+/* Commands */
+enum set_commands {
+	CMD_NONE,
+	CMD_CREATE,		/* -N */
+	CMD_DESTROY,		/* -X */
+	CMD_FLUSH,		/* -F */
+	CMD_RENAME,		/* -E */
+	CMD_SWAP,		/* -W */
+	CMD_LIST,		/* -L */
+	CMD_SAVE,		/* -S */
+	CMD_RESTORE,		/* -R */
+	CMD_ADD,		/* -A */
+	CMD_DEL,		/* -D */
+	CMD_TEST,		/* -T */
+	CMD_BIND,		/* -B */
+	CMD_UNBIND,		/* -U */
+	CMD_HELP,		/* -H */
+	CMD_VERSION,		/* -V */
+	NUMBER_OF_CMD = CMD_VERSION,
+	/* Internal commands */
+	CMD_MAX_SETS,
+	CMD_LIST_SIZE,
+	CMD_SAVE_SIZE,
+	CMD_ADT_GET,
+};
+
 enum exittype {
 	OTHER_PROBLEM = 1,
 	PARAMETER_PROBLEM,
 	VERSION_PROBLEM
 };
 
-struct set_data {
-	void *setdata;			/* Hook to set speficic data */
-	void *bitmap;			/* Which elements has got a childset (bitmap) */
-	void *adt;			/* Add/del/test data */
-};
-
-/* The simplistic view of an ipset */
+/* The view of an ipset in userspace */
 struct set {
-	struct set *next;
-
 	char name[IP_SET_MAXNAMELEN];		/* Name of the set */
-	unsigned id;				/* Pool id in kernel */
-	unsigned levels;			/* Levels we may have in this set */
+	ip_set_id_t id;				/* Unique set id */
+	ip_set_id_t index;			/* Array index */
 	unsigned ref;				/* References in kernel */
-	struct settype *settype[IP_SET_LEVELS];	/* Pointer to set type functions */
-	struct set_data private[IP_SET_LEVELS];	/* Hook to set specific data */
+	struct settype *settype;		/* Pointer to set type functions */
 };
-
-#define ADT_ADD		0
-#define ADT_DEL		1
-#define ADT_TEST	2
 
 struct settype {
 	struct settype *next;
@@ -106,79 +111,49 @@ struct settype {
 	/* Pointer to list of extra command-line options for create */
 	struct option *create_opts;
 
-
 	/*
 	 * Add/del/test IP
 	 */
 
 	/* Size of data. Will be sent to kernel */
-	size_t req_size;
+	size_t adt_size;
 
 	/* Function which parses command options */
-	ip_set_ip_t (*adt_parser) (int cmd, const char *option, 
-				   void *data, const void * setdata);
+	ip_set_ip_t (*adt_parser) (unsigned cmd, const char *optarg, void *data);
 
 	/*
 	 * Printing
 	 */
 
-	/* Set up the sets headerinfo with data coming from kernel */
-	void (*initheader) (void ** setdata, void *data, size_t len);
+	/* Size of header. */
+	size_t header_size;
 
-	/* Set up the sets members with data coming from kernel */
-	void (*initmembers) (void * setdata, void *data, size_t len);
-
-	/* Remove the members memory usage */
-	void (*killmembers) (void ** setdata);
+	/* Initialize the type-header */
+	void (*initheader) (struct set *set, const void *data);
 
 	/* Pretty print the type-header */
-	void (*printheader) (const void * setdata, unsigned options);
+	void (*printheader) (struct set *set, unsigned options);
 
-	/* Returns an IP address from the set */
-	ip_set_ip_t (*getipbyid) (const void * setdata, ip_set_ip_t id);
-	
-	/* Return the size of the set in ids */
-	ip_set_ip_t (*sizeid) (const void * setdata);
-	
 	/* Pretty print all IPs */
-	void (*printips) (const void * setdata, unsigned options);
+	void (*printips) (struct set *set, void *data, size_t len, unsigned options);
 
 	/* Pretty print all IPs sorted */
-	void (*printips_sorted) (const void * setdata,
-				 unsigned options);
+	void (*printips_sorted) (struct set *set, void *data, size_t len, unsigned options);
 
 	/* Print save arguments for creating the set */
-	void (*saveheader) (const void * setdata);
+	void (*saveheader) (struct set *set, unsigned options);
 
 	/* Print save for all IPs */
-	void (*saveips) (const void * setdata);
+	void (*saveips) (struct set *set, void *data, size_t len, unsigned options);
 
 	/* Print usage */
 	void (*usage) (void);
 
-	/*
-	 * Hint: size of data must be smaller than that of create!
-	 */
-
-	/* Size of hint data. Will *not* be sent to kernel */
-	size_t hint_size;
-
-	/* Initialize the hint data. */
-	void (*hint_init) (void *data);
-
-	/* Function which parses command options; returns true if it ate an option */
-	int (*hint_parse) (int c, char *argv[], void *data);
-
-	/* Pointer to list of extra command-line options for hinting */
-	struct option *hint_opts;
-
-	/* Hint initialization info */
-	void (*hint) (const void *data, ip_set_ip_t * ip, ip_set_ip_t id);
-
 	/* Internal data */
+	void *header;
+	void *data;
 	unsigned int option_offset;
 	unsigned int flags;
-	void *data;
 };
 
 extern void settype_register(struct settype *settype);

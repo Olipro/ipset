@@ -35,15 +35,10 @@
 
 #define BUFLEN 30;
 
-#define OPT_CREATE_INITVAL    0x01U
-#define OPT_CREATE_HASHSIZE   0x02U
-#define OPT_CREATE_NETMASK    0x03U
-
-#define OPT_HINT_TRY	      0x01U
-#define OPT_HINT_NETMASK      0x02U
-
-#define HINT_DEFAULT_TRY	8
-#define HINT_DEFAULT_FACTOR	4
+#define OPT_CREATE_HASHSIZE	0x01U
+#define OPT_CREATE_PROBES	0x02U
+#define OPT_CREATE_RESIZE	0x04U
+#define OPT_CREATE_NETMASK	0x08U
 
 /* Initialize the create. */
 void create_init(void *data)
@@ -52,8 +47,12 @@ void create_init(void *data)
 	    (struct ip_set_req_iphash_create *) data;
 
 	DP("create INIT");
+
+	/* Default create parameters */	
+	mydata->hashsize = 1024;
+	mydata->probes = 8;
+	mydata->resize = 50;
 	
-	mydata->initval = 0;
 	mydata->netmask = 0xFFFFFFFF;
 }
 
@@ -62,27 +61,16 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 {
 	struct ip_set_req_iphash_create *mydata =
 	    (struct ip_set_req_iphash_create *) data;
-	char *end;
 	unsigned int bits;
+	ip_set_ip_t value;
 
 	DP("create_parse");
 
 	switch (c) {
 	case '1':
-		errno = 0;
-		mydata->initval = strtoul(optarg, &end, 0);
-		if (*end == '\0' && end != optarg && errno != ERANGE) {
 
-			*flags |= OPT_CREATE_INITVAL;
-
-			DP("--initval 0x%x)", mydata->initval);
-			break;
-		}
-		exit_error(PARAMETER_PROBLEM, "Invalid initval `%s' specified", optarg);
-	case '2':
-
-		if (string_to_number(optarg, 1, MAX_RANGE, &mydata->hashsize))
-			exit_error(PARAMETER_PROBLEM, "Hashsize `%s' specified", optarg);
+		if (string_to_number(optarg, 1, UINT_MAX - 1, &mydata->hashsize))
+			exit_error(PARAMETER_PROBLEM, "Invalid hashsize `%s' specified", optarg);
 
 		*flags |= OPT_CREATE_HASHSIZE;
 
@@ -90,7 +78,31 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 		
 		break;
 
+	case '2':
+
+		if (string_to_number(optarg, 1, 65535, &value))
+			exit_error(PARAMETER_PROBLEM, "Invalid probes `%s' specified", optarg);
+
+		mydata->probes = value;
+		*flags |= OPT_CREATE_PROBES;
+
+		DP("--probes %u", mydata->probes);
+		
+		break;
+
 	case '3':
+
+		if (string_to_number(optarg, 0, 65535, &value))
+			exit_error(PARAMETER_PROBLEM, "Invalid resize `%s' specified", optarg);
+
+		mydata->resize = value;
+		*flags |= OPT_CREATE_RESIZE;
+
+		DP("--resize %u", mydata->resize);
+		
+		break;
+
+	case '4':
 
 		if (string_to_number(optarg, 0, 32, &bits))
 			exit_error(PARAMETER_PROBLEM, 
@@ -118,119 +130,46 @@ void create_final(void *data, unsigned int flags)
 	struct ip_set_req_iphash_create *mydata =
 	    (struct ip_set_req_iphash_create *) data;
 
-	if ((flags & OPT_CREATE_HASHSIZE) == 0)
-		exit_error(PARAMETER_PROBLEM,
-			   "Need to specify --hashsize\n");
-
-	if (!mydata->initval) {
-		srand(getpid() | time(NULL));
-		mydata->initval = rand();
-	}
-	DP("initval: 0x%x hashsize %d", mydata->initval, mydata->hashsize);
+	DP("hashsize %u probes %u resize %u",
+	   mydata->hashsize, mydata->probes, mydata->resize);
 }
 
 /* Create commandline options */
 static struct option create_opts[] = {
-	{"initval", 1, 0, '1'},
-	{"hashsize", 1, 0, '2'},
-	{"netmask", 1, 0, '3'},
+	{"hashsize", 1, 0, '1'},
+	{"probes", 1, 0, '2'},
+	{"resize", 1, 0, '3'},
+	{"netmask", 1, 0, '4'},
 	{0}
 };
 
 /* Add, del, test parser */
-ip_set_ip_t adt_parser(int cmd, const char *optarg, 
-		       void *data, const void *setdata)
+ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 {
 	struct ip_set_req_iphash *mydata =
 	    (struct ip_set_req_iphash *) data;
 
-	mydata->flags = 0;
-	
-	if (*optarg == '+') {
-		if (cmd == ADT_ADD) {
-			mydata->flags |= IPSET_ADD_OVERWRITE;
-			optarg++;
-		} else
-			exit_error(PARAMETER_PROBLEM,
-			   	   "The '!' overwrite flag can be used only "
-			   	   "when adding an IP address to the set\n");
-	}			
 	parse_ip(optarg, &mydata->ip);
 
 	return mydata->ip;	
 };
 
-ip_set_ip_t getipbyid(const void *setdata, ip_set_ip_t id)
-{
-	struct ip_set_iphash *mysetdata =
-	    (struct ip_set_iphash *) setdata;
+/*
+ * Print and save
+ */
 
-	return mysetdata->members[id];
-}
-
-ip_set_ip_t sizeid(const void *setdata)
-{
-	struct ip_set_iphash *mysetdata =
-	    (struct ip_set_iphash *) setdata;
-
-	return (mysetdata->hashsize);
-}
-
-void initheader(void **setdata, void *data, size_t len)
+void initheader(struct set *set, const void *data)
 {
 	struct ip_set_req_iphash_create *header =
 	    (struct ip_set_req_iphash_create *) data;
+	struct ip_set_iphash *map =
+		(struct ip_set_iphash *) set->settype->header;
 
-	DP("iphash: initheader() 1");
-
-	if (len != sizeof(struct ip_set_req_iphash_create))
-		exit_error(OTHER_PROBLEM,
-			   "Iphash: incorrect size of header. "
-			   "Got %d, wanted %d.", len,
-			   sizeof(struct ip_set_req_iphash_create));
-
-	*setdata = ipset_malloc(sizeof(struct ip_set_iphash));
-
-	DP("iphash: initheader() 2");
-
-	((struct ip_set_iphash *) *setdata)->initval =
-		header->initval;
-	((struct ip_set_iphash *) *setdata)->hashsize =
-		header->hashsize;
-	((struct ip_set_iphash *) *setdata)->netmask =
-		header->netmask;
-}
-
-void initmembers(void *setdata, void *data, size_t len)
-{
-	struct ip_set_iphash *mysetdata =
-	    (struct ip_set_iphash *) setdata;
-	size_t size;
-
-	DP("iphash: initmembers()");
-
-	/* Check so we get the right amount of memberdata */
-	size = sizeof(ip_set_ip_t) * mysetdata->hashsize;
-
-	if (len != size)
-		exit_error(OTHER_PROBLEM,
-			   "Iphash: incorrect size of members. "
-			   "Got %d, wanted %d.", len, size);
-
-	mysetdata->members = data;
-}
-
-void killmembers(void **setdata)
-{
-	struct ip_set_iphash *mysetdata =
-	    (struct ip_set_iphash *) *setdata;
-
-	DP("iphash: killmembers()");
-
-	if (mysetdata->members != NULL)
-		free(mysetdata->members);
-		
-	ipset_free(setdata);
+	memset(map, 0, sizeof(struct ip_set_iphash));
+	map->hashsize = header->hashsize;
+	map->probes = header->probes;
+	map->resize = header->resize;
+	map->netmask = header->netmask;
 }
 
 unsigned int
@@ -249,188 +188,71 @@ mask_to_bits(ip_set_ip_t mask)
 	return bits;
 }
 	
-void printheader(const void *setdata, unsigned options)
+void printheader(struct set *set, unsigned options)
 {
 	struct ip_set_iphash *mysetdata =
-	    (struct ip_set_iphash *) setdata;
+	    (struct ip_set_iphash *) set->settype->header;
 
-	printf(" initval: 0x%x", mysetdata->initval);
-	printf(" hashsize: %d", mysetdata->hashsize);
+	printf(" hashsize: %u", mysetdata->hashsize);
+	printf(" probes: %u", mysetdata->probes);
+	printf(" resize: %u", mysetdata->resize);
 	if (mysetdata->netmask == 0xFFFFFFFF)
 		printf("\n");
 	else
 		printf(" netmask: %d\n", mask_to_bits(mysetdata->netmask));
 }
 
-void printips(const void *setdata, unsigned options)
+void printips(struct set *set, void *data, size_t len, unsigned options)
 {
-	struct ip_set_iphash *mysetdata =
-	    (struct ip_set_iphash *) setdata;
-	ip_set_ip_t id;
+	size_t offset = 0;
+	ip_set_ip_t *ip;
 
-	for (id = 0; id < mysetdata->hashsize; id++)
-		if (mysetdata->members[id])
-			printf("%s\n", ip_tostring(mysetdata->members[id], options));
+	while (offset < len) {
+		ip = data + offset;
+		if (*ip)
+			printf("%s\n", ip_tostring(*ip, options));
+		offset += sizeof(ip_set_ip_t);
+	}
 }
 
-void saveheader(const void *setdata)
+void saveheader(struct set *set, unsigned options)
 {
-	return;
+	struct ip_set_iphash *mysetdata =
+	    (struct ip_set_iphash *) set->settype->header;
+
+	printf("-N %s %s --hashsize %u --probes %u --resize %u",
+	       set->name, set->settype->typename,
+	       mysetdata->hashsize, mysetdata->probes, mysetdata->resize);
+	if (mysetdata->netmask == 0xFFFFFFFF)
+		printf("\n");
+	else
+		printf(" --netmask %d\n", mask_to_bits(mysetdata->netmask));
 }
 
 /* Print save for an IP */
-void saveips(const void *setdata)
+void saveips(struct set *set, void *data, size_t len, unsigned options)
 {
-	return;
+	size_t offset = 0;
+	ip_set_ip_t *ip;
+
+	while (offset < len) {
+		ip = data + offset;
+		if (*ip)
+			printf("-A %s %s\n", set->name, ip_tostring(*ip, options));
+		offset += sizeof(ip_set_ip_t);
+	}
 }
 
 void usage(void)
 {
 	printf
-	    ("-N set iphash [--initval hash-initval] --hashsize hashsize [--netmask CIDR-netmask]\n"
-	     "-A set [!]IP\n"
+	    ("-N set iphash [--hashsize hashsize] [--probes probes ]\n"
+	     "              [--resize resize] [--netmask CIDR-netmask]\n"
+	     "-A set IP\n"
 	     "-D set IP\n"
-	     "-T set IP\n"
-	     "-H iphash -i [--try number] [--factor number] [--netmask CIDR-netmask]\n");
+	     "-T set IP\n");
 }
 
-struct ip_set_iphash_hint {
-	unsigned int try;
-	unsigned int factor;
-	ip_set_ip_t netmask;
-};
-
-/* Initialize the hint. */
-void hint_init(void *data)
-{
-	struct ip_set_iphash_hint *mydata = 
-		(struct ip_set_iphash_hint *) data;
-
-	DP("hint INIT");
-	
-	mydata->try = HINT_DEFAULT_TRY;
-	mydata->factor = HINT_DEFAULT_FACTOR;
-	mydata->netmask = 0xFFFFFFFF;
-}
-
-/* Function which parses command options; returns true if it ate an option */
-int hint_parse(int c, char *argv[], void *data)
-{
-	struct ip_set_iphash_hint *mydata = 
-		(struct ip_set_iphash_hint *) data;
-	unsigned int bits;
-
-	DP("hint_parse");
-
-	switch (c) {
-	case '1':
-		if (string_to_number(optarg, 1, 32, &mydata->try))
-			exit_error(PARAMETER_PROBLEM, 
-				  "Invalid --try `%s' specified (out of range 1-32", optarg);
-		
-		DP("--try %i)", mydata->try);
-		break;
-
-	case '2':
-		if (string_to_number(optarg, 1, 64, &mydata->factor))
-			exit_error(PARAMETER_PROBLEM, 
-				  "Invalid --factor `%s' specified (out of range 1-64", optarg);
-		
-		DP("--factor %i)", mydata->factor);
-		break;
-
-	case '3':
-
-		if (string_to_number(optarg, 0, 32, &bits))
-			exit_error(PARAMETER_PROBLEM, 
-				  "Invalid netmask `%s' specified", optarg);
-		
-		if (bits != 0)
-			mydata->netmask = 0xFFFFFFFF << (32 - bits);
-
-		DP("--netmask %x", mydata->netmask);
-		
-		break;
-
-	default:
-		return 0;
-	}
-
-	return 1;
-}
-
-/* Hint commandline options */
-static struct option hint_opts[] = {
-	{"try", 1, 0, '1'},
-	{"factor", 1, 0, '2'},
-	{"netmask", 1, 0, '3'},
-	{0}
-};
-
-int hint_try(const ip_set_ip_t *ip, ip_set_ip_t *test, ip_set_ip_t best,
-	     ip_set_ip_t hashsize, unsigned int try, uint32_t *initval, int *found)
-{
-	ip_set_ip_t id, hash;
-	int i = 0;
-
-    next_try:
-	while (i < try) {
-		memset(test, 0, MAX_RANGE * sizeof(ip_set_ip_t));
-		for (id = 0; id < best; id++) {
-			hash = jhash_1word(ip[id], *initval) % hashsize;
-			if (test[hash] != 0) {
-				*initval = rand();
-				i++;
-				goto next_try;
-			} else
-				test[hash] = ip[id];
-			DP("%i %x", hash, ip[id]);
-		}
-		printf("--initval 0x%08x --hashsize %d\n", *initval, hashsize);
-		*found = 1;
-		return 1;
-	}
-	return 0;	
-}
-
-void hint(const void *data, ip_set_ip_t *ip, ip_set_ip_t best)
-{
-	struct ip_set_iphash_hint *mydata = 
-		(struct ip_set_iphash_hint *) data;
-	uint32_t initval;
-	ip_set_ip_t next, prev, curr;
-	ip_set_ip_t test[MAX_RANGE];
-	ip_set_ip_t id;
-	int found = 0;
-	
-	curr = MAX_RANGE > mydata->factor * best ? mydata->factor * best : MAX_RANGE;
-	prev = next = MAX_RANGE;
-
-	srand(curr);
-	initval = rand();
-
-	for (id = 0; id < best; id++)
-		ip[id] &= mydata->netmask;
-
-	while (1) {
-		DP("%u %u %u %u", prev, curr, next, best);
-
-		if (hint_try(ip, test, best, curr, mydata->try, &initval, &found)) {
-			if (curr == best)
-				return;
-			next = (curr + best)/2;
-		} else {
-			if (curr == prev){
-				if (!found)
-					printf("Cannot find good init values.\n");
-				return;
-			}
-			next = (curr + prev)/2;
-		}
-		prev = curr;
-		curr = next;
-	}
-}
 static struct settype settype_iphash = {
 	.typename = SETTYPE_NAME,
 	.typecode = IPSET_TYPE_IP,
@@ -444,30 +266,18 @@ static struct settype settype_iphash = {
 	.create_opts = create_opts,
 
 	/* Add/del/test */
-	.req_size = sizeof(struct ip_set_req_iphash),
+	.adt_size = sizeof(struct ip_set_req_iphash),
 	.adt_parser = &adt_parser,
 
-	/* Get an IP address by id */
-	.getipbyid = &getipbyid,
-	.sizeid = &sizeid,
-
 	/* Printing */
+	.header_size = sizeof(struct ip_set_iphash),
 	.initheader = &initheader,
-	.initmembers = &initmembers,
-	.killmembers = &killmembers,
 	.printheader = &printheader,
 	.printips = &printips,		/* We only have the unsorted version */
 	.printips_sorted = &printips,
 	.saveheader = &saveheader,
 	.saveips = &saveips,
 	.usage = &usage,
-
-	/* Hint */
-	.hint_size = sizeof(struct ip_set_iphash_hint),
-	.hint_init = &hint_init,
-	.hint_parse = &hint_parse,
-	.hint_opts = hint_opts,
-	.hint = &hint,
 };
 
 void _init(void)

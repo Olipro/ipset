@@ -1,48 +1,64 @@
 #!/usr/bin/make
 
-IPSET_VERSION:=v1.0
+######################################################################
+# YOU SHOULD NOT NEED TO TOUCH ANYTHING BELOW THIS LINE
+######################################################################
+
+ifndef KERNEL_DIR
+KERNEL_DIR=/usr/src/linux
+endif
+
+IPSET_VERSION:=2.0
+
+PREFIX:=/usr/local
+LIBDIR:=$(PREFIX)/lib
+BINDIR:=$(PREFIX)/sbin
+MANDIR:=$(PREFIX)/man
+INCDIR:=$(PREFIX)/include
 IPSET_LIB_DIR:=$(DESTDIR)$(LIBDIR)/ipset
-#IPSET_LIB_DIR:=.
-#CFLAGS:=-I$(KERNEL_DIR)/include
+
+# directory for new iptables releases
+RELEASE_DIR:=/tmp
+
+COPT_FLAGS:=-O2
+CFLAGS:=$(COPT_FLAGS) -Wall -Wunused -I$(KERNEL_DIR)/include -I. -g -DIPSET_DEBUG #-pg # -DIPTC_DEBUG
 
 SETTYPES:=ipmap portmap macipmap iphash
 
-EXTRAS+=$(shell [ -f $(KERNEL_DIR)/include/linux/netfilter_ipv4/ip_set.h ] && echo ipset/ipset)
-EXTRAS+=$(foreach T, $(SETTYPES),ipset/libipset_$(T).so)
-EXTRA_INSTALLS+=$(DESTDIR)$(BINDIR)/ipset $(DESTDIR)$(MANDIR)/man8/ipset.8
-EXTRA_INSTALLS+=$(foreach T, $(SETTYPES), $(DESTDIR)$(LIBDIR)/ipset/libipset_$(T).so)
+PROGRAMS=ipset
+SHARED_LIBS=$(foreach T, $(SETTYPES),libipset_$(T).so)
+INSTALL=$(DESTDIR)$(BINDIR)/ipset $(DESTDIR)$(MANDIR)/man8/ipset.8
+INSTALL+=$(foreach T, $(SETTYPES), $(DESTDIR)$(LIBDIR)/ipset/libipset_$(T).so)
 
-ifndef TOPLEVEL_INCLUDED
-local:
-	cd .. && $(MAKE) $(KERN_TARGETS) $(SHARED_LIBS) $(EXTRAS)
+all: $(PROGRAMS) $(SHARED_LIBS)
 
-else
-EXTRA_DEPENDS+=$(shell [ -f $(KERNEL_DIR)/include/linux/netfilter_ipv4/ip_set.h ] && echo "")
-CFLAGS+=-DIPSET_VERSION=$(IPSET_VERSION) -DIPSET_LIB_DIR=\"$(IPSET_LIB_DIR)\"
+install: all $(INSTALL)
+
+clean: $(EXTRA_CLEANS)
+	rm -rf $(PROGRAMS) $(SHARED_LIBS) *.o
 
 #The ipset(8) self
-ipset/ipset.o: ipset/ipset.c
-	$(CC) $(CFLAGS) -g -c -o $@ $<
+ipset.o: ipset.c
+	$(CC) $(CFLAGS) -DIPSET_VERSION=\"$(IPSET_VERSION)\" -DIPSET_LIB_DIR=\"$(IPSET_LIB_DIR)\" -c -o $@ $<
 
-ipset/ipset: ipset/ipset.o
+ipset: ipset.o
 	$(CC) $(CFLAGS) -ldl -rdynamic -o $@ $^
 
 #Pooltypes
-ipset/ipset_%.o: ipset/ipset_%.c
+ipset_%.o: ipset_%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-ipset/libipset_%.so: ipset/ipset_%.o
+libipset_%.so: ipset_%.o
 	$(LD) -shared -o $@ $<
 
-$(DESTDIR)$(LIBDIR)/ipset/libipset_%.so: ipset/libipset_%.so
+$(DESTDIR)$(LIBDIR)/ipset/libipset_%.so: libipset_%.so
 	@[ -d $(DESTDIR)$(LIBDIR)/ipset ] || mkdir -p $(DESTDIR)$(LIBDIR)/ipset
 	cp $< $@
 
-$(DESTDIR)$(BINDIR)/ipset: ipset/ipset
+$(DESTDIR)$(BINDIR)/ipset: ipset
 	@[ -d $(DESTDIR)$(BINDIR) ] || mkdir -p $(DESTDIR)$(BINDIR)
 	cp $< $@
 
-$(DESTDIR)$(MANDIR)/man8/ipset.8: ipset/ipset.8
+$(DESTDIR)$(MANDIR)/man8/ipset.8: ipset.8
 	@[ -d $(DESTDIR)$(MANDIR)/man8 ] || mkdir -p $(DESTDIR)$(MANDIR)/man8
 	cp $< $@
-endif

@@ -18,7 +18,7 @@
 .\"
 .\"
 .SH NAME
-ipset \- IP set administration
+ipset \- administration tool for IP sets
 .SH SYNOPSIS
 .BR "ipset -N " "set type-specification [options]"
 .br
@@ -26,27 +26,30 @@ ipset \- IP set administration
 .br
 .BR "ipset -[EW] " "from-set to-set"
 .br
-.BR "ipset -[ADT] " "set entry"
+.BR "ipset -[ADU] " "set entry"
+.br
+.BR "ipset -B " "set entry -b binding"
+.br
+.BR "ipset -T " "set entry [-b binding]"
 .br
 .BR "ipset -R "
 .SH DESCRIPTION
-.B Ipset
-is used to set up, maintain, and inspect so called IP sets in the Linux
-kernel. Each set can contain a fixed number of entries and at every entry
-there might be child sets, up to a given level. Child sets at the same
-level must have the same type.
+.B ipset
+is used to set up, maintain and inspect so called IP sets in the Linux
+kernel. Depending on the type, an IP set may store IP addresses, (TCP/UDP)
+port numbers or additional informations besides IP addresses: the word IP 
+means a general term here. See the set type definitions below.
 .P
-In spite it is called IP sets, depending on the type the sets may
-store not only IP addresses but (TCP/UDP) port numbers as well, or 
-additional informations besides IP addresses: the word IP means a general
-term here. See the set type definitions below.
+Any entry in a set can be bound to another set, which forms a relationship
+between a set element and the set it is bound to. The sets may have a 
+default binding, which is valid for every set element for which there is
+no binding defined at all. There is no need for the entry to be
+added to the set for a binding to be defined for it.
 .P
-Child sets are identified
-by `IP', without the possible additional informations stored in the set.
-There is no other relationship between the set entry and the child set
-at that entry: the set entry can be added, deleted without disturbing
-the child set and vice versa. Therefore below we denote pure IPs
-identifying a child set by `IP', while entries in a set by `entry'.
+IP set bindings pointing to sets and iptables matches and targets 
+referring to sets creates references, which protects the given sets in 
+the kernel. A set cannot be removed (destroyed) while there is a reference 
+pointing to it.
 .SH OPTIONS
 The options that are recognized by
 .B ipset
@@ -59,104 +62,135 @@ need to use only enough letters to ensure that
 .B ipset
 can differentiate it from all other options.
 .TP
-.BI "-N, --create " "\fIsetname\fP type0[,type1...] type0-options"
-Create a set identified with setname, with listed types. 
-Type0-specific options must be supplied. When more than one set 
-type is given on the command line, room for the first level child 
-sets are automatically reserved.
+.BI "-N, --create " "\fIsetname\fP type type-options"
+Create a set identified with setname and specified type. 
+Type-specific options must be supplied.
 .TP
-.BI "-N, --create " "\fIsetname:IP[,...]\fP type type-options"
-Create a child set at setname:IP[,...] identified with type,
-which must correspond to the set type used when the set was created.
-The parent set and parent child sets must exist. When the
-.B "-c, --childsets"
-option is used, space for child sets will be reserved.
+.BI "-X, --destroy " "[\fIsetname\fP]"
+Destroy the specified set, or all sets if none or the keyword
+.B
+:all:
+is specified.
+Before destroying the set, all bindings belonging to the 
+set elements and the default binding of the set are removed.
+
+If the set has got references, nothing is done.
 .TP
-.BI "-X, --destroy " "[\fIsetname[:IP,...]\fP]"
-Destroy the specified set or child set, or all sets if none is
-given.
-.TP
-.BI "-F, --flush " "[\fIsetname[:IP,...]\fP]"
-Delete all entries from the specified set or child set, or from
-all sets if none is given. When the
-.B "-c, --childsets"
-option is specified, child sets are recursively flushed too.
+.BI "-F, --flush " "[\fIsetname\fP]"
+Delete all entries from the specified set, or flush
+all sets if none or the keyword
+.B
+:all:
+is given. Bindings are not affected by the flush operation.
 .TP
 .BI "-E, --rename " "\fIfrom-setname\fP \fIto-setname\fP"
 Rename a set. Set identified by to-setname must not exist.
 .TP
 .BI "-W, --swap " "\fIfrom-setname\fP \fIto-setname\fP"
-Swap the content of two sets. Both sets must exist.
+Swap two sets as they referenced in the Linux kernel.
+.B
+iptables
+rules or
+.B
+ipset
+bindings pointing to from-setname will point to to-setname
+and vice versa. Both sets must exist.
 .TP
-.BI "-L, --list " "[\fIsetname[:IP,...]\fP]"
-List the entries from the specified set or child set, or from
-all sets if none is given. When the
-.B "-c, --childsets"
-option is specified, child sets are recursively listed too.
-The
+.BI "-L, --list " "[\fIsetname\fP]"
+List the entries and bindings for the specified set, or for
+all sets if none or the keyword
+.B
+:all:
+is given. The
 .B "-n, --numeric"
 option can be used to suppress name lookups and generate numeric
 output. When the
 .B "-s, --sorted"
-option is given, the entries are listed sorted.
+option is given, the entries are listed sorted (if the given set
+supports it).
 .TP
-.BI "-S, --save " "[\fIsetname[:IP,...]\fP]"
-Save the set or child set, or all sets if none specified to stdout
-in a format, that --restore can read.
+.BI "-S, --save " "[\fIsetname\fP]"
+Save the given set, or all sets if none or the keyword
+.B
+:all:
+is specified to stdout in a format that --restore can read.
 .TP
 .BI "-R, --restore "
-Restore from stdin a saved session generated by --save.
+Restore a saved session generated by --save. The saved session
+is read from stdin which is required to be rewindable.
 .TP
-.BI "-A, --add " "\fIsetname[:IP,...]\fP \fIentry[:entry,...]\fP"
-Add an entry to a (child) set or multiple entries to the child sets
-defined by the entries. In another words, the command
-.nf
- ipset -A set entry1,entry2
-.fi
-is equivalent to
-.nf
- ipset -A set entry1
- ipset -A set:entry1-IP entry2
-.fi
+.BI "-A, --add " "\fIsetname\fP \fIIP\fP"
+Add an IP to a set.
 .TP
-.BI "-D, --del " "\fIsetname[:IP,...]\fP \fIentry[:entry,...]\fP"
-Delete an entry from a (child) set or multiple entries from the child sets
-defined by the entries.
+.BI "-D, --del " "\fIsetname\fP \fIIP\fP"
+Delete an IP from a set. 
+.TP
+.BI "-T, --test " "\fIsetname\fP \fIIP
+Test wether an IP is in a set or not. Exit status number is zero
+if the tested IP is in the set and nonzero if it is missing from 
+the set.
+.TP
+.BI "-T, --test " "\fIsetname\fP \fIIP\fP \fI--binding\fP \fIto-setname\fP"
+Test wether the IP belonging to the set points to the specified binding. 
+Exit status number is zero if the binding points to the specified set, 
+otherwise it is nonzero. The keyword
+.B
+:default:
+can be used to test the default binding of the set.
+.TP
+.BI "-B, --bind " "\fIsetname\fP \fIIP\fP \fI--binding\fP \fIto-setname\fP"
+Bind the IP in setname to to-setname.
+.TP
+.BI "-U, --unbind " "\fIsetname\fP \fIIP\fP"
+Delete the binding belonging to IP in set setname. 
+.TP
+.BI "-H, --help " "[settype]"
+Print help and settype specific help if settype specified.
 .P
-When multiple entries are added or deleted and the command fails at
-a deeper level, the successfully added/deleted entries are not restored
-to their previous value.
-.TP
-.BI "-T, --test " "\fIsetname[:IP,...]\fP \fIentry[:entry,...]\fP"
-Test if an entry or multiple entries exist in a (child) set. Exit status
-number is nonzero if any tested entry is missing from the set and
-zero if they are all exists.
-.TP
-.BI "-H, --help " "[settype] [options]"
-Print help and settype specific help. Some set types has additional
-help options, see below.
+At the
+.B
+-B, -U
+and
+.B 
+-T
+commands you can use the token
+.B
+:default:
+to bind, unbind or test the default binding of a set instead
+of an IP. At the
+.B
+-U
+command you can use the token
+.B
+:all:
+to destroy the bindings of all elements of a set.
 .SS "OTHER OPTIONS"
 The following additional options can be specified:
+.TP
+.B "-b, --binding setname"
+The option specifies the value of the binding for the
+.B "-B"
+binding command, for which it is a mandatory option.
+You can use it in the
+.B "-T"
+test command as well to test bindings.
 .TP
 .B "-s, --sorted"
 Sorted output. When listing sets, entries are listed sorted.
 .TP
 .B "-n, --numeric"
-Numeric output. When listing sets, IP addresses and port numbers
-will be printed in numeric format. By default the program will
-try to display them as host names, network names, or services
-(whenever applicable).
+Numeric output. When listing sets, bindings, IP addresses and 
+port numbers will be printed in numeric format. By default the 
+program will try to display them as host names, network names 
+or services (whenever applicable), which can trigger
+.B
+slow
+DNS 
+lookups.
 .TP
 .B "-q, --quiet"
-Suppress any output to stdout and stderr. Ipset will still return
+Suppress any output to stdout and stderr. ipset will still return
 possible errors.
-.TP
-.B "-c, --childsets"
-Space will be reserved for child sets when creating a set, or list/flush
-operation valid for child sets too.
-.TP
-.B "-i, --hint"
-Hint best settype initialization parameters (for hash type sets).
 .SH SET TYPES
 ipset supports the following set types:
 .SS ipmap
@@ -191,7 +225,7 @@ The macipmap set type uses a memory range, where each 8 bytes
 represents one IP and a MAC addresses. A macipmap set type can store
 up to 65535 (B-class network) IP addresses with MAC.
 When adding an entry to a macipmap set, you must specify the entry as
-.I IP%MAC
+.I IP%MAC.
 When deleting or testing macipmap entries, the
 .I %MAC
 part is not mandatory.
@@ -223,86 +257,40 @@ Options to use when creating an portmap set:
 .BR "--to " to-port
 Create a portmap set from the specified range.
 .SS iphash
-The iphash set type uses a fixed size hash to store the IP addresses
-and can store up to 65535 (size of a B-class network) addresses. The 
-iphash set type is fast and great for use to store
-random addresses. By supplyig the
+The iphash set type uses a hash to store IP addresses.
+In order to avoid clashes in the hash, double-hashing and, as a last
+resort, dynamic growing of the hash performed. The iphash set type is
+fast and great for use to store random addresses. By supplyig the
 .B "--netmask"
 option with a CIDR netmask value between 0-32 at creating the set,
 you will be able to store and match network addresses instead: i.e 
 an IP address will be in the set if the value of the address
 masked with the specified netmask can be found in the set.
-When adding and IP address to the hash, the IP address can be preceded 
-by `+', by which you can force to overwrite already existing entries 
-in the hash.
-.P
-In help mode you can use the
-.B "--hint"
-option to find the the smallest hashsize with the corresponding initval
-for your hash entries.
 .P
 Options to use when creating an iphash set:
 .TP
 .BR "--hashsize " hashsize
+The initial hash size (default 1024)
 .TP
-.BR "--initval " hash-initval
-Create an iphash set with the specified hashsize and initial 
-(random) hash parameter. (The
-.B "--initval"
-parameter is optional.)
+.BR "--probes " probes
+How many times try to resolve clashing at adding an IP to the hash 
+by double-hashing (default 8).
+.TP
+.BR "--resize " percent
+Increase the hash size by this many percent (default 50) when adding
+an IP to the hash could not be performed after
+.B
+probes
+number of double-hashing. 
 .TP
 .BR "--netmask " CIDR-netmask
 When the optional
 .B "--netmask"
 parameter specified, network addresses will be 
 stored in the set instead of IP addresses.
-.TP
-The possible help mode options are:
-.TP
-.BI "-i, --hint"
-Enable hinting mode to find the best (smallest) hash size. The entries
-are fed via standard input.
-.TP
-.BI "--try " number
-How many times should the program try the same hash size with
-different random initvals (default 8).
-.TP
-.BI "--factor " number
-The starting hash size is so many times the number of the entries
-(default 4).
-.SH NETFILTER MATCH AND TARGET
-The IP set package adds the `set' match and `SET' target to netfilter:
-.SS set
-The match provides the following option:
-.TP
-.BR "--set " "setname[:flag,...] flag[,flag]"
-where flags are
-.BR "src"
-and/or
-.BR "dst" .
-Hence the command
-.nf
- iptables -A FORWARD -m set --set test:src dst
-.fi
-will match packets, for which there is a child-set under the set named
-as test at the source address or port (depending on the type of the set)
-of the packet, and the destination address or port of the 
-packet (depending of the type of the child set) is set in the child set.
-.SS SET
-The target provides the following option:
-.TP
-.BR "--add-set " "setname[:flag,...] flag[,flag]"
-add the address(es)/port(s) of the packet to the (child)set
-.TP
-.BR "--del-set " "setname[:flag,...] flag[,flag]"
-delete the address(es)/port(s) of the packet from the (child)set,
-where flags are
-.BR "src"
-and/or
-.BR "dst" .
-The flags in the second argument can be preceded by an optional `+' sign, 
-which will force overwriting already existing elements in the target set
-when adding elements to a hash type set.
+.SH GENERAL RESTRICTIONS
+Setnames starting with colon (:) cannot be defined. Zero valued set 
+entries cannot be used.
 .SH DIAGNOSTICS
 Various error messages are printed to standard error.  The exit code
 is 0 for correct functioning.  Errors which appear to be caused by

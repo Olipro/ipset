@@ -18,7 +18,7 @@
  */
 
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -183,66 +183,31 @@ static struct option create_opts[] = {
 };
 
 /* Add, del, test parser */
-ip_set_ip_t adt_parser(int cmd, const char *optarg,
-		       void *data, const void *setdata)
+ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 {
 	struct ip_set_req_ipmap *mydata =
 	    (struct ip_set_req_ipmap *) data;
-	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) setdata;
 
-	DP("ipmap: %p %p", data, setdata);
+	DP("ipmap: %p %p", optarg, data);
 
 	parse_ip(optarg, &mydata->ip);
-
-	DP("from %s", ip_tostring(mysetdata->first_ip, 0));
-	DP("to   %s", ip_tostring(mysetdata->last_ip, 0));
-	DP("ip   %s", ip_tostring(mydata->ip, 0));
-
-	if (mydata->ip < mysetdata->first_ip ||
-	    mydata->ip > mysetdata->last_ip)
-		exit_error(PARAMETER_PROBLEM, "IP '%s' is out of range\n",
-			   ip_tostring(mydata->ip, 0));
+	DP("%s", ip_tostring(mydata->ip, 0));
 
 	return mydata->ip;	
 }
 
-ip_set_ip_t getipbyid(const void *setdata, ip_set_ip_t id)
-{
-	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) setdata;
+/*
+ * Print and save
+ */
 
-	return (mysetdata->first_ip + id * mysetdata->hosts);
-}
-
-ip_set_ip_t sizeid(const void *setdata)
-{
-	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) setdata;
-
-	return (mysetdata->sizeid);
-}
-
-void initheader(void **setdata, void *data, size_t len)
+void initheader(struct set *set, const void *data)
 {
 	struct ip_set_req_ipmap_create *header =
 	    (struct ip_set_req_ipmap_create *) data;
-	struct ip_set_ipmap *map;
+	struct ip_set_ipmap *map =
+		(struct ip_set_ipmap *) set->settype->header;
 		
-	DP("ipmap: initheader() 1");
-
-	if (len != sizeof(struct ip_set_req_ipmap_create))
-		exit_error(OTHER_PROBLEM,
-			   "Ipmap: incorrect size of header. "
-			   "Got %d, wanted %d.", len,
-			   sizeof(struct ip_set_req_ipmap_create));
-
-	*setdata = ipset_malloc(sizeof(struct ip_set_ipmap));
-
-	DP("ipmap: initheader() 2");
-	
-	map = (struct ip_set_ipmap *) *setdata;
-	
+	memset(map, 0, sizeof(struct ip_set_ipmap));
 	map->first_ip = header->from;
 	map->last_ip = header->to;
 	map->netmask = header->netmask;
@@ -263,45 +228,12 @@ void initheader(void **setdata, void *data, size_t len)
 	}
 
 	DP("%i %i", map->hosts, map->sizeid );
-
 }
 
-void initmembers(void *setdata, void *data, size_t len)
+void printheader(struct set *set, unsigned options)
 {
 	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) setdata;
-	size_t size;
-
-	DP("ipmap: initmembers()");
-
-	/* Check so we get the right amount of memberdata */
-	size = bitmap_bytes(0, mysetdata->sizeid - 1);
-
-	if (len != size)
-		exit_error(OTHER_PROBLEM,
-			   "Ipmap: incorrect size of members. "
-			   "Got %d, wanted %d.", len, size);
-
-	mysetdata->members = data;
-}
-
-void killmembers(void **setdata)
-{
-	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) *setdata;
-
-	DP("ipmap: killmembers()");
-
-	if (mysetdata->members != NULL)
-		ipset_free(&mysetdata->members);
-		
-	ipset_free(setdata);
-}
-
-void printheader(const void *setdata, unsigned options)
-{
-	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) setdata;
+	    (struct ip_set_ipmap *) set->settype->header;
 
 	printf(" from: %s", ip_tostring(mysetdata->first_ip, options));
 	printf(" to: %s", ip_tostring(mysetdata->last_ip, options));
@@ -311,27 +243,51 @@ void printheader(const void *setdata, unsigned options)
 		printf(" netmask: %d\n", mask_to_bits(mysetdata->netmask));
 }
 
-void printips_sorted(const void *setdata, unsigned options)
+void printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 {
 	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) setdata;
+	    (struct ip_set_ipmap *) set->settype->header;
 	ip_set_ip_t id;
 
 	for (id = 0; id < mysetdata->sizeid; id++)
-		if (test_bit(id, mysetdata->members))
-			printf("%s\n", ip_tostring(mysetdata->first_ip + id * mysetdata->hosts,
-						   options));
+		if (test_bit(id, data))
+			printf("%s\n",
+			       ip_tostring(mysetdata->first_ip
+			       		   + id * mysetdata->hosts,
+					   options));
 }
 
-void saveheader(const void *setdata)
+void saveheader(struct set *set, unsigned options)
 {
-	return;
+	struct ip_set_ipmap *mysetdata =
+	    (struct ip_set_ipmap *) set->settype->header;
+
+	printf("-N %s %s --from %s",
+	       set->name, set->settype->typename,
+	       ip_tostring(mysetdata->first_ip, options));
+	printf(" --to %s",
+	       ip_tostring(mysetdata->last_ip, options));
+	if (mysetdata->netmask == 0xFFFFFFFF)
+		printf("\n");
+	else
+		printf(" --netmask %d\n",
+		       mask_to_bits(mysetdata->netmask));
 }
 
-/* Print save for an IP */
-void saveips(const void *setdata)
+void saveips(struct set *set, void *data, size_t len, unsigned options)
 {
-	return;
+	struct ip_set_ipmap *mysetdata =
+	    (struct ip_set_ipmap *) set->settype->header;
+	ip_set_ip_t id;
+
+	DP("%s", set->name);
+	for (id = 0; id < mysetdata->sizeid; id++)
+		if (test_bit(id, data))
+			printf("-A %s %s\n",
+			       set->name,
+			       ip_tostring(mysetdata->first_ip 
+			       		   + id * mysetdata->hosts,
+					   options));
 }
 
 void usage(void)
@@ -357,24 +313,18 @@ static struct settype settype_ipmap = {
 	.create_opts = create_opts,
 
 	/* Add/del/test */
-	.req_size = sizeof(struct ip_set_req_ipmap),
+	.adt_size = sizeof(struct ip_set_req_ipmap),
 	.adt_parser = &adt_parser,
 
-	/* Get an IP address by id */
-	.getipbyid = &getipbyid,
-	.sizeid = &sizeid,
-
 	/* Printing */
+	.header_size = sizeof(struct ip_set_ipmap),
 	.initheader = &initheader,
-	.initmembers = &initmembers,
-	.killmembers = &killmembers,
 	.printheader = &printheader,
 	.printips = &printips_sorted,	/* We only have sorted version */
 	.printips_sorted = &printips_sorted,
 	.saveheader = &saveheader,
 	.saveips = &saveips,
 	.usage = &usage,
-	.hint = NULL,
 };
 
 void _init(void)
