@@ -204,7 +204,6 @@ void usage(void)
 
 static struct settype settype_portmap = {
 	.typename = SETTYPE_NAME,
-	.typecode = IPSET_TYPE_PORT,
 	.protocol_version = IP_SET_PROTOCOL_VERSION,
 
 	/* Create */
@@ -226,6 +225,11 @@ static struct settype settype_portmap = {
 	.printips_sorted = &printports_sorted,
 	.saveheader = &saveheader,
 	.saveips = &saveports,
+	
+	/* Bindings */
+	.bindip_tostring = &port_tostring,
+	.bindip_parse = &parse_port,
+
 	.usage = &usage,
 };
 

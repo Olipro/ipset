@@ -62,7 +62,7 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 		*flags |= OPT_CREATE_FROM;
 
 		DP("--from %x (%s)", mydata->from,
-		   ip_tostring(mydata->from, 0));
+		   ip_tostring_numeric(mydata->from));
 
 		break;
 
@@ -71,7 +71,8 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 
 		*flags |= OPT_CREATE_TO;
 
-		DP("--to %x (%s)", mydata->to, ip_tostring(mydata->to, 0));
+		DP("--to %x (%s)", mydata->to,
+		   ip_tostring_numeric(mydata->to));
 
 		break;
 
@@ -84,9 +85,9 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 		*flags |= OPT_CREATE_NETWORK;
 
 		DP("--network from %x (%s)", mydata->from,
-		   ip_tostring(mydata->from, 0));
+		   ip_tostring_numeric(mydata->from));
 		DP("--network to   %x (%s)", mydata->to,
-		   ip_tostring(mydata->to, 0));
+		   ip_tostring_numeric(mydata->to));
 
 		break;
 
@@ -152,15 +153,15 @@ void create_final(void *data, unsigned int flags)
 		if ((mydata->from & mydata->netmask) != mydata->from)
 			exit_error(PARAMETER_PROBLEM,
 				   "%s is not a network address according to netmask %d\n",
-				   ip_tostring(mydata->from, 0),
+				   ip_tostring_numeric(mydata->from),
 				   mask_to_bits(mydata->netmask));
 		
 		mask = range_to_mask(mydata->from, mydata->to, &mask_bits);
 		if (!mask)
 			exit_error(PARAMETER_PROBLEM,
 				   "%s-%s is not a full network\n",
-				   ip_tostring(mydata->from, 0),
-				   ip_tostring(mydata->to, 0));
+				   ip_tostring_numeric(mydata->from),
+				   ip_tostring_numeric(mydata->to));
 
 		netmask_bits = mask_to_bits(mydata->netmask);
 		
@@ -168,8 +169,8 @@ void create_final(void *data, unsigned int flags)
 			exit_error(PARAMETER_PROBLEM,
 				   "%d netmask specifies larger or equal netblock than %s-%s\n",
 				   netmask_bits,
-				   ip_tostring(mydata->from, 0),
-				   ip_tostring(mydata->to, 0));
+				   ip_tostring_numeric(mydata->from),
+				   ip_tostring_numeric(mydata->to));
 	}
 }
 
@@ -191,7 +192,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 	DP("ipmap: %p %p", optarg, data);
 
 	parse_ip(optarg, &mydata->ip);
-	DP("%s", ip_tostring(mydata->ip, 0));
+	DP("%s", ip_tostring_numeric(mydata->ip));
 
 	return mydata->ip;	
 }
@@ -302,7 +303,6 @@ void usage(void)
 
 static struct settype settype_ipmap = {
 	.typename = SETTYPE_NAME,
-	.typecode = IPSET_TYPE_IP,
 	.protocol_version = IP_SET_PROTOCOL_VERSION,
 
 	/* Create */
@@ -324,6 +324,11 @@ static struct settype settype_ipmap = {
 	.printips_sorted = &printips_sorted,
 	.saveheader = &saveheader,
 	.saveips = &saveips,
+	
+	/* Bindings */
+	.bindip_tostring = &ip_tostring,
+	.bindip_parse	= &parse_ip,
+
 	.usage = &usage,
 };
 

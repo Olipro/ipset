@@ -1,6 +1,15 @@
+2.1
+ - Lock debugging used with debugless lock definiton (Piotr Chytla and
+   others).
+ - Bindings were not properly filled out at listing (kernel)
+ - When listing sets from kernel, id was not added to the set structure
+   (ipset)
+ - nethash hash type added
+ - ipset manpage corrections (macipmap)
+
 2.0.1
- - Cut'n'paste bug at saving macipmap types fixed
-   Thanks to Vincent Bernat for the bugreport.
+ - Missing -fPIC in Makefile (Robert Iakobashvili)
+ - Cut'n'paste bug at saving macipmap types (Vincent Bernat).
 
 2.0
  - Chaining of sets are changed: child sets replaced by bindings
@@ -9,6 +18,7 @@
  - Save and restore functionality implemented
  - iphash type reworked: clashing resolved by double-hashing and by
    dynamically growing the set
+
 1.0
  - Renamed to ipset
  - Rewritten to support child pools

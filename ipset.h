@@ -87,7 +87,6 @@ struct settype {
 	struct settype *next;
 
 	char typename[IP_SET_MAXNAMELEN];
-	char typecode;
 
 	int protocol_version;
 
@@ -146,6 +145,12 @@ struct settype {
 	/* Print save for all IPs */
 	void (*saveips) (struct set *set, void *data, size_t len, unsigned options);
 
+	/* Conver a single IP (binding) to string */
+	char * (*bindip_tostring)(ip_set_ip_t ip, unsigned options);
+	
+	/* Parse an IP at restoring bindings. FIXME */
+	void (*bindip_parse) (const char *str, ip_set_ip_t * ip);
+
 	/* Print usage */
 	void (*usage) (void);
 
@@ -163,6 +168,7 @@ extern void settype_register(struct settype *settype);
 extern void exit_error(enum exittype status, char *msg, ...);
 
 extern char *ip_tostring(ip_set_ip_t ip, unsigned options);
+extern char *ip_tostring_numeric(ip_set_ip_t ip);
 extern void parse_ip(const char *str, ip_set_ip_t * ip);
 extern void parse_mask(const char *str, ip_set_ip_t * mask);
 extern void parse_ipandmask(const char *str, ip_set_ip_t * ip,

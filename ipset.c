@@ -491,6 +491,11 @@ char *ip_tostring(ip_set_ip_t ip, unsigned options)
 	return inet_ntoa(addr);
 }
 
+char *ip_tostring_numeric(ip_set_ip_t ip)
+{
+	return ip_tostring(ip, OPT_NUMERIC);
+}
+
 /* Fills the 'ip' with the parsed ip or host in host byte order */
 void parse_ip(const char *str, ip_set_ip_t * ip)
 {
@@ -770,7 +775,7 @@ static struct set *set_find_byid(ip_set_id_t id)
 		if (set_list[i] && set_list[i]->id == id) {
 			set = set_list[i];
 			break;
-	}
+		}
 			
 	if (set == NULL)
 	    	exit_error(PARAMETER_PROBLEM,
@@ -1007,6 +1012,7 @@ tryagain:
 		set = ipset_malloc(sizeof(struct set));
 		strcpy(set->name, name_list->name);
 		set->index = name_list->index;
+		set->id = name_list->id;
 		set->settype = settype_load(name_list->typename);
 		set_list[name_list->index] = set;
 		DP("loaded %s, type %s, index %u",
@@ -1028,7 +1034,6 @@ static size_t save_bindings(void *data, size_t offset, size_t len)
 	struct ip_set_hash_save *hash =
 		(struct ip_set_hash_save *) (data + offset);
 	struct set *set;
-	char * (*printip)(ip_set_ip_t ip, unsigned options);
 
 	DP("offset %u, len %u", offset, len);
 	if (offset + sizeof(struct ip_set_hash_save) > len)
@@ -1039,11 +1044,9 @@ static size_t save_bindings(void *data, size_t offset, size_t len)
 	if (!(set && set_list[hash->binding]))
 		exit_error(OTHER_PROBLEM,
 			   "Save binding failed, try again later.");
-	printip = set->settype->typecode == IPSET_TYPE_IP ?
-			ip_tostring : port_tostring;
 	printf("-B %s %s -b %s\n",
 		set->name,
-		printip(hash->ip, OPT_NUMERIC),
+		set->settype->bindip_tostring(hash->ip, OPT_NUMERIC),
 		set_list[hash->binding]->name);
 
 	return sizeof(struct ip_set_hash_save);
@@ -1579,10 +1582,8 @@ static void set_restore_bind(struct set *set,
 	DP("%s -> %s", adt, binding);
 	if (strcmp(adt, IPSET_TOKEN_DEFAULT) == 0)
 		hash_restore->ip = 0;
-	else if (set->settype->typecode == IPSET_TYPE_IP)
-		parse_ip(adt, &hash_restore->ip); 
 	else
-		parse_port(adt, &hash_restore->ip);
+		set->settype->bindip_parse(adt, &hash_restore->ip);
 	hash_restore->id = set->index;	    		   
 	hash_restore->binding = (set_find_byname(binding))->index;	
 	DP("id %u, ip %u, binding %u",
@@ -1647,8 +1648,7 @@ static size_t print_set(void *data, unsigned options)
 	printf("Bindings:\n");
 	offset += setlist->members_size;
 	print_bindings(data + offset, setlist->bindings_size, options,
-		       settype->typecode == IPSET_TYPE_IP ?
-		       ip_tostring : port_tostring);
+		       settype->bindip_tostring);
 
 	printf("\n");		/* One newline between sets */
 	

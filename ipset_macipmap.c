@@ -62,7 +62,7 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 		*flags |= OPT_CREATE_FROM;
 
 		DP("--from %x (%s)", mydata->from,
-		   ip_tostring(mydata->from, 0));
+		   ip_tostring_numeric(mydata->from));
 
 		break;
 
@@ -71,7 +71,8 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 
 		*flags |= OPT_CREATE_TO;
 
-		DP("--to %x (%s)", mydata->to, ip_tostring(mydata->to, 0));
+		DP("--to %x (%s)", mydata->to,
+		   ip_tostring_numeric(mydata->to));
 
 		break;
 
@@ -84,9 +85,9 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 		*flags |= OPT_CREATE_NETWORK;
 
 		DP("--network from %x (%s)", mydata->from,
-		   ip_tostring(mydata->from, 0));
+		   ip_tostring_numeric(mydata->from));
 		DP("--network to   %x (%s)", mydata->to,
-		   ip_tostring(mydata->to, 0));
+		   ip_tostring_numeric(mydata->to));
 
 		break;
 
@@ -192,6 +193,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 	else
 		memset(mydata->ethernet, 0, ETH_ALEN);	
 
+	free(saved);
 	return mydata->ip;	
 }
 
@@ -302,7 +304,6 @@ void usage(void)
 
 static struct settype settype_macipmap = {
 	.typename = SETTYPE_NAME,
-	.typecode = IPSET_TYPE_IP,
 	.protocol_version = IP_SET_PROTOCOL_VERSION,
 
 	/* Create */
@@ -324,6 +325,11 @@ static struct settype settype_macipmap = {
 	.printips_sorted = &printips_sorted,
 	.saveheader = &saveheader,
 	.saveips = &saveips,
+
+	/* Bindings */
+	.bindip_tostring = &ip_tostring,
+	.bindip_parse = &parse_ip,
+
 	.usage = &usage,
 };
 
