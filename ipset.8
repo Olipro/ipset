@@ -245,6 +245,18 @@ When the optional
 .B "--matchunset"
 parameter specified, IP addresses which could be stored 
 in the set but not set yet, will always match.
+.P
+Please note, the 
+.I
+set
+and
+.I
+SET
+netfilter kernel modules
+.B
+always
+use the source MAC address from the packet to match, add or delete
+entries from a macipmap type of set.
 .SS portmap
 The portmap set type uses a memory range, where each bit represents
 one port. A portmap set type can store up to 65535 ports.
@@ -288,9 +300,62 @@ When the optional
 .B "--netmask"
 parameter specified, network addresses will be 
 stored in the set instead of IP addresses.
+.P
+.SS nethash
+The nethash set type uses a hash to store different size of
+network addresses. The
+.I
+IP
+"address" used in the ipset command must be in the form
+.I
+IP-address/cidr-size
+where the CIDR block size must be in the inclusive range of 1-31.
+In order to avoid clashes in the hash, 
+double-hashing and, as a last resort, dynamic growing of the hash performed.
+.P
+Options to use when creating an iphash set:
+.TP
+.BR "--hashsize " hashsize
+The initial hash size (default 1024)
+.TP
+.BR "--probes " probes
+How many times try to resolve clashing at adding an IP to the hash 
+by double-hashing (default 2).
+.TP
+.BR "--resize " percent
+Increase the hash size by this many percent (default 50) when adding
+an IP to the hash could not be performed after
+.P
+An IP address will be in a nethash type of set if it is in any of the
+netblocks added to the set, where the matching start from the smallest
+size of netblock to the biggest ones. When adding/deleting IP addresses
+to a nethash set by the
+.I
+SET
+netfilter kernel module, it will be added/deleted by the smallest
+netblock size which can be found in the set.
+.P
+.SS iptree
+The iptree set type uses a tree to store IP addresses, optionally 
+with timeout values.
+.P
+Options to use when creating an iptree set:
+.TP
+.BR "--timeout " value
+The timeout value for the entries in seconds (default 0)
+.P
+When adding an IP address to a set, one may add it with a specific timeout 
+value using the syntax 
+.I IP%timeout-value.
 .SH GENERAL RESTRICTIONS
 Setnames starting with colon (:) cannot be defined. Zero valued set 
 entries cannot be used.
+.SH COMMENTS
+If you want to store same size subnets from a given network
+(say /24 blocks from a /8 network), use the ipmap set type.
+If you want to store random same size networks (say random /24 blocks), 
+use the iphash set type. If you have got random size of netblocks, 
+use nethash.
 .SH DIAGNOSTICS
 Various error messages are printed to standard error.  The exit code
 is 0 for correct functioning.  Errors which appear to be caused by

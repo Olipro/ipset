@@ -6,6 +6,7 @@
  - More careful resizing by avoiding locking completely
  - stdin stored internally in a temporary file, so we can feed 'ipset -R'
    from a pipe
+ - iptree maptype added
 
 2.1
  - Lock debugging used with debugless lock definiton (Piotr Chytla and
@@ -13,12 +14,14 @@
  - Bindings were not properly filled out at listing (kernel)
  - When listing sets from kernel, id was not added to the set structure
    (ipset)
- - nethash hash type added
+ - nethash maptype added
  - ipset manpage corrections (macipmap)
 
 2.0.1
  - Missing -fPIC in Makefile (Robert Iakobashvili)
  - Cut'n'paste bug at saving macipmap types (Vincent Bernat).
+ - Bug in printing/saving SET targets reported and fixed by Michal
+   Pokrywka
 
 2.0
  - Chaining of sets are changed: child sets replaced by bindings
