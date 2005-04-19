@@ -1,4 +1,10 @@
-2.1.1
+2.2.1
+ - Magic number in ip_set_nethash.h was mistyped (bug reported by Rob
+   Carlson)
+ - ipset can now test IP addresses in nethash type of sets (i.e. addresses
+   in netblocks added to the set)
+
+2.2.0
  - Locking bug in ip_set_nethash.c (Clifford Wolf and Rob Carlson)
  - Makefile contained an unnecessary variable in IPSET_LIB_DIR (Clifford
    Wolf)

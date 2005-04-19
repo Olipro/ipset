@@ -136,13 +136,16 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 
 	ptr = strsep(&tmp, "/");
 	
-	if (tmp == NULL)
-		exit_error(PARAMETER_PROBLEM,
-			   "Missing cidr from `%s'", optarg);
-
-	if (string_to_number(tmp, 1, 31, &cidr))
-		exit_error(PARAMETER_PROBLEM,
-			   "Out of range cidr `%s' specified", optarg);
+	if (tmp == NULL) {
+		if (cmd == CMD_TEST)
+			cidr = 32;
+		else
+			exit_error(PARAMETER_PROBLEM,
+				   "Missing cidr from `%s'", optarg);
+	} else
+		if (string_to_number(tmp, 1, 31, &cidr))
+			exit_error(PARAMETER_PROBLEM,
+				   "Out of range cidr `%s' specified", optarg);
 	
 	mydata->cidr = cidr;
 	parse_ip(ptr, &mydata->ip);
