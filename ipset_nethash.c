@@ -296,7 +296,7 @@ static char * net_tostring(ip_set_ip_t ip, unsigned options)
 static void parse_net(const char *str, ip_set_ip_t *ip)
 {
 	char *saved = strdup(str);
-	char *ptr, *tmp;
+	char *ptr, *tmp = saved;
 	ip_set_ip_t cidr;
 
 	ptr = strsep(&tmp, "/");
