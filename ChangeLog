@@ -1,3 +1,9 @@
+2.2.2
+ - Jiffies rollover bug in ip_set_iptree reported and fixed by Rob Nielsen
+ - Compiler warning in the non-SMP case fixed (Marcus Sundberg)
+ - slab cache names shrunk in order to be compatible with 2.4.* (Marcus
+   Sundberg)
+
 2.2.1
  - Magic number in ip_set_nethash.h was mistyped (bug reported by Rob
    Carlson)
