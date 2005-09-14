@@ -1,3 +1,10 @@
+2.2.3
+ - memory allocation bug in iphash and nethash in connection with the SET
+   target was fixed (bug reported by Nikolai Malykh)
+ - lockhelp.h was removed from the 2.6.13 kernel tree, ip_set.c is
+   updated accordingly (Cardoso Didier, Samir Bellabes)
+ - manpage is updated to clearly state the command order in restore mode
+
 2.2.2
  - Jiffies rollover bug in ip_set_iptree reported and fixed by Rob Nielsen
  - Compiler warning in the non-SMP case fixed (Marcus Sundberg)
