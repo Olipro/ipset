@@ -99,12 +99,12 @@ void create_final(void *data, unsigned int flags)
 
 	if (mydata->from > mydata->to)
 		exit_error(PARAMETER_PROBLEM,
-			   "From can't be lower than to.\n", MAX_RANGE);
+			   "From can't be lower than to.\n");
 
 	if (mydata->to - mydata->from > MAX_RANGE)
 		exit_error(PARAMETER_PROBLEM,
-			   "Range to large. Max is %d ports in range\n",
-			   MAX_RANGE);
+			   "Range too large. Max is %d ports in range\n",
+			   MAX_RANGE+1);
 }
 
 /* Create commandline options */
@@ -123,7 +123,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 	parse_port(optarg, &mydata->port);
 	DP("%s", port_tostring(mydata->port, 0));
 
-	return mydata->port;	
+	return 1;	
 }
 
 /*

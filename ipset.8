@@ -200,7 +200,7 @@ possible errors.
 ipset supports the following set types:
 .SS ipmap
 The ipmap set type uses a memory range, where each bit represents
-one IP address. An ipmap set can store up to 65535 (B-class network)
+one IP address. An ipmap set can store up to 65536 (B-class network)
 IP addresses. The ipmap set type is very fast and memory cheap, great
 for use when one want to match certain IPs in a range. Using the
 .B "--netmask"
@@ -228,7 +228,7 @@ must be a network address.
 .SS macipmap
 The macipmap set type uses a memory range, where each 8 bytes
 represents one IP and a MAC addresses. A macipmap set type can store
-up to 65535 (B-class network) IP addresses with MAC.
+up to 65536 (B-class network) IP addresses with MAC.
 When adding an entry to a macipmap set, you must specify the entry as
 .I IP%MAC.
 When deleting or testing macipmap entries, the
@@ -264,7 +264,7 @@ use the source MAC address from the packet to match, add or delete
 entries from a macipmap type of set.
 .SS portmap
 The portmap set type uses a memory range, where each bit represents
-one port. A portmap set type can store up to 65535 ports.
+one port. A portmap set type can store up to 65536 ports.
 The portmap set type is very fast and memory cheap.
 .P
 Options to use when creating an portmap set:
@@ -325,7 +325,7 @@ The initial hash size (default 1024)
 .TP
 .BR "--probes " probes
 How many times try to resolve clashing at adding an IP to the hash 
-by double-hashing (default 2).
+by double-hashing (default 4).
 .TP
 .BR "--resize " percent
 Increase the hash size by this many percent (default 50) when adding
@@ -354,7 +354,7 @@ value using the syntax
 .I IP%timeout-value.
 .SH GENERAL RESTRICTIONS
 Setnames starting with colon (:) cannot be defined. Zero valued set 
-entries cannot be used.
+entries cannot be used with hash type of sets.
 .SH COMMENTS
 If you want to store same size subnets from a given network
 (say /24 blocks from a /8 network), use the ipmap set type.

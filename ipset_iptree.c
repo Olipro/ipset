@@ -93,7 +93,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 		mydata->timeout = 0;	
 
 	free(saved);
-	return mydata->ip;	
+	return 1;	
 }
 
 /*

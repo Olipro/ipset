@@ -80,14 +80,18 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 		parse_ipandmask(optarg, &mydata->from, &mydata->to);
 
 		/* Make to the last of from + mask */
-		mydata->to = mydata->from | ~(mydata->to);
-
+		if (mydata->to)
+			mydata->to = mydata->from | ~(mydata->to);
+		else {
+			mydata->from = 0x00000000;
+			mydata->to = 0xFFFFFFFF;
+		}
 		*flags |= OPT_CREATE_NETWORK;
 
-		DP("--network from %x (%s)", mydata->from,
-		   ip_tostring_numeric(mydata->from));
-		DP("--network to   %x (%s)", mydata->to,
-		   ip_tostring_numeric(mydata->to));
+		DP("--network from %x (%s)", 
+		   mydata->from, ip_tostring_numeric(mydata->from));
+		DP("--network to %x (%s)", 
+		   mydata->to, ip_tostring_numeric(mydata->to));
 
 		break;
 
@@ -112,11 +116,15 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 	return 1;
 }
 
+#define ERRSTRLEN	256
+
 /* Final check; exit if not ok. */
 void create_final(void *data, unsigned int flags)
 {
 	struct ip_set_req_ipmap_create *mydata =
 	    (struct ip_set_req_ipmap_create *) data;
+	ip_set_ip_t range;
+	char errstr[ERRSTRLEN];
 
 	if (flags == 0)
 		exit_error(PARAMETER_PROBLEM,
@@ -135,17 +143,14 @@ void create_final(void *data, unsigned int flags)
 				   "Need to specify both --from and --to\n");
 	}
 
-	DP("from : %x to: %x  diff: %d", mydata->from, mydata->to,
+	DP("from : %x to: %x diff: %x", 
+	   mydata->from, mydata->to,
 	   mydata->to - mydata->from);
 
 	if (mydata->from > mydata->to)
 		exit_error(PARAMETER_PROBLEM,
-			   "From can't be lower than to.\n", MAX_RANGE);
+			   "From can't be lower than to.\n");
 
-	if (mydata->to - mydata->from > MAX_RANGE)
-		exit_error(PARAMETER_PROBLEM,
-			   "Range to large. Max is %d IPs in range\n",
-			   MAX_RANGE);
 	if (flags & OPT_CREATE_NETMASK) {
 		unsigned int mask_bits, netmask_bits;
 		ip_set_ip_t mask;
@@ -157,21 +162,37 @@ void create_final(void *data, unsigned int flags)
 				   mask_to_bits(mydata->netmask));
 		
 		mask = range_to_mask(mydata->from, mydata->to, &mask_bits);
-		if (!mask)
+		if (!mask
+		    && (mydata->from || mydata->to != 0xFFFFFFFF)) {
+			strncpy(errstr, ip_tostring_numeric(mydata->from),
+				ERRSTRLEN-2);
+			errstr[ERRSTRLEN-1] = '\0';
 			exit_error(PARAMETER_PROBLEM,
-				   "%s-%s is not a full network\n",
-				   ip_tostring_numeric(mydata->from),
-				   ip_tostring_numeric(mydata->to));
-
+				   "%s-%s is not a full network (%x)\n",
+				   errstr,
+				   ip_tostring_numeric(mydata->to), mask);
+		}
 		netmask_bits = mask_to_bits(mydata->netmask);
 		
-		if (netmask_bits <= mask_bits)
+		if (netmask_bits <= mask_bits) {
+			strncpy(errstr, ip_tostring_numeric(mydata->from),
+				ERRSTRLEN-2);
+			errstr[ERRSTRLEN-1] = '\0';
 			exit_error(PARAMETER_PROBLEM,
-				   "%d netmask specifies larger or equal netblock than %s-%s\n",
+				   "%d netmask specifies larger or equal netblock than %s-%s (%d)\n",
 				   netmask_bits,
-				   ip_tostring_numeric(mydata->from),
-				   ip_tostring_numeric(mydata->to));
+				   errstr,
+				   ip_tostring_numeric(mydata->to),
+				   mask_bits);
+		}
+		range = (1<<(netmask_bits - mask_bits)) - 1;
+	} else {
+		range = mydata->to - mydata->from;
 	}
+	if (range > MAX_RANGE)
+		exit_error(PARAMETER_PROBLEM,
+			   "Range to large. Max is %d IPs in range\n",
+			   MAX_RANGE+1);
 }
 
 /* Create commandline options */
@@ -194,7 +215,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 	parse_ip(optarg, &mydata->ip);
 	DP("%s", ip_tostring_numeric(mydata->ip));
 
-	return mydata->ip;	
+	return 1;	
 }
 
 /*

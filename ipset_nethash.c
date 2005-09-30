@@ -49,7 +49,7 @@ void create_init(void *data)
 
 	/* Default create parameters */	
 	mydata->hashsize = 1024;
-	mydata->probes = 2;
+	mydata->probes = 4;
 	mydata->resize = 50;
 }
 
@@ -149,6 +149,9 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 	
 	mydata->cidr = cidr;
 	parse_ip(ptr, &mydata->ip);
+	if (!mydata->ip)
+		exit_error(PARAMETER_PROBLEM,
+			  "Zero valued IP address `%s' specified", ptr);
 	free(saved);
 
 	return mydata->ip;	

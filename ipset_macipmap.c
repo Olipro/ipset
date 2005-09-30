@@ -84,10 +84,10 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 
 		*flags |= OPT_CREATE_NETWORK;
 
-		DP("--network from %x (%s)", mydata->from,
-		   ip_tostring_numeric(mydata->from));
-		DP("--network to   %x (%s)", mydata->to,
-		   ip_tostring_numeric(mydata->to));
+		DP("--network from %x (%s)", 
+		   mydata->from, ip_tostring_numeric(mydata->from));
+		DP("--network to %x (%s)", 
+		   mydata->to, ip_tostring_numeric(mydata->to));
 
 		break;
 
@@ -137,12 +137,12 @@ void create_final(void *data, unsigned int flags)
 
 	if (mydata->from > mydata->to)
 		exit_error(PARAMETER_PROBLEM,
-			   "From can't be lower than to.\n", MAX_RANGE);
+			   "From can't be lower than to.\n");
 
 	if (mydata->to - mydata->from > MAX_RANGE)
 		exit_error(PARAMETER_PROBLEM,
-			   "Range to large. Max is %d IPs in range\n",
-			   MAX_RANGE);
+			   "Range too large. Max is %d IPs in range\n",
+			   MAX_RANGE+1);
 }
 
 /* Create commandline options */
@@ -194,7 +194,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 		memset(mydata->ethernet, 0, ETH_ALEN);	
 
 	free(saved);
-	return mydata->ip;	
+	return 1;	
 }
 
 /*

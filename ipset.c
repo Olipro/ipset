@@ -483,16 +483,15 @@ static char *ip_tonetwork(const struct in_addr *addr)
 char *ip_tostring(ip_set_ip_t ip, unsigned options)
 {
 	struct in_addr addr;
-	char *name;
-
 	addr.s_addr = htonl(ip);
 
 	if (!(options & OPT_NUMERIC)) {
+		char *name;
 		if ((name = ip_tohost(&addr)) != NULL ||
 		    (name = ip_tonetwork(&addr)) != NULL)
 			return name;
 	}
-
+	
 	return inet_ntoa(addr);
 }
 
@@ -511,9 +510,6 @@ void parse_ip(const char *str, ip_set_ip_t * ip)
 	
 	if (inet_aton(str, &addr) != 0) {
 		*ip = ntohl(addr.s_addr);	/* We want host byte order */
-		if (!*ip)
-			exit_error(PARAMETER_PROBLEM,
-				   "Zero valued IP address `%s' specified", str);
 		return;
 	}
 
@@ -530,10 +526,6 @@ void parse_ip(const char *str, ip_set_ip_t * ip)
 				   "Please specify one.", str);
 
 		*ip = ntohl(((struct in_addr *) host->h_addr_list[0])->s_addr);
-		if (!*ip)
-			exit_error(PARAMETER_PROBLEM,
-				   "Zero valued IP address `%s' specified",
-				   str);
 		return;
 	}
 
@@ -563,7 +555,7 @@ void parse_mask(const char *str, ip_set_ip_t * mask)
 
 	DP("bits: %d", bits);
 
-	*mask = 0xFFFFFFFF << (32 - bits);
+	*mask = bits != 0 ? 0xFFFFFFFF << (32 - bits) : 0L;
 }
 
 /* Combines parse_ip and parse_mask */
@@ -589,13 +581,13 @@ parse_ipandmask(const char *str, ip_set_ip_t * ip, ip_set_ip_t * mask)
 		parse_ip(buf, ip);
 
 	DP("%s ip: %08X (%s) mask: %08X",
-	   str, *ip, ip_tostring(*ip, 0), *mask);
+	   str, *ip, ip_tostring_numeric(*ip), *mask);
 
 	/* Apply the netmask */
 	*ip &= *mask;
 
 	DP("%s ip: %08X (%s) mask: %08X",
-	   str, *ip, ip_tostring(*ip, 0), *mask);
+	   str, *ip, ip_tostring_numeric(*ip), *mask);
 }
 
 /* Return a string representation of a port
@@ -654,11 +646,7 @@ void parse_port(const char *str, ip_set_ip_t *port)
 	if ((string_to_number(str, 0, 65535, port) != 0)
 	      && (string_to_port(str, port) != 0))
 		exit_error(PARAMETER_PROBLEM, 
-		           "Invalid TCP port `%s' specified", str);
-	
-	if (!*port)
-		exit_error(PARAMETER_PROBLEM, 
-		           "Zero valued port `%s' specified", str);
+		           "Invalid TCP port `%s' specified", str);	
 }
 
 /* 

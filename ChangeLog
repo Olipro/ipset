@@ -1,3 +1,10 @@
+2.2.4
+ - half-fixed memory allocation bug in iphash and nethash finally
+   completely fixed (bug reported by Nikolai Malykh)
+ - restrictions to enter zero-valued entries into all non-hash type sets
+   were removed
+ - Too strict check on the set size of ipmap type was corrected 
+
 2.2.3
  - memory allocation bug in iphash and nethash in connection with the SET
    target was fixed (bug reported by Nikolai Malykh)

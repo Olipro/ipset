@@ -152,6 +152,9 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 	    (struct ip_set_req_iphash *) data;
 
 	parse_ip(optarg, &mydata->ip);
+	if (!mydata->ip)
+		exit_error(PARAMETER_PROBLEM,
+			   "Zero valued IP address `%s' specified", optarg);
 
 	return mydata->ip;	
 };
