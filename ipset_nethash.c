@@ -291,7 +291,7 @@ void saveips(struct set *set, void *data, size_t len, unsigned options)
 	}
 }
 
-static char * net_tostring(ip_set_ip_t ip, unsigned options)
+static char * net_tostring(struct set *set, ip_set_ip_t ip, unsigned options)
 {
 	return unpack_ip_tostring(ip, options);
 }

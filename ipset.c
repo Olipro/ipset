@@ -495,6 +495,10 @@ char *ip_tostring(ip_set_ip_t ip, unsigned options)
 	return inet_ntoa(addr);
 }
 
+char *binding_ip_tostring(struct set *set, ip_set_ip_t ip, unsigned options)
+{
+	return ip_tostring(ip, options);
+}
 char *ip_tostring_numeric(ip_set_ip_t ip)
 {
 	return ip_tostring(ip, OPT_NUMERIC);
@@ -1039,7 +1043,7 @@ static size_t save_bindings(void *data, size_t offset, size_t len)
 			   "Save binding failed, try again later.");
 	printf("-B %s %s -b %s\n",
 		set->name,
-		set->settype->bindip_tostring(hash->ip, OPT_NUMERIC),
+		set->settype->bindip_tostring(set, hash->ip, OPT_NUMERIC),
 		set_list[hash->binding]->name);
 
 	return sizeof(struct ip_set_hash_save);
@@ -1624,8 +1628,10 @@ static void set_restore_bind(struct set *set,
  * Print operation
  */
 
-static void print_bindings(void *data, size_t size, unsigned options,
-			   char * (*printip)(ip_set_ip_t ip, unsigned options))
+static void print_bindings(struct set *set,
+			   void *data, size_t size, unsigned options,
+			   char * (*printip)(struct set *set, 
+					     ip_set_ip_t ip, unsigned options))
 {
 	size_t offset = 0;
 	struct ip_set_hash_list *hash;
@@ -1633,7 +1639,7 @@ static void print_bindings(void *data, size_t size, unsigned options,
 	while (offset < size) {
 		hash = (struct ip_set_hash_list *) (data + offset);
 		printf("%s -> %s\n", 
-			printip(hash->ip, options),
+			printip(set, hash->ip, options),
 			set_list[hash->binding]->name);
 		offset += sizeof(struct ip_set_hash_list);
 	}
@@ -1676,7 +1682,8 @@ static size_t print_set(void *data, unsigned options)
 	/* Print bindings */
 	printf("Bindings:\n");
 	offset += setlist->members_size;
-	print_bindings(data + offset, setlist->bindings_size, options,
+	print_bindings(set,
+		       data + offset, setlist->bindings_size, options,
 		       settype->bindip_tostring);
 
 	printf("\n");		/* One newline between sets */

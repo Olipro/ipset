@@ -41,15 +41,15 @@ port numbers or additional informations besides IP addresses: the word IP
 means a general term here. See the set type definitions below.
 .P
 Any entry in a set can be bound to another set, which forms a relationship
-between a set element and the set it is bound to. The sets may have a 
-default binding, which is valid for every set element for which there is
-no binding defined at all. There is no need for the entry to be
-added to the set for a binding to be defined for it.
+between a set element and the set it is bound to. In order to define a
+binding it is not required that the entry be already added to the set. 
+The sets may have a default binding, which is valid for every set element 
+for which there is no binding defined at all.
 .P
 IP set bindings pointing to sets and iptables matches and targets 
 referring to sets creates references, which protects the given sets in 
-the kernel. A set cannot be removed (destroyed) while there is a reference 
-pointing to it.
+the kernel. A set cannot be removed (destroyed) while there is a single
+reference pointing to it.
 .SH OPTIONS
 The options that are recognized by
 .B ipset
@@ -62,7 +62,7 @@ need to use only enough letters to ensure that
 .B ipset
 can differentiate it from all other options.
 .TP
-.BI "-N, --create " "\fIsetname\fP type type-options"
+.BI "-N, --create " "\fIsetname\fP type type-specific-options"
 Create a set identified with setname and specified type. 
 Type-specific options must be supplied.
 .TP
@@ -93,8 +93,8 @@ iptables
 rules or
 .B
 ipset
-bindings pointing to from-setname will point to to-setname
-and vice versa. Both sets must exist.
+bindings pointing to the content of from-setname will point to 
+the content of to-setname and vice versa. Both sets must exist.
 .TP
 .BI "-L, --list " "[\fIsetname\fP]"
 List the entries and bindings for the specified set, or for
@@ -107,7 +107,7 @@ option can be used to suppress name lookups and generate numeric
 output. When the
 .B "-s, --sorted"
 option is given, the entries are listed sorted (if the given set
-supports it).
+type supports the operation).
 .TP
 .BI "-S, --save " "[\fIsetname\fP]"
 Save the given set, or all sets if none or the keyword
@@ -122,7 +122,8 @@ can be fed from stdin.
 When generating a session file please note that the supported commands
 (create set, add element, bind) must appear in a strict order: first create
 the set, then add all elements. Then create the next set, add all its elements
-and so on. Finally you can append all binding commands. 
+and so on. Finally you can list all binding commands. Also, it is a restore
+operation, so the sets being restored must not exist.
 .TP
 .BI "-A, --add " "\fIsetname\fP \fIIP\fP"
 Add an IP to a set.
@@ -275,9 +276,9 @@ Options to use when creating an portmap set:
 Create a portmap set from the specified range.
 .SS iphash
 The iphash set type uses a hash to store IP addresses.
-In order to avoid clashes in the hash, double-hashing and, as a last
+In order to avoid clashes in the hash double-hashing, and as a last
 resort, dynamic growing of the hash performed. The iphash set type is
-fast and great for use to store random addresses. By supplyig the
+great to store random addresses. By supplyig the
 .B "--netmask"
 option with a CIDR netmask value between 0-32 at creating the set,
 you will be able to store and match network addresses instead: i.e 
@@ -306,17 +307,27 @@ When the optional
 parameter specified, network addresses will be 
 stored in the set instead of IP addresses.
 .P
+Sets created by zero valued resize parameter won't be resized at all.
+The lookup time in an iphash type of set approximately linearly grows with
+the value of the 
+.B
+probes
+parameter. At the same time higher 
+.B
+probes
+values result a better utilized hash while smaller values 
+produce a larger, sparse hash.
 .SS nethash
 The nethash set type uses a hash to store different size of
 network addresses. The
 .I
 IP
-"address" used in the ipset command must be in the form
+"address" used in the ipset commands must be in the form
 .I
 IP-address/cidr-size
 where the CIDR block size must be in the inclusive range of 1-31.
-In order to avoid clashes in the hash, 
-double-hashing and, as a last resort, dynamic growing of the hash performed.
+In order to avoid clashes in the hash 
+double-hashing, and as a last resort, dynamic growing of the hash performed.
 .P
 Options to use when creating an nethash set:
 .TP
@@ -332,14 +343,66 @@ Increase the hash size by this many percent (default 50) when adding
 an IP to the hash could not be performed after
 .P
 An IP address will be in a nethash type of set if it is in any of the
-netblocks added to the set, where the matching start from the smallest
-size of netblock to the biggest ones. When adding/deleting IP addresses
+netblocks added to the set and the matching always start from the smallest
+size of netblock (most specific netmask) to the biggest ones (least
+specific netmasks). When adding/deleting IP addresses
 to a nethash set by the
 .I
 SET
 netfilter kernel module, it will be added/deleted by the smallest
 netblock size which can be found in the set.
 .P
+The lookup time in a nethash type of set is approximately linearly 
+grows with the times of the
+.B
+probes
+parameter and the number of different mask parameters in the hash.
+Otherwise the same speed and memory efficiency comments applies here 
+as at the iphash type.
+.SS ipporthash
+The ipporthash set type uses a hash to store IP address and port pairs.
+In order to avoid clashes in the hash double-hashing, and as a last
+resort, dynamic growing of the hash performed. An ipporthash set can 
+store up to 65536 (B-class network) IP addresses with all possible port
+values. When adding, deleting and testing values in an ipporthash type of
+set, the entries must be specified as
+.B
+"IP%port".
+.P
+The ipporthash types of sets evaluates two src/dst parameters of the 
+.I
+set
+match and 
+.I
+SET
+target. 
+.P
+Options to use when creating an ipporthash set:
+.TP
+.BR "--from " from-IP
+.TP
+.BR "--to " to-IP
+Create an ipporthash set from the specified range.
+.TP
+.BR "--network " IP/mask
+Create an ipporthash set from the specified network.
+.TP
+.BR "--hashsize " hashsize
+The initial hash size (default 1024)
+.TP
+.BR "--probes " probes
+How many times try to resolve clashing at adding an IP to the hash 
+by double-hashing (default 8).
+.TP
+.BR "--resize " percent
+Increase the hash size by this many percent (default 50) when adding
+an IP to the hash could not be performed after
+.B
+probes
+number of double-hashing.
+.P
+The same resizing, speed and memory efficiency comments applies here 
+as at the iphash type.
 .SS iptree
 The iptree set type uses a tree to store IP addresses, optionally 
 with timeout values.

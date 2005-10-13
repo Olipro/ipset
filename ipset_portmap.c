@@ -165,6 +165,11 @@ void printports_sorted(struct set *set, void *data, size_t len, unsigned options
 	}
 }
 
+char * binding_port_tostring(struct set *set, ip_set_ip_t ip, unsigned options)
+{
+	return port_tostring(ip, options);
+}
+
 void saveheader(struct set *set, unsigned options)
 {
 	struct ip_set_portmap *mysetdata =
@@ -227,7 +232,7 @@ static struct settype settype_portmap = {
 	.saveips = &saveports,
 	
 	/* Bindings */
-	.bindip_tostring = &port_tostring,
+	.bindip_tostring = &binding_port_tostring,
 	.bindip_parse = &parse_port,
 
 	.usage = &usage,

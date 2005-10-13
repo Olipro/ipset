@@ -327,7 +327,7 @@ static struct settype settype_macipmap = {
 	.saveips = &saveips,
 
 	/* Bindings */
-	.bindip_tostring = &ip_tostring,
+	.bindip_tostring = &binding_ip_tostring,
 	.bindip_parse = &parse_ip,
 
 	.usage = &usage,

@@ -8,7 +8,7 @@ ifndef KERNEL_DIR
 KERNEL_DIR=/usr/src/linux
 endif
 
-IPSET_VERSION:=2.2.4
+IPSET_VERSION:=2.2.5
 
 PREFIX:=/usr/local
 LIBDIR:=$(PREFIX)/lib
@@ -23,7 +23,7 @@ RELEASE_DIR:=/tmp
 COPT_FLAGS:=-O2
 CFLAGS:=$(COPT_FLAGS) -Wall -Wunused -I$(KERNEL_DIR)/include -I. # -g -DIPSET_DEBUG #-pg # -DIPTC_DEBUG
 SH_CFLAGS:=$(CFLAGS) -fPIC
-SETTYPES:=ipmap portmap macipmap iphash nethash iptree
+SETTYPES:=ipmap portmap macipmap iphash nethash iptree ipporthash
 
 PROGRAMS=ipset
 SHARED_LIBS=$(foreach T, $(SETTYPES),libipset_$(T).so)
