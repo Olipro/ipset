@@ -1,8 +1,16 @@
+2.2.6
+ - memory allocation in iptree is changed to GFP_ATOMIC because
+   we hold a lock (bug reported by Radek Hladik)
+ - compatibility fix: __nocast is not defined in all 2.6 branches
+   (problem reported by Ming-Ching Tiew)
+ - manpage corrections
+
 2.2.5
  - garbage collector of iptree type of sets is fixed: flushing
    sets/removing kernel module could corrupt the timer
  - new ipporthash type added
  - manpage fixes and corrections
+
 2.2.4
  - half-fixed memory allocation bug in iphash and nethash finally
    completely fixed (bug reported by Nikolai Malykh)

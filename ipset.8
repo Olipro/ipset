@@ -412,8 +412,10 @@ Options to use when creating an iptree set:
 .BR "--timeout " value
 The timeout value for the entries in seconds (default 0)
 .P
-When adding an IP address to a set, one may add it with a specific timeout 
-value using the syntax 
+If a set was created with a nonzero valued 
+.B "--timeout"
+parameter then one may add IP addresses to the set with a specific 
+timeout value using the syntax 
 .I IP%timeout-value.
 .SH GENERAL RESTRICTIONS
 Setnames starting with colon (:) cannot be defined. Zero valued set 
