@@ -130,7 +130,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 {
 	struct ip_set_req_nethash *mydata =
 	    (struct ip_set_req_nethash *) data;
-	char *saved = strdup(optarg);
+	char *saved = ipset_strdup(optarg);
 	char *ptr, *tmp = saved;
 	ip_set_ip_t cidr;
 
@@ -249,7 +249,7 @@ static char * unpack_ip_tostring(ip_set_ip_t ip, unsigned options)
 		((unsigned char *)&ip)[3],
 		b);
 
-	DP("%s %s", ip_tostring(htonl(ip), options), buf);
+	DP("%s %s", ip_tostring(ntohl(ip), options), buf);
 	return buf;
 }
 

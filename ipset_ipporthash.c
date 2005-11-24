@@ -38,7 +38,7 @@
 #define OPT_CREATE_RESIZE	0x04U
 #define OPT_CREATE_NETWORK	0x08U
 #define OPT_CREATE_FROM		0x10U
-#define OPT_CREATE_TO		0x10U
+#define OPT_CREATE_TO		0x20U
 
 /* Initialize the create. */
 void create_init(void *data)
@@ -156,21 +156,20 @@ void create_final(void *data, unsigned int flags)
 	   mydata->hashsize, mydata->probes, mydata->resize);
 #endif
 
-	if (flags == 0)
-		exit_error(PARAMETER_PROBLEM,
-			   "Need to specify --from and --to, or --network\n");
-
 	if (flags & OPT_CREATE_NETWORK) {
 		/* --network */
 		if ((flags & OPT_CREATE_FROM) || (flags & OPT_CREATE_TO))
 			exit_error(PARAMETER_PROBLEM,
 				   "Can't specify --from or --to with --network\n");
-	} else {
+	} else if (flags & (OPT_CREATE_FROM | OPT_CREATE_TO)) {
 		/* --from --to */
-		if ((flags & OPT_CREATE_FROM) == 0
-		    || (flags & OPT_CREATE_TO) == 0)
+		if (!(flags & OPT_CREATE_FROM) || !(flags & OPT_CREATE_TO))
 			exit_error(PARAMETER_PROBLEM,
 				   "Need to specify both --from and --to\n");
+	} else {
+		exit_error(PARAMETER_PROBLEM,
+			   "Need to specify --from and --to, or --network\n");
+
 	}
 
 	DP("from : %x to: %x diff: %x", 
@@ -179,7 +178,7 @@ void create_final(void *data, unsigned int flags)
 
 	if (mydata->from > mydata->to)
 		exit_error(PARAMETER_PROBLEM,
-			   "From can't be lower than to.\n");
+			   "From can't be higher than to.\n");
 
 	if (mydata->to - mydata->from > MAX_RANGE)
 		exit_error(PARAMETER_PROBLEM,
@@ -203,7 +202,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 {
 	struct ip_set_req_ipporthash *mydata =
 	    (struct ip_set_req_ipporthash *) data;
-	char *saved = strdup(optarg);
+	char *saved = ipset_strdup(optarg);
 	char *ptr, *tmp = saved;
 
 	DP("ipporthash: %p %p", optarg, data);
@@ -331,9 +330,9 @@ void usage(void)
 	     "   [--hashsize hashsize] [--probes probes ] [--resize resize]\n"
 	     "-N set ipporthash --network IP/mask\n"
 	     "   [--hashsize hashsize] [--probes probes ] [--resize resize]\n"
-	     "-A set IP\n"
-	     "-D set IP\n"
-	     "-T set IP\n");
+	     "-A set IP%%port\n"
+	     "-D set IP%%port\n"
+	     "-T set IP%%port\n");
 }
 
 static struct settype settype_ipporthash = {

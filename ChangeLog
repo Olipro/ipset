@@ -1,3 +1,11 @@
+2.2.7
+ All patches were submitted by Jones Desougi
+ - missing or confusing error message fixes for ipporthash
+ - minor correction in debugging in nethash
+ - copy-paste bug in kernel set types at memory allocation
+   checking fixed
+ - unified memory allocations in ipset
+
 2.2.6
  - memory allocation in iptree is changed to GFP_ATOMIC because
    we hold a lock (bug reported by Radek Hladik)

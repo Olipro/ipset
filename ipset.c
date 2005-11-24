@@ -417,6 +417,17 @@ void *ipset_malloc(size_t size)
 	return p;
 }
 
+char *ipset_strdup(const char *s)
+{
+	char *p;
+
+	if ((p = strdup(s)) == NULL) {
+		perror("ipset: not enough memory");
+		exit(1);
+	}
+	return p;
+}
+
 void ipset_free(void **data)
 {
 	if (*data == NULL)
@@ -439,7 +450,7 @@ static struct option *merge_options(struct option *oldopts,
 	global_option_offset += OPTION_OFFSET;
 	*option_offset = global_option_offset;
 
-	merge = malloc(sizeof(struct option) * (num_new + num_old + 1));
+	merge = ipset_malloc(sizeof(struct option) * (num_new + num_old + 1));
 	memcpy(merge, oldopts, num_old * sizeof(struct option));
 	for (i = 0; i < num_new; i++) {
 		merge[num_old + i] = newopts[i];
@@ -1207,10 +1218,10 @@ static void build_argv(int line, char *buffer) {
 	newargc = 1;
 
 	ptr = strtok(buffer, " \t\n");
-	newargv[newargc++] = strdup(ptr);
+	newargv[newargc++] = ipset_strdup(ptr);
 	while ((ptr = strtok(NULL, " \t\n")) != NULL) {
 		if ((newargc + 1) < sizeof(newargv)/sizeof(char *))
-			newargv[newargc++] = strdup(ptr);
+			newargv[newargc++] = ipset_strdup(ptr);
 		else
 			exit_error(PARAMETER_PROBLEM,
 				   "Line %d is too long to restore\n", line);
@@ -1227,11 +1238,9 @@ static FILE *create_tempfile(void)
 	
 	if (!(tmpdir = getenv("TMPDIR")) && !(tmpdir = getenv("TMP")))
 		tmpdir = "/tmp";
-	filename = malloc(strlen(tmpdir) + strlen(TEMPFILE_PATTERN) + 1);
-	if (!filename)
-		exit_error(OTHER_PROBLEM, "Could not malloc temporary filename.");
+	filename = ipset_malloc(strlen(tmpdir) + strlen(TEMPFILE_PATTERN) + 1);
 	strcpy(filename, tmpdir);
-	strcpy(filename, TEMPFILE_PATTERN);
+	strcat(filename, TEMPFILE_PATTERN);
 	
 	(void) umask(077);	/* Create with restrictive permissions */
 	fd = mkstemp(filename);
@@ -1376,7 +1385,7 @@ static void set_restore(char *argv0)
 	line = 0;
 	
 	/* Initialize newargv/newargc */
-	newargv[newargc++] = strdup(argv0);
+	newargv[newargc++] = ipset_strdup(argv0);
 	
 	/* Second pass: build up restore request */
 	while (fgets(buffer, sizeof(buffer), in)) {		

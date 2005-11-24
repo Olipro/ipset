@@ -79,7 +79,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 {
 	struct ip_set_req_iptree *mydata =
 	    (struct ip_set_req_iptree *) data;
-	char *saved = strdup(optarg);
+	char *saved = ipset_strdup(optarg);
 	char *ptr, *tmp = saved;
 
 	DP("iptree: %p %p", optarg, data);

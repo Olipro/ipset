@@ -181,6 +181,7 @@ extern int string_to_number(const char *str, unsigned int min, unsigned int max,
 		            ip_set_ip_t *port);
 
 extern void *ipset_malloc(size_t size);
+extern char *ipset_strdup(const char *);
 extern void ipset_free(void **data);
 
 #endif	/* __IPSET_H */
