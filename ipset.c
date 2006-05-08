@@ -386,7 +386,7 @@ static void check_protocolversion(void)
 			   req_version.version, IP_SET_PROTOCOL_VERSION);
 }
 
-static void set_command(int *cmd, const int newcmd)
+static void set_command(unsigned *cmd, const int newcmd)
 {
 	if (*cmd != CMD_NONE)
 		exit_error(PARAMETER_PROBLEM, "Can't use -%c with -%c\n",
@@ -2099,7 +2099,8 @@ int parse_commandline(int argc, char *argv[])
 					exit_error(PARAMETER_PROBLEM,
 						   "Unknown arg `%s'",
 						   argv[optind - 1]);
-
+				
+				res = 0;
 			}
 
 			DP("next arg");

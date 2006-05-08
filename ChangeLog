@@ -1,3 +1,15 @@
+2.2.9
+ - 'ipset -N' did not generate proper return code
+ - 'limit' module parameter added to the kernel modules of the
+   iphash, ipporthash, nethash and iptree type of sets so that
+   the maximal number of elements can now be limited
+ - zero valued entries (port 0 or IP address 0.0.0.0) were
+   detected as members of the hash/tree kind of sets
+   (reported by Andrew Kraslavsky)
+ - list and save operations used the external identifier
+   of the sets for the bindings instead of the internal one
+   (reported by Amin Azez)
+
 2.2.8
  - Nasty off-by-one bug fixed in iptree type of sets
    (bug reported by Pablo Sole)

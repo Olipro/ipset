@@ -8,7 +8,7 @@ ifndef KERNEL_DIR
 KERNEL_DIR=/usr/src/linux
 endif
 
-IPSET_VERSION:=2.2.8
+IPSET_VERSION:=2.2.9
 
 PREFIX:=/usr/local
 LIBDIR:=$(PREFIX)/lib
