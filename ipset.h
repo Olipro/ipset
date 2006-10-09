@@ -184,4 +184,9 @@ extern void *ipset_malloc(size_t size);
 extern char *ipset_strdup(const char *);
 extern void ipset_free(void **data);
 
+#define BITSPERBYTE	(8*sizeof(char))
+#define ID2BYTE(id)	((id)/BITSPERBYTE)
+#define ID2MASK(id)	(1 << ((id)%BITSPERBYTE))
+#define test_bit(id, heap)	((((char *)(heap))[ID2BYTE(id)] & ID2MASK(id)) != 0)
+
 #endif	/* __IPSET_H */

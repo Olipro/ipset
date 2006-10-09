@@ -1,3 +1,10 @@
+2.2.9a
+ - use correct type (socklen_t) for getsockopt (H. Nakano)
+ - incorrect return codes fixed (Tomasz Lemiech, Alexey Bortnikov)
+ - kernel header dependency removed (asm/bitops.h)
+ - ipset now tries to load in the ip_set kernel module if the protocol
+   is not available
+
 2.2.9
  - 'ipset -N' did not generate proper return code
  - 'limit' module parameter added to the kernel modules of the

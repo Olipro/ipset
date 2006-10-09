@@ -17,13 +17,19 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <arpa/inet.h>
 #include <stdarg.h>
 #include <netdb.h>
 #include <dlfcn.h>
-#include <asm/bitops.h>
+#include <fcntl.h>
+/* #include <asm/bitops.h> */
 
 #include "ipset.h"
+
+#ifndef PROC_SYS_MODPROBE
+#define PROC_SYS_MODPROBE "/proc/sys/kernel/modprobe"
+#endif
 
 char program_name[] = "ipset";
 char program_version[] = IPSET_VERSION;
@@ -42,7 +48,8 @@ static int option_quiet = 0;
 static int restore = 0;
 void *restore_data = NULL;
 struct ip_set_restore *restore_set = NULL;
-size_t restore_offset = 0, restore_size;
+size_t restore_offset = 0;
+socklen_t restore_size;
 unsigned line = 0;
 
 #define TEMPFILE_PATTERN	"/ipsetXXXXXX"
@@ -239,6 +246,73 @@ static char cmd2char(int option)
 	return cmdflags[option];
 }
 
+/* From iptables.c ... */
+static char *get_modprobe(void)
+{
+	int procfile;
+	char *ret;
+
+#define PROCFILE_BUFSIZ	1024
+	procfile = open(PROC_SYS_MODPROBE, O_RDONLY);
+	if (procfile < 0)
+		return NULL;
+
+	ret = (char *) malloc(PROCFILE_BUFSIZ);
+	if (ret) {
+		memset(ret, 0, PROCFILE_BUFSIZ);
+		switch (read(procfile, ret, PROCFILE_BUFSIZ)) {
+		case -1: goto fail;
+		case PROCFILE_BUFSIZ: goto fail; /* Partial read.  Wierd */
+		}
+		if (ret[strlen(ret)-1]=='\n') 
+			ret[strlen(ret)-1]=0;
+		close(procfile);
+		return ret;
+	}
+ fail:
+	free(ret);
+	close(procfile);
+	return NULL;
+}
+
+static int ipset_insmod(const char *modname, const char *modprobe)
+{
+	char *buf = NULL;
+	char *argv[3];
+	struct stat junk;
+	int status;
+	
+	if (!stat(modprobe, &junk)) {
+		/* Try to read out of the kernel */
+		buf = get_modprobe();
+		if (!buf)
+			return -1;
+		modprobe = buf;
+	}
+	
+	switch (fork()) {
+	case 0:
+		argv[0] = (char *)modprobe;
+		argv[1] = (char *)modname;
+		argv[2] = NULL;
+		execv(argv[0], argv);
+		
+		/* Should not reach */
+		exit(1);
+	case -1:
+		return -1;
+	
+	default: /* parent */
+		wait(&status);
+	}
+	
+	free(buf);
+	
+	if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+		return 0;
+	return -1;
+}
+
 static int kernel_getsocket(void)
 {
 	int sockfd = -1;
@@ -292,30 +366,50 @@ static void kernel_error(unsigned cmd, int err)
 	exit_error(OTHER_PROBLEM, "Error from kernel: %s", strerror(err));
 }
 
-static void kernel_getfrom(unsigned cmd, void *data, size_t * size)
+static inline int wrapped_getsockopt(void *data, socklen_t *size)
 {
 	int res;
 	int sockfd = kernel_getsocket();
 
 	/* Send! */
 	res = getsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
-
+	if (res != 0 
+	    && errno == ENOPROTOOPT 
+	    && ipset_insmod("ip_set", "/sbin/modprobe") == 0)
+		res = getsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
 	DP("res=%d errno=%d", res, errno);
-
-	if (res != 0)
-		kernel_error(cmd, errno);
+	
+	return res;
 }
 
-static int kernel_sendto_handleerrno(unsigned cmd, unsigned op,
-				     void *data, size_t size)
+static inline int wrapped_setsockopt(void *data, socklen_t size)
 {
 	int res;
 	int sockfd = kernel_getsocket();
 
 	/* Send! */
 	res = setsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
-
+	if (res != 0 
+	    && errno == ENOPROTOOPT 
+	    && ipset_insmod("ip_set", "/sbin/modprobe") == 0)
+		res = setsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
 	DP("res=%d errno=%d", res, errno);
+	
+	return res;
+}
+
+static void kernel_getfrom(unsigned cmd, void *data, socklen_t * size)
+{
+	int res = wrapped_getsockopt(data, size);
+
+	if (res != 0)
+		kernel_error(cmd, errno);
+}
+
+static int kernel_sendto_handleerrno(unsigned cmd, unsigned op,
+				     void *data, socklen_t size)
+{
+	int res = wrapped_setsockopt(data, size);
 
 	if (res != 0) {
 		if (errno == EEXIST)
@@ -329,13 +423,7 @@ static int kernel_sendto_handleerrno(unsigned cmd, unsigned op,
 
 static void kernel_sendto(unsigned cmd, void *data, size_t size)
 {
-	int res;
-	int sockfd = kernel_getsocket();
-
-	/* Send! */
-	res = setsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
-
-	DP("res=%d errno=%d", res, errno);
+	int res = wrapped_setsockopt(data, size);
 
 	if (res != 0)
 		kernel_error(cmd, errno);
@@ -343,13 +431,7 @@ static void kernel_sendto(unsigned cmd, void *data, size_t size)
 
 static int kernel_getfrom_handleerrno(unsigned cmd, void *data, size_t * size)
 {
-	int res;
-	int sockfd = kernel_getsocket();
-
-	/* Send! */
-	res = getsockopt(sockfd, SOL_IP, SO_IP_SET, data, size);
-
-	DP("res=%d errno=%d", res, errno);
+	int res = wrapped_getsockopt(data, size);
 
 	if (res != 0) {
 		if (errno == EAGAIN)
@@ -364,7 +446,7 @@ static int kernel_getfrom_handleerrno(unsigned cmd, void *data, size_t * size)
 static void check_protocolversion(void)
 {
 	struct ip_set_req_version req_version;
-	size_t size = sizeof(struct ip_set_req_version);
+	socklen_t size = sizeof(struct ip_set_req_version);
 	int sockfd = kernel_getsocket();
 	int res;
 
@@ -958,7 +1040,7 @@ static size_t load_set_list(const char name[IP_SET_MAXNAMELEN],
 	struct ip_set_name_list *name_list;
 	struct set *set;
 	ip_set_id_t i;
-	size_t size, req_size;
+	socklen_t size, req_size;
 	int repeated = 0, res = 0;
 
 	DP("%s %s", cmd == CMD_MAX_SETS ? "MAX_SETS"
@@ -1132,7 +1214,7 @@ static size_t save_default_bindings(void *data, int *bindings)
 static int try_save_sets(const char name[IP_SET_MAXNAMELEN])
 {
 	void *data = NULL;
-	size_t size, req_size = 0;
+	socklen_t size, req_size = 0;
 	ip_set_id_t index;
 	int res = 0, bindings = 0;
 	time_t now = time(NULL);
@@ -1447,7 +1529,7 @@ static struct set *set_adt_get(const char *name)
 {
 	struct ip_set_req_adt_get req_adt_get;
 	struct set *set;
-	size_t size;
+	socklen_t size;
 
 	DP("%s", name);
 
@@ -1456,7 +1538,7 @@ static struct set *set_adt_get(const char *name)
 	strcpy(req_adt_get.set.name, name);
 	size = sizeof(struct ip_set_req_adt_get);
 
-	kernel_getfrom(CMD_ADT_GET, &req_adt_get, &size);
+	kernel_getfrom(CMD_ADT_GET, (void *) &req_adt_get, &size);
 
 	set = ipset_malloc(sizeof(struct set));
 	strcpy(set->name, name);
@@ -1705,7 +1787,7 @@ static int try_list_sets(const char name[IP_SET_MAXNAMELEN],
 {
 	void *data = NULL;
 	ip_set_id_t index;
-	size_t size, req_size;
+	socklen_t size, req_size;
 	int res = 0;
 
 	DP("%s", name);
@@ -2043,6 +2125,7 @@ int parse_commandline(int argc, char *argv[])
 						   "Unknown arg `%s'",
 						   argv[optind - 1]);
 
+				res = 0;
 				break;
 			}
 

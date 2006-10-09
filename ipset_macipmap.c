@@ -24,7 +24,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <asm/bitops.h>
 #include <linux/if_ether.h>
 
 #include <linux/netfilter_ipv4/ip_set_macipmap.h>

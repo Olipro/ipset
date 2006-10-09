@@ -25,7 +25,6 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <asm/bitops.h>
 #include <asm/types.h>
 
 #include <linux/netfilter_ipv4/ip_set_nethash.h>
