@@ -191,7 +191,7 @@ void create_final(void *data, unsigned int flags)
 	}
 	if (range > MAX_RANGE)
 		exit_error(PARAMETER_PROBLEM,
-			   "Range to large. Max is %d IPs in range\n",
+			   "Range too large. Max is %d IPs in range\n",
 			   MAX_RANGE+1);
 }
 

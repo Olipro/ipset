@@ -1,3 +1,12 @@
+2.3.0
+ - jiffies rollover bug in iptree type fixed (reported by Lukasz Nierycho
+   and others)
+ - endiannes bug in iptree type fixed (spotted by Jan Engelhardt)
+ - iptreemap type added (submitted by Sven Wegener)  
+ - 2.6.22/23 compatibility fixes (Jeremy Jacque)
+ - typo fixes in ipset (Neville D)
+ - separator changed to ':' from '%' (old one still supported) in ipset
+
 2.2.9a
  - use correct type (socklen_t) for getsockopt (H. Nakano)
  - incorrect return codes fixed (Tomasz Lemiech, Alexey Bortnikov)

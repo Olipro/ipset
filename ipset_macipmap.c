@@ -184,7 +184,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 
 	DP("macipmap: %p %p", optarg, data);
 
-	ptr = strsep(&tmp, "%");
+	ptr = strsep(&tmp, ":%");
 	parse_ip(ptr, &mydata->ip);
 
 	if (tmp)
@@ -246,7 +246,7 @@ void printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 	while (addr <= mysetdata->last_ip) {
 		if (test_bit(IPSET_MACIP_ISSET,
 			     (void *)&table[addr - mysetdata->first_ip].flags)) {
-			printf("%s%%", ip_tostring(addr, options));
+			printf("%s:", ip_tostring(addr, options));
 			print_mac(table[addr - mysetdata->first_ip].
 				  ethernet);
 			printf("\n");
@@ -281,7 +281,7 @@ void saveips(struct set *set, void *data, size_t len, unsigned options)
 	while (addr <= mysetdata->last_ip) {
 		if (test_bit(IPSET_MACIP_ISSET,
 			     (void *)&table[addr - mysetdata->first_ip].flags)) {
-			printf("-A %s %s%%",
+			printf("-A %s %s:",
 			       set->name, ip_tostring(addr, options));
 			print_mac(table[addr - mysetdata->first_ip].
 				  ethernet);
@@ -296,9 +296,9 @@ void usage(void)
 	printf
 	    ("-N set macipmap --from IP --to IP [--matchunset]\n"
 	     "-N set macipmap --network IP/mask [--matchunset]\n"
-	     "-A set IP%%MAC\n"
-	     "-D set IP[%%MAC]\n"
-	     "-T set IP[%%MAC]\n");
+	     "-A set IP:MAC\n"
+	     "-D set IP[:MAC]\n"
+	     "-T set IP[:MAC]\n");
 }
 
 static struct settype settype_macipmap = {

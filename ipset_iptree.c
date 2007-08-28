@@ -84,7 +84,7 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
 
 	DP("iptree: %p %p", optarg, data);
 
-	ptr = strsep(&tmp, "%");
+	ptr = strsep(&tmp, ":%");
 	parse_ip(ptr, &mydata->ip);
 
 	if (tmp)
@@ -130,8 +130,8 @@ void printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 	while (len >= offset + sizeof(struct ip_set_req_iptree)) {
 		req = (struct ip_set_req_iptree *)(data + offset);
 		if (mysetdata->timeout)
-			printf("%s%%%u\n", ip_tostring(req->ip, options),
-					   req->timeout);
+			printf("%s:%u\n", ip_tostring(req->ip, options),
+					  req->timeout);
 		else
 			printf("%s\n", ip_tostring(req->ip, options));
 		offset += sizeof(struct ip_set_req_iptree);
@@ -164,7 +164,7 @@ void saveips(struct set *set, void *data, size_t len, unsigned options)
 	while (len >= offset + sizeof(struct ip_set_req_iptree)) {
 		req = (struct ip_set_req_iptree *)(data + offset);
 		if (mysetdata->timeout)
-			printf("-A %s %s%%%u\n",
+			printf("-A %s %s:%u\n",
 				set->name, 
 				ip_tostring(req->ip, options),
 				req->timeout);
@@ -180,7 +180,7 @@ void usage(void)
 {
 	printf
 	    ("-N set iptree [--timeout value]\n"
-	     "-A set IP[%%timeout]\n"
+	     "-A set IP[:timeout]\n"
 	     "-D set IP\n"
 	     "-T set IP\n");
 }

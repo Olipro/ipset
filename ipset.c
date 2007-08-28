@@ -1151,13 +1151,17 @@ static size_t save_set(void *data, int *bindings,
 	struct settype *settype;
 	size_t used;
 	
-	DP("offset %u, len %u", offset, len);
+	DP("offset %u (%u/%u/%u), len %u", offset,
+	   sizeof(struct ip_set_save), 
+	   set_save->header_size, set_save->members_size, 
+	   len);
 	if (offset + sizeof(struct ip_set_save) > len
 	    || offset + sizeof(struct ip_set_save)
 	       + set_save->header_size + set_save->members_size > len)
 		exit_error(OTHER_PROBLEM,
 			   "Save operation failed, try again later.");
 
+	DP("index: %u", set_save->index);
 	if (set_save->index == IP_SET_INVALID_ID) {
 		/* Marker */
 		*bindings = 1;
@@ -1633,6 +1637,10 @@ static int set_bind(struct set *set, const char *adt,
 	/* set may be null: '-U :all: :all:|:default:' */
 	DP("(%s, %s) -> %s", set ? set->name : IPSET_TOKEN_ALL, adt, binding);
 
+	/* Ugly */
+	if (strcmp(set->settype->typename, "iptreemap") == 0)
+		exit_error(PARAMETER_PROBLEM,
+			"iptreemap type of sets cannot be used at binding operations\n");
 	/* Alloc memory for the data to send */
 	size = sizeof(struct ip_set_req_bind);
 	if (op != IP_SET_OP_UNBIND_SET && adt[0] == ':')

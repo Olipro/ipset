@@ -231,10 +231,11 @@ The macipmap set type uses a memory range, where each 8 bytes
 represents one IP and a MAC addresses. A macipmap set type can store
 up to 65536 (B-class network) IP addresses with MAC.
 When adding an entry to a macipmap set, you must specify the entry as
-.I IP%MAC.
+.I IP:MAC.
 When deleting or testing macipmap entries, the
-.I %MAC
-part is not mandatory.
+.I :MAC
+part is not mandatory. (The old "%" separation token instead of ":", i.e
+IP%MAC is accepted as well.)
 .P
 Options to use when creating an macipmap set:
 .TP
@@ -307,6 +308,9 @@ When the optional
 parameter specified, network addresses will be 
 stored in the set instead of IP addresses.
 .P
+The iphash type of sets can store up to 65535 entries. If a set is full,
+no new entries can be added to it.
+.P
 Sets created by zero valued resize parameter won't be resized at all.
 The lookup time in an iphash type of set approximately linearly grows with
 the value of the 
@@ -342,6 +346,9 @@ by double-hashing (default 4).
 Increase the hash size by this many percent (default 50) when adding
 an IP to the hash could not be performed after
 .P
+The nethash type of sets can store up to 65535 entries. If a set is full,
+no new entries can be added to it.
+.P
 An IP address will be in a nethash type of set if it is in any of the
 netblocks added to the set and the matching always start from the smallest
 size of netblock (most specific netmask) to the biggest ones (least
@@ -367,7 +374,8 @@ store up to 65536 (B-class network) IP addresses with all possible port
 values. When adding, deleting and testing values in an ipporthash type of
 set, the entries must be specified as
 .B
-"IP%port".
+"IP:port".
+(Old "IP%port" format accepted as well.)
 .P
 The ipporthash types of sets evaluates two src/dst parameters of the 
 .I
@@ -416,7 +424,20 @@ If a set was created with a nonzero valued
 .B "--timeout"
 parameter then one may add IP addresses to the set with a specific 
 timeout value using the syntax 
-.I IP%timeout-value.
+.I IP:timeout-value.
+Similarly to the hash types, the iptree type of sets can store up to 65535
+entries.
+.SS iptreemap
+The iptreemap set type uses a tree to store IP addresses or networks, 
+where the last octet of an IP address are stored in a bitmap.
+As input entry, you can add IP addresses, CIDR blocks or network ranges
+to the set. Network ranges can be specified in the format
+.I IP1:IP2
+.P
+Options to use when creating an iptreemap set:
+.TP
+.BR "--gc " value
+How often the garbage collection should be called, in seconds (default 300)
 .SH GENERAL RESTRICTIONS
 Setnames starting with colon (:) cannot be defined. Zero valued set 
 entries cannot be used with hash type of sets.
