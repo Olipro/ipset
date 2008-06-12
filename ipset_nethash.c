@@ -173,22 +173,6 @@ void initheader(struct set *set, const void *data)
 	map->resize = header->resize;
 }
 
-unsigned int
-mask_to_bits(ip_set_ip_t mask)
-{
-	unsigned int bits = 32;
-	ip_set_ip_t maskaddr;
-	
-	if (mask == 0xFFFFFFFF)
-		return bits;
-	
-	maskaddr = 0xFFFFFFFE;
-	while (--bits >= 0 && maskaddr != mask)
-		maskaddr <<= 1;
-	
-	return bits;
-}
-	
 void printheader(struct set *set, unsigned options)
 {
 	struct ip_set_nethash *mysetdata =

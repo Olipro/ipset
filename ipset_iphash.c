@@ -191,7 +191,7 @@ mask_to_bits(ip_set_ip_t mask)
 	
 	return bits;
 }
-	
+
 void printheader(struct set *set, unsigned options)
 {
 	struct ip_set_iphash *mysetdata =

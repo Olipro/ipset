@@ -8,7 +8,7 @@ ifndef KERNEL_DIR
 KERNEL_DIR=/usr/src/linux
 endif
 
-IPSET_VERSION:=2.3.0
+IPSET_VERSION:=2.3.1
 
 PREFIX:=/usr/local
 LIBDIR:=$(PREFIX)/lib
@@ -21,7 +21,7 @@ IPSET_LIB_DIR:=$(LIBDIR)/ipset
 RELEASE_DIR:=/tmp
 
 COPT_FLAGS:=-O2
-CFLAGS:=$(COPT_FLAGS) -Wall -Wunused -I$(KERNEL_DIR)/include -I. -g -DIPSET_DEBUG #-pg # -DIPTC_DEBUG
+CFLAGS:=$(COPT_FLAGS) -Wall -Wunused -I$(KERNEL_DIR)/include -I. # -g -DIPSET_DEBUG #-pg # -DIPTC_DEBUG
 SH_CFLAGS:=$(CFLAGS) -fPIC
 SETTYPES:=ipmap portmap macipmap iphash nethash iptree iptreemap ipporthash
 
@@ -31,6 +31,11 @@ INSTALL=$(DESTDIR)$(BINDIR)/ipset $(DESTDIR)$(MANDIR)/man8/ipset.8
 INSTALL+=$(foreach T, $(SETTYPES), $(DESTDIR)$(LIBDIR)/ipset/libipset_$(T).so)
 
 all: $(PROGRAMS) $(SHARED_LIBS)
+
+.PHONY: tests
+
+tests:
+	cd tests; ./runtest.sh
 
 install: all $(INSTALL)
 

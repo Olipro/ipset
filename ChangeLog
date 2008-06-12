@@ -1,3 +1,12 @@
+2.3.1
+ - segfault on --unbind :all: :all: fixed (reported by bugzilla,
+   report and patch sent by Tom Eastep)
+ - User input parameters are sanitized everywhere
+ - Initial testsuite added and 'test' target to the Makefile
+   added: few bugs discovered and fixed
+   - typo in macipmap type prevented to use max size set of this type
+   - *map types are made sure to allow and use max size of sets
+
 2.3.0
  - jiffies rollover bug in iptree type fixed (reported by Lukasz Nierycho
    and others)

@@ -308,7 +308,7 @@ When the optional
 parameter specified, network addresses will be 
 stored in the set instead of IP addresses.
 .P
-The iphash type of sets can store up to 65535 entries. If a set is full,
+The iphash type of sets can store up to 65536 entries. If a set is full,
 no new entries can be added to it.
 .P
 Sets created by zero valued resize parameter won't be resized at all.
@@ -346,7 +346,7 @@ by double-hashing (default 4).
 Increase the hash size by this many percent (default 50) when adding
 an IP to the hash could not be performed after
 .P
-The nethash type of sets can store up to 65535 entries. If a set is full,
+The nethash type of sets can store up to 65536 entries. If a set is full,
 no new entries can be added to it.
 .P
 An IP address will be in a nethash type of set if it is in any of the
@@ -425,7 +425,7 @@ If a set was created with a nonzero valued
 parameter then one may add IP addresses to the set with a specific 
 timeout value using the syntax 
 .I IP:timeout-value.
-Similarly to the hash types, the iptree type of sets can store up to 65535
+Similarly to the hash types, the iptree type of sets can store up to 65536
 entries.
 .SS iptreemap
 The iptreemap set type uses a tree to store IP addresses or networks, 
@@ -462,6 +462,8 @@ Jozsef Kadlecsik wrote ipset, which is based on ippool by
 Joakim Axelsson, Patrick Schaaf and Martin Josefsson.
 .P
 Sven Wegener wrote the iptreemap type.
+.SH LAST REMARK
+.BR "I stand on the shoulder of giants."
 .\" .. and did I mention that we are incredibly cool people?
 .\" .. sexy, too ..
 .\" .. witty, charming, powerful ..

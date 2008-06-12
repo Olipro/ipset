@@ -1638,7 +1638,7 @@ static int set_bind(struct set *set, const char *adt,
 	DP("(%s, %s) -> %s", set ? set->name : IPSET_TOKEN_ALL, adt, binding);
 
 	/* Ugly */
-	if (strcmp(set->settype->typename, "iptreemap") == 0)
+	if (set && strcmp(set->settype->typename, "iptreemap") == 0)
 		exit_error(PARAMETER_PROBLEM,
 			"iptreemap type of sets cannot be used at binding operations\n");
 	/* Alloc memory for the data to send */
