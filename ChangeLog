@@ -1,6 +1,7 @@
 [2.3.2]
  - including limits.h for UINT_MAX is required with glibc-2.8 (pud)
  - needless cast from and to void pointers cleanups in iptreemap (Sven Wegener)
+ - Initial ipset release with kernel modules included.
 
 2.3.1
  - segfault on --unbind :all: :all: fixed (reported by bugzilla,
