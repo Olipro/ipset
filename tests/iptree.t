@@ -28,8 +28,8 @@
 1 ipset -T test 2.0.0.2
 # Timeout: Test value not added to the set
 1 ipset -T test 192.168.68.70
-# Timeout: Sleep 5s so that entries can time out
-0 sleep 5
+# Timeout: Sleep 6s so that entries can time out
+0 sleep 6
 # Timeout: Test first random value
 1 ipset -T test 2.0.0.1
 # Timeout: Test second random value

@@ -31,7 +31,7 @@
 void
 create_init(void *data)
 {
-	struct ip_set_req_iptreemap_create *mydata = (struct ip_set_req_iptreemap_create *) data;
+	struct ip_set_req_iptreemap_create *mydata = data;
 
 	mydata->gc_interval = 0;
 }
@@ -39,7 +39,7 @@ create_init(void *data)
 int
 create_parse(int c, char *argv[], void *data, unsigned int *flags)
 {
-	struct ip_set_req_iptreemap_create *mydata = (struct ip_set_req_iptreemap_create *) data;
+	struct ip_set_req_iptreemap_create *mydata = data;
 
 	switch (c) {
 		case 'g':
@@ -68,7 +68,7 @@ static struct option create_opts[] = {
 ip_set_ip_t
 adt_parser(unsigned int cmd, const char *optarg, void *data)
 {
-	struct ip_set_req_iptreemap *mydata = (struct ip_set_req_iptreemap *) data;
+	struct ip_set_req_iptreemap *mydata = data;
 	ip_set_ip_t mask;
 
 	char *saved = ipset_strdup(optarg);
@@ -94,8 +94,8 @@ adt_parser(unsigned int cmd, const char *optarg, void *data)
 void
 initheader(struct set *set, const void *data)
 {
-	struct ip_set_req_iptreemap_create *header = (struct ip_set_req_iptreemap_create *) data;
-	struct ip_set_iptreemap *map = (struct ip_set_iptreemap *) set->settype->header;
+	const struct ip_set_req_iptreemap_create *header = data;
+	struct ip_set_iptreemap *map = set->settype->header;
 
 	map->gc_interval = header->gc_interval;
 }
@@ -103,7 +103,7 @@ initheader(struct set *set, const void *data)
 void
 printheader(struct set *set, unsigned int options)
 {
-	struct ip_set_iptreemap *mysetdata = (struct ip_set_iptreemap *) set->settype->header;
+	struct ip_set_iptreemap *mysetdata = set->settype->header;
 
 	if (mysetdata->gc_interval)
 		printf(" gc: %u", mysetdata->gc_interval);
@@ -118,7 +118,7 @@ printips_sorted(struct set *set, void *data, size_t len, unsigned int options)
 	size_t offset = 0;
 
 	while (len >= offset + sizeof(struct ip_set_req_iptreemap)) {
-		req = (struct ip_set_req_iptreemap *) (data + offset);
+		req = data + offset;
 
 		printf("%s", ip_tostring(req->start, options));
 		if (req->start != req->end)
@@ -132,7 +132,7 @@ printips_sorted(struct set *set, void *data, size_t len, unsigned int options)
 void
 saveheader(struct set *set, unsigned int options)
 {
-	struct ip_set_iptreemap *mysetdata = (struct ip_set_iptreemap *) set->settype->header;
+	struct ip_set_iptreemap *mysetdata = set->settype->header;
 
 	printf("-N %s %s", set->name, set->settype->typename);
 
@@ -149,7 +149,7 @@ saveips(struct set *set, void *data, size_t len, unsigned int options)
 	size_t offset = 0;
 
 	while (len >= offset + sizeof(struct ip_set_req_iptreemap)) {
-		req = (struct ip_set_req_iptreemap *) (data + offset);
+		req = data + offset;
 
 		printf("-A %s %s", set->name, ip_tostring(req->start, options));
 
