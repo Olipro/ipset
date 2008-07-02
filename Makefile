@@ -7,6 +7,12 @@
 ifndef KERNEL_DIR
 KERNEL_DIR=/usr/src/linux
 endif
+ifndef IP_NF_SET_MAX
+IP_NF_SET_MAX=256
+endif
+ifndef IP_NF_SET_HASHSIZE
+IP_NF_SET_HASHSIZE=1024
+endif
 
 IPSET_VERSION:=2.3.2
 
@@ -21,7 +27,7 @@ IPSET_LIB_DIR:=$(LIBDIR)/ipset
 RELEASE_DIR:=/tmp
 
 COPT_FLAGS:=-O2
-CFLAGS:=$(COPT_FLAGS) -Wall -Wunused -I$(KERNEL_DIR)/include -I. # -g -DIPSET_DEBUG #-pg # -DIPTC_DEBUG
+CFLAGS:=$(COPT_FLAGS) -Wall -Wunused -Ikernel/include -I. # -g -DIPSET_DEBUG #-pg # -DIPTC_DEBUG
 SH_CFLAGS:=$(CFLAGS) -fPIC
 SETTYPES:=ipmap portmap macipmap iphash nethash iptree iptreemap ipporthash
 
@@ -31,16 +37,23 @@ INSTALL=$(DESTDIR)$(BINDIR)/ipset $(DESTDIR)$(MANDIR)/man8/ipset.8
 INSTALL+=$(foreach T, $(SETTYPES), $(DESTDIR)$(LIBDIR)/ipset/libipset_$(T).so)
 
 all: $(PROGRAMS) $(SHARED_LIBS)
+	cd kernel; make -C $(KERNEL_DIR) M=`pwd` IP_NF_SET_MAX=$(IP_NF_SET_MAX) IP_NF_SET_HASHSIZE=$(IP_NF_SET_HASHSIZE) modules
 
 .PHONY: tests
 
 tests:
 	cd tests; ./runtest.sh
 
-install: all $(INSTALL)
+ipset_install: all $(INSTALL)
+
+modules_install:
+	cd kernel; make -C $(KERNEL_DIR) M=`pwd` modules_install
+
+install: ipset_install modules_install
 
 clean: $(EXTRA_CLEANS)
 	rm -rf $(PROGRAMS) $(SHARED_LIBS) *.o *~
+	cd kernel; make -C $(KERNEL_DIR) M=`pwd` clean
 
 #The ipset(8) self
 ipset.o: ipset.c

@@ -1,0 +1,25 @@
+This is the ipset source tree. Follow these steps to install ipset:
+
+0. You need the source tree of your kernel (version >= 2.6.16) and it have 
+   to be configured, modules compiled.
+
+1. Compile ipset and it's kernel modules
+
+   # make KERNEL_DIR=<<where-you-built-your-kernel>>
+
+   You can specify the maximum number of sets (default 256)
+   and/or the hash size for bindings (default 1024) if you want:
+
+   # make KERNEL_DIR=<<where-you-built-your-kernel>> \
+	IP_NF_SET_MAX=<<your setsize number>> \
+	IP_NF_SET_HASHSIZE=<<your hashsize number>>
+
+2. Install the binary and the modules
+
+   # make KERNEL_DIR=<<where-you-built-your-kernel>> install
+
+3. Cleanup the source tree
+
+   # make KERNEL_DIR=<<where-you-built-your-kernel>> clean
+
+That's it!
