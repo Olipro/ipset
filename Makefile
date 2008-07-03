@@ -36,20 +36,30 @@ SHARED_LIBS=$(foreach T, $(SETTYPES),libipset_$(T).so)
 INSTALL=$(DESTDIR)$(BINDIR)/ipset $(DESTDIR)$(MANDIR)/man8/ipset.8
 INSTALL+=$(foreach T, $(SETTYPES), $(DESTDIR)$(LIBDIR)/ipset/libipset_$(T).so)
 
-all: $(PROGRAMS) $(SHARED_LIBS)
-	cd kernel; make -C $(KERNEL_DIR) M=`pwd` IP_NF_SET_MAX=$(IP_NF_SET_MAX) IP_NF_SET_HASHSIZE=$(IP_NF_SET_HASHSIZE) modules
+all: binaries modules
 
 .PHONY: tests
 
 tests:
 	cd tests; ./runtest.sh
 
-ipset_install: all $(INSTALL)
+binaries: $(PROGRAMS) $(SHARED_LIBS)
 
-modules_install:
+binaries_install: binaries $(INSTALL)
+
+patch_kernel:
+	cd kernel; ./patch_kernel $(KERNEL_DIR)
+
+modules:
+	@[ -f $(KERNEL_DIR)/net/ipv4/netfilter/Kconfig ] || (echo "Error: the directory '$(KERNEL_DIR)' doesn't look like a Linux 2.6.x kernel source tree." && exit 1)
+	@[ -f $(KERNEL_DIR)/.config ] || (echo "Error: the kernel source in '$(KERNEL_DIR)' must be configured" && exit 1)
+	@[ -f $(KERNEL_DIR)/Module.symvers ] || echo "Warning: you should run 'make modules' in '$(KERNEL_DIR)' beforehand"
+	cd kernel; make -C $(KERNEL_DIR) M=`pwd` IP_NF_SET_MAX=$(IP_NF_SET_MAX) IP_NF_SET_HASHSIZE=$(IP_NF_SET_HASHSIZE) modules
+
+modules_install: modules
 	cd kernel; make -C $(KERNEL_DIR) M=`pwd` modules_install
 
-install: ipset_install modules_install
+install: binaries_install modules_install
 
 clean: $(EXTRA_CLEANS)
 	rm -rf $(PROGRAMS) $(SHARED_LIBS) *.o *~
