@@ -297,6 +297,7 @@ static inline int bitmap_bytes(ip_set_ip_t a, ip_set_ip_t b)
 }
 
 #ifdef __KERNEL__
+#include <linux/netfilter_ipv4/ip_set_compat.h>
 
 #define ip_set_printk(format, args...) 			\
 	do {							\

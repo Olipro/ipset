@@ -133,7 +133,7 @@ ip_set_hash_del(ip_set_id_t id, ip_set_ip_t ip)
 
 	if (set_hash != NULL)
 		__set_hash_del(set_hash);
-	write_unlock_bh(&ip_set_lock);
+ 	write_unlock_bh(&ip_set_lock);
 	return 0;
 }
 

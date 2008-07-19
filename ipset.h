@@ -108,7 +108,7 @@ struct settype {
 	void (*create_final) (void *data, unsigned int flags);
 
 	/* Pointer to list of extra command-line options for create */
-	struct option *create_opts;
+	const struct option *create_opts;
 
 	/*
 	 * Add/del/test IP
@@ -165,7 +165,7 @@ extern void settype_register(struct settype *settype);
 
 /* extern void unregister_settype(set_type_t *set_type); */
 
-extern void exit_error(enum exittype status, char *msg, ...);
+extern void exit_error(enum exittype status, const char *msg, ...);
 
 extern char *binding_ip_tostring(struct set *set,
 				 ip_set_ip_t ip, unsigned options);

@@ -22,25 +22,53 @@
 #include <net/protocol.h>
 #include <net/checksum.h>
 #include <linux/netfilter_ipv4.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 #include <linux/netfilter_ipv4/ip_tables.h>
+#define xt_register_target	ipt_register_target
+#define xt_unregister_target	ipt_unregister_target
+#define xt_target		ipt_target
+#define XT_CONTINUE		IPT_CONTINUE
+#else
+#include <linux/netfilter/x_tables.h>
+#endif
 #include <linux/netfilter_ipv4/ipt_set.h>
 
 static unsigned int
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
-target(struct sk_buff *skb,
-#else
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 target(struct sk_buff **pskb,
-#endif
+       unsigned int hooknum,
+       const struct net_device *in,
+       const struct net_device *out,
+       const void *targinfo,
+       void *userinfo)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)
+target(struct sk_buff **pskb,
        const struct net_device *in,
        const struct net_device *out,
        unsigned int hooknum,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
-       const struct xt_target *target,
-#endif
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
        const void *targinfo,
        void *userinfo)
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
+target(struct sk_buff **pskb,
+       const struct net_device *in,
+       const struct net_device *out,
+       unsigned int hooknum,
+       const struct xt_target *target,
+       const void *targinfo,
+       void *userinfo)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
+target(struct sk_buff **pskb,
+       const struct net_device *in,
+       const struct net_device *out,
+       unsigned int hooknum,
+       const struct xt_target *target,
+       const void *targinfo)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24) */
+target(struct sk_buff *skb,
+       const struct net_device *in,
+       const struct net_device *out,
+       unsigned int hooknum,
+       const struct xt_target *target,
        const void *targinfo)
 #endif
 {
@@ -59,33 +87,51 @@ target(struct sk_buff **pskb,
 				    skb,
 				    info->del_set.flags);
 
-	return IPT_CONTINUE;
+	return XT_CONTINUE;
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
-static bool
-#else
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 static int
-#endif
 checkentry(const char *tablename,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)
-	   const void *e,
-#else
 	   const struct ipt_entry *e,
-#endif
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
-	   const struct xt_target *target,
-#endif
 	   void *targinfo,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
 	   unsigned int targinfosize,
-#endif
 	   unsigned int hook_mask)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)
+static int
+checkentry(const char *tablename,
+	   const void *e,
+	   void *targinfo,
+	   unsigned int targinfosize,
+	   unsigned int hook_mask)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
+static int
+checkentry(const char *tablename,
+	   const void *e,
+	   const struct xt_target *target,
+	   void *targinfo,
+	   unsigned int targinfosize,
+	   unsigned int hook_mask)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,23)
+static int
+checkentry(const char *tablename,
+	   const void *e,
+	   const struct xt_target *target,
+	   void *targinfo,
+	   unsigned int hook_mask)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23) */
+static bool
+checkentry(const char *tablename,
+	   const void *e,
+	   const struct xt_target *target,
+	   void *targinfo,
+	   unsigned int hook_mask)
+#endif
 {
 	struct ipt_set_info_target *info = targinfo;
 	ip_set_id_t index;
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)
 	if (targinfosize != IPT_ALIGN(sizeof(*info))) {
 		DP("bad target info size %u", targinfosize);
 		return 0;
@@ -118,19 +164,21 @@ checkentry(const char *tablename,
 	return 1;
 }
 
-static void destroy(
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
-		    const struct xt_target *target,
-#endif
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
-		    void *targetinfo, unsigned int targetsize)
-#else
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)
+static void destroy(void *targetinfo,
+		    unsigned int targetsize)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
+static void destroy(const struct xt_target *target,
+		    void *targetinfo,
+		    unsigned int targetsize)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19) */
+static void destroy(const struct xt_target *target,
 		    void *targetinfo)
 #endif
 {
 	struct ipt_set_info_target *info = targetinfo;
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)
 	if (targetsize != IPT_ALIGN(sizeof(struct ipt_set_info_target))) {
 		ip_set_printk("invalid targetsize %d", targetsize);
 		return;
@@ -142,37 +190,38 @@ static void destroy(
 		ip_set_put(info->del_set.index);
 }
 
-static struct ipt_target SET_target = {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)
+static struct xt_target SET_target = {
 	.name 		= "SET",
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
-	.family		= AF_INET,
-#endif
 	.target 	= target,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
-	.targetsize	= sizeof(struct ipt_set_info_target),
-#endif
 	.checkentry 	= checkentry,
 	.destroy 	= destroy,
 	.me 		= THIS_MODULE
 };
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17) */
+static struct xt_target SET_target = {
+	.name 		= "SET",
+	.family		= AF_INET,
+	.target 	= target,
+	.targetsize	= sizeof(struct ipt_set_info_target),
+	.checkentry 	= checkentry,
+	.destroy 	= destroy,
+	.me 		= THIS_MODULE
+};
+#endif
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
 MODULE_DESCRIPTION("iptables IP set target module");
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
-#define ipt_register_target      xt_register_target
-#define ipt_unregister_target    xt_unregister_target
-#endif
-
 static int __init ipt_SET_init(void)
 {
-	return ipt_register_target(&SET_target);
+	return xt_register_target(&SET_target);
 }
 
 static void __exit ipt_SET_fini(void)
 {
-	ipt_unregister_target(&SET_target);
+	xt_unregister_target(&SET_target);
 }
 
 module_init(ipt_SET_init);

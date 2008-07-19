@@ -44,6 +44,6 @@
 1 ipset -A test 1.255.255.255
 # Network: Try to add value after upper boundary
 1 ipset -A test 2.1.0.0
-# Network: Delete test test
+# Network: Delete test set
 0 ipset -X test
 # eof

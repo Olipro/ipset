@@ -28,11 +28,7 @@
 static inline ip_set_ip_t
 get_port(const struct sk_buff *skb, u_int32_t flags)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 	struct iphdr *iph = ip_hdr(skb);
-#else
-	struct iphdr *iph = skb->nh.iph;
-#endif
 	u_int16_t offset = ntohs(iph->frag_off) & IP_OFFSET;
 	switch (iph->protocol) {
 	case IPPROTO_TCP: {
@@ -42,11 +38,7 @@ get_port(const struct sk_buff *skb, u_int32_t flags)
 		if (offset)
 			return INVALID_PORT;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 		if (skb_copy_bits(skb, ip_hdr(skb)->ihl*4, &tcph, sizeof(tcph)) < 0)
-#else
-		if (skb_copy_bits(skb, skb->nh.iph->ihl*4, &tcph, sizeof(tcph)) < 0)
-#endif
 			/* No choice either */
 			return INVALID_PORT;
 	     	
@@ -59,11 +51,7 @@ get_port(const struct sk_buff *skb, u_int32_t flags)
 		if (offset)
 			return INVALID_PORT;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 		if (skb_copy_bits(skb, ip_hdr(skb)->ihl*4, &udph, sizeof(udph)) < 0)
-#else
-		if (skb_copy_bits(skb, skb->nh.iph->ihl*4, &udph, sizeof(udph)) < 0)
-#endif
 			/* No choice either */
 			return INVALID_PORT;
 	     	

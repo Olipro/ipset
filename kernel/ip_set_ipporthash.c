@@ -8,6 +8,7 @@
 /* Kernel module implementing an ip+port hash set */
 
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <linux/udp.h>
@@ -34,11 +35,7 @@ static int limit = MAX_RANGE;
 static inline ip_set_ip_t
 get_port(const struct sk_buff *skb, u_int32_t flags)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 	struct iphdr *iph = ip_hdr(skb);
-#else
-	struct iphdr *iph = skb->nh.iph;
-#endif
 	u_int16_t offset = ntohs(iph->frag_off) & IP_OFFSET;
 
 	switch (iph->protocol) {
@@ -49,11 +46,7 @@ get_port(const struct sk_buff *skb, u_int32_t flags)
 		if (offset)
 			return INVALID_PORT;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 		if (skb_copy_bits(skb, ip_hdr(skb)->ihl*4, &tcph, sizeof(tcph)) < 0)
-#else
-		if (skb_copy_bits(skb, skb->nh.iph->ihl*4, &tcph, sizeof(tcph)) < 0)
-#endif
 			/* No choice either */
 			return INVALID_PORT;
 	     	
@@ -66,11 +59,7 @@ get_port(const struct sk_buff *skb, u_int32_t flags)
 		if (offset)
 			return INVALID_PORT;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 		if (skb_copy_bits(skb, ip_hdr(skb)->ihl*4, &udph, sizeof(udph)) < 0)
-#else
-		if (skb_copy_bits(skb, skb->nh.iph->ihl*4, &udph, sizeof(udph)) < 0)
-#endif
 			/* No choice either */
 			return INVALID_PORT;
 	     	
@@ -159,13 +148,8 @@ testip_kernel(struct ip_set *set,
 
 	DP("flag: %s src: %u.%u.%u.%u dst: %u.%u.%u.%u",
 	   flags[index] & IPSET_SRC ? "SRC" : "DST",
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 	   NIPQUAD(ip_hdr(skb)->saddr),
 	   NIPQUAD(ip_hdr(skb)->daddr));
-#else
-	   NIPQUAD(skb->nh.iph->saddr),
-	   NIPQUAD(skb->nh.iph->daddr));
-#endif
 	DP("flag %s port %u",
 	   flags[index+1] & IPSET_SRC ? "SRC" : "DST",
 	   port);	
@@ -174,13 +158,8 @@ testip_kernel(struct ip_set *set,
 
 	res =  __testip(set,
 			ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 					? ip_hdr(skb)->saddr
 					: ip_hdr(skb)->daddr),
-#else
-					? skb->nh.iph->saddr
-					: skb->nh.iph->daddr),
-#endif
 			port,
 			hash_ip);
 	return (res < 0 ? 0 : res);
@@ -254,13 +233,8 @@ addip_kernel(struct ip_set *set,
 
 	DP("flag: %s src: %u.%u.%u.%u dst: %u.%u.%u.%u",
 	   flags[index] & IPSET_SRC ? "SRC" : "DST",
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 	   NIPQUAD(ip_hdr(skb)->saddr),
 	   NIPQUAD(ip_hdr(skb)->daddr));
-#else
-	   NIPQUAD(skb->nh.iph->saddr),
-	   NIPQUAD(skb->nh.iph->daddr));
-#endif
 	DP("flag %s port %u",
 	   flags[index+1] & IPSET_SRC ? "SRC" : "DST",
 	   port);	
@@ -269,13 +243,8 @@ addip_kernel(struct ip_set *set,
 
 	return __addip(set->data,
 		       ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-		       		? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 		       port,
 		       hash_ip);
 }
@@ -408,13 +377,8 @@ delip_kernel(struct ip_set *set,
 
 	DP("flag: %s src: %u.%u.%u.%u dst: %u.%u.%u.%u",
 	   flags[index] & IPSET_SRC ? "SRC" : "DST",
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 	   NIPQUAD(ip_hdr(skb)->saddr),
 	   NIPQUAD(ip_hdr(skb)->daddr));
-#else
-	   NIPQUAD(skb->nh.iph->saddr),
-	   NIPQUAD(skb->nh.iph->daddr));
-#endif
 	DP("flag %s port %u",
 	   flags[index+1] & IPSET_SRC ? "SRC" : "DST",
 	   port);	
@@ -423,13 +387,8 @@ delip_kernel(struct ip_set *set,
 
 	return __delip(set,
 		       ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-		       		? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 		       port,
 		       hash_ip);
 }

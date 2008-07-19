@@ -50,7 +50,7 @@ void *restore_data = NULL;
 struct ip_set_restore *restore_set = NULL;
 size_t restore_offset = 0;
 socklen_t restore_size;
-unsigned line = 0;
+unsigned restore_line = 0;
 
 #define TEMPFILE_PATTERN	"/ipsetXXXXXX"
 
@@ -116,7 +116,7 @@ static struct option opts_long[] = {
 	{"help",    2, 0, 'H'},
 
 	/* end */
-	{0}
+	{NULL},
 };
 
 static char opts_short[] =
@@ -152,7 +152,7 @@ static char commands_v_options[NUMBER_OF_CMD][NUMBER_OF_OPT] = {
 /* Main parser function */
 int parse_commandline(int argc, char *argv[]);
 
-void exit_tryhelp(int status)
+static void exit_tryhelp(int status)
 {
 	fprintf(stderr,
 		"Try `%s -H' or '%s --help' for more information.\n",
@@ -160,7 +160,7 @@ void exit_tryhelp(int status)
 	exit(status);
 }
 
-void exit_error(enum exittype status, char *msg, ...)
+void exit_error(enum exittype status, const char *msg, ...)
 {
 	va_list args;
 
@@ -170,8 +170,8 @@ void exit_error(enum exittype status, char *msg, ...)
 		vfprintf(stderr, msg, args);
 		va_end(args);
 		fprintf(stderr, "\n");
-		if (line)
-			fprintf(stderr, "Restore failed at line %u:\n", line);
+		if (restore_line)
+			fprintf(stderr, "Restore failed at line %u:\n", restore_line);
 		if (status == PARAMETER_PROBLEM)
 			exit_tryhelp(status);
 		if (status == VERSION_PROBLEM)
@@ -183,7 +183,7 @@ void exit_error(enum exittype status, char *msg, ...)
 	exit(status);
 }
 
-void ipset_printf(char *msg, ...)
+static void ipset_printf(char *msg, ...)
 {
 	va_list args;
 
@@ -893,12 +893,12 @@ static struct set *set_find_byname(const char *name)
 
 static ip_set_id_t set_find_free_index(const char *name)
 {
-	ip_set_id_t i, index = IP_SET_INVALID_ID;
+	ip_set_id_t i, idx = IP_SET_INVALID_ID;
 
 	for (i = 0; i < max_sets; i++) {
-		if (index == IP_SET_INVALID_ID
+		if (idx == IP_SET_INVALID_ID
 		    && set_list[i] == NULL)
-			index = i;
+			idx = i;
 		if (set_list[i] != NULL
 		    && strncmp(set_list[i]->name, name,
 			       IP_SET_MAXNAMELEN) == 0)
@@ -907,13 +907,13 @@ static ip_set_id_t set_find_free_index(const char *name)
    				   name);
 	}
 			
-	if (index == IP_SET_INVALID_ID)		
+	if (idx == IP_SET_INVALID_ID)		
 		exit_error(PARAMETER_PROBLEM,
 	   		   "Set %s cannot be restored, "
 	   		   "max number of set %u reached",
 	   		   name, max_sets);
 
-	return index;
+	return idx;
 }
 
 /* 
@@ -1032,7 +1032,7 @@ static void set_rename(const char *name, const char *newname,
  * Send MAX_SETS, LIST_SIZE and/or SAVE_SIZE orders to kernel
  */
 static size_t load_set_list(const char name[IP_SET_MAXNAMELEN],
-			    ip_set_id_t *index,
+			    ip_set_id_t *idx,
 			    unsigned op, unsigned cmd)
 {
 	void *data = NULL;
@@ -1069,7 +1069,7 @@ tryagain:
 	max_sets = req_max_sets.max_sets;
 	set_list = ipset_malloc(max_sets * sizeof(struct set *));
 	memset(set_list, 0, max_sets * sizeof(struct set *));
-	*index = req_max_sets.set.index;
+	*idx = req_max_sets.set.index;
 
 	if (req_max_sets.sets == 0)
 		/* No sets in kernel */
@@ -1080,7 +1080,7 @@ tryagain:
 			  + req_max_sets.sets * sizeof(struct ip_set_name_list);
 	data = ipset_malloc(size);
 	((struct ip_set_req_setnames *) data)->op = op;
-	((struct ip_set_req_setnames *) data)->index = *index;
+	((struct ip_set_req_setnames *) data)->index = *idx;
 
 	res = kernel_getfrom_handleerrno(cmd, data, &size);
 
@@ -1219,12 +1219,12 @@ static int try_save_sets(const char name[IP_SET_MAXNAMELEN])
 {
 	void *data = NULL;
 	socklen_t size, req_size = 0;
-	ip_set_id_t index;
+	ip_set_id_t idx;
 	int res = 0, bindings = 0;
 	time_t now = time(NULL);
 
 	/* Load set_list from kernel */
-	size = load_set_list(name, &index,
+	size = load_set_list(name, &idx,
 			     IP_SET_OP_SAVE_SIZE, CMD_SAVE);
 	
 	if (size) {
@@ -1233,7 +1233,7 @@ static int try_save_sets(const char name[IP_SET_MAXNAMELEN])
 		req_size = (size += sizeof(struct ip_set_save));
 		data = ipset_malloc(size);
 		((struct ip_set_req_list *) data)->op = IP_SET_OP_SAVE;
-		((struct ip_set_req_list *) data)->index = index;
+		((struct ip_set_req_list *) data)->index = idx;
 		res = kernel_getfrom_handleerrno(CMD_SAVE, data, &size);
 
 		if (res != 0 || size != req_size) {
@@ -1354,10 +1354,10 @@ static void set_restore(char *argv0)
 	char buffer[1024];	
 	char *ptr, *name = NULL;
 	char cmd = ' ';
-	int line = 0, first_pass, i, bindings = 0;
+	int restore_line = 0, first_pass, i, bindings = 0;
 	struct settype *settype = NULL;
 	struct ip_set_req_setnames *header;
-	ip_set_id_t index;
+	ip_set_id_t idx;
 	FILE *in;
 	int res;
 	
@@ -1365,7 +1365,7 @@ static void set_restore(char *argv0)
 	in = create_tempfile();
 	
 	/* Load existing sets from kernel */
-	load_set_list(IPSET_TOKEN_ALL, &index,
+	load_set_list(IPSET_TOKEN_ALL, &idx,
 		      IP_SET_OP_LIST_SIZE, CMD_RESTORE);
 	
 	restore_size = sizeof(struct ip_set_req_setnames)/* header */
@@ -1373,7 +1373,7 @@ static void set_restore(char *argv0)
 	DP("restore_size: %u", restore_size);
 	/* First pass: calculate required amount of data */
 	while (fgets(buffer, sizeof(buffer), in)) {
-		line++;
+		restore_line++;
 
 		if (buffer[0] == '\n')
 			continue;
@@ -1396,7 +1396,7 @@ static void set_restore(char *argv0)
 		    || ptr[2] != '\0') {
 			exit_error(PARAMETER_PROBLEM,
 				   "Line %u does not start as a valid restore command\n",
-				   line);
+				   restore_line);
 		}
 		cmd = ptr[1];		
 		/* setname */
@@ -1405,7 +1405,7 @@ static void set_restore(char *argv0)
 		if (ptr == NULL)
 		        exit_error(PARAMETER_PROBLEM,
 		        	   "Missing set name in line %u\n",
-		        	   line);
+		        	   restore_line);
 		DP("cmd %c", cmd);
 		switch (cmd) {
 		case 'N': {
@@ -1415,11 +1415,11 @@ static void set_restore(char *argv0)
 			if (ptr == NULL)
 			        exit_error(PARAMETER_PROBLEM,
 			        	   "Missing settype in line %u\n",
-		        		   line);
+		        		   restore_line);
 			if (bindings)
 			        exit_error(PARAMETER_PROBLEM,
 			        	   "Invalid line %u: create must precede bindings\n",
-		        		   line);
+		        		   restore_line);
 			settype = check_set_typename(ptr);
 			restore_size += sizeof(struct ip_set_restore)
 					+ settype->create_size;
@@ -1432,11 +1432,11 @@ static void set_restore(char *argv0)
 			        exit_error(PARAMETER_PROBLEM,
 			        	   "Add IP to set %s in line %u without "
 					   "preceding corresponding create set line\n",
-		        		   ptr, line);
+		        		   ptr, restore_line);
 			if (bindings)
 			        exit_error(PARAMETER_PROBLEM,
 			        	   "Invalid line %u: adding entries must precede bindings\n",
-		        		   line);
+		        		   restore_line);
 			restore_size += settype->adt_size;
 			DP("restore_size (A): %u", restore_size);
 			break;
@@ -1450,7 +1450,7 @@ static void set_restore(char *argv0)
 		default: {
 			exit_error(PARAMETER_PROBLEM,
 		       		   "Unrecognized restore command in line %u\n",
-				   line);
+				   restore_line);
 		}
 		} /* end of switch */
 	}			
@@ -1467,15 +1467,15 @@ static void set_restore(char *argv0)
 
 	/* Rewind to scan the file again */
 	fseek(in, 0L, SEEK_SET);
-	first_pass = line;
-	line = 0;
+	first_pass = restore_line;
+	restore_line = 0;
 	
 	/* Initialize newargv/newargc */
 	newargv[newargc++] = ipset_strdup(argv0);
 	
 	/* Second pass: build up restore request */
 	while (fgets(buffer, sizeof(buffer), in)) {		
-		line++;
+		restore_line++;
 
 		if (buffer[0] == '\n')
 			continue;
@@ -1485,7 +1485,7 @@ static void set_restore(char *argv0)
 			goto do_restore;
 		DP("restoring: %s", buffer);
 		/* Build faked argv, argc */
-		build_argv(line, buffer);
+		build_argv(restore_line, buffer);
 		for (i = 0; i < newargc; i++)
 			DP("argv[%u]: %s", i, newargv[i]);
 		
@@ -1794,20 +1794,20 @@ static int try_list_sets(const char name[IP_SET_MAXNAMELEN],
 			 unsigned options)
 {
 	void *data = NULL;
-	ip_set_id_t index;
+	ip_set_id_t idx;
 	socklen_t size, req_size;
 	int res = 0;
 
 	DP("%s", name);
 	/* Load set_list from kernel */
-	size = req_size = load_set_list(name, &index,
+	size = req_size = load_set_list(name, &idx,
 					IP_SET_OP_LIST_SIZE, CMD_LIST);
 
 	if (size) {
 		/* Get sets and print them */
 		data = ipset_malloc(size);
 		((struct ip_set_req_list *) data)->op = IP_SET_OP_LIST;
-		((struct ip_set_req_list *) data)->index = index;
+		((struct ip_set_req_list *) data)->index = idx;
 		res = kernel_getfrom_handleerrno(CMD_LIST, data, &size);
 		DP("get_lists getsockopt() res=%d errno=%d", res, errno);
 

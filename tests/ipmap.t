@@ -80,6 +80,6 @@
 0 ipset -T test 255.255.255.255
 # Full: Test value not added to the set
 1 ipset -T test 0.1.0.0
-# Full: Delete test test
+# Full: Delete test set
 0 ipset -X test
 # eof

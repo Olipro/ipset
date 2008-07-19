@@ -40,14 +40,16 @@
 #define OPT_ADDDEL_MAC     0x02U
 
 /* Initialize the create. */
-void create_init(void *data)
+static void
+create_init(void *data)
 {
 	DP("create INIT");
 	/* Nothing */
 }
 
 /* Function which parses command options; returns true if it ate an option */
-int create_parse(int c, char *argv[], void *data, unsigned *flags)
+static int
+create_parse(int c, char *argv[], void *data, unsigned *flags)
 {
 	struct ip_set_req_macipmap_create *mydata =
 	    (struct ip_set_req_macipmap_create *) data;
@@ -107,7 +109,8 @@ int create_parse(int c, char *argv[], void *data, unsigned *flags)
 }
 
 /* Final check; exit if not ok. */
-void create_final(void *data, unsigned int flags)
+static void
+create_final(void *data, unsigned int flags)
 {
 	struct ip_set_req_macipmap_create *mydata =
 	    (struct ip_set_req_macipmap_create *) data;
@@ -145,15 +148,16 @@ void create_final(void *data, unsigned int flags)
 }
 
 /* Create commandline options */
-static struct option create_opts[] = {
-	{"from", 1, 0, '1'},
-	{"to", 1, 0, '2'},
-	{"network", 1, 0, '3'},
-	{"matchunset", 0, 0, '4'},
-	{0}
+static const struct option create_opts[] = {
+	{.name = "from",	.has_arg = required_argument,	.val = '1'},
+	{.name = "to",		.has_arg = required_argument,	.val = '2'},
+	{.name = "network",	.has_arg = required_argument,	.val = '3'},
+	{.name = "matchunset",	.has_arg = no_argument,		.val = '4'},
+	{NULL},
 };
 
-static void parse_mac(const char *mac, unsigned char *ethernet)
+static void
+parse_mac(const char *mac, unsigned char *ethernet)
 {
 	unsigned int i = 0;
 
@@ -175,7 +179,8 @@ static void parse_mac(const char *mac, unsigned char *ethernet)
 }
 
 /* Add, del, test parser */
-ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
+static ip_set_ip_t
+adt_parser(unsigned cmd, const char *optarg, void *data)
 {
 	struct ip_set_req_macipmap *mydata =
 	    (struct ip_set_req_macipmap *) data;
@@ -200,7 +205,8 @@ ip_set_ip_t adt_parser(unsigned cmd, const char *optarg, void *data)
  * Print and save
  */
 
-void initheader(struct set *set, const void *data)
+static void
+initheader(struct set *set, const void *data)
 {
 	struct ip_set_req_macipmap_create *header =
 	    (struct ip_set_req_macipmap_create *) data;
@@ -213,7 +219,8 @@ void initheader(struct set *set, const void *data)
 	map->flags = header->flags;
 }
 
-void printheader(struct set *set, unsigned options)
+static void
+printheader(struct set *set, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata =
 	    (struct ip_set_macipmap *) set->settype->header;
@@ -226,7 +233,8 @@ void printheader(struct set *set, unsigned options)
 	printf("\n");
 }
 
-static void print_mac(unsigned char macaddress[ETH_ALEN])
+static void
+print_mac(unsigned char macaddress[ETH_ALEN])
 {
 	unsigned int i;
 
@@ -235,7 +243,8 @@ static void print_mac(unsigned char macaddress[ETH_ALEN])
 		printf(":%02X", macaddress[i]);
 }
 
-void printips_sorted(struct set *set, void *data, size_t len, unsigned options)
+static void
+printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata =
 	    (struct ip_set_macipmap *) set->settype->header;
@@ -255,7 +264,8 @@ void printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 	}
 }
 
-void saveheader(struct set *set, unsigned options)
+static void
+saveheader(struct set *set, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata =
 	    (struct ip_set_macipmap *) set->settype->header;
@@ -270,7 +280,8 @@ void saveheader(struct set *set, unsigned options)
 	printf("\n");
 }
 
-void saveips(struct set *set, void *data, size_t len, unsigned options)
+static void
+saveips(struct set *set, void *data, size_t len, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata =
 	    (struct ip_set_macipmap *) set->settype->header;
@@ -291,7 +302,7 @@ void saveips(struct set *set, void *data, size_t len, unsigned options)
 	}
 }
 
-void usage(void)
+static void usage(void)
 {
 	printf
 	    ("-N set macipmap --from IP --to IP [--matchunset]\n"

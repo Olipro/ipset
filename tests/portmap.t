@@ -32,6 +32,6 @@
 0 ipset -T test 65535
 # Full: Test value not added to the set
 1 ipset -T test 1
-# Full: Delete test test
+# Full: Delete test set
 0 ipset -X test
 # eof

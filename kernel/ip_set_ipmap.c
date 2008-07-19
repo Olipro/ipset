@@ -66,13 +66,8 @@ testip_kernel(struct ip_set *set,
 {
 	int res =  __testip(set,
 			ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-				? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 			hash_ip);
 	return (res < 0 ? 0 : res);
 }
@@ -118,13 +113,8 @@ addip_kernel(struct ip_set *set,
 {
 	return __addip(set,
 		       ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-		       		? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 		       hash_ip);
 }
 
@@ -168,13 +158,8 @@ delip_kernel(struct ip_set *set,
 {
 	return __delip(set,
 		       ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-				? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 		       hash_ip);
 }
 

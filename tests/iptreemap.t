@@ -40,6 +40,6 @@
 0 ipset -D test 192.168.68.70/30
 # Test element from the middle
 1 ipset -T test 192.168.68.71
-# Delete test test
+# Delete test set
 0 ipset -X test
 # eof

@@ -1,7 +1,7 @@
 This is the ipset source tree. Follow these steps to install ipset:
 
-0. You need the source tree of your kernel (version >= 2.6.16) and it have 
-   to be configured, modules compiled.
+0. You need the source tree of your kernel (version >= 2.6.16 or 2.4.36.x)
+   and it have to be configured, modules compiled.
 
 1. Compile ipset and it's kernel modules
 
@@ -27,8 +27,8 @@ That's it!
 Read the ipset(8) and iptables(8) manpages on how to use ipset 
 and its match and target from iptables.
 
-If you want to build a non-modular kernel, then proceed with the following 
-steps:
+If you want to build a non-modular >= 2.6.16 kernel or has got a 2.4.36.x
+kernel tree, then proceed with the following steps:
 
 1. Compile the ipset binaries
 

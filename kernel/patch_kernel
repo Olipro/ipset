@@ -13,6 +13,17 @@ kconfig() {
 	echo "endmenu" >> $file
 }
 
+config() {
+	file=$1/net/ipv4/netfilter/Config.in
+	if [ "`grep 'CONFIG_IP_NF_SET' $file`" ]; then
+		return
+	fi
+	mv $file $file.orig
+	grep -v endmenu $file.orig > $file
+	cat Config.in.ipset >> $file
+	echo "endmenu" >> $file
+}
+
 makefile() {
 	file=$1/net/ipv4/netfilter/Makefile
 	if [ "`grep CONFIG_IP_NF_SET $file`" ]; then
@@ -20,6 +31,20 @@ makefile() {
 	fi
 	cp $file $file.orig
 	cat Makefile.ipset >> $file
+}
+
+oldmakefile() {
+	file=$1/net/ipv4/netfilter/Makefile
+	if [ "`grep CONFIG_IP_NF_SET $file`" ]; then
+		return
+	fi
+	lineno=`grep -n Rules.make $file | cut -f1 -d:`
+	lineno=$((lineno-1))
+	head -n $lineno $file > $file.head
+	lineno=$((lineno+1))
+	tail +$lineno $file > $file.tail
+	cp $file $file.orig
+	cat $file.head Makefile.ipset Makefile.export.ipset $file.tail > $file
 }
 
 tree() {
@@ -31,11 +56,15 @@ if [ -z "$1" ]; then
 	echo "Error: missing kernel directory parameter."
 	exit 1
 fi
-if [ ! -f $1/net/ipv4/netfilter/Kconfig ]; then
-	echo "Error: the directory $1 doesn't look like a Linux 2.6.x kernel source tree."
+if [ -f $1/net/ipv4/netfilter/Kconfig ]; then
+	tree $1
+	kconfig $1
+	makefile $1
+elif [ -f $1/net/ipv4/netfilter/Config.in ]; then
+	tree $1
+	config $1
+	oldmakefile $1
+else
+	echo "Error: The directory $1 doesn't look like a Linux 2.4/2.6 kernel source tree."
 	exit 1
 fi
-
-tree $1
-kconfig $1
-makefile $1

@@ -5,10 +5,17 @@
 
 static size_t max_malloc_size = 0, max_page_size = 0;
 
-static inline bool init_max_page_size(void)
+static inline int init_max_page_size(void)
 {
+/* Compatibility glues to support 2.4.36 */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+#define __GFP_NOWARN		0
+
+	/* Guaranteed: slab.c */
+	max_malloc_size = max_page_size = 131072;
+#else
 	size_t page_size = 0;
-	
+
 #define CACHE(x) if (max_page_size == 0 || x < max_page_size)	\
 			page_size = x;
 #include <linux/kmalloc_sizes.h>
@@ -21,6 +28,7 @@ static inline bool init_max_page_size(void)
 
 		return 1;
 	}
+#endif
 	return 0;
 }
 

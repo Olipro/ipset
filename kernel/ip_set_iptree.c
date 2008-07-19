@@ -9,6 +9,7 @@
 
 #include <linux/version.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
@@ -20,11 +21,6 @@
 #include <asm/bitops.h>
 #include <linux/spinlock.h>
 
-/* Backward compatibility */
-#ifndef __nocast
-#define __nocast
-#endif
-
 #include <linux/netfilter_ipv4/ip_set_iptree.h>
 
 static int limit = MAX_RANGE;
@@ -35,13 +31,9 @@ static int limit = MAX_RANGE;
  * to delete the gc timer at destroying/flushing a set */
 #define IPTREE_DESTROY_SLEEP	100
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
-static struct kmem_cache *branch_cachep;
-static struct kmem_cache *leaf_cachep;
-#else
-static kmem_cache_t *branch_cachep;
-static kmem_cache_t *leaf_cachep;
-#endif
+static __KMEM_CACHE_T__ *branch_cachep;
+static __KMEM_CACHE_T__ *leaf_cachep;
+
 
 #if defined(__LITTLE_ENDIAN)
 #define ABCD(a,b,c,d,addrp) do {		\
@@ -118,23 +110,13 @@ testip_kernel(struct ip_set *set,
 	
 	DP("flag: %s src: %u.%u.%u.%u dst: %u.%u.%u.%u",
 	   flags[index] & IPSET_SRC ? "SRC" : "DST",
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 	   NIPQUAD(ip_hdr(skb)->saddr),
 	   NIPQUAD(ip_hdr(skb)->daddr));
-#else
-	   NIPQUAD(skb->nh.iph->saddr),
-	   NIPQUAD(skb->nh.iph->daddr));
-#endif
 
 	res =  __testip(set,
 			ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-				? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 			hash_ip);
 	return (res < 0 ? 0 : res);
 }
@@ -219,13 +201,8 @@ addip_kernel(struct ip_set *set,
 
 	return __addip(set,
 		       ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-		       		? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 		       map->timeout,
 		       hash_ip);
 }
@@ -287,13 +264,8 @@ delip_kernel(struct ip_set *set,
 {
 	return __delip(set,
 		       ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-		       		? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 		       hash_ip);
 }
 
@@ -556,29 +528,15 @@ static int __init ip_set_iptree_init(void)
 {
 	int ret;
 	
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
-	branch_cachep = kmem_cache_create("ip_set_iptreeb",
-				sizeof(struct ip_set_iptreeb),
-				0, 0, NULL);
-#else
-	branch_cachep = kmem_cache_create("ip_set_iptreeb",
-				sizeof(struct ip_set_iptreeb),
-				0, 0, NULL, NULL);
-#endif
+	branch_cachep = KMEM_CACHE_CREATE("ip_set_iptreeb",
+					  sizeof(struct ip_set_iptreeb));
 	if (!branch_cachep) {
 		printk(KERN_ERR "Unable to create ip_set_iptreeb slab cache\n");
 		ret = -ENOMEM;
 		goto out;
 	}
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
-	leaf_cachep = kmem_cache_create("ip_set_iptreed",
-				sizeof(struct ip_set_iptreed),
-				0, 0, NULL);
-#else
-	leaf_cachep = kmem_cache_create("ip_set_iptreed",
-				sizeof(struct ip_set_iptreed),
-				0, 0, NULL, NULL);
-#endif
+	leaf_cachep = KMEM_CACHE_CREATE("ip_set_iptreed",
+					sizeof(struct ip_set_iptreed));
 	if (!leaf_cachep) {
 		printk(KERN_ERR "Unable to create ip_set_iptreed slab cache\n");
 		ret = -ENOMEM;

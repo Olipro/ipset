@@ -68,13 +68,8 @@ testip_kernel(struct ip_set *set,
 	ip_set_ip_t ip;
 	
 	ip = ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 			? ip_hdr(skb)->saddr
 			: ip_hdr(skb)->daddr);
-#else
-			? skb->nh.iph->saddr
-			: skb->nh.iph->daddr);
-#endif
 
 	if (ip < map->first_ip || ip > map->last_ip)
 		return 0;
@@ -86,13 +81,8 @@ testip_kernel(struct ip_set *set,
 	    (void *) &table[ip - map->first_ip].flags)) {
 		/* Is mac pointer valid?
 		 * If so, compare... */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 		return (skb_mac_header(skb) >= skb->head
 			&& (skb_mac_header(skb) + ETH_HLEN) <= skb->data
-#else
-		return (skb->mac.raw >= skb->head
-			&& (skb->mac.raw + ETH_HLEN) <= skb->data
-#endif
 			&& (memcmp(eth_hdr(skb)->h_source,
 				   &table[ip - map->first_ip].ethernet,
 				   ETH_ALEN) == 0));
@@ -146,21 +136,11 @@ addip_kernel(struct ip_set *set,
 	ip_set_ip_t ip;
 	
 	ip = ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 			? ip_hdr(skb)->saddr
 			: ip_hdr(skb)->daddr);
-#else
-			? skb->nh.iph->saddr
-			: skb->nh.iph->daddr);
-#endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 	if (!(skb_mac_header(skb) >= skb->head
 	      && (skb_mac_header(skb) + ETH_HLEN) <= skb->data))
-#else
-	if (!(skb->mac.raw >= skb->head
-	      && (skb->mac.raw + ETH_HLEN) <= skb->data))
-#endif
 		return -EINVAL;
 
 	return __addip(set, ip, eth_hdr(skb)->h_source, hash_ip);
@@ -207,13 +187,8 @@ delip_kernel(struct ip_set *set,
 {
 	return __delip(set,
 		       ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-		       		? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 		       hash_ip);
 }
 

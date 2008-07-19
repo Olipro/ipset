@@ -28,7 +28,7 @@
 
 #define OPT_CREATE_GC 0x1
 
-void
+static void
 create_init(void *data)
 {
 	struct ip_set_req_iptreemap_create *mydata = data;
@@ -36,7 +36,7 @@ create_init(void *data)
 	mydata->gc_interval = 0;
 }
 
-int
+static int
 create_parse(int c, char *argv[], void *data, unsigned int *flags)
 {
 	struct ip_set_req_iptreemap_create *mydata = data;
@@ -55,17 +55,17 @@ create_parse(int c, char *argv[], void *data, unsigned int *flags)
 	return 1;
 }
 
-void
+static void
 create_final(void *data, unsigned int flags)
 {
 }
 
-static struct option create_opts[] = {
-	{"gc", 1, 0, 'g'},
-	{0}
+static const struct option create_opts[] = {
+	{.name = "gc",	.has_arg = required_argument,	.val = 'g'},
+	{NULL},
 };
 
-ip_set_ip_t
+static ip_set_ip_t
 adt_parser(unsigned int cmd, const char *optarg, void *data)
 {
 	struct ip_set_req_iptreemap *mydata = data;
@@ -91,7 +91,7 @@ adt_parser(unsigned int cmd, const char *optarg, void *data)
 	return 1;
 }
 
-void
+static void
 initheader(struct set *set, const void *data)
 {
 	const struct ip_set_req_iptreemap_create *header = data;
@@ -100,7 +100,7 @@ initheader(struct set *set, const void *data)
 	map->gc_interval = header->gc_interval;
 }
 
-void
+static void
 printheader(struct set *set, unsigned int options)
 {
 	struct ip_set_iptreemap *mysetdata = set->settype->header;
@@ -111,7 +111,7 @@ printheader(struct set *set, unsigned int options)
 	printf("\n");
 }
 
-void
+static void
 printips_sorted(struct set *set, void *data, size_t len, unsigned int options)
 {
 	struct ip_set_req_iptreemap *req;
@@ -129,7 +129,7 @@ printips_sorted(struct set *set, void *data, size_t len, unsigned int options)
 	}
 }
 
-void
+static void
 saveheader(struct set *set, unsigned int options)
 {
 	struct ip_set_iptreemap *mysetdata = set->settype->header;
@@ -142,7 +142,7 @@ saveheader(struct set *set, unsigned int options)
 	printf("\n");
 }
 
-void
+static void
 saveips(struct set *set, void *data, size_t len, unsigned int options)
 {
 	struct ip_set_req_iptreemap *req;
@@ -162,7 +162,7 @@ saveips(struct set *set, void *data, size_t len, unsigned int options)
 	}
 }
 
-void
+static void
 usage(void)
 {
 	printf(

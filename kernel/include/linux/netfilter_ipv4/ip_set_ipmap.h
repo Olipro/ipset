@@ -25,7 +25,7 @@ struct ip_set_req_ipmap {
 	ip_set_ip_t ip;
 };
 
-unsigned int
+static unsigned int
 mask_to_bits(ip_set_ip_t mask)
 {
 	unsigned int bits = 32;
@@ -41,7 +41,7 @@ mask_to_bits(ip_set_ip_t mask)
 	return bits;
 }
 
-ip_set_ip_t
+static ip_set_ip_t
 range_to_mask(ip_set_ip_t from, ip_set_ip_t to, unsigned int *bits)
 {
 	ip_set_ip_t mask = 0xFFFFFFFE;

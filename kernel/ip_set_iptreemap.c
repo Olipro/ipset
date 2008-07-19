@@ -30,15 +30,9 @@
 #define IPTREEMAP_DEFAULT_GC_TIME (5 * 60)
 #define IPTREEMAP_DESTROY_SLEEP (100)
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
-static struct kmem_cache *cachep_b;
-static struct kmem_cache *cachep_c;
-static struct kmem_cache *cachep_d;
-#else
-static kmem_cache_t *cachep_b;
-static kmem_cache_t *cachep_c;
-static kmem_cache_t *cachep_d;
-#endif
+static __KMEM_CACHE_T__ *cachep_b;
+static __KMEM_CACHE_T__ *cachep_c;
+static __KMEM_CACHE_T__ *cachep_d;
 
 static struct ip_set_iptreemap_d *fullbitmap_d;
 static struct ip_set_iptreemap_c *fullbitmap_c;
@@ -295,13 +289,8 @@ testip_kernel(struct ip_set *set, const struct sk_buff *skb, ip_set_ip_t *hash_i
 
 	res = __testip(set,
 		       ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-				? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 		       hash_ip);
 
 	return (res < 0 ? 0 : res);
@@ -384,13 +373,8 @@ addip_kernel(struct ip_set *set, const struct sk_buff *skb, ip_set_ip_t *hash_ip
 
 	return __addip_single(set,
 			ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-				? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 			hash_ip);
 }
 
@@ -470,13 +454,8 @@ delip_kernel(struct ip_set *set, const struct sk_buff *skb, ip_set_ip_t *hash_ip
 {
 	return __delip_single(set,
 			ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-				? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 			hash_ip,
 		        GFP_ATOMIC);
 }
@@ -725,43 +704,22 @@ static int __init ip_set_iptreemap_init(void)
 	int ret = -ENOMEM;
 	int a;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
-	cachep_b = kmem_cache_create("ip_set_iptreemap_b",
-				     sizeof(struct ip_set_iptreemap_b),
-				     0, 0, NULL);
-#else
-	cachep_b = kmem_cache_create("ip_set_iptreemap_b",
-				     sizeof(struct ip_set_iptreemap_b),
-				     0, 0, NULL, NULL);
-#endif
+	cachep_b = KMEM_CACHE_CREATE("ip_set_iptreemap_b",
+				     sizeof(struct ip_set_iptreemap_b));
 	if (!cachep_b) {
 		ip_set_printk("Unable to create ip_set_iptreemap_b slab cache");
 		goto out;
 	}
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
-	cachep_c = kmem_cache_create("ip_set_iptreemap_c",
-				     sizeof(struct ip_set_iptreemap_c),
-				     0, 0, NULL);
-#else
-	cachep_c = kmem_cache_create("ip_set_iptreemap_c",
-				     sizeof(struct ip_set_iptreemap_c),
-				     0, 0, NULL, NULL);
-#endif
+	cachep_c = KMEM_CACHE_CREATE("ip_set_iptreemap_c",
+				     sizeof(struct ip_set_iptreemap_c));
 	if (!cachep_c) {
 		ip_set_printk("Unable to create ip_set_iptreemap_c slab cache");
 		goto outb;
 	}
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
-	cachep_d = kmem_cache_create("ip_set_iptreemap_d",
-				     sizeof(struct ip_set_iptreemap_d),
-				     0, 0, NULL);
-#else
-	cachep_d = kmem_cache_create("ip_set_iptreemap_d",
-				     sizeof(struct ip_set_iptreemap_d),
-				     0, 0, NULL, NULL);
-#endif
+	cachep_d = KMEM_CACHE_CREATE("ip_set_iptreemap_d",
+				     sizeof(struct ip_set_iptreemap_d));
 	if (!cachep_d) {
 		ip_set_printk("Unable to create ip_set_iptreemap_d slab cache");
 		goto outc;

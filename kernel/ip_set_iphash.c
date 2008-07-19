@@ -8,6 +8,7 @@
 /* Kernel module implementing an ip hash set */
 
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
 #include <linux/version.h>
@@ -88,13 +89,8 @@ testip_kernel(struct ip_set *set,
 {
 	return __testip(set,
 			ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-				? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 			hash_ip);
 }
 
@@ -149,13 +145,8 @@ addip_kernel(struct ip_set *set,
 {
 	return __addip((struct ip_set_iphash *) set->data,
 		       ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-		       		? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 		       hash_ip);
 }
 
@@ -276,13 +267,8 @@ delip_kernel(struct ip_set *set,
 {
 	return __delip(set,
 		       ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-				? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 		       hash_ip);
 }
 

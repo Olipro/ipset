@@ -8,6 +8,7 @@
 /* Kernel module implementing a cidr nethash set */
 
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
 #include <linux/version.h>
@@ -111,13 +112,8 @@ testip_kernel(struct ip_set *set,
 {
 	return __testip(set,
 			ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 				? ip_hdr(skb)->saddr
 				: ip_hdr(skb)->daddr),
-#else
-				? skb->nh.iph->saddr
-				: skb->nh.iph->daddr),
-#endif
 			hash_ip);
 }
 
@@ -206,13 +202,8 @@ addip_kernel(struct ip_set *set,
 	struct ip_set_nethash *map = set->data;
 	int ret = -ERANGE;
 	ip_set_ip_t ip = ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 					? ip_hdr(skb)->saddr
 					: ip_hdr(skb)->daddr);
-#else
-					? skb->nh.iph->saddr
-					: skb->nh.iph->daddr);
-#endif
 	
 	if (map->cidr[0])
 		ret = __addip(map, ip, map->cidr[0], hash_ip);
@@ -338,13 +329,8 @@ delip_kernel(struct ip_set *set,
 	struct ip_set_nethash *map = set->data;
 	int ret = -ERANGE;
 	ip_set_ip_t ip = ntohl(flags[index] & IPSET_SRC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 					? ip_hdr(skb)->saddr
 					: ip_hdr(skb)->daddr);
-#else
-					? skb->nh.iph->saddr
-					: skb->nh.iph->daddr);
-#endif
 	
 	if (map->cidr[0])
 		ret = __delip(map, ip, map->cidr[0], hash_ip);
