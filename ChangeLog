@@ -1,9 +1,13 @@
-[2.3.3]
+2.3.3a
+ - Fix to compile ipset with 2.4.26.x tree statically (bug reported by
+   G.W. Haywood)
+
+2.3.3
  - compatibility for the 2.6.x kernel tree improved and compiler warnings
    fixed (Jan Engelhardt)
  - compatibility fixes for the 2.4.36.x kernel tree added
 
-[2.3.2]
+2.3.2
  - including limits.h for UINT_MAX is required with glibc-2.8 (pud)
  - needless cast from and to void pointers cleanups in iptreemap (Sven Wegener)
  - Initial ipset release with kernel modules included.

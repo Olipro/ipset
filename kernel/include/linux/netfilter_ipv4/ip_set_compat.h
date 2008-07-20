@@ -9,7 +9,7 @@
 #define __MOD_INC(foo)		__MOD_INC_USE_COUNT(foo)
 #define __MOD_DEC(foo)		__MOD_DEC_USE_COUNT(foo)
 #else
-#define __MOD_INC(foo)
+#define __MOD_INC(foo)		1
 #define __MOD_DEC(foo)
 #endif
 
@@ -25,7 +25,7 @@
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 #include <linux/interrupt.h>
 #define DEFINE_RWLOCK(x)                rwlock_t x = RW_LOCK_UNLOCKED
-#define try_module_get(x)               (__MOD_INC(x), 1)
+#define try_module_get(x)		__MOD_INC(x)
 #define module_put(x)                   __MOD_DEC(x)
 #define __clear_bit(nr, addr)		clear_bit(nr, addr)
 #define __set_bit(nr, addr)		set_bit(nr, addr)
