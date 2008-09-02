@@ -1,3 +1,6 @@
+Tue, 02 Sep 2008
+	- ChangeLog forked for kernel part
+
 2.3.3a
  - Fix to compile ipset with 2.4.26.x tree statically (bug reported by
    G.W. Haywood)

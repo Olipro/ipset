@@ -1,0 +1,4 @@
+Tue, 02 Sep 2008
+	- ChangeLog forked for kernel part
+	- Compatibility fix for kernels >= 2.6.27:
+	  semaphore.h was moved from asm/ to linux/ (James King)
