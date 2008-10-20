@@ -4,7 +4,6 @@
 #include <linux/netfilter_ipv4/ip_set.h>
 
 #define SETTYPE_NAME "iptree"
-#define MAX_RANGE 0x0000FFFF
 
 struct ip_set_iptreed {
 	unsigned long expires[256];	   	/* x.x.x.ADDR */

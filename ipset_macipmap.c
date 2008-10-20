@@ -21,8 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <linux/if_ether.h>
 
@@ -51,8 +49,7 @@ create_init(void *data)
 static int
 create_parse(int c, char *argv[], void *data, unsigned *flags)
 {
-	struct ip_set_req_macipmap_create *mydata =
-	    (struct ip_set_req_macipmap_create *) data;
+	struct ip_set_req_macipmap_create *mydata = data;
 
 	DP("create_parse");
 
@@ -112,8 +109,7 @@ create_parse(int c, char *argv[], void *data, unsigned *flags)
 static void
 create_final(void *data, unsigned int flags)
 {
-	struct ip_set_req_macipmap_create *mydata =
-	    (struct ip_set_req_macipmap_create *) data;
+	struct ip_set_req_macipmap_create *mydata = data;
 
 	if (flags == 0)
 		exit_error(PARAMETER_PROBLEM,
@@ -182,14 +178,18 @@ parse_mac(const char *mac, unsigned char *ethernet)
 static ip_set_ip_t
 adt_parser(unsigned cmd, const char *optarg, void *data)
 {
-	struct ip_set_req_macipmap *mydata =
-	    (struct ip_set_req_macipmap *) data;
+	struct ip_set_req_macipmap *mydata = data;
 	char *saved = ipset_strdup(optarg);
 	char *ptr, *tmp = saved;
 
 	DP("macipmap: %p %p", optarg, data);
+	
+	if ((ptr = strchr(tmp, ':')) || (ptr = strchr(tmp, '%')))
+		fprintf(stderr, "Warning: please replace old separator character '%s.1' with ','.\n"
+			        "Next release won't support it.\n",
+		        ptr);
 
-	ptr = strsep(&tmp, ":%");
+	ptr = strsep(&tmp, ":%,");
 	parse_ip(ptr, &mydata->ip);
 
 	if (tmp)
@@ -208,10 +208,8 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 static void
 initheader(struct set *set, const void *data)
 {
-	struct ip_set_req_macipmap_create *header =
-	    (struct ip_set_req_macipmap_create *) data;
-	struct ip_set_macipmap *map =
-		(struct ip_set_macipmap *) set->settype->header;
+	const struct ip_set_req_macipmap_create *header = data;
+	struct ip_set_macipmap *map = set->settype->header;
 
 	memset(map, 0, sizeof(struct ip_set_macipmap));
 	map->first_ip = header->from;
@@ -222,8 +220,7 @@ initheader(struct set *set, const void *data)
 static void
 printheader(struct set *set, unsigned options)
 {
-	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) set->settype->header;
+	struct ip_set_macipmap *mysetdata = set->settype->header;
 
 	printf(" from: %s", ip_tostring(mysetdata->first_ip, options));
 	printf(" to: %s", ip_tostring(mysetdata->last_ip, options));
@@ -246,10 +243,8 @@ print_mac(unsigned char macaddress[ETH_ALEN])
 static void
 printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 {
-	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) set->settype->header;
-	struct ip_set_macip *table =
-	    (struct ip_set_macip *) data;
+	struct ip_set_macipmap *mysetdata = set->settype->header;
+	struct ip_set_macip *table = data;
 	u_int32_t addr = mysetdata->first_ip;
 
 	while (addr <= mysetdata->last_ip) {
@@ -267,8 +262,7 @@ printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 static void
 saveheader(struct set *set, unsigned options)
 {
-	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) set->settype->header;
+	struct ip_set_macipmap *mysetdata = set->settype->header;
 
 	printf("-N %s %s --from %s",
 	       set->name, set->settype->typename,
@@ -283,16 +277,14 @@ saveheader(struct set *set, unsigned options)
 static void
 saveips(struct set *set, void *data, size_t len, unsigned options)
 {
-	struct ip_set_macipmap *mysetdata =
-	    (struct ip_set_macipmap *) set->settype->header;
-	struct ip_set_macip *table =
-	    (struct ip_set_macip *) data;
+	struct ip_set_macipmap *mysetdata = set->settype->header;
+	struct ip_set_macip *table = data;
 	u_int32_t addr = mysetdata->first_ip;
 
 	while (addr <= mysetdata->last_ip) {
 		if (test_bit(IPSET_MACIP_ISSET,
 			     (void *)&table[addr - mysetdata->first_ip].flags)) {
-			printf("-A %s %s:",
+			printf("-A %s %s,",
 			       set->name, ip_tostring(addr, options));
 			print_mac(table[addr - mysetdata->first_ip].
 				  ethernet);
@@ -307,9 +299,9 @@ static void usage(void)
 	printf
 	    ("-N set macipmap --from IP --to IP [--matchunset]\n"
 	     "-N set macipmap --network IP/mask [--matchunset]\n"
-	     "-A set IP:MAC\n"
-	     "-D set IP[:MAC]\n"
-	     "-T set IP[:MAC]\n");
+	     "-A set IP[,MAC]\n"
+	     "-D set IP[,MAC]\n"
+	     "-T set IP[,MAC]\n");
 }
 
 static struct settype settype_macipmap = {

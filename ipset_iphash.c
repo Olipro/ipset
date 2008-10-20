@@ -15,22 +15,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <errno.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <asm/types.h>
 
 #include <linux/netfilter_ipv4/ip_set_iphash.h>
-#include <linux/netfilter_ipv4/ip_set_jhash.h>
-
 #include "ipset.h"
 
 #define BUFLEN 30;
@@ -44,8 +34,7 @@
 static void
 create_init(void *data)
 {
-	struct ip_set_req_iphash_create *mydata =
-	    (struct ip_set_req_iphash_create *) data;
+	struct ip_set_req_iphash_create *mydata = data;
 
 	DP("create INIT");
 
@@ -131,8 +120,7 @@ static void
 create_final(void *data, unsigned int flags)
 {
 #ifdef IPSET_DEBUG
-	struct ip_set_req_iphash_create *mydata =
-	    (struct ip_set_req_iphash_create *) data;
+	struct ip_set_req_iphash_create *mydata = data;
 
 	DP("hashsize %u probes %u resize %u",
 	   mydata->hashsize, mydata->probes, mydata->resize);
@@ -152,8 +140,7 @@ static const struct option create_opts[] = {
 static ip_set_ip_t
 adt_parser(unsigned cmd, const char *optarg, void *data)
 {
-	struct ip_set_req_iphash *mydata =
-	    (struct ip_set_req_iphash *) data;
+	struct ip_set_req_iphash *mydata = data;
 
 	parse_ip(optarg, &mydata->ip);
 	if (!mydata->ip)
@@ -170,10 +157,8 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 static void
 initheader(struct set *set, const void *data)
 {
-	struct ip_set_req_iphash_create *header =
-	    (struct ip_set_req_iphash_create *) data;
-	struct ip_set_iphash *map =
-		(struct ip_set_iphash *) set->settype->header;
+	const struct ip_set_req_iphash_create *header = data;
+	struct ip_set_iphash *map = set->settype->header;
 
 	memset(map, 0, sizeof(struct ip_set_iphash));
 	map->hashsize = header->hashsize;
@@ -201,8 +186,7 @@ mask_to_bits(ip_set_ip_t mask)
 static void
 printheader(struct set *set, unsigned options)
 {
-	struct ip_set_iphash *mysetdata =
-	    (struct ip_set_iphash *) set->settype->header;
+	struct ip_set_iphash *mysetdata = set->settype->header;
 
 	printf(" hashsize: %u", mysetdata->hashsize);
 	printf(" probes: %u", mysetdata->probes);
@@ -230,8 +214,7 @@ printips(struct set *set, void *data, size_t len, unsigned options)
 static void
 saveheader(struct set *set, unsigned options)
 {
-	struct ip_set_iphash *mysetdata =
-	    (struct ip_set_iphash *) set->settype->header;
+	struct ip_set_iphash *mysetdata = set->settype->header;
 
 	printf("-N %s %s --hashsize %u --probes %u --resize %u",
 	       set->name, set->settype->typename,

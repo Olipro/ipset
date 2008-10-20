@@ -1,4 +1,13 @@
-Tue, 02 Sep 2008
-	- ChangeLog forked for kernel part
-	- Compatibility fix for kernels >= 2.6.27:
-	  semaphore.h was moved from asm/ to linux/ (James King)
+2.4
+  - ipportiphash, ipportnethash and setlist types added
+  - set type modules reworked to avoid code duplication
+    as much as possible, code unification macros 
+  - expand_macros Makefile target added to help debugging
+    code unification macros
+  - ip_set_addip_kernel and ip_set_delip_kernel
+    changed from void to int, __ip_set_get_byname and
+    __ip_set_put_byid added for the sake of setlist type
+  - unnecessary includes removed
+  - compatibility fix for kernels >= 2.6.27:
+    semaphore.h was moved from asm/ to linux/ (James King)
+  - ChangeLog forked for kernel part

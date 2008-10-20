@@ -33,7 +33,7 @@ struct ip_set_req_iptreemap_create {
 };
 
 struct ip_set_req_iptreemap {
-	ip_set_ip_t start;
+	ip_set_ip_t ip;
 	ip_set_ip_t end;
 };
 

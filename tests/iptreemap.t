@@ -13,7 +13,7 @@
 # Test value not added to the set
 1 ipset -T test 192.168.68.70
 # Add IP range
-0 ipset -A test 3.0.0.0:3.0.0.2
+0 ipset -A test 3.0.0.0-3.0.0.2
 # Test the three members of the range: first
 0 ipset -T test 3.0.0.0
 # Test the three members of the range: second
@@ -38,8 +38,14 @@
 0 ipset -T test 192.168.68.71
 # Delete a network from the middle
 0 ipset -D test 192.168.68.70/30
-# Test element from the middle
+# Test lower bound of deleted network
+1 ipset -T test 192.168.68.68
+# Test upper bound of deleted network
 1 ipset -T test 192.168.68.71
+# Test element before lower bound of deleted network
+0 ipset -T test 192.168.68.67
+# Test element after upper bound of deleted network
+0 ipset -T test 192.168.68.72
 # Delete test set
 0 ipset -X test
 # eof

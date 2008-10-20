@@ -21,8 +21,6 @@
  */
 
 #include <getopt.h>
-#include <sys/types.h>
-#include <netdb.h>
 
 #include <linux/netfilter_ipv4/ip_set.h>
 
@@ -183,6 +181,9 @@ extern int string_to_number(const char *str, unsigned int min, unsigned int max,
 extern void *ipset_malloc(size_t size);
 extern char *ipset_strdup(const char *);
 extern void ipset_free(void **data);
+
+extern struct set *set_find_byname(const char *name);
+extern struct set *set_find_byid(ip_set_id_t id);
 
 #define BITSPERBYTE	(8*sizeof(char))
 #define ID2BYTE(id)	((id)/BITSPERBYTE)

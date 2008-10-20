@@ -19,10 +19,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-/* #include <asm/bitops.h> */
 
 #include <linux/netfilter_ipv4/ip_set_ipmap.h>
 #include "ipset.h"
@@ -40,8 +37,7 @@
 static void
 create_init(void *data)
 {
-	struct ip_set_req_ipmap_create *mydata =
-	    (struct ip_set_req_ipmap_create *) data;
+	struct ip_set_req_ipmap_create *mydata = data;
 
 	DP("create INIT");
 	mydata->netmask = 0xFFFFFFFF;
@@ -51,8 +47,7 @@ create_init(void *data)
 static int
 create_parse(int c, char *argv[], void *data, unsigned *flags)
 {
-	struct ip_set_req_ipmap_create *mydata =
-	    (struct ip_set_req_ipmap_create *) data;
+	struct ip_set_req_ipmap_create *mydata = data;
 	unsigned int bits;
 
 	DP("create_parse");
@@ -118,16 +113,12 @@ create_parse(int c, char *argv[], void *data, unsigned *flags)
 	return 1;
 }
 
-#define ERRSTRLEN	256
-
 /* Final check; exit if not ok. */
 static void
 create_final(void *data, unsigned int flags)
 {
-	struct ip_set_req_ipmap_create *mydata =
-	    (struct ip_set_req_ipmap_create *) data;
+	struct ip_set_req_ipmap_create *mydata = data;
 	ip_set_ip_t range;
-	char errstr[ERRSTRLEN];
 
 	if (flags == 0)
 		exit_error(PARAMETER_PROBLEM,
@@ -157,7 +148,7 @@ create_final(void *data, unsigned int flags)
 	if (flags & OPT_CREATE_NETMASK) {
 		unsigned int mask_bits, netmask_bits;
 		ip_set_ip_t mask;
-		
+
 		if ((mydata->from & mydata->netmask) != mydata->from)
 			exit_error(PARAMETER_PROBLEM,
 				   "%s is not a network address according to netmask %d\n",
@@ -167,26 +158,14 @@ create_final(void *data, unsigned int flags)
 		mask = range_to_mask(mydata->from, mydata->to, &mask_bits);
 		if (!mask
 		    && (mydata->from || mydata->to != 0xFFFFFFFF)) {
-			strncpy(errstr, ip_tostring_numeric(mydata->from),
-				ERRSTRLEN-2);
-			errstr[ERRSTRLEN-1] = '\0';
 			exit_error(PARAMETER_PROBLEM,
-				   "%s-%s is not a full network (%x)\n",
-				   errstr,
-				   ip_tostring_numeric(mydata->to), mask);
+				   "You have to define a full network with --from"
+				   " and --to if you specify the --network option\n");
 		}
 		netmask_bits = mask_to_bits(mydata->netmask);
-		
 		if (netmask_bits <= mask_bits) {
-			strncpy(errstr, ip_tostring_numeric(mydata->from),
-				ERRSTRLEN-2);
-			errstr[ERRSTRLEN-1] = '\0';
 			exit_error(PARAMETER_PROBLEM,
-				   "%d netmask specifies larger or equal netblock than %s-%s (%d)\n",
-				   netmask_bits,
-				   errstr,
-				   ip_tostring_numeric(mydata->to),
-				   mask_bits);
+				   "%d netmask specifies larger or equal netblock than the network itself\n");
 		}
 		range = (1<<(netmask_bits - mask_bits)) - 1;
 	} else {
@@ -211,8 +190,7 @@ static const struct option create_opts[] = {
 static ip_set_ip_t
 adt_parser(unsigned cmd, const char *optarg, void *data)
 {
-	struct ip_set_req_ipmap *mydata =
-	    (struct ip_set_req_ipmap *) data;
+	struct ip_set_req_ipmap *mydata = data;
 
 	DP("ipmap: %p %p", optarg, data);
 
@@ -229,10 +207,8 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 static void
 initheader(struct set *set, const void *data)
 {
-	struct ip_set_req_ipmap_create *header =
-	    (struct ip_set_req_ipmap_create *) data;
-	struct ip_set_ipmap *map =
-		(struct ip_set_ipmap *) set->settype->header;
+	const struct ip_set_req_ipmap_create *header = data;
+	struct ip_set_ipmap *map = set->settype->header;
 		
 	memset(map, 0, sizeof(struct ip_set_ipmap));
 	map->first_ip = header->from;
@@ -260,8 +236,7 @@ initheader(struct set *set, const void *data)
 static void
 printheader(struct set *set, unsigned options)
 {
-	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) set->settype->header;
+	struct ip_set_ipmap *mysetdata = set->settype->header;
 
 	printf(" from: %s", ip_tostring(mysetdata->first_ip, options));
 	printf(" to: %s", ip_tostring(mysetdata->last_ip, options));
@@ -274,8 +249,7 @@ printheader(struct set *set, unsigned options)
 static void
 printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 {
-	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) set->settype->header;
+	struct ip_set_ipmap *mysetdata = set->settype->header;
 	ip_set_ip_t id;
 
 	for (id = 0; id < mysetdata->sizeid; id++)
@@ -289,8 +263,7 @@ printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 static void
 saveheader(struct set *set, unsigned options)
 {
-	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) set->settype->header;
+	struct ip_set_ipmap *mysetdata = set->settype->header;
 
 	printf("-N %s %s --from %s",
 	       set->name, set->settype->typename,
@@ -307,8 +280,7 @@ saveheader(struct set *set, unsigned options)
 static void
 saveips(struct set *set, void *data, size_t len, unsigned options)
 {
-	struct ip_set_ipmap *mysetdata =
-	    (struct ip_set_ipmap *) set->settype->header;
+	struct ip_set_ipmap *mysetdata = set->settype->header;
 	ip_set_ip_t id;
 
 	DP("%s", set->name);

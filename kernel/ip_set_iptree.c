@@ -1,4 +1,4 @@
-/* Copyright (C) 2005 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
+/* Copyright (C) 2005-2008 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -7,20 +7,19 @@
 
 /* Kernel module implementing an IP set type: the iptree type */
 
-#include <linux/version.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv4/ip_set.h>
 #include <linux/errno.h>
 #include <asm/uaccess.h>
 #include <asm/bitops.h>
 #include <linux/spinlock.h>
 
+#include <linux/netfilter_ipv4/ip_set.h>
+#include <linux/netfilter_ipv4/ip_set_bitmaps.h>
 #include <linux/netfilter_ipv4/ip_set_iptree.h>
 
 static int limit = MAX_RANGE;
@@ -61,7 +60,7 @@ static __KMEM_CACHE_T__ *leaf_cachep;
 } while (0)
 
 static inline int
-__testip(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t *hash_ip)
+iptree_test(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 {
 	struct ip_set_iptree *map = set->data;
 	struct ip_set_iptreeb *btree;
@@ -84,42 +83,10 @@ __testip(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t *hash_ip)
 		   || time_after(dtree->expires[d], jiffies));
 }
 
-static int
-testip(struct ip_set *set, const void *data, size_t size,
-       ip_set_ip_t *hash_ip)
-{
-	const struct ip_set_req_iptree *req = data;
+#define KADT_CONDITION
 
-	if (size != sizeof(struct ip_set_req_iptree)) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      sizeof(struct ip_set_req_iptree),
-			      size);
-		return -EINVAL;
-	}
-	return __testip(set, req->ip, hash_ip);
-}
-
-static int
-testip_kernel(struct ip_set *set,
-	      const struct sk_buff *skb,
-	      ip_set_ip_t *hash_ip,
-	      const u_int32_t *flags,
-	      unsigned char index)
-{
-	int res;
-	
-	DP("flag: %s src: %u.%u.%u.%u dst: %u.%u.%u.%u",
-	   flags[index] & IPSET_SRC ? "SRC" : "DST",
-	   NIPQUAD(ip_hdr(skb)->saddr),
-	   NIPQUAD(ip_hdr(skb)->daddr));
-
-	res =  __testip(set,
-			ntohl(flags[index] & IPSET_SRC
-				? ip_hdr(skb)->saddr
-				: ip_hdr(skb)->daddr),
-			hash_ip);
-	return (res < 0 ? 0 : res);
-}
+UADT(iptree, test)
+KADT(iptree, test, ipaddr)
 
 #define ADDIP_WALK(map, elem, branch, type, cachep) do {	\
 	if ((map)->tree[elem]) {				\
@@ -137,8 +104,8 @@ testip_kernel(struct ip_set *set,
 } while (0)	
 
 static inline int
-__addip(struct ip_set *set, ip_set_ip_t ip, unsigned int timeout,
-	ip_set_ip_t *hash_ip)
+iptree_add(struct ip_set *set, ip_set_ip_t *hash_ip,
+	   ip_set_ip_t ip, unsigned int timeout)
 {
 	struct ip_set_iptree *map = set->data;
 	struct ip_set_iptreeb *btree;
@@ -161,6 +128,8 @@ __addip(struct ip_set *set, ip_set_ip_t ip, unsigned int timeout,
 	if (dtree->expires[d]
 	    && (!map->timeout || time_after(dtree->expires[d], jiffies)))
 	    	ret = -EEXIST;
+	if (map->timeout && timeout == 0)
+		timeout = map->timeout;
 	dtree->expires[d] = map->timeout ? (timeout * HZ + jiffies) : 1;
 	/* Lottery: I won! */
 	if (dtree->expires[d] == 0)
@@ -171,41 +140,8 @@ __addip(struct ip_set *set, ip_set_ip_t ip, unsigned int timeout,
 	return ret;
 }
 
-static int
-addip(struct ip_set *set, const void *data, size_t size,
-      ip_set_ip_t *hash_ip)
-{
-	struct ip_set_iptree *map = set->data;
-	const struct ip_set_req_iptree *req = data;
-
-	if (size != sizeof(struct ip_set_req_iptree)) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      sizeof(struct ip_set_req_iptree),
-			      size);
-		return -EINVAL;
-	}
-	DP("%u.%u.%u.%u %u", HIPQUAD(req->ip), req->timeout);
-	return __addip(set, req->ip,
-		       req->timeout ? req->timeout : map->timeout,
-		       hash_ip);
-}
-
-static int
-addip_kernel(struct ip_set *set,
-	     const struct sk_buff *skb,
-	     ip_set_ip_t *hash_ip,
-	     const u_int32_t *flags,
-	     unsigned char index)
-{
-	struct ip_set_iptree *map = set->data;
-
-	return __addip(set,
-		       ntohl(flags[index] & IPSET_SRC
-				? ip_hdr(skb)->saddr
-				: ip_hdr(skb)->daddr),
-		       map->timeout,
-		       hash_ip);
-}
+UADT(iptree, add, req->timeout)
+KADT(iptree, add, ipaddr, 0)
 
 #define DELIP_WALK(map, elem, branch) do {	\
 	if ((map)->tree[elem]) {		\
@@ -215,7 +151,7 @@ addip_kernel(struct ip_set *set,
 } while (0)
 
 static inline int
-__delip(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t *hash_ip)
+iptree_del(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 {
 	struct ip_set_iptree *map = set->data;
 	struct ip_set_iptreeb *btree;
@@ -240,34 +176,8 @@ __delip(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t *hash_ip)
 	return -EEXIST;
 }
 
-static int
-delip(struct ip_set *set, const void *data, size_t size,
-      ip_set_ip_t *hash_ip)
-{
-	const struct ip_set_req_iptree *req = data;
-
-	if (size != sizeof(struct ip_set_req_iptree)) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      sizeof(struct ip_set_req_iptree),
-			      size);
-		return -EINVAL;
-	}
-	return __delip(set, req->ip, hash_ip);
-}
-
-static int
-delip_kernel(struct ip_set *set,
-	     const struct sk_buff *skb,
-	     ip_set_ip_t *hash_ip,
-	     const u_int32_t *flags,
-	     unsigned char index)
-{
-	return __delip(set,
-		       ntohl(flags[index] & IPSET_SRC
-				? ip_hdr(skb)->saddr
-				: ip_hdr(skb)->daddr),
-		       hash_ip);
-}
+UADT(iptree, del)
+KADT(iptree, del, ipaddr)
 
 #define LOOP_WALK_BEGIN(map, i, branch) \
 	for (i = 0; i < 256; i++) {	\
@@ -277,7 +187,8 @@ delip_kernel(struct ip_set *set,
 
 #define LOOP_WALK_END }
 
-static void ip_tree_gc(unsigned long ul_set)
+static void
+ip_tree_gc(unsigned long ul_set)
 {
 	struct ip_set *set = (struct ip_set *) ul_set;
 	struct ip_set_iptree *map = set->data;
@@ -347,7 +258,8 @@ static void ip_tree_gc(unsigned long ul_set)
 	add_timer(&map->gc);
 }
 
-static inline void init_gc_timer(struct ip_set *set)
+static inline void
+init_gc_timer(struct ip_set *set)
 {
 	struct ip_set_iptree *map = set->data;
 
@@ -362,7 +274,8 @@ static inline void init_gc_timer(struct ip_set *set)
 	add_timer(&map->gc);
 }
 
-static int create(struct ip_set *set, const void *data, size_t size)
+static int
+iptree_create(struct ip_set *set, const void *data, size_t size)
 {
 	const struct ip_set_req_iptree_create *req = data;
 	struct ip_set_iptree *map;
@@ -390,7 +303,8 @@ static int create(struct ip_set *set, const void *data, size_t size)
 	return 0;
 }
 
-static void __flush(struct ip_set_iptree *map)
+static inline void
+__flush(struct ip_set_iptree *map)
 {
 	struct ip_set_iptreeb *btree;
 	struct ip_set_iptreec *ctree;
@@ -409,7 +323,8 @@ static void __flush(struct ip_set_iptree *map)
 	map->elements = 0;
 }
 
-static void destroy(struct ip_set *set)
+static void
+iptree_destroy(struct ip_set *set)
 {
 	struct ip_set_iptree *map = set->data;
 
@@ -421,7 +336,8 @@ static void destroy(struct ip_set *set)
 	set->data = NULL;
 }
 
-static void flush(struct ip_set *set)
+static void
+iptree_flush(struct ip_set *set)
 {
 	struct ip_set_iptree *map = set->data;
 	unsigned int timeout = map->timeout;
@@ -436,7 +352,8 @@ static void flush(struct ip_set *set)
 	init_gc_timer(set);
 }
 
-static void list_header(const struct ip_set *set, void *data)
+static void
+iptree_list_header(const struct ip_set *set, void *data)
 {
 	const struct ip_set_iptree *map = set->data;
 	struct ip_set_req_iptree_create *header = data;
@@ -444,7 +361,8 @@ static void list_header(const struct ip_set *set, void *data)
 	header->timeout = map->timeout;
 }
 
-static int list_members_size(const struct ip_set *set)
+static int
+iptree_list_members_size(const struct ip_set *set)
 {
 	const struct ip_set_iptree *map = set->data;
 	struct ip_set_iptreeb *btree;
@@ -469,7 +387,8 @@ static int list_members_size(const struct ip_set *set)
 	return (count * sizeof(struct ip_set_req_iptree));
 }
 
-static void list_members(const struct ip_set *set, void *data)
+static void
+iptree_list_members(const struct ip_set *set, void *data)
 {
 	const struct ip_set_iptree *map = set->data;
 	struct ip_set_iptreeb *btree;
@@ -497,26 +416,7 @@ static void list_members(const struct ip_set *set, void *data)
 	LOOP_WALK_END;
 }
 
-static struct ip_set_type ip_set_iptree = {
-	.typename		= SETTYPE_NAME,
-	.features		= IPSET_TYPE_IP | IPSET_DATA_SINGLE,
-	.protocol_version	= IP_SET_PROTOCOL_VERSION,
-	.create			= &create,
-	.destroy		= &destroy,
-	.flush			= &flush,
-	.reqsize		= sizeof(struct ip_set_req_iptree),
-	.addip			= &addip,
-	.addip_kernel		= &addip_kernel,
-	.delip			= &delip,
-	.delip_kernel		= &delip_kernel,
-	.testip			= &testip,
-	.testip_kernel		= &testip_kernel,
-	.header_size		= sizeof(struct ip_set_req_iptree_create),
-	.list_header		= &list_header,
-	.list_members_size	= &list_members_size,
-	.list_members		= &list_members,
-	.me			= THIS_MODULE,
-};
+IP_SET_TYPE(iptree, IPSET_TYPE_IP | IPSET_DATA_SINGLE)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");

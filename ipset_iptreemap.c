@@ -15,11 +15,9 @@
  * Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <linux/netfilter_ipv4/ip_set_iptreemap.h>
@@ -75,18 +73,24 @@ adt_parser(unsigned int cmd, const char *optarg, void *data)
 	char *ptr, *tmp = saved;
 
 	if (strchr(tmp, '/')) {
-		parse_ipandmask(tmp, &mydata->start, &mask);
-		mydata->end = mydata->start | ~mask;
+		parse_ipandmask(tmp, &mydata->ip, &mask);
+		mydata->end = mydata->ip | ~mask;
 	} else {
-		ptr = strsep(&tmp, ":");
-		parse_ip(ptr, &mydata->start);
+		if ((ptr = strchr(tmp, ':')) != NULL)
+			fprintf(stderr, "Warning: please replace old separator character '%s.1' with ','.\n"
+			        "Next release won't support it.\n",
+			        ptr);
+		ptr = strsep(&tmp, "-:");
+		parse_ip(ptr, &mydata->ip);
 
 		if (tmp) {
 			parse_ip(tmp, &mydata->end);
 		} else {
-			mydata->end = mydata->start;
+			mydata->end = mydata->ip;
 		}
 	}
+
+	free(saved);
 
 	return 1;
 }
@@ -120,9 +124,9 @@ printips_sorted(struct set *set, void *data, size_t len, unsigned int options)
 	while (len >= offset + sizeof(struct ip_set_req_iptreemap)) {
 		req = data + offset;
 
-		printf("%s", ip_tostring(req->start, options));
-		if (req->start != req->end)
-			printf(":%s", ip_tostring(req->end, options));
+		printf("%s", ip_tostring(req->ip, options));
+		if (req->ip != req->end)
+			printf("-%s", ip_tostring(req->end, options));
 		printf("\n");
 
 		offset += sizeof(struct ip_set_req_iptreemap);
@@ -151,10 +155,10 @@ saveips(struct set *set, void *data, size_t len, unsigned int options)
 	while (len >= offset + sizeof(struct ip_set_req_iptreemap)) {
 		req = data + offset;
 
-		printf("-A %s %s", set->name, ip_tostring(req->start, options));
+		printf("-A %s %s", set->name, ip_tostring(req->ip, options));
 
-		if (req->start != req->end)
-			printf(":%s", ip_tostring(req->end, options));
+		if (req->ip != req->end)
+			printf("-%s", ip_tostring(req->end, options));
 
 		printf("\n");
 

@@ -10,6 +10,8 @@
 0 ipset -T test 192.168.68.95
 # Test value not added to the set
 1 ipset -T test 2.0.1.0
+# Try to add IP address
+2 ipset -A test 2.0.0.1
 # Delete test set
 0 ipset -X test
 # eof

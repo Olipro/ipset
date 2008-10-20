@@ -15,21 +15,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <errno.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <asm/types.h>
 
 #include <linux/netfilter_ipv4/ip_set_nethash.h>
-#include <linux/netfilter_ipv4/ip_set_jhash.h>
+#include <linux/netfilter_ipv4/ip_set_hashes.h>
 
 #include "ipset.h"
 
@@ -43,8 +35,7 @@
 static void
 create_init(void *data)
 {
-	struct ip_set_req_nethash_create *mydata =
-	    (struct ip_set_req_nethash_create *) data;
+	struct ip_set_req_nethash_create *mydata = data;
 
 	DP("create INIT");
 
@@ -58,8 +49,7 @@ create_init(void *data)
 static int
 create_parse(int c, char *argv[], void *data, unsigned *flags)
 {
-	struct ip_set_req_nethash_create *mydata =
-	    (struct ip_set_req_nethash_create *) data;
+	struct ip_set_req_nethash_create *mydata = data;
 	ip_set_ip_t value;
 
 	DP("create_parse");
@@ -112,8 +102,7 @@ static void
 create_final(void *data, unsigned int flags)
 {
 #ifdef IPSET_DEBUG
-	struct ip_set_req_nethash_create *mydata =
-	    (struct ip_set_req_nethash_create *) data;
+	struct ip_set_req_nethash_create *mydata = data;
 
 	DP("hashsize %u probes %u resize %u",
 	   mydata->hashsize, mydata->probes, mydata->resize);
@@ -132,8 +121,7 @@ static const struct option create_opts[] = {
 static ip_set_ip_t
 adt_parser(unsigned cmd, const char *optarg, void *data)
 {
-	struct ip_set_req_nethash *mydata =
-	    (struct ip_set_req_nethash *) data;
+	struct ip_set_req_nethash *mydata = data;
 	char *saved = ipset_strdup(optarg);
 	char *ptr, *tmp = saved;
 	ip_set_ip_t cidr;
@@ -168,10 +156,8 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 static void
 initheader(struct set *set, const void *data)
 {
-	struct ip_set_req_nethash_create *header =
-	    (struct ip_set_req_nethash_create *) data;
-	struct ip_set_nethash *map =
-		(struct ip_set_nethash *) set->settype->header;
+	const struct ip_set_req_nethash_create *header = data;
+	struct ip_set_nethash *map = set->settype->header;
 
 	memset(map, 0, sizeof(struct ip_set_nethash));
 	map->hashsize = header->hashsize;
@@ -182,8 +168,7 @@ initheader(struct set *set, const void *data)
 static void
 printheader(struct set *set, unsigned options)
 {
-	struct ip_set_nethash *mysetdata =
-	    (struct ip_set_nethash *) set->settype->header;
+	struct ip_set_nethash *mysetdata = set->settype->header;
 
 	printf(" hashsize: %u", mysetdata->hashsize);
 	printf(" probes: %u", mysetdata->probes);
@@ -261,8 +246,7 @@ printips(struct set *set, void *data, size_t len, unsigned options)
 static void
 saveheader(struct set *set, unsigned options)
 {
-	struct ip_set_nethash *mysetdata =
-	    (struct ip_set_nethash *) set->settype->header;
+	struct ip_set_nethash *mysetdata = set->settype->header;
 
 	printf("-N %s %s --hashsize %u --probes %u --resize %u\n",
 	       set->name, set->settype->typename,
@@ -311,7 +295,7 @@ parse_net(const char *str, ip_set_ip_t *ip)
 	parse_ip(ptr, ip);
 	free(saved);
 	
-	*ip = pack(*ip, cidr);
+	*ip = pack_ip_cidr(*ip, cidr);
 }
 
 static void usage(void)

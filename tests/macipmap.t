@@ -20,6 +20,12 @@
 1 ipset -A test 2.0.0.0
 # Range: Try to add value after upper boundary
 1 ipset -A test 2.1.0.1
+# Range: Try to add value with MAC
+0 ipset -A test 2.0.0.2,00:11:22:33:44:55
+# Range: Test value with invalid MAC
+1 ipset -T test 2.0.0.2,00:11:22:33:44:56
+# Range: Test value with valid MAC
+0 ipset -T test 2.0.0.2,00:11:22:33:44:55
 # Range: Delete test test
 0 ipset -X test
 # Network: Try to create a set from an invalid network

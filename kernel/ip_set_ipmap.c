@@ -1,6 +1,6 @@
 /* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
  *                         Patrick Schaaf <bof@bof.de>
- * Copyright (C) 2003-2004 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
+ * Copyright (C) 2003-2008 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -12,14 +12,13 @@
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
-#include <linux/version.h>
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv4/ip_set.h>
 #include <linux/errno.h>
 #include <asm/uaccess.h>
 #include <asm/bitops.h>
 #include <linux/spinlock.h>
 
+#include <linux/netfilter_ipv4/ip_set.h>
+#include <linux/netfilter_ipv4/ip_set_bitmaps.h>
 #include <linux/netfilter_ipv4/ip_set_ipmap.h>
 
 static inline ip_set_ip_t
@@ -29,9 +28,9 @@ ip_to_id(const struct ip_set_ipmap *map, ip_set_ip_t ip)
 }
 
 static inline int
-__testip(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t *hash_ip)
+ipmap_test(const struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 {
-	struct ip_set_ipmap *map = set->data;
+	const struct ip_set_ipmap *map = set->data;
 	
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -ERANGE;
@@ -42,38 +41,13 @@ __testip(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t *hash_ip)
 	return !!test_bit(ip_to_id(map, *hash_ip), map->members);
 }
 
-static int
-testip(struct ip_set *set, const void *data, size_t size,
-       ip_set_ip_t *hash_ip)
-{
-	const struct ip_set_req_ipmap *req = data;
+#define KADT_CONDITION
 
-	if (size != sizeof(struct ip_set_req_ipmap)) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      sizeof(struct ip_set_req_ipmap),
-			      size);
-		return -EINVAL;
-	}
-	return __testip(set, req->ip, hash_ip);
-}
-
-static int
-testip_kernel(struct ip_set *set,
-	      const struct sk_buff *skb,
-	      ip_set_ip_t *hash_ip,
-	      const u_int32_t *flags,
-	      unsigned char index)
-{
-	int res =  __testip(set,
-			ntohl(flags[index] & IPSET_SRC
-				? ip_hdr(skb)->saddr
-				: ip_hdr(skb)->daddr),
-			hash_ip);
-	return (res < 0 ? 0 : res);
-}
+UADT(ipmap, test)
+KADT(ipmap, test, ipaddr)
 
 static inline int
-__addip(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t *hash_ip)
+ipmap_add(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 {
 	struct ip_set_ipmap *map = set->data;
 
@@ -88,38 +62,11 @@ __addip(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t *hash_ip)
 	return 0;
 }
 
-static int
-addip(struct ip_set *set, const void *data, size_t size,
-      ip_set_ip_t *hash_ip)
-{
-	const struct ip_set_req_ipmap *req = data;
-
-	if (size != sizeof(struct ip_set_req_ipmap)) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      sizeof(struct ip_set_req_ipmap),
-			      size);
-		return -EINVAL;
-	}
-	DP("%u.%u.%u.%u", HIPQUAD(req->ip));
-	return __addip(set, req->ip, hash_ip);
-}
-
-static int
-addip_kernel(struct ip_set *set,
-	     const struct sk_buff *skb,
-	     ip_set_ip_t *hash_ip,
-	     const u_int32_t *flags,
-	     unsigned char index)
-{
-	return __addip(set,
-		       ntohl(flags[index] & IPSET_SRC
-				? ip_hdr(skb)->saddr
-				: ip_hdr(skb)->daddr),
-		       hash_ip);
-}
+UADT(ipmap, add)
+KADT(ipmap, add, ipaddr)
 
 static inline int
-__delip(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t *hash_ip)
+ipmap_del(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 {
 	struct ip_set_ipmap *map = set->data;
 
@@ -134,64 +81,13 @@ __delip(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t *hash_ip)
 	return 0;
 }
 
-static int
-delip(struct ip_set *set, const void *data, size_t size,
-      ip_set_ip_t *hash_ip)
+UADT(ipmap, del)
+KADT(ipmap, del, ipaddr)
+
+static inline int
+__ipmap_create(const struct ip_set_req_ipmap_create *req,
+	       struct ip_set_ipmap *map)
 {
-	const struct ip_set_req_ipmap *req = data;
-
-	if (size != sizeof(struct ip_set_req_ipmap)) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      sizeof(struct ip_set_req_ipmap),
-			      size);
-		return -EINVAL;
-	}
-	return __delip(set, req->ip, hash_ip);
-}
-
-static int
-delip_kernel(struct ip_set *set,
-	     const struct sk_buff *skb,
-	     ip_set_ip_t *hash_ip,
-	     const u_int32_t *flags,
-	     unsigned char index)
-{
-	return __delip(set,
-		       ntohl(flags[index] & IPSET_SRC
-				? ip_hdr(skb)->saddr
-				: ip_hdr(skb)->daddr),
-		       hash_ip);
-}
-
-static int create(struct ip_set *set, const void *data, size_t size)
-{
-	int newbytes;
-	const struct ip_set_req_ipmap_create *req = data;
-	struct ip_set_ipmap *map;
-
-	if (size != sizeof(struct ip_set_req_ipmap_create)) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      sizeof(struct ip_set_req_ipmap_create),
-			      size);
-		return -EINVAL;
-	}
-
-	DP("from %u.%u.%u.%u to %u.%u.%u.%u",
-	   HIPQUAD(req->from), HIPQUAD(req->to));
-
-	if (req->from > req->to) {
-		DP("bad ip range");
-		return -ENOEXEC;
-	}
-
-	map = kmalloc(sizeof(struct ip_set_ipmap), GFP_KERNEL);
-	if (!map) {
-		DP("out of memory for %d bytes",
-		   sizeof(struct ip_set_ipmap));
-		return -ENOMEM;
-	}
-	map->first_ip = req->from;
-	map->last_ip = req->to;
 	map->netmask = req->netmask;
 
 	if (req->netmask == 0xFFFFFFFF) {
@@ -200,12 +96,12 @@ static int create(struct ip_set *set, const void *data, size_t size)
 	} else {
 		unsigned int mask_bits, netmask_bits;
 		ip_set_ip_t mask;
-		
+
 		map->first_ip &= map->netmask;	/* Should we better bark? */
-		
+
 		mask = range_to_mask(map->first_ip, map->last_ip, &mask_bits);
 		netmask_bits = mask_to_bits(map->netmask);
-		
+
 		if ((!mask && (map->first_ip || map->last_ip != 0xFFFFFFFF))
 		    || netmask_bits <= mask_bits)
 			return -ENOEXEC;
@@ -216,101 +112,33 @@ static int create(struct ip_set *set, const void *data, size_t size)
 		map->sizeid = 2 << (netmask_bits - mask_bits - 1);
 	}
 	if (map->sizeid > MAX_RANGE + 1) {
-		ip_set_printk("range too big (max %d addresses)",
-			       MAX_RANGE+1);
-		kfree(map);
+		ip_set_printk("range too big, %d elements (max %d)",
+			       map->sizeid, MAX_RANGE+1);
 		return -ENOEXEC;
 	}
 	DP("hosts %u, sizeid %u", map->hosts, map->sizeid);
-	newbytes = bitmap_bytes(0, map->sizeid - 1);
-	map->members = kmalloc(newbytes, GFP_KERNEL);
-	if (!map->members) {
-		DP("out of memory for %d bytes", newbytes);
-		kfree(map);
-		return -ENOMEM;
-	}
-	memset(map->members, 0, newbytes);
-	
-	set->data = map;
-	return 0;
-}
-
-static void destroy(struct ip_set *set)
-{
-	struct ip_set_ipmap *map = set->data;
-	
-	kfree(map->members);
-	kfree(map);
-	
-	set->data = NULL;
-}
-
-static void flush(struct ip_set *set)
-{
-	struct ip_set_ipmap *map = set->data;
-	memset(map->members, 0, bitmap_bytes(0, map->sizeid - 1));
-}
-
-static void list_header(const struct ip_set *set, void *data)
-{
-	const struct ip_set_ipmap *map = set->data;
-	struct ip_set_req_ipmap_create *header = data;
-
-	header->from = map->first_ip;
-	header->to = map->last_ip;
-	header->netmask = map->netmask;
-}
-
-static int list_members_size(const struct ip_set *set)
-{
-	const struct ip_set_ipmap *map = set->data;
-
 	return bitmap_bytes(0, map->sizeid - 1);
 }
 
-static void list_members(const struct ip_set *set, void *data)
-{
-	const struct ip_set_ipmap *map = set->data;
-	int bytes = bitmap_bytes(0, map->sizeid - 1);
+BITMAP_CREATE(ipmap)
+BITMAP_DESTROY(ipmap)
+BITMAP_FLUSH(ipmap)
 
-	memcpy(data, map->members, bytes);
+static inline void
+__ipmap_list_header(const struct ip_set_ipmap *map,
+		    struct ip_set_req_ipmap_create *header)
+{
+	header->netmask = map->netmask;
 }
 
-static struct ip_set_type ip_set_ipmap = {
-	.typename		= SETTYPE_NAME,
-	.features		= IPSET_TYPE_IP | IPSET_DATA_SINGLE,
-	.protocol_version	= IP_SET_PROTOCOL_VERSION,
-	.create			= &create,
-	.destroy		= &destroy,
-	.flush			= &flush,
-	.reqsize		= sizeof(struct ip_set_req_ipmap),
-	.addip			= &addip,
-	.addip_kernel		= &addip_kernel,
-	.delip			= &delip,
-	.delip_kernel		= &delip_kernel,
-	.testip			= &testip,
-	.testip_kernel		= &testip_kernel,
-	.header_size		= sizeof(struct ip_set_req_ipmap_create),
-	.list_header		= &list_header,
-	.list_members_size	= &list_members_size,
-	.list_members		= &list_members,
-	.me			= THIS_MODULE,
-};
+BITMAP_LIST_HEADER(ipmap)
+BITMAP_LIST_MEMBERS_SIZE(ipmap)
+BITMAP_LIST_MEMBERS(ipmap)
+
+IP_SET_TYPE(ipmap, IPSET_TYPE_IP | IPSET_DATA_SINGLE)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
 MODULE_DESCRIPTION("ipmap type of IP sets");
 
-static int __init ip_set_ipmap_init(void)
-{
-	return ip_set_register_set_type(&ip_set_ipmap);
-}
-
-static void __exit ip_set_ipmap_fini(void)
-{
-	/* FIXME: possible race with ip_set_create() */
-	ip_set_unregister_set_type(&ip_set_ipmap);
-}
-
-module_init(ip_set_ipmap_init);
-module_exit(ip_set_ipmap_fini);
+REGISTER_MODULE(ipmap)

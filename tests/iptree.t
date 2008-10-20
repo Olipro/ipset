@@ -38,6 +38,14 @@
 1 ipset -T test 2.0.0.2
 # Timeout: Test value not added to the set
 1 ipset -T test 192.168.68.70
+# Timeout: Add entry with 3s timeout value
+0 ipset -A test 2.0.0.2,3
+# Timeout: Test entry added with 3s timeout
+0 ipset -T test 2.0.0.2
+# Timeout: Sleep 4s so that entry can time out
+0 sleep 4
+# Timeout: Test entry added with 3s timeout
+1 ipset -T test 2.0.0.2
 # Timeout: Delete test set
 0 ipset -X test
 # eof

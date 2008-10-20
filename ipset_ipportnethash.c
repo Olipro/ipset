@@ -1,4 +1,4 @@
-/* Copyright 2004 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
+/* Copyright 2008 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
  * This program is free software; you can redistribute it and/or modify   
  * it under the terms of the GNU General Public License as published by   
@@ -20,7 +20,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 
-#include <linux/netfilter_ipv4/ip_set_ipporthash.h>
+#include <linux/netfilter_ipv4/ip_set_ipportnethash.h>
 
 #include "ipset.h"
 
@@ -35,7 +35,7 @@
 static void
 create_init(void *data)
 {
-	struct ip_set_req_ipporthash_create *mydata = data;
+	struct ip_set_req_ipportnethash_create *mydata = data;
 
 	DP("create INIT");
 
@@ -49,7 +49,7 @@ create_init(void *data)
 static int
 create_parse(int c, char *argv[], void *data, unsigned *flags)
 {
-	struct ip_set_req_ipporthash_create *mydata = data;
+	struct ip_set_req_ipportnethash_create *mydata = data;
 	ip_set_ip_t value;
 
 	DP("create_parse");
@@ -140,7 +140,7 @@ create_parse(int c, char *argv[], void *data, unsigned *flags)
 static void
 create_final(void *data, unsigned int flags)
 {
-	struct ip_set_req_ipporthash_create *mydata = data;
+	struct ip_set_req_ipportnethash_create *mydata = data;
 
 #ifdef IPSET_DEBUG
 	DP("hashsize %u probes %u resize %u",
@@ -192,11 +192,12 @@ static const struct option create_opts[] = {
 static ip_set_ip_t
 adt_parser(unsigned cmd, const char *optarg, void *data)
 {
-	struct ip_set_req_ipporthash *mydata = data;
+	struct ip_set_req_ipportnethash *mydata = data;
 	char *saved = ipset_strdup(optarg);
 	char *ptr, *tmp = saved;
+	ip_set_ip_t cidr;
 
-	DP("ipporthash: %p %p", optarg, data);
+	DP("ipportnethash: %p %p", optarg, data);
 
 	if ((ptr = strchr(tmp, ':')) || (ptr = strchr(tmp, '%')))
 		fprintf(stderr, "Warning: please replace old separator character '%s.1' with ','.\n"
@@ -205,12 +206,31 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 
 	ptr = strsep(&tmp, ":%,");
 	parse_ip(ptr, &mydata->ip);
-
-	if (tmp)
-		parse_port(tmp, &mydata->port);
-	else
+	if (!tmp)
 		exit_error(PARAMETER_PROBLEM,
-			   "IP address and port must be specified: ip,port");
+			   "IP address, port and network address must be specified: ip,port,net");
+
+	ptr = strsep(&tmp, ":%,");
+	parse_port(ptr, &mydata->port);
+	if (!tmp)
+		exit_error(PARAMETER_PROBLEM,
+			   "IP address, port and network address must be specified: ip,port,net");
+
+	ptr = strsep(&tmp, "/");
+	if (tmp == NULL)
+		if (cmd == CMD_TEST)
+			cidr = 32;
+		else
+			exit_error(PARAMETER_PROBLEM,
+				   "Missing /cidr from `%s'", optarg);
+	else
+		if (string_to_number(tmp, 1, 31, &cidr))
+			exit_error(PARAMETER_PROBLEM,
+				   "Out of range cidr `%s' specified", optarg);
+	
+	mydata->cidr = cidr;
+
+	parse_ip(ptr, &mydata->ip1);
 	free(saved);
 	return 1;	
 };
@@ -222,10 +242,10 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 static void
 initheader(struct set *set, const void *data)
 {
-	const struct ip_set_req_ipporthash_create *header = data;
-	struct ip_set_ipporthash *map = set->settype->header;
+	const struct ip_set_req_ipportnethash_create *header = data;
+	struct ip_set_ipportnethash *map = set->settype->header;
 
-	memset(map, 0, sizeof(struct ip_set_ipporthash));
+	memset(map, 0, sizeof(struct ip_set_ipportnethash));
 	map->hashsize = header->hashsize;
 	map->probes = header->probes;
 	map->resize = header->resize;
@@ -236,7 +256,7 @@ initheader(struct set *set, const void *data)
 static void
 printheader(struct set *set, unsigned options)
 {
-	struct ip_set_ipporthash *mysetdata = set->settype->header;
+	struct ip_set_ipportnethash *mysetdata = set->settype->header;
 
 	printf(" from: %s", ip_tostring(mysetdata->first_ip, options));
 	printf(" to: %s", ip_tostring(mysetdata->last_ip, options));
@@ -245,31 +265,88 @@ printheader(struct set *set, unsigned options)
 	printf(" resize: %u\n", mysetdata->resize);
 }
 
+static char buf[20];
+
+static char *
+unpack_ip_tostring(ip_set_ip_t ip, unsigned options)
+{
+	int i, j = 3;
+	unsigned char a, b;
+
+	ip = htonl(ip);	
+	for (i = 3; i >= 0; i--)
+		if (((unsigned char *)&ip)[i] != 0) {
+			j = i;
+			break;
+		}
+			
+	a = ((unsigned char *)&ip)[j];
+	if (a <= 128) {
+		a = (a - 1) * 2;
+		b = 7;
+	} else if (a <= 192) {
+		a = (a - 129) * 4;
+		b = 6;
+	} else if (a <= 224) {
+		a = (a - 193) * 8;
+		b = 5;
+	} else if (a <= 240) {
+		a = (a - 225) * 16;
+		b = 4;
+	} else if (a <= 248) {
+		a = (a - 241) * 32;
+		b = 3;
+	} else if (a <= 252) {
+		a = (a - 249) * 64;
+		b = 2;
+	} else if (a <= 254) {
+		a = (a - 253) * 128;
+		b = 1;
+	} else {
+		a = b = 0;
+	}
+	((unsigned char *)&ip)[j] = a;
+	b += j * 8;
+	
+	sprintf(buf, "%u.%u.%u.%u/%u",
+		((unsigned char *)&ip)[0],
+		((unsigned char *)&ip)[1],
+		((unsigned char *)&ip)[2],
+		((unsigned char *)&ip)[3],
+		b);
+
+	DP("%s %s", ip_tostring(ntohl(ip), options), buf);
+	return buf;
+}
+
 static void
 printips(struct set *set, void *data, size_t len, unsigned options)
 {
-	struct ip_set_ipporthash *mysetdata = set->settype->header;
+	struct ip_set_ipportnethash *mysetdata = set->settype->header;
 	size_t offset = 0;
-	ip_set_ip_t *ipptr, ip;
+	struct ipportip *ipptr;
+	ip_set_ip_t ip;
 	uint16_t port;
 
 	while (offset < len) {
 		ipptr = data + offset;
-		if (*ipptr) {
-			ip = (*ipptr>>16) + mysetdata->first_ip;
-			port = (uint16_t) *ipptr;
-			printf("%s,%s\n", 
+		if (ipptr->ip || ipptr->ip1) {
+			ip = (ipptr->ip>>16) + mysetdata->first_ip;
+			port = (uint16_t) ipptr->ip;
+			printf("%s,%s,", 
 			       ip_tostring(ip, options),
 			       port_tostring(port, options));
+			printf("%s\n", 
+			       unpack_ip_tostring(ipptr->ip1, options));
 		}
-		offset += sizeof(ip_set_ip_t);
+		offset += sizeof(struct ipportip);
 	}
 }
 
 static void
 saveheader(struct set *set, unsigned options)
 {
-	struct ip_set_ipporthash *mysetdata = set->settype->header;
+	struct ip_set_ipportnethash *mysetdata = set->settype->header;
 
 	printf("-N %s %s --from %s",
 	       set->name, set->settype->typename,
@@ -284,69 +361,56 @@ saveheader(struct set *set, unsigned options)
 static void
 saveips(struct set *set, void *data, size_t len, unsigned options)
 {
-	struct ip_set_ipporthash *mysetdata = set->settype->header;
+	struct ip_set_ipportnethash *mysetdata = set->settype->header;
 	size_t offset = 0;
-	ip_set_ip_t *ipptr, ip;
+	struct ipportip *ipptr;
+	ip_set_ip_t ip;
 	uint16_t port;
 
 	while (offset < len) {
 		ipptr = data + offset;
-		if (*ipptr) {
-			ip = (*ipptr>>16) + mysetdata->first_ip;
-			port = (uint16_t) *ipptr;
-			printf("-A %s %s,%s\n", set->name, 
+		if (ipptr) {
+			ip = (ipptr->ip>>16) + mysetdata->first_ip;
+			port = (uint16_t) ipptr->ip;
+			printf("-A %s %s,%s,", set->name, 
 			       ip_tostring(ip, options),
 			       port_tostring(port, options));
+			printf("%s\n",
+			       unpack_ip_tostring(ipptr->ip, options));
 		}
-		offset += sizeof(ip_set_ip_t);
+		offset += sizeof(struct ipportip);
 	}
-}
-
-static char buffer[22];
-
-static char *
-unpack_ipport_tostring(struct set *set, ip_set_ip_t bip, unsigned options)
-{
-	struct ip_set_ipporthash *mysetdata = set->settype->header;
-	ip_set_ip_t ip, port;
-	
-	ip = (bip>>16) + mysetdata->first_ip;
-	port = (uint16_t) bip;
-	sprintf(buffer, "%s,%s", 
-		ip_tostring(ip, options), port_tostring(port, options));
-		
-	return buffer;
 }
 
 static void usage(void)
 {
 	printf
-	    ("-N set ipporthash --from IP --to IP\n"
+	    ("-N set ipportnethash --from IP --to IP\n"
 	     "   [--hashsize hashsize] [--probes probes ] [--resize resize]\n"
-	     "-N set ipporthash --network IP/mask\n"
+	     "-N set ipportnethash --network IP/mask\n"
 	     "   [--hashsize hashsize] [--probes probes ] [--resize resize]\n"
-	     "-A set IP,port\n"
-	     "-D set IP,port\n"
-	     "-T set IP,port\n");
+	     "-A set IP,port,IP/net\n"
+	     "-D set IP,port,IP/net\n"
+	     "-T set IP,port,IP[/net]\n");
 }
 
-static struct settype settype_ipporthash = {
+static struct settype settype_ipportnethash = {
 	.typename = SETTYPE_NAME,
 	.protocol_version = IP_SET_PROTOCOL_VERSION,
 
 	/* Create */
-	.create_size = sizeof(struct ip_set_req_ipporthash_create),
+	.create_size = sizeof(struct ip_set_req_ipportnethash_create),
 	.create_init = &create_init,
 	.create_parse = &create_parse,
 	.create_final = &create_final,
 	.create_opts = create_opts,
 
 	/* Add/del/test */
-	.adt_size = sizeof(struct ip_set_req_ipporthash),
+	.adt_size = sizeof(struct ip_set_req_ipportnethash),
 	.adt_parser = &adt_parser,
 
 	/* Printing */
-	.header_size = sizeof(struct ip_set_ipporthash),
+	.header_size = sizeof(struct ip_set_ipportnethash),
 	.initheader = &initheader,
 	.printheader = &printheader,
 	.printips = &printips,		/* We only have the unsorted version */
@@ -354,15 +418,11 @@ static struct settype settype_ipporthash = {
 	.saveheader = &saveheader,
 	.saveips = &saveips,
 	
-	/* Bindings */
-	.bindip_tostring = &unpack_ipport_tostring,
-	.bindip_parse = &parse_ip,
-	
 	.usage = &usage,
 };
 
 void _init(void)
 {
-	settype_register(&settype_ipporthash);
+	settype_register(&settype_ipportnethash);
 
 }

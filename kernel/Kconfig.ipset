@@ -79,6 +79,22 @@ config IP_NF_SET_IPPORTHASH
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
+config IP_NF_SET_IPPORTIPHASH
+	tristate "ipportiphash set support"
+	depends on IP_NF_SET
+	help
+	  This option adds the ipportiphash set type support.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+config IP_NF_SET_IPPORTNETHASH
+	tristate "ipportnethash set support"
+	depends on IP_NF_SET
+	help
+	  This option adds the ipportnethash set type support.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
 config IP_NF_SET_IPTREE
 	tristate "iptree set support"
 	depends on IP_NF_SET
@@ -92,6 +108,14 @@ config IP_NF_SET_IPTREEMAP
 	depends on IP_NF_SET
 	help
 	  This option adds the iptreemap set type support.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+config IP_NF_SET_SETLIST
+	tristate "setlist set support"
+	depends on IP_NF_SET
+	help
+	  This option adds the setlist set type support.
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 

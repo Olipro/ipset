@@ -87,6 +87,9 @@ typedef uint16_t ip_set_id_t;
 #define IPSET_TYPE_PORT		0x02	/* Port type of set */
 #define IPSET_DATA_SINGLE	0x04	/* Single data storage */
 #define IPSET_DATA_DOUBLE	0x08	/* Double data storage */
+#define IPSET_DATA_TRIPLE	0x10	/* Triple data storage */
+#define IPSET_TYPE_IP1		0x20	/* IP address type of set */
+#define IPSET_TYPE_SETNAME	0x40	/* setname type of set */
 
 /* Reserved keywords */
 #define IPSET_TOKEN_DEFAULT	":default:"
@@ -296,8 +299,12 @@ static inline int bitmap_bytes(ip_set_ip_t a, ip_set_ip_t b)
 	return 4 * ((((b - a + 8) / 8) + 3) / 4);
 }
 
+/* General limit for the elements in a set */
+#define MAX_RANGE 0x0000FFFF
+
 #ifdef __KERNEL__
 #include <linux/netfilter_ipv4/ip_set_compat.h>
+#include <linux/netfilter_ipv4/ip_set_malloc.h>
 
 #define ip_set_printk(format, args...) 			\
 	do {							\
@@ -482,17 +489,84 @@ struct ip_set_hash {
 extern ip_set_id_t ip_set_get_byname(const char name[IP_SET_MAXNAMELEN]);
 extern ip_set_id_t ip_set_get_byindex(ip_set_id_t id);
 extern void ip_set_put(ip_set_id_t id);
+extern ip_set_id_t __ip_set_get_byname(const char name[IP_SET_MAXNAMELEN],
+				       struct ip_set **set);
+extern void __ip_set_put_byid(ip_set_id_t id);
 
 /* API for iptables set match, and SET target */
-extern void ip_set_addip_kernel(ip_set_id_t id,
-				const struct sk_buff *skb,
-				const u_int32_t *flags);
-extern void ip_set_delip_kernel(ip_set_id_t id,
-				const struct sk_buff *skb,
-				const u_int32_t *flags);
+extern int ip_set_addip_kernel(ip_set_id_t id,
+			       const struct sk_buff *skb,
+			       const u_int32_t *flags);
+extern int ip_set_delip_kernel(ip_set_id_t id,
+			       const struct sk_buff *skb,
+			       const u_int32_t *flags);
 extern int ip_set_testip_kernel(ip_set_id_t id,
 				const struct sk_buff *skb,
 				const u_int32_t *flags);
+
+/* Macros to generate functions */
+
+#define STRUCT(pre, type)	CONCAT2(pre, type)
+#define CONCAT2(pre, type)	struct pre##type
+
+#define FNAME(pre, mid, post)	CONCAT3(pre, mid, post)
+#define CONCAT3(pre, mid, post)	pre##mid##post
+
+#define UADT0(type, adt, args...)					\
+static int								\
+FNAME(type,_u,adt)(struct ip_set *set, const void *data, size_t size,	\
+	     ip_set_ip_t *hash_ip)					\
+{									\
+	const STRUCT(ip_set_req_,type) *req = data;			\
+									\
+	return FNAME(type,_,adt)(set, hash_ip , ## args);		\
+}
+
+#define UADT(type, adt, args...)					\
+	UADT0(type, adt, req->ip , ## args)
+
+#define KADT(type, adt, getfn, args...)					\
+static int								\
+FNAME(type,_k,adt)(struct ip_set *set,					\
+	     const struct sk_buff *skb,					\
+	     ip_set_ip_t *hash_ip,					\
+	     const u_int32_t *flags,					\
+	     unsigned char index)					\
+{									\
+	ip_set_ip_t ip = getfn(skb, flags[index]);			\
+									\
+	KADT_CONDITION							\
+	return FNAME(type,_,adt)(set, hash_ip, ip , ##args);		\
+}
+
+#define REGISTER_MODULE(type)						\
+static int __init ip_set_##type##_init(void)				\
+{									\
+	init_max_page_size();						\
+	return ip_set_register_set_type(&ip_set_##type);		\
+}									\
+									\
+static void __exit ip_set_##type##_fini(void)				\
+{									\
+	/* FIXME: possible race with ip_set_create() */			\
+	ip_set_unregister_set_type(&ip_set_##type);			\
+}									\
+									\
+module_init(ip_set_##type##_init);					\
+module_exit(ip_set_##type##_fini);
+
+/* Common functions */
+
+static inline ip_set_ip_t
+ipaddr(const struct sk_buff *skb, u_int32_t flag)
+{
+	return ntohl(flag & IPSET_SRC ? ip_hdr(skb)->saddr : ip_hdr(skb)->daddr);
+}
+
+#define jhash_ip(map, i, ip)	jhash_1word(ip, *(map->initval + i))
+
+#define pack_ip_port(map, ip, port) \
+	(port + ((ip - ((map)->first_ip)) << 16))
 
 #endif				/* __KERNEL__ */
 

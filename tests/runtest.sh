@@ -1,9 +1,15 @@
-#!/bin/sh
+#!/bin/bash
 
 tests="init"
 tests+=" ipmap macipmap portmap"
 tests+=" iphash nethash ipporthash"
+tests+=" ipportiphash ipportnethash"
 tests+=" iptree iptreemap"
+tests+=" setlist"
+
+if [ "$1" ]; then
+	tests="init $@"
+fi
 
 for types in $tests; do
     ipset -X test >/dev/null 2>&1
@@ -24,7 +30,7 @@ for types in $tests; do
 	r=$?
 	# echo $ret $r
 	if [ "$ret" = "$r" ]; then
-		echo "OK"
+		echo "passed"
 	else
 		echo "FAILED"
 		echo "Failed test: $cmd"
@@ -33,6 +39,8 @@ for types in $tests; do
 	# sleep 1
     done < $types.t
 done
+# Remove test sets created by setlist.t
+ipset -X
 for x in $tests; do
 	case $x in
 	init)
@@ -43,5 +51,5 @@ for x in $tests; do
 	esac
 done
 rmmod ip_set >/dev/null 2>&1
-echo "All tests are OK"
+echo "All tests are passed"
 
