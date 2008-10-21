@@ -185,6 +185,8 @@ extern void ipset_free(void **data);
 extern struct set *set_find_byname(const char *name);
 extern struct set *set_find_byid(ip_set_id_t id);
 
+extern unsigned warn_once;
+
 #define BITSPERBYTE	(8*sizeof(char))
 #define ID2BYTE(id)	((id)/BITSPERBYTE)
 #define ID2MASK(id)	(1 << ((id)%BITSPERBYTE))

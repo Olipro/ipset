@@ -198,10 +198,9 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 
 	DP("ipportiphash: %p %p", optarg, data);
 
-	if ((ptr = strchr(tmp, ':')) || (ptr = strchr(tmp, '%')))
-		fprintf(stderr, "Warning: please replace old separator character '%s.1' with ','.\n"
-			        "Next release won't support it.\n",
-		        ptr);
+	if (((ptr = strchr(tmp, ':')) || (ptr = strchr(tmp, '%'))) && ++warn_once == 1)
+		fprintf(stderr, "Warning: please use ',' separator token between ip,port,ip.\n"
+			        "Next release won't support old separator tokens.\n");
 
 	ptr = strsep(&tmp, ":%,");
 	parse_ip(ptr, &mydata->ip);

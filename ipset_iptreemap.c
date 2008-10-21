@@ -76,10 +76,9 @@ adt_parser(unsigned int cmd, const char *optarg, void *data)
 		parse_ipandmask(tmp, &mydata->ip, &mask);
 		mydata->end = mydata->ip | ~mask;
 	} else {
-		if ((ptr = strchr(tmp, ':')) != NULL)
-			fprintf(stderr, "Warning: please replace old separator character '%s.1' with ','.\n"
-			        "Next release won't support it.\n",
-			        ptr);
+		if ((ptr = strchr(tmp, ':')) != NULL && ++warn_once == 1)
+			fprintf(stderr, "Warning: please use '-' separator token between IP range.\n"
+			        "Next release won't support old separator token.\n");
 		ptr = strsep(&tmp, "-:");
 		parse_ip(ptr, &mydata->ip);
 

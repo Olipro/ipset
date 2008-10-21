@@ -47,6 +47,7 @@ struct ip_set_restore *restore_set = NULL;
 size_t restore_offset = 0;
 socklen_t restore_size;
 unsigned restore_line = 0;
+unsigned warn_once = 0;
 
 #define TEMPFILE_PATTERN	"/ipsetXXXXXX"
 

@@ -1,3 +1,9 @@
+2.4.1
+  - macipmap type reported misleading deprecated separator
+    tokens and printed the old one at listing set elements
+    (bug reported by Krzysztof Oledzki)
+  - Warn only once about deprecated separator tokens in
+    restore mode.
 
 2.4
   - Added KBUILD_OUTPUT support (Sven Wegener)

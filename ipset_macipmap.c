@@ -183,13 +183,15 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 	char *ptr, *tmp = saved;
 
 	DP("macipmap: %p %p", optarg, data);
-	
-	if ((ptr = strchr(tmp, ':')) || (ptr = strchr(tmp, '%')))
-		fprintf(stderr, "Warning: please replace old separator character '%s.1' with ','.\n"
-			        "Next release won't support it.\n",
-		        ptr);
 
-	ptr = strsep(&tmp, ":%,");
+	ptr = strsep(&tmp, ",");
+	if (!tmp) {
+		tmp = saved;
+		ptr = strsep(&tmp, ":%");	
+		if (tmp && ++warn_once == 1)
+			fprintf(stderr, "Warning: please use ',' separator token between ip,mac.\n"
+				        "Next release won't support old separator tokens.\n");
+	}
 	parse_ip(ptr, &mydata->ip);
 
 	if (tmp)
@@ -250,7 +252,7 @@ printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 	while (addr <= mysetdata->last_ip) {
 		if (test_bit(IPSET_MACIP_ISSET,
 			     (void *)&table[addr - mysetdata->first_ip].flags)) {
-			printf("%s:", ip_tostring(addr, options));
+			printf("%s,", ip_tostring(addr, options));
 			print_mac(table[addr - mysetdata->first_ip].
 				  ethernet);
 			printf("\n");
