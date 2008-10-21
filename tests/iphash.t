@@ -1,5 +1,9 @@
 # IP: Create a set 
 0 ipset -N test iphash --hashsize 128 
+# Range: Add zero valued element
+2 ipset -A test 0.0.0.0
+# Range: Test zero valued element
+2 ipset -T test 0.0.0.0
 # IP: Add first random value
 0 ipset -A test 2.0.0.1
 # IP: Add second random value

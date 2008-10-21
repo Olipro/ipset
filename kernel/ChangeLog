@@ -1,3 +1,7 @@
+2.4.1
+  - Zero-valued element are not accepted by hash type of sets
+    because we cannot make a difference between a zero-valued
+    element and not-set element.
 2.4
   - ipportiphash, ipportnethash and setlist types added
   - set type modules reworked to avoid code duplication

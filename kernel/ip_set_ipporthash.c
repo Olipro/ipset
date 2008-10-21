@@ -39,8 +39,11 @@ ipporthash_id(struct ip_set *set, ip_set_ip_t *hash_ip,
 	ip_set_ip_t *elem;
 
 	*hash_ip = pack_ip_port(map, ip, port);
+		
 	DP("set: %s, ipport:%u.%u.%u.%u:%u, %u.%u.%u.%u",
 	   set->name, HIPQUAD(ip), port, HIPQUAD(*hash_ip));
+	if (!*hash_ip)
+		return UINT_MAX;
 	
 	for (i = 0; i < map->probes; i++) {
 		id = jhash_ip(map, i, *hash_ip) % map->hashsize;
@@ -113,6 +116,9 @@ ipporthash_add(struct ip_set *set, ip_set_ip_t *hash_ip,
 		return -ERANGE;
 
 	*hash_ip = pack_ip_port(map, ip, port);
+
+	if (!*hash_ip)
+		return -ERANGE;
 	
 	return __ipporthash_add(map, hash_ip);
 }
