@@ -19,8 +19,6 @@
 
 #include <net/ip.h>
 
-#include <linux/netfilter_ipv4/ip_set.h>
-#include <linux/netfilter_ipv4/ip_set_bitmaps.h>
 #include <linux/netfilter_ipv4/ip_set_portmap.h>
 #include <linux/netfilter_ipv4/ip_set_getport.h>
 

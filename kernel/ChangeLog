@@ -1,3 +1,10 @@
+2.4.2
+  - When flushing a nethash/ipportnethash type of set, it can
+    lead to a kernel crash due to a wrong type declaration,
+    bug reported by Krzysztof Oledzki.
+  - iptree and iptreemap types require the header file linux/timer.h,
+    also reported by Krzysztof Oledzki.
+  
 2.4.1
   - Zero-valued element are not accepted by hash type of sets
     because we cannot make a difference between a zero-valued

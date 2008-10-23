@@ -20,8 +20,6 @@
 
 #include <net/ip.h>
 
-#include <linux/netfilter_ipv4/ip_set.h>
-#include <linux/netfilter_ipv4/ip_set_hashes.h>
 #include <linux/netfilter_ipv4/ip_set_iphash.h>
 
 static int limit = MAX_RANGE;

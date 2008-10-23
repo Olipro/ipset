@@ -2,6 +2,7 @@
 #define __IP_SET_NETHASH_H
 
 #include <linux/netfilter_ipv4/ip_set.h>
+#include <linux/netfilter_ipv4/ip_set_hashes.h>
 
 #define SETTYPE_NAME "nethash"
 
@@ -13,7 +14,7 @@ struct ip_set_nethash {
 	uint16_t resize;		/* resize factor in percent */
 	uint8_t cidr[30];		/* CIDR sizes */
 	uint16_t nets[30];		/* nr of nets by CIDR sizes */
-	uint32_t initval[0];		/* initvals for jhash_1word */
+	initval_t initval[0];		/* initvals for jhash_1word */
 };
 
 struct ip_set_req_nethash_create {

@@ -2,6 +2,7 @@
 #define __IP_SET_IPHASH_H
 
 #include <linux/netfilter_ipv4/ip_set.h>
+#include <linux/netfilter_ipv4/ip_set_hashes.h>
 
 #define SETTYPE_NAME "iphash"
 
@@ -12,7 +13,7 @@ struct ip_set_iphash {
 	uint16_t probes;		/* max number of probes  */
 	uint16_t resize;		/* resize factor in percent */
 	ip_set_ip_t netmask;		/* netmask */
-	uint32_t initval[0];		/* initvals for jhash_1word */
+	initval_t initval[0];		/* initvals for jhash_1word */
 };
 
 struct ip_set_req_iphash_create {

@@ -20,8 +20,6 @@
 
 #include <net/ip.h>
 
-#include <linux/netfilter_ipv4/ip_set.h>
-#include <linux/netfilter_ipv4/ip_set_hashes.h>
 #include <linux/netfilter_ipv4/ip_set_nethash.h>
 
 static int limit = MAX_RANGE;
@@ -153,8 +151,8 @@ KADT(nethash, add, ipaddr, cidr)
 static inline void
 __nethash_retry(struct ip_set_nethash *tmp, struct ip_set_nethash *map)
 {
-	memcpy(tmp->cidr, map->cidr, 30 * sizeof(uint8_t));
-	memcpy(tmp->nets, map->nets, 30 * sizeof(uint16_t));
+	memcpy(tmp->cidr, map->cidr, sizeof(tmp->cidr));
+	memcpy(tmp->nets, map->nets, sizeof(tmp->nets));
 }
 
 HASH_RETRY(nethash, ip_set_ip_t)
@@ -190,8 +188,8 @@ static inline int
 __nethash_create(const struct ip_set_req_nethash_create *req,
 		 struct ip_set_nethash *map)
 {
-	memset(map->cidr, 0, 30 * sizeof(uint8_t));
-	memset(map->nets, 0, 30 * sizeof(uint16_t));
+	memset(map->cidr, 0, sizeof(map->cidr));
+	memset(map->nets, 0, sizeof(map->nets));
 	
 	return 0;
 }

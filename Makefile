@@ -20,7 +20,7 @@ ifndef V
 V=0
 endif
 
-IPSET_VERSION:=2.4.1
+IPSET_VERSION:=2.4.2
 
 PREFIX:=/usr/local
 LIBDIR:=$(PREFIX)/lib
@@ -72,7 +72,7 @@ modules_install: modules
 install: binaries_install modules_install
 
 clean: $(EXTRA_CLEANS)
-	rm -rf $(PROGRAMS) $(SHARED_LIBS) *.o *~
+	rm -rf $(PROGRAMS) $(SHARED_LIBS) *.o *~ tests/*~
 	[ -f $(KERNEL_DIR)/net/ipv4/netfilter/Config.in ] || (cd kernel; make -C $(KERNEL_DIR) M=`pwd` clean)
 
 #The ipset(8) self

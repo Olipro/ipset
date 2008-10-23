@@ -21,7 +21,6 @@
 #include <arpa/inet.h>
 
 #include <linux/netfilter_ipv4/ip_set_nethash.h>
-#include <linux/netfilter_ipv4/ip_set_hashes.h>
 
 #include "ipset.h"
 

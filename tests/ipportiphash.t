@@ -28,7 +28,9 @@
 1 ipset -A test 2.0.0.0,5,1.1.1.1
 # Range: Try to add value after upper boundary
 1 ipset -A test 2.1.0.1,128,2.2.2.2
-# Range: Delete test test
+# Range: Flush test set
+0 ipset -F test
+# Range: Delete test set
 0 ipset -X test
 # Network: Try to create a set from an invalid network
 2 ipset -N test ipportiphash --network 2.0.0.0/15
@@ -54,6 +56,8 @@
 1 ipset -A test 1.255.255.255,5,1.1.1.1
 # Network: Try to add value after upper boundary
 1 ipset -A test 2.1.0.0,128,2.2.2.2
+# Network: Flush test set
+0 ipset -F test
 # Network: Delete test set
 0 ipset -X test
 # eof

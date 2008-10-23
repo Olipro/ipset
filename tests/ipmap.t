@@ -20,7 +20,9 @@
 1 ipset -A test 2.0.0.0
 # Range: Try to add value after upper boundary
 1 ipset -A test 2.1.0.1
-# Range: Delete test test
+# Range: Flush test set
+0 ipset -F test
+# Range: Delete test set
 0 ipset -X test
 # Network: Try to create a set from an invalid network
 2 ipset -N test ipmap --network 2.0.0.0/15
@@ -44,7 +46,9 @@
 1 ipset -A test 1.255.255.255
 # Network: Try to add value after upper boundary
 1 ipset -A test 2.1.0.0
-# Network: Delete test test
+# Network: Flush test set
+0 ipset -F test
+# Network: Delete test set
 0 ipset -X test
 # Subnets: Create a set to store networks
 0 ipset -N test ipmap --network 10.0.0.0/8 --netmask 24
@@ -66,7 +70,9 @@
 1 ipset -A test 9.255.255.255
 # Subnets: Try to add value after upper boundary
 1 ipset -A test 11.0.0.0
-# Subnets: Delete test test
+# Subnets: FLush test set
+0 ipset -F test
+# Subnets: Delete test set
 0 ipset -X test
 # Full: Create full IPv4 space with /16 networks
 0 ipset -N test ipmap --network 0.0.0.0/0 --netmask 16

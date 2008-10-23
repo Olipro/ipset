@@ -3,6 +3,7 @@
 
 /* Macros to generate functions */
 
+#ifdef __KERNEL__
 #define BITMAP_CREATE(type)						\
 static int								\
 type##_create(struct ip_set *set, const void *data, size_t size)	\
@@ -115,5 +116,6 @@ struct ip_set_type ip_set_##type = {					\
 	.list_members		= &type##_list_members,			\
 	.me			= THIS_MODULE,				\
 };
+#endif /* __KERNEL */
 
 #endif /* __IP_SET_BITMAPS_H */

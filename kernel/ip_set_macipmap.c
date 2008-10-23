@@ -19,8 +19,6 @@
 #include <linux/spinlock.h>
 #include <linux/if_ether.h>
 
-#include <linux/netfilter_ipv4/ip_set.h>
-#include <linux/netfilter_ipv4/ip_set_bitmaps.h>
 #include <linux/netfilter_ipv4/ip_set_macipmap.h>
 
 static int

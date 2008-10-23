@@ -22,8 +22,6 @@
 
 #include <net/ip.h>
 
-#include <linux/netfilter_ipv4/ip_set.h>
-#include <linux/netfilter_ipv4/ip_set_hashes.h>
 #include <linux/netfilter_ipv4/ip_set_ipportnethash.h>
 #include <linux/netfilter_ipv4/ip_set_getport.h>
 
@@ -223,8 +221,8 @@ __ipportnethash_retry(struct ip_set_ipportnethash *tmp,
 {
 	tmp->first_ip = map->first_ip;
 	tmp->last_ip = map->last_ip;
-	memcpy(tmp->cidr, map->cidr, 30 * sizeof(uint8_t));
-	memcpy(tmp->nets, map->nets, 30 * sizeof(uint16_t));
+	memcpy(tmp->cidr, map->cidr, sizeof(tmp->cidr));
+	memcpy(tmp->nets, map->nets, sizeof(tmp->nets));
 }
 
 HASH_RETRY2(ipportnethash, struct ipportip)
@@ -273,8 +271,8 @@ __ipportnethash_create(const struct ip_set_req_ipportnethash_create *req,
 	}
 	map->first_ip = req->from;
 	map->last_ip = req->to;
-	memset(map->cidr, 0, 30 * sizeof(uint8_t));
-	memset(map->nets, 0, 30 * sizeof(uint16_t));
+	memset(map->cidr, 0, sizeof(map->cidr));
+	memset(map->nets, 0, sizeof(map->nets));
 	return 0;
 }
 

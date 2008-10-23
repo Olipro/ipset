@@ -2,6 +2,7 @@
 #define __IP_SET_IPPORTHASH_H
 
 #include <linux/netfilter_ipv4/ip_set.h>
+#include <linux/netfilter_ipv4/ip_set_hashes.h>
 
 #define SETTYPE_NAME "ipporthash"
 
@@ -13,7 +14,7 @@ struct ip_set_ipporthash {
 	uint16_t resize;		/* resize factor in percent */
 	ip_set_ip_t first_ip;		/* host byte order, included in range */
 	ip_set_ip_t last_ip;		/* host byte order, included in range */
-	uint32_t initval[0];		/* initvals for jhash_1word */
+	initval_t initval[0];		/* initvals for jhash_1word */
 };
 
 struct ip_set_req_ipporthash_create {

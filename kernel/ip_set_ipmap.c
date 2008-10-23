@@ -17,8 +17,6 @@
 #include <asm/bitops.h>
 #include <linux/spinlock.h>
 
-#include <linux/netfilter_ipv4/ip_set.h>
-#include <linux/netfilter_ipv4/ip_set_bitmaps.h>
 #include <linux/netfilter_ipv4/ip_set_ipmap.h>
 
 static inline ip_set_ip_t

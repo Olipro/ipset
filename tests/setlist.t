@@ -26,6 +26,8 @@
 1 ipset -D test foo,after,bar
 # Setlist: Delete bar,after,foo
 0 ipset -D test bar,after,foo
-# Setlist: Delete test test
+# Setlist: Flush test set
+0 ipset -F test
+# Setlist: Delete test set
 0 ipset -X test
 # eof

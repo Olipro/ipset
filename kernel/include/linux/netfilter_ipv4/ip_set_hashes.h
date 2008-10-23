@@ -1,6 +1,8 @@
 #ifndef __IP_SET_HASHES_H
 #define __IP_SET_HASHES_H
 
+#define initval_t uint32_t
+
 /* Macros to generate functions */
 
 #ifdef __KERNEL__
@@ -30,11 +32,11 @@ type##_retry(struct ip_set *set)					\
 		      set->name, map->hashsize, hashsize);		\
 		      							\
 	tmp = kmalloc(sizeof(struct ip_set_##type)			\
-		      + map->probes * sizeof(uint32_t), GFP_ATOMIC);	\
+		      + map->probes * sizeof(initval_t), GFP_ATOMIC);	\
 	if (!tmp) {							\
 		DP("out of memory for %d bytes",			\
 		   sizeof(struct ip_set_##type)				\
-		   + map->probes * sizeof(uint32_t));			\
+		   + map->probes * sizeof(initval_t));			\
 		return -ENOMEM;						\
 	}								\
 	tmp->members = harray_malloc(hashsize, sizeof(dtype), GFP_ATOMIC);\
@@ -47,7 +49,7 @@ type##_retry(struct ip_set *set)					\
 	tmp->elements = 0;						\
 	tmp->probes = map->probes;					\
 	tmp->resize = map->resize;					\
-	memcpy(tmp->initval, map->initval, map->probes * sizeof(uint32_t));\
+	memcpy(tmp->initval, map->initval, map->probes * sizeof(initval_t));\
 	__##type##_retry(tmp, map);					\
 									\
 	write_lock_bh(&set->lock);					\
@@ -103,15 +105,15 @@ type##_create(struct ip_set *set, const void *data, size_t size)	\
 	}								\
 									\
 	map = kmalloc(sizeof(struct ip_set_##type)			\
-		      + req->probes * sizeof(uint32_t), GFP_KERNEL);	\
+		      + req->probes * sizeof(initval_t), GFP_KERNEL);	\
 	if (!map) {							\
 		DP("out of memory for %d bytes",			\
 		   sizeof(struct ip_set_##type)				\
-		   + req->probes * sizeof(uint32_t));			\
+		   + req->probes * sizeof(initval_t));			\
 		return -ENOMEM;						\
 	}								\
 	for (i = 0; i < req->probes; i++)				\
-		get_random_bytes(((uint32_t *) map->initval)+i, 4);	\
+		get_random_bytes(((initval_t *) map->initval)+i, 4);	\
 	map->elements = 0;						\
 	map->hashsize = req->hashsize;					\
 	map->probes = req->probes;					\
@@ -158,8 +160,8 @@ type##_flush(struct ip_set *set)					\
 {									\
 	struct ip_set_##type *map = set->data;				\
 	harray_flush(map->members, map->hashsize, sizeof(dtype));	\
-	memset(map->cidr, 0, 30 * sizeof(uint8_t));			\
-	memset(map->nets, 0, 30 * sizeof(uint32_t));			\
+	memset(map->cidr, 0, sizeof(map->cidr));			\
+	memset(map->nets, 0, sizeof(map->nets));			\
 	map->elements = 0;						\
 }
 

@@ -17,6 +17,7 @@
 #include <asm/uaccess.h>
 #include <asm/bitops.h>
 #include <linux/spinlock.h>
+#include <linux/timer.h>
 
 #include <linux/netfilter_ipv4/ip_set.h>
 #include <linux/netfilter_ipv4/ip_set_bitmaps.h>

@@ -16,6 +16,8 @@
 1 ipset -T test 2.0.1.0
 # Try to add IP address
 2 ipset -A test 2.0.0.1
+# Flush test set
+0 ipset -F test
 # Delete test set
 0 ipset -X test
 # eof

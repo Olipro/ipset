@@ -10,17 +10,11 @@
 
 /* ipt_SET.c - netfilter target to manipulate IP sets */
 
-#include <linux/types.h>
-#include <linux/ip.h>
-#include <linux/timer.h>
 #include <linux/module.h>
-#include <linux/netfilter.h>
-#include <linux/netdevice.h>
-#include <linux/if.h>
-#include <linux/inetdevice.h>
+#include <linux/ip.h>
+#include <linux/skbuff.h>
 #include <linux/version.h>
-#include <net/protocol.h>
-#include <net/checksum.h>
+
 #include <linux/netfilter_ipv4.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 #include <linux/netfilter_ipv4/ip_tables.h>

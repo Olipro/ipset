@@ -46,6 +46,8 @@
 0 ipset -T test 192.168.68.67
 # Test element after upper bound of deleted network
 0 ipset -T test 192.168.68.72
+# Flush test set
+0 ipset -F test
 # Delete test set
 0 ipset -X test
 # eof

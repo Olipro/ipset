@@ -12,7 +12,9 @@
 1 ipset -T test 2.0.0.2
 # Static: Test value not added to the set
 1 ipset -T test 192.168.68.70
-# Static: Delete test test
+# Static: Flush test set
+0 ipset -F test
+# Static: Delete test set
 0 ipset -X test
 # Timeout: Create a set with a timeout parameter
 0 ipset -N test iptree --timeout 5
@@ -46,6 +48,8 @@
 0 sleep 4
 # Timeout: Test entry added with 3s timeout
 1 ipset -T test 2.0.0.2
+# Timeout: Flush test set
+0 ipset -F test
 # Timeout: Delete test set
 0 ipset -X test
 # eof

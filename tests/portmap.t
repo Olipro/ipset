@@ -18,7 +18,9 @@
 1 ipset -A test 0
 # Range: Try to add value after upper boundary
 1 ipset -A test 1025
-# Range: Delete test test
+# Range: Flush test set
+0 ipset -F test
+# Range: Delete test set
 0 ipset -X test
 # Full: Create a full set of ports
 0 ipset -N test portmap --from 0 --to 65535
@@ -32,6 +34,8 @@
 0 ipset -T test 65535
 # Full: Test value not added to the set
 1 ipset -T test 1
+# Full: Flush test set
+0 ipset -F test
 # Full: Delete test set
 0 ipset -X test
 # eof

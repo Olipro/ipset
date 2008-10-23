@@ -2,6 +2,7 @@
 #define __IP_SET_PORTMAP_H
 
 #include <linux/netfilter_ipv4/ip_set.h>
+#include <linux/netfilter_ipv4/ip_set_bitmaps.h>
 
 #define SETTYPE_NAME	"portmap"
 

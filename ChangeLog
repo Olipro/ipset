@@ -1,3 +1,6 @@
+2.4.2
+  - Only kernel part changes, see kernel/ChangeLoh
+
 2.4.1
   - macipmap type reported misleading deprecated separator
     tokens and printed the old one at listing set elements
