@@ -1,3 +1,7 @@
+2.4.3
+  - Include file <limits.h> was missing from userspace set type
+    modules.
+
 2.4.2
   - Only kernel part changes, see kernel/ChangeLoh
 

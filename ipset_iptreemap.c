@@ -15,14 +15,13 @@
  * Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <arpa/inet.h>
-
-#include <linux/netfilter_ipv4/ip_set_iptreemap.h>
+#include <limits.h>			/* UINT_MAX */
+#include <stdio.h>			/* *printf */
+#include <string.h>			/* mem* */
 
 #include "ipset.h"
+
+#include <linux/netfilter_ipv4/ip_set_iptreemap.h>
 
 #define OPT_CREATE_GC 0x1
 
@@ -89,7 +88,7 @@ adt_parser(unsigned int cmd, const char *optarg, void *data)
 		}
 	}
 
-	free(saved);
+	ipset_free(saved);
 
 	return 1;
 }

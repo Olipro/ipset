@@ -16,13 +16,12 @@
  */
 
 
-#include <stdio.h>
-#include <string.h>
-#include <arpa/inet.h>
+#include <stdio.h>			/* *printf */
+#include <string.h>			/* mem* */
 
-#include <linux/netfilter_ipv4/ip_set_portmap.h>
 #include "ipset.h"
 
+#include <linux/netfilter_ipv4/ip_set_portmap.h>
 
 #define BUFLEN 30;
 

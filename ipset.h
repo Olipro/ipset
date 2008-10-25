@@ -20,7 +20,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <getopt.h>
+#include <getopt.h>			/* struct option */
+#include <stdint.h>
+#include <sys/types.h>
 
 #include <linux/netfilter_ipv4/ip_set.h>
 
@@ -180,7 +182,7 @@ extern int string_to_number(const char *str, unsigned int min, unsigned int max,
 
 extern void *ipset_malloc(size_t size);
 extern char *ipset_strdup(const char *);
-extern void ipset_free(void **data);
+extern void ipset_free(void *data);
 
 extern struct set *set_find_byname(const char *name);
 extern struct set *set_find_byid(ip_set_id_t id);

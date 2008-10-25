@@ -7,19 +7,22 @@
  * published by the Free Software Foundation.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <time.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <arpa/inet.h>
-#include <stdarg.h>
-#include <netdb.h>
-#include <dlfcn.h>
-#include <fcntl.h>
+#include <stdio.h>			/* *printf, perror, sscanf, fdopen */
+#include <string.h>			/* mem*, str* */
+#include <errno.h>			/* errno, perror */
+#include <time.h>			/* time, ctime */
+#include <netdb.h>			/* gethostby*, getnetby*, getservby* */
+#include <stdlib.h>			/* exit, malloc, free, strtol, getenv, mkstemp */
+#include <unistd.h>			/* read, close, fork, exec*, unlink */
+#include <sys/types.h>			/* open, wait, socket, *sockopt, umask */
+#include <sys/stat.h>			/* open, umask */
+#include <sys/wait.h>			/* wait */
+#include <sys/socket.h>			/* socket, *sockopt, gethostby*, inet_* */
+#include <netinet/in.h>			/* inet_* */
+#include <fcntl.h>			/* open */
+#include <arpa/inet.h>			/* htonl, inet_* */
+#include <stdarg.h>			/* va_* */
+#include <dlfcn.h>			/* dlopen */
 
 #include "ipset.h"
 
@@ -510,13 +513,12 @@ char *ipset_strdup(const char *s)
 	return p;
 }
 
-void ipset_free(void **data)
+void ipset_free(void *data)
 {
-	if (*data == NULL)
+	if (data == NULL)
 		return;
 
-	free(*data);
-	*data = NULL;
+	free(data);
 }
 
 static struct option *merge_options(struct option *oldopts,
@@ -1265,7 +1267,7 @@ static int try_save_sets(const char name[IP_SET_MAXNAMELEN])
 	printf("COMMIT\n");
 	now = time(NULL);
 	printf("# Completed on %s", ctime(&now));
-	ipset_free(&data);
+	ipset_free(data);
 	return res;
 }
 
@@ -1847,7 +1849,7 @@ static int try_list_sets(const char name[IP_SET_MAXNAMELEN],
 	while (size != req_size)
 		size += print_set(data + size, options);
 
-	ipset_free(&data);
+	ipset_free(data);
 	return res;
 }
 

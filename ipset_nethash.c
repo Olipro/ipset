@@ -15,14 +15,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <arpa/inet.h>
-
-#include <linux/netfilter_ipv4/ip_set_nethash.h>
+#include <limits.h>			/* UINT_MAX */
+#include <stdio.h>			/* *printf */
+#include <string.h>			/* mem*, str* */
 
 #include "ipset.h"
+
+#include <linux/netfilter_ipv4/ip_set_nethash.h>
 
 #define BUFLEN 30;
 
@@ -143,7 +142,7 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 	if (!mydata->ip)
 		exit_error(PARAMETER_PROBLEM,
 			  "Zero valued IP address `%s' specified", ptr);
-	free(saved);
+	ipset_free(saved);
 
 	return mydata->ip;	
 };
@@ -277,7 +276,7 @@ net_tostring(struct set *set, ip_set_ip_t ip, unsigned options)
 static void
 parse_net(const char *str, ip_set_ip_t *ip)
 {
-	char *saved = strdup(str);
+	char *saved = ipset_strdup(str);
 	char *ptr, *tmp = saved;
 	ip_set_ip_t cidr;
 
@@ -292,7 +291,7 @@ parse_net(const char *str, ip_set_ip_t *ip)
 			   "Out of range cidr `%s' specified", str);
 	
 	parse_ip(ptr, ip);
-	free(saved);
+	ipset_free(saved);
 	
 	*ip = pack_ip_cidr(*ip, cidr);
 }

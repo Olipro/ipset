@@ -17,12 +17,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <arpa/inet.h>
+#include <stdio.h>			/* *printf */
+#include <string.h>			/* mem* */
+
+#include "ipset.h"
 
 #include <linux/netfilter_ipv4/ip_set_ipmap.h>
-#include "ipset.h"
 
 #define BUFLEN 30;
 

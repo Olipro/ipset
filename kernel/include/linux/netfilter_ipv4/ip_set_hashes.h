@@ -267,6 +267,8 @@ del_cidr_size(uint8_t *cidr, uint8_t size)
 	}
 	cidr[29] = 0;
 }
+#else
+#include <arpa/inet.h>
 #endif /* __KERNEL */
 
 #ifndef UINT16_MAX

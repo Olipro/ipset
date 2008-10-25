@@ -18,14 +18,14 @@
  */
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <linux/if_ether.h>
+#include <stdio.h>			/* *printf */
+#include <stdlib.h>			/* mem* */
+#include <string.h>			/* str* */
+#include <net/ethernet.h>		/* ETH_ALEN */
+
+#include "ipset.h"
 
 #include <linux/netfilter_ipv4/ip_set_macipmap.h>
-#include "ipset.h"
 
 #define BUFLEN 30;
 

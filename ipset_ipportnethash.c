@@ -15,14 +15,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <arpa/inet.h>
-
-#include <linux/netfilter_ipv4/ip_set_ipportnethash.h>
+#include <limits.h>			/* UINT_MAX */
+#include <stdio.h>			/* *printf */
+#include <string.h>			/* mem*, str* */
 
 #include "ipset.h"
+
+#include <linux/netfilter_ipv4/ip_set_ipportnethash.h>
 
 #define OPT_CREATE_HASHSIZE	0x01U
 #define OPT_CREATE_PROBES	0x02U
@@ -230,7 +229,7 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 	mydata->cidr = cidr;
 
 	parse_ip(ptr, &mydata->ip1);
-	free(saved);
+	ipset_free(saved);
 	return 1;	
 };
 

@@ -20,7 +20,7 @@ ifndef V
 V=0
 endif
 
-IPSET_VERSION:=2.4.2
+IPSET_VERSION:=2.4.3
 
 PREFIX:=/usr/local
 LIBDIR:=$(PREFIX)/lib

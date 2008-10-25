@@ -15,13 +15,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <arpa/inet.h>
+#include <limits.h>			/* UINT_MAX */
+#include <stdio.h>			/* *printf */
+#include <string.h>			/* mem* */
+
+#include "ipset.h"
 
 #include <linux/netfilter_ipv4/ip_set_iptree.h>
-#include "ipset.h"
 
 #define BUFLEN 30;
 
@@ -95,7 +95,7 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 	else
 		mydata->timeout = 0;	
 
-	free(saved);
+	ipset_free(saved);
 	return 1;	
 }
 

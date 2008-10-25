@@ -15,14 +15,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <arpa/inet.h>
-
-#include <linux/netfilter_ipv4/ip_set_iphash.h>
+#include <limits.h>			/* UINT_MAX */
+#include <stdio.h>			/* *printf */
+#include <string.h>			/* mem* */
 
 #include "ipset.h"
+
+#include <linux/netfilter_ipv4/ip_set_iphash.h>
 
 #define BUFLEN 30;
 
