@@ -34,7 +34,7 @@ create_init(void *data)
 }
 
 static int
-create_parse(int c, char *argv[], void *data, unsigned int *flags)
+create_parse(int c, char *argv[] UNUSED, void *data, unsigned int *flags)
 {
 	struct ip_set_req_iptreemap_create *mydata = data;
 
@@ -53,22 +53,22 @@ create_parse(int c, char *argv[], void *data, unsigned int *flags)
 }
 
 static void
-create_final(void *data, unsigned int flags)
+create_final(void *data UNUSED, unsigned int flags UNUSED)
 {
 }
 
 static const struct option create_opts[] = {
 	{.name = "gc",	.has_arg = required_argument,	.val = 'g'},
-	{NULL},
+	{0, 0, 0, 0},
 };
 
 static ip_set_ip_t
-adt_parser(unsigned int cmd, const char *optarg, void *data)
+adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_iptreemap *mydata = data;
 	ip_set_ip_t mask;
 
-	char *saved = ipset_strdup(optarg);
+	char *saved = ipset_strdup(arg);
 	char *ptr, *tmp = saved;
 
 	if (strchr(tmp, '/')) {
@@ -103,7 +103,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned int options)
+printheader(struct set *set, unsigned int options UNUSED)
 {
 	struct ip_set_iptreemap *mysetdata = set->settype->header;
 
@@ -114,7 +114,8 @@ printheader(struct set *set, unsigned int options)
 }
 
 static void
-printips_sorted(struct set *set, void *data, size_t len, unsigned int options)
+printips_sorted(struct set *set UNUSED, void *data,
+		size_t len, unsigned int options)
 {
 	struct ip_set_req_iptreemap *req;
 	size_t offset = 0;
@@ -132,7 +133,7 @@ printips_sorted(struct set *set, void *data, size_t len, unsigned int options)
 }
 
 static void
-saveheader(struct set *set, unsigned int options)
+saveheader(struct set *set, unsigned int options UNUSED)
 {
 	struct ip_set_iptreemap *mysetdata = set->settype->header;
 
@@ -145,7 +146,8 @@ saveheader(struct set *set, unsigned int options)
 }
 
 static void
-saveips(struct set *set, void *data, size_t len, unsigned int options)
+saveips(struct set *set UNUSED, void *data,
+	size_t len, unsigned int options)
 {
 	struct ip_set_req_iptreemap *req;
 	size_t offset = 0;
@@ -202,8 +204,7 @@ static struct settype settype_iptreemap = {
 	.usage = &usage,
 };
 
-void
-_init(void)
+CONSTRUCTOR(iptreemap)
 {
 	settype_register(&settype_iptreemap);
 }

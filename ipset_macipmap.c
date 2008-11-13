@@ -39,7 +39,7 @@
 
 /* Initialize the create. */
 static void
-create_init(void *data)
+create_init(void *data UNUSED)
 {
 	DP("create INIT");
 	/* Nothing */
@@ -47,7 +47,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[], void *data, unsigned *flags)
+create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_macipmap_create *mydata = data;
 
@@ -149,7 +149,7 @@ static const struct option create_opts[] = {
 	{.name = "to",		.has_arg = required_argument,	.val = '2'},
 	{.name = "network",	.has_arg = required_argument,	.val = '3'},
 	{.name = "matchunset",	.has_arg = no_argument,		.val = '4'},
-	{NULL},
+	{0, 0, 0, 0},
 };
 
 static void
@@ -176,13 +176,13 @@ parse_mac(const char *mac, unsigned char *ethernet)
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(unsigned cmd, const char *optarg, void *data)
+adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_macipmap *mydata = data;
-	char *saved = ipset_strdup(optarg);
+	char *saved = ipset_strdup(arg);
 	char *ptr, *tmp = saved;
 
-	DP("macipmap: %p %p", optarg, data);
+	DP("macipmap: %p %p", arg, data);
 
 	ptr = strsep(&tmp, ",");
 	if (!tmp) {
@@ -200,6 +200,7 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 		memset(mydata->ethernet, 0, ETH_ALEN);	
 
 	free(saved);
+
 	return 1;	
 }
 
@@ -243,7 +244,8 @@ print_mac(unsigned char macaddress[ETH_ALEN])
 }
 
 static void
-printips_sorted(struct set *set, void *data, size_t len, unsigned options)
+printips_sorted(struct set *set, void *data,
+		size_t len UNUSED, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata = set->settype->header;
 	struct ip_set_macip *table = data;
@@ -277,7 +279,8 @@ saveheader(struct set *set, unsigned options)
 }
 
 static void
-saveips(struct set *set, void *data, size_t len, unsigned options)
+saveips(struct set *set, void *data,
+	size_t len UNUSED, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata = set->settype->header;
 	struct ip_set_macip *table = data;
@@ -337,7 +340,7 @@ static struct settype settype_macipmap = {
 	.usage = &usage,
 };
 
-void _init(void)
+CONSTRUCTOR(macipmap)
 {
 	settype_register(&settype_macipmap);
 

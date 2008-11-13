@@ -46,7 +46,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[], void *data, unsigned *flags)
+create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_ipportiphash_create *mydata = data;
 	ip_set_ip_t value;
@@ -184,18 +184,18 @@ static const struct option create_opts[] = {
 	{.name = "from",	.has_arg = required_argument,	.val = '4'},
 	{.name = "to",		.has_arg = required_argument,	.val = '5'},
 	{.name = "network",	.has_arg = required_argument,	.val = '6'},
-	{NULL},
+	{0, 0, 0, 0},
 };
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(unsigned cmd, const char *optarg, void *data)
+adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_ipportiphash *mydata = data;
-	char *saved = ipset_strdup(optarg);
+	char *saved = ipset_strdup(arg);
 	char *ptr, *tmp = saved;
 
-	DP("ipportiphash: %p %p", optarg, data);
+	DP("ipportiphash: %p %p", arg, data);
 
 	if (((ptr = strchr(tmp, ':')) || (ptr = strchr(tmp, '%'))) && ++warn_once == 1)
 		fprintf(stderr, "Warning: please use ',' separator token between ip,port,ip.\n"
@@ -215,6 +215,9 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 	else
 		exit_error(PARAMETER_PROBLEM,
 			   "IP address, port and IP address must be specified: ip,port,ip");
+	if (!(mydata->ip || mydata->port || mydata->ip1))
+		exit_error(PARAMETER_PROBLEM,
+			  "Zero valued IP address, port and IP address `%s' specified", arg);
 	ipset_free(saved);
 	return 1;	
 };
@@ -351,7 +354,7 @@ static struct settype settype_ipportiphash = {
 	.usage = &usage,
 };
 
-void _init(void)
+CONSTRUCTOR(ipportiphash)
 {
 	settype_register(&settype_ipportiphash);
 

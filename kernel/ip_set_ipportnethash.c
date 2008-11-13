@@ -44,6 +44,8 @@ ipportnethash_id_cidr(struct ip_set *set, ip_set_ip_t *hash_ip,
 	DP("set: %s, ipport:%u.%u.%u.%u:%u, %u.%u.%u.%u",
 	   set->name, HIPQUAD(ip), port, HIPQUAD(*hash_ip));
 	ip1 = pack_ip_cidr(ip1, cidr);
+	if (!(*hash_ip || ip1))
+		return UINT_MAX;
 	
 	for (i = 0; i < map->probes; i++) {
 		id = jhash_ip2(map, i, *hash_ip, ip1) % map->hashsize;
@@ -104,13 +106,10 @@ static int
 ipportnethash_utest(struct ip_set *set, const void *data, size_t size,
 		    ip_set_ip_t *hash_ip)
 {
-	const struct ip_set_ipportnethash *map = set->data;
 	const struct ip_set_req_ipportnethash *req = data;
 
 	if (req->cidr <= 0 || req->cidr > 32)
 		return -EINVAL;
-	if (!(pack_ip_port(map, req->ip, req->port)))
-		return -ERANGE;
 	return (req->cidr == 32 
 		? ipportnethash_test(set, hash_ip, req->ip, req->port,
 				     req->ip1)
@@ -120,7 +119,6 @@ ipportnethash_utest(struct ip_set *set, const void *data, size_t size,
 
 #define KADT_CONDITION						\
 	ip_set_ip_t port, ip1;					\
-	struct ip_set_ipportnethash *map = set->data;		\
 								\
 	if (flags[index+2] == 0)				\
 		return 0;					\
@@ -129,8 +127,6 @@ ipportnethash_utest(struct ip_set *set, const void *data, size_t size,
 	ip1 = ipaddr(skb, flags[index+2]);			\
 								\
 	if (port == INVALID_PORT)				\
-		return 0;					\
-	if (!(pack_ip_port(map, ip, port)))			\
 		return 0;
 
 KADT(ipportnethash, test, ipaddr, port, ip1)
@@ -185,10 +181,11 @@ ipportnethash_add(struct ip_set *set, ip_set_ip_t *hash_ip,
 		return -ERANGE;
 
 	*hash_ip = pack_ip_port(map, ip, port);
+	ip1 = pack_ip_cidr(ip1, cidr);
 	if (!(*hash_ip || ip1))
 		return -ERANGE;
 	
-	ret =__ipportnet_add(map, *hash_ip, pack_ip_cidr(ip1, cidr));
+	ret =__ipportnet_add(map, *hash_ip, ip1);
 	if (ret == 0) {
 		if (!map->nets[cidr-1]++)
 			add_cidr_size(map->cidr, cidr);

@@ -35,6 +35,8 @@ nethash_id_cidr(const struct ip_set_nethash *map,
 	ip_set_ip_t *elem;
 
 	*hash_ip = pack_ip_cidr(ip, cidr);
+	if (!*hash_ip)
+		return MAX_RANGE;
 	
 	for (i = 0; i < map->probes; i++) {
 		id = jhash_ip(map, i, *hash_ip) % map->hashsize;
@@ -67,13 +69,13 @@ nethash_test_cidr(struct ip_set *set, ip_set_ip_t *hash_ip,
 {
 	const struct ip_set_nethash *map = set->data;
 
-	return (ip && nethash_id_cidr(map, hash_ip, ip, cidr) != UINT_MAX);
+	return (nethash_id_cidr(map, hash_ip, ip, cidr) != UINT_MAX);
 }
 
 static inline int
 nethash_test(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 {
-	return (ip && nethash_id(set, hash_ip, ip) != UINT_MAX);
+	return (nethash_id(set, hash_ip, ip) != UINT_MAX);
 }
 
 static int
@@ -120,15 +122,15 @@ nethash_add(struct ip_set *set, ip_set_ip_t *hash_ip,
 	struct ip_set_nethash *map = set->data;
 	int ret;
 	
-	if (!ip || map->elements >= limit)
-		return -ERANGE;
+	if (map->elements >= limit || map->nets[cidr-1] == UINT16_MAX)
+		return -ERANGE;	
 	if (cidr <= 0 || cidr >= 32)
 		return -EINVAL;
-	if (map->nets[cidr-1] == UINT16_MAX)
-		return -ERANGE;
-	
+
 	*hash_ip = pack_ip_cidr(ip, cidr);
 	DP("%u.%u.%u.%u/%u, %u.%u.%u.%u", HIPQUAD(ip), cidr, HIPQUAD(*hash_ip));
+	if (!*hash_ip)
+		return -ERANGE;
 	
 	ret = __nethash_add(map, hash_ip);
 	if (ret == 0) {
@@ -164,8 +166,6 @@ nethash_del(struct ip_set *set, ip_set_ip_t *hash_ip,
 	struct ip_set_nethash *map = set->data;
 	ip_set_ip_t id, *elem;
 
-	if (!ip)
-		return -ERANGE;
 	if (cidr <= 0 || cidr >= 32)
 		return -EINVAL;	
 	

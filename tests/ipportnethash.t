@@ -3,9 +3,17 @@
 # Range: Create a set from a valid range
 0 ipset -N test ipportnethash --from 2.0.0.1 --to 2.1.0.0
 # Range: Add zero valued element
-1 ipset -A test 2.0.0.1,0,0.0.0.0/1
+2 ipset -A test 2.0.0.1,0,0.0.0.0/0
 # Range: Test zero valued element
-1 ipset -T test 2.0.0.1,0,0.0.0.0/1
+2 ipset -T test 2.0.0.1,0,0.0.0.0/0
+# Range: Delete zero valued element
+2 ipset -D test 2.0.0.1,0,0.0.0.0/0
+# Range: Add almost zero valued element
+0 ipset -A test 2.0.0.1,0,0.0.0.0/24
+# Range: Test almost zero valued element
+0 ipset -T test 2.0.0.1,0,0.0.0.0/24
+# Range: Delete almost zero valued element
+0 ipset -D test 2.0.0.1,0,0.0.0.0/24
 # Range: Add lower boundary
 0 ipset -A test 2.0.0.1,5,1.1.1.1/24
 # Range: Add upper boundary

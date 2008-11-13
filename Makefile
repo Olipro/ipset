@@ -20,7 +20,7 @@ ifndef V
 V=0
 endif
 
-IPSET_VERSION:=2.4.3
+IPSET_VERSION:=2.4.4
 
 PREFIX:=/usr/local
 LIBDIR:=$(PREFIX)/lib
@@ -33,7 +33,31 @@ IPSET_LIB_DIR:=$(LIBDIR)/ipset
 RELEASE_DIR:=/tmp
 
 COPT_FLAGS:=-O2
-CFLAGS:=$(COPT_FLAGS) -Wall -Wunused -Ikernel/include -I. # -g -DIPSET_DEBUG #-pg # -DIPTC_DEBUG
+WARN_FLAGS:=-Wall \
+	-Wextra \
+	-Waggregate-return \
+	-Wbad-function-cast \
+	-Wcast-align \
+	-Wformat=2 \
+	-Wfloat-equal \
+	-Winit-self \
+	-Winline \
+	-Wmissing-declarations \
+	-Wmissing-prototypes \
+	-Wnested-externs \
+	-Wold-style-definition \
+	-Wpacked \
+	-Wredundant-decls \
+	-Wshadow \
+	-Wsign-compare \
+	-Wstrict-prototypes \
+	-Wswitch-default \
+	-Wswitch-enum \
+	-Wundef \
+	-Wwrite-strings \
+	-Werror
+
+CFLAGS:=$(COPT_FLAGS) $(WARN_FLAGS) -Ikernel/include -I. # -g -DIPSET_DEBUG #-pg
 SH_CFLAGS:=$(CFLAGS) -fPIC
 SETTYPES:=ipmap portmap macipmap
 SETTYPES+=iptree iptreemap
@@ -87,7 +111,7 @@ ipset_%.o: ipset_%.c ipset.h
 	$(CC) $(SH_CFLAGS) -o $@ -c $<
 
 libipset_%.so: ipset_%.o
-	$(LD) -shared -o $@ $<
+	$(CC) -shared -o $@ $<
 
 $(DESTDIR)$(LIBDIR)/ipset/libipset_%.so: libipset_%.so
 	@[ -d $(DESTDIR)$(LIBDIR)/ipset ] || mkdir -p $(DESTDIR)$(LIBDIR)/ipset

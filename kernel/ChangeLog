@@ -1,3 +1,7 @@
+2.4.4
+  - Premature checking prevents to add valid elements to hash
+    types, fixed (bug reported by JC Janos).
+
 2.4.2
   - When flushing a nethash/ipportnethash type of set, it can
     lead to a kernel crash due to a wrong type declaration,

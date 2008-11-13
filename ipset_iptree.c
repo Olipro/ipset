@@ -39,7 +39,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[], void *data, unsigned *flags)
+create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_iptree_create *mydata = data;
 
@@ -63,25 +63,25 @@ create_parse(int c, char *argv[], void *data, unsigned *flags)
 
 /* Final check; exit if not ok. */
 static void
-create_final(void *data, unsigned int flags)
+create_final(void *data UNUSED, unsigned int flags UNUSED)
 {
 }
 
 /* Create commandline options */
 static const struct option create_opts[] = {
 	{.name = "timeout",	.has_arg = required_argument,	.val = '1'},
-	{NULL},
+	{0, 0, 0, 0},
 };
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(unsigned cmd, const char *optarg, void *data)
+adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_iptree *mydata = data;
-	char *saved = ipset_strdup(optarg);
+	char *saved = ipset_strdup(arg);
 	char *ptr, *tmp = saved;
 
-	DP("iptree: %p %p", optarg, data);
+	DP("iptree: %p %p", arg, data);
 
 	if (((ptr = strchr(tmp, ':')) || (ptr = strchr(tmp, '%'))) && ++warn_once == 1)
 		fprintf(stderr, "Warning: please use ',' separator token between ip,timeout.\n"
@@ -113,7 +113,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned options)
+printheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_iptree *mysetdata = set->settype->header;
 
@@ -141,7 +141,7 @@ printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 }
 
 static void
-saveheader(struct set *set, unsigned options)
+saveheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_iptree *mysetdata = set->settype->header;
 
@@ -218,7 +218,7 @@ static struct settype settype_iptree = {
 	.usage = &usage,
 };
 
-void _init(void)
+CONSTRUCTOR(iptree)
 {
 	settype_register(&settype_iptree);
 

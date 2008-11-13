@@ -36,7 +36,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[], void *data, unsigned *flags)
+create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags UNUSED)
 {
 	struct ip_set_req_setlist_create *mydata = data;
 	unsigned int size;
@@ -57,14 +57,14 @@ create_parse(int c, char *argv[], void *data, unsigned *flags)
 
 /* Final check; exit if not ok. */
 static void
-create_final(void *data, unsigned int flags)
+create_final(void *data UNUSED, unsigned int flags UNUSED)
 {
 }
 
 /* Create commandline options */
 static const struct option create_opts[] = {
 	{.name = "size",	.has_arg = required_argument,	.val = '1'},
-	{NULL},
+	{0, 0, 0, 0},
 };
 
 static void check_setname(const char *name)
@@ -77,13 +77,13 @@ static void check_setname(const char *name)
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(unsigned cmd, const char *optarg, void *data)
+adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_setlist *mydata = data;
-	char *saved = ipset_strdup(optarg);
+	char *saved = ipset_strdup(arg);
 	char *ptr, *tmp = saved;
 	
-	DP("setlist: %p %p", optarg, data);
+	DP("setlist: %p %p", arg, data);
 
 	ptr = strsep(&tmp, ",");
 	check_setname(ptr);
@@ -125,7 +125,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned options)
+printheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_setlist *mysetdata = set->settype->header;
 
@@ -133,7 +133,8 @@ printheader(struct set *set, unsigned options)
 }
 
 static void
-printips_sorted(struct set *set, void *data, size_t len, unsigned options)
+printips_sorted(struct set *set, void *data,
+		size_t len UNUSED, unsigned options UNUSED)
 {
 	struct ip_set_setlist *mysetdata = set->settype->header;
 	int i;
@@ -150,7 +151,7 @@ printips_sorted(struct set *set, void *data, size_t len, unsigned options)
 }
 
 static void
-saveheader(struct set *set, unsigned options)
+saveheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_setlist *mysetdata = set->settype->header;
 
@@ -160,7 +161,8 @@ saveheader(struct set *set, unsigned options)
 }
 
 static void
-saveips(struct set *set, void *data, size_t len, unsigned options)
+saveips(struct set *set, void *data,
+	size_t len UNUSED, unsigned options UNUSED)
 {
 	struct ip_set_setlist *mysetdata = set->settype->header;
 	int i;
@@ -212,7 +214,7 @@ static struct settype settype_setlist = {
 	.usage = &usage,
 };
 
-void _init(void)
+CONSTRUCTOR(setlist)
 {
 	settype_register(&settype_setlist);
 

@@ -32,7 +32,7 @@
 
 /* Initialize the create. */
 static void
-create_init(void *data)
+create_init(void *data UNUSED)
 {
 	DP("create INIT");
 	/* Nothing */
@@ -40,7 +40,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[], void *data, unsigned *flags)
+create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_portmap_create *mydata = data;
 
@@ -108,16 +108,16 @@ create_final(void *data, unsigned int flags)
 static const struct option create_opts[] = {
 	{.name = "from",	.has_arg = required_argument,	.val = '1'},
 	{.name = "to",		.has_arg = required_argument,	.val = '2'},
-	{NULL},
+	{0, 0, 0, 0},
 };
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(unsigned cmd, const char *optarg, void *data)
+adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_portmap *mydata = data;
 
-	parse_port(optarg, &mydata->ip);
+	parse_port(arg, &mydata->ip);
 	DP("%s", port_tostring(mydata->ip, 0));
 
 	return 1;	
@@ -148,7 +148,8 @@ printheader(struct set *set, unsigned options)
 }
 
 static void
-printports_sorted(struct set *set, void *data, size_t len, unsigned options)
+printports_sorted(struct set *set, void *data,
+		  size_t len UNUSED, unsigned options)
 {
 	struct ip_set_portmap *mysetdata = set->settype->header;
 	u_int32_t addr = mysetdata->first_ip;
@@ -162,7 +163,8 @@ printports_sorted(struct set *set, void *data, size_t len, unsigned options)
 }
 
 static char *
-binding_port_tostring(struct set *set, ip_set_ip_t ip, unsigned options)
+binding_port_tostring(struct set *set UNUSED,
+		      ip_set_ip_t ip, unsigned options)
 {
 	return port_tostring(ip, options);
 }
@@ -181,7 +183,8 @@ saveheader(struct set *set, unsigned options)
 }
 
 static void
-saveports(struct set *set, void *data, size_t len, unsigned options)
+saveports(struct set *set, void *data,
+	  size_t len UNUSED, unsigned options)
 {
 	struct ip_set_portmap *mysetdata = set->settype->header;
 	u_int32_t addr = mysetdata->first_ip;
@@ -235,7 +238,7 @@ static struct settype settype_portmap = {
 	.usage = &usage,
 };
 
-void _init(void)
+CONSTRUCTOR(portmap)
 {
 	settype_register(&settype_portmap);
 

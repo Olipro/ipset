@@ -6,6 +6,8 @@
 1 ipset -A test 2.0.0.1,0
 # Range: Test zero valued element
 1 ipset -T test 2.0.0.1,0
+# Range: Delete zero valued element
+1 ipset -D test 2.0.0.1,0
 # Range: Add lower boundary
 0 ipset -A test 2.0.0.1,5
 # Range: Add upper boundary

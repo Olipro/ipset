@@ -46,7 +46,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[], void *data, unsigned *flags)
+create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_ipportnethash_create *mydata = data;
 	ip_set_ip_t value;
@@ -184,19 +184,19 @@ static const struct option create_opts[] = {
 	{.name = "from",	.has_arg = required_argument,	.val = '4'},
 	{.name = "to",		.has_arg = required_argument,	.val = '5'},
 	{.name = "network",	.has_arg = required_argument,	.val = '6'},
-	{NULL},
+	{0, 0, 0, 0},
 };
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(unsigned cmd, const char *optarg, void *data)
+adt_parser(int cmd, const char *arg, void *data)
 {
 	struct ip_set_req_ipportnethash *mydata = data;
-	char *saved = ipset_strdup(optarg);
+	char *saved = ipset_strdup(arg);
 	char *ptr, *tmp = saved;
 	ip_set_ip_t cidr;
 
-	DP("ipportnethash: %p %p", optarg, data);
+	DP("ipportnethash: %p %p", arg, data);
 
 	if (((ptr = strchr(tmp, ':')) || (ptr = strchr(tmp, '%'))) && ++warn_once == 1)
 		fprintf(stderr, "Warning: please use ',' separator token between ip,port,net.\n"
@@ -220,11 +220,11 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 			cidr = 32;
 		else
 			exit_error(PARAMETER_PROBLEM,
-				   "Missing /cidr from `%s'", optarg);
+				   "Missing /cidr from `%s'", arg);
 	else
 		if (string_to_number(tmp, 1, 31, &cidr))
 			exit_error(PARAMETER_PROBLEM,
-				   "Out of range cidr `%s' specified", optarg);
+				   "Out of range cidr `%s' specified", arg);
 	
 	mydata->cidr = cidr;
 
@@ -266,7 +266,7 @@ printheader(struct set *set, unsigned options)
 static char buf[20];
 
 static char *
-unpack_ip_tostring(ip_set_ip_t ip, unsigned options)
+unpack_ip_tostring(ip_set_ip_t ip, unsigned options UNUSED)
 {
 	int i, j = 3;
 	unsigned char a, b;
@@ -313,7 +313,7 @@ unpack_ip_tostring(ip_set_ip_t ip, unsigned options)
 		((unsigned char *)&ip)[3],
 		b);
 
-	DP("%s %s", ip_tostring(ntohl(ip), options), buf);
+	DP("%s %s", ip_tostring(ntohl(ip), 0), buf);
 	return buf;
 }
 
@@ -419,7 +419,7 @@ static struct settype settype_ipportnethash = {
 	.usage = &usage,
 };
 
-void _init(void)
+CONSTRUCTOR(ipportnethash)
 {
 	settype_register(&settype_ipportnethash);
 

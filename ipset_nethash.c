@@ -45,7 +45,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[], void *data, unsigned *flags)
+create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_nethash_create *mydata = data;
 	ip_set_ip_t value;
@@ -97,14 +97,8 @@ create_parse(int c, char *argv[], void *data, unsigned *flags)
 
 /* Final check; exit if not ok. */
 static void
-create_final(void *data, unsigned int flags)
+create_final(void *data UNUSED, unsigned int flags UNUSED)
 {
-#ifdef IPSET_DEBUG
-	struct ip_set_req_nethash_create *mydata = data;
-
-	DP("hashsize %u probes %u resize %u",
-	   mydata->hashsize, mydata->probes, mydata->resize);
-#endif
 }
 
 /* Create commandline options */
@@ -112,15 +106,15 @@ static const struct option create_opts[] = {
 	{.name = "hashsize",	.has_arg = required_argument,	.val = '1'},
 	{.name = "probes",	.has_arg = required_argument,	.val = '2'},
 	{.name = "resize",	.has_arg = required_argument,	.val = '3'},
-	{NULL},
+	{0, 0, 0, 0},
 };
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(unsigned cmd, const char *optarg, void *data)
+adt_parser(int cmd, const char *arg, void *data)
 {
 	struct ip_set_req_nethash *mydata = data;
-	char *saved = ipset_strdup(optarg);
+	char *saved = ipset_strdup(arg);
 	char *ptr, *tmp = saved;
 	ip_set_ip_t cidr;
 
@@ -131,20 +125,22 @@ adt_parser(unsigned cmd, const char *optarg, void *data)
 			cidr = 32;
 		else
 			exit_error(PARAMETER_PROBLEM,
-				   "Missing cidr from `%s'", optarg);
+				   "Missing cidr from `%s'", arg);
 	} else
 		if (string_to_number(tmp, 1, 31, &cidr))
 			exit_error(PARAMETER_PROBLEM,
-				   "Out of range cidr `%s' specified", optarg);
+				   "Out of range cidr `%s' specified", arg);
 	
 	mydata->cidr = cidr;
 	parse_ip(ptr, &mydata->ip);
+#if 0
 	if (!mydata->ip)
 		exit_error(PARAMETER_PROBLEM,
 			  "Zero valued IP address `%s' specified", ptr);
+#endif
 	ipset_free(saved);
 
-	return mydata->ip;	
+	return 1;	
 };
 
 /*
@@ -164,7 +160,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned options)
+printheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_nethash *mysetdata = set->settype->header;
 
@@ -176,7 +172,7 @@ printheader(struct set *set, unsigned options)
 static char buf[20];
 
 static char *
-unpack_ip_tostring(ip_set_ip_t ip, unsigned options)
+unpack_ip_tostring(ip_set_ip_t ip, unsigned options UNUSED)
 {
 	int i, j = 3;
 	unsigned char a, b;
@@ -223,12 +219,12 @@ unpack_ip_tostring(ip_set_ip_t ip, unsigned options)
 		((unsigned char *)&ip)[3],
 		b);
 
-	DP("%s %s", ip_tostring(ntohl(ip), options), buf);
+	DP("%s %s", ip_tostring(ntohl(ip), 0), buf);
 	return buf;
 }
 
 static void
-printips(struct set *set, void *data, size_t len, unsigned options)
+printips(struct set *set UNUSED, void *data, size_t len, unsigned options)
 {
 	size_t offset = 0;
 	ip_set_ip_t *ip;
@@ -242,7 +238,7 @@ printips(struct set *set, void *data, size_t len, unsigned options)
 }
 
 static void
-saveheader(struct set *set, unsigned options)
+saveheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_nethash *mysetdata = set->settype->header;
 
@@ -253,7 +249,7 @@ saveheader(struct set *set, unsigned options)
 
 /* Print save for an IP */
 static void
-saveips(struct set *set, void *data, size_t len, unsigned options)
+saveips(struct set *set UNUSED, void *data, size_t len, unsigned options)
 {
 	size_t offset = 0;
 	ip_set_ip_t *ip;
@@ -268,7 +264,7 @@ saveips(struct set *set, void *data, size_t len, unsigned options)
 }
 
 static char *
-net_tostring(struct set *set, ip_set_ip_t ip, unsigned options)
+net_tostring(struct set *set UNUSED, ip_set_ip_t ip, unsigned options)
 {
 	return unpack_ip_tostring(ip, options);
 }
@@ -337,7 +333,7 @@ static struct settype settype_nethash = {
 	.usage = &usage,
 };
 
-void _init(void)
+CONSTRUCTOR(nethash)
 {
 	settype_register(&settype_nethash);
 

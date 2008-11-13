@@ -45,7 +45,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[], void *data, unsigned *flags)
+create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_ipmap_create *mydata = data;
 	unsigned int bits;
@@ -183,18 +183,18 @@ static const struct option create_opts[] = {
 	{.name = "to",		.has_arg = required_argument,	.val = '2'},
 	{.name = "network",	.has_arg = required_argument,	.val = '3'},
 	{.name = "netmask",	.has_arg = required_argument,	.val = '4'},
-	{NULL},
+	{0, 0, 0, 0},
 };
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(unsigned cmd, const char *optarg, void *data)
+adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_ipmap *mydata = data;
 
-	DP("ipmap: %p %p", optarg, data);
+	DP("ipmap: %p %p", arg, data);
 
-	parse_ip(optarg, &mydata->ip);
+	parse_ip(arg, &mydata->ip);
 	DP("%s", ip_tostring_numeric(mydata->ip));
 
 	return 1;	
@@ -247,7 +247,8 @@ printheader(struct set *set, unsigned options)
 }
 
 static void
-printips_sorted(struct set *set, void *data, size_t len, unsigned options)
+printips_sorted(struct set *set, void *data,
+		size_t len UNUSED, unsigned options)
 {
 	struct ip_set_ipmap *mysetdata = set->settype->header;
 	ip_set_ip_t id;
@@ -278,7 +279,7 @@ saveheader(struct set *set, unsigned options)
 }
 
 static void
-saveips(struct set *set, void *data, size_t len, unsigned options)
+saveips(struct set *set, void *data, size_t len UNUSED, unsigned options)
 {
 	struct ip_set_ipmap *mysetdata = set->settype->header;
 	ip_set_ip_t id;
@@ -334,7 +335,7 @@ static struct settype settype_ipmap = {
 	.usage = &usage,
 };
 
-void _init(void)
+CONSTRUCTOR(ipmap)
 {
 	settype_register(&settype_ipmap);
 

@@ -1,3 +1,10 @@
+2.4.4
+  - Premature checking prevents to add valid elements to hash
+    types, fixed (bug reported by JC Janos).
+  - Local variable shadows another variable, fixed (reported
+    by Jan Engelhardt).
+  - More compiler warning options added and warnings fixed.
+
 2.4.3
   - Include file <limits.h> was missing from userspace set type
     modules, reported by Krzysztof Oledzki and Sven Wegener.

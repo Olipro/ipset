@@ -28,6 +28,12 @@
 0 ipset -X test
 # Network: Create a set 
 0 ipset -N test iphash --hashsize 128 --netmask 24
+# Range: Add zero valued element
+2 ipset -A test 0.0.0.0
+# Range: Test zero valued element
+2 ipset -T test 0.0.0.0
+# Range: Delete zero valued element
+2 ipset -D test 0.0.0.0
 # Network: Add first random network
 0 ipset -A test 2.0.0.1
 # Network: Add second random network

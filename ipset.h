@@ -68,11 +68,10 @@ enum set_commands {
 	CMD_ADT_GET,
 };
 
-enum exittype {
-	OTHER_PROBLEM = 1,
-	PARAMETER_PROBLEM,
-	VERSION_PROBLEM
-};
+/* Exit codes */
+#define OTHER_PROBLEM		1
+#define PARAMETER_PROBLEM	2
+#define VERSION_PROBLEM		3
 
 /* The view of an ipset in userspace */
 struct set {
@@ -118,7 +117,7 @@ struct settype {
 	size_t adt_size;
 
 	/* Function which parses command options */
-	ip_set_ip_t (*adt_parser) (unsigned cmd, const char *optarg, void *data);
+	ip_set_ip_t (*adt_parser) (int cmd, const char *optarg, void *data);
 
 	/*
 	 * Printing
@@ -157,7 +156,7 @@ struct settype {
 	/* Internal data */
 	void *header;
 	void *data;
-	unsigned int option_offset;
+	int option_offset;
 	unsigned int flags;
 };
 
@@ -165,7 +164,7 @@ extern void settype_register(struct settype *settype);
 
 /* extern void unregister_settype(set_type_t *set_type); */
 
-extern void exit_error(enum exittype status, const char *msg, ...);
+extern void exit_error(int status, const char *msg, ...);
 
 extern char *binding_ip_tostring(struct set *set,
 				 ip_set_ip_t ip, unsigned options);
@@ -193,5 +192,10 @@ extern unsigned warn_once;
 #define ID2BYTE(id)	((id)/BITSPERBYTE)
 #define ID2MASK(id)	(1 << ((id)%BITSPERBYTE))
 #define test_bit(id, heap)	((((char *)(heap))[ID2BYTE(id)] & ID2MASK(id)) != 0)
+
+#define UNUSED __attribute__ ((unused))
+#define CONSTRUCTOR(module) \
+void __attribute__ ((constructor)) module##_init(void); \
+void module##_init(void)
 
 #endif	/* __IPSET_H */
