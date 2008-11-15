@@ -1,3 +1,7 @@
+2.4.5
+  - Some compiler warning options are too aggressive and
+    therefore disabled.
+
 2.4.4
   - Premature checking prevents to add valid elements to hash
     types, fixed (bug reported by JC Janos).

@@ -64,7 +64,7 @@ create_final(void *data UNUSED, unsigned int flags UNUSED)
 /* Create commandline options */
 static const struct option create_opts[] = {
 	{.name = "size",	.has_arg = required_argument,	.val = '1'},
-	{0, 0, 0, 0},
+	{NULL},
 };
 
 static void check_setname(const char *name)

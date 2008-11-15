@@ -70,7 +70,7 @@ create_final(void *data UNUSED, unsigned int flags UNUSED)
 /* Create commandline options */
 static const struct option create_opts[] = {
 	{.name = "timeout",	.has_arg = required_argument,	.val = '1'},
-	{0, 0, 0, 0},
+	{NULL},
 };
 
 /* Add, del, test parser */

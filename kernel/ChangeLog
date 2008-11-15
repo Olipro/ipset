@@ -1,3 +1,8 @@
+2.4.5
+  - setlist type does not work properly together with swapping
+    sets, bug reported by Thomas Jacob.
+  - Include linux/capability.h explicitly in ip_set.c (Jan Engelhardt)
+
 2.4.4
   - Premature checking prevents to add valid elements to hash
     types, fixed (bug reported by JC Janos).

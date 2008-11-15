@@ -17,14 +17,14 @@
 #include <linux/netfilter_ipv4/ip_set_setlist.h>
 
 /*
- * before ==> id, ref
- * after  ==> ref, id
+ * before ==> index, ref
+ * after  ==> ref, index
  */
 
 static inline bool
-next_id_eq(const struct ip_set_setlist *map, int i, ip_set_id_t id)
+next_index_eq(const struct ip_set_setlist *map, int i, ip_set_id_t index)
 {
-	return i < map->size && map->id[i] == id;
+	return i < map->size && map->index[i] == index;
 }
 
 static int
@@ -33,15 +33,15 @@ setlist_utest(struct ip_set *set, const void *data, size_t size,
 {
 	const struct ip_set_setlist *map = set->data;
 	const struct ip_set_req_setlist *req = data;
-	ip_set_id_t id, ref = IP_SET_INVALID_ID;
+	ip_set_id_t index, ref = IP_SET_INVALID_ID;
 	int i, res = 0;
 	struct ip_set *s;
 	
 	if (req->before && req->ref[0] == '\0')
 		return -EINVAL;
 
-	id = __ip_set_get_byname(req->name, &s);
-	if (id == IP_SET_INVALID_ID)
+	index = __ip_set_get_byname(req->name, &s);
+	if (index == IP_SET_INVALID_ID)
 		return -EEXIST;
 	if (req->ref[0] != '\0') {
 		ref = __ip_set_get_byname(req->ref, &s);
@@ -51,24 +51,24 @@ setlist_utest(struct ip_set *set, const void *data, size_t size,
 		}
 	}
 	for (i = 0; i < map->size
-		    && map->id[i] != IP_SET_INVALID_ID; i++) {
-		if (req->before && map->id[i] == id) {
-		    	res = next_id_eq(map, i + 1, ref);
+		    && map->index[i] != IP_SET_INVALID_ID; i++) {
+		if (req->before && map->index[i] == index) {
+		    	res = next_index_eq(map, i + 1, ref);
 		    	break;
 		} else if (!req->before) {
 			if ((ref == IP_SET_INVALID_ID
-			     && map->id[i] == id)
-			    || (map->id[i] == ref
-			        && next_id_eq(map, i + 1, id))) {
+			     && map->index[i] == index)
+			    || (map->index[i] == ref
+			        && next_index_eq(map, i + 1, index))) {
 			        res = 1;
 			        break;
 			}
 		}
 	}
 	if (ref != IP_SET_INVALID_ID)
-		__ip_set_put_byid(ref);
+		__ip_set_put_byindex(ref);
 finish:
-	__ip_set_put_byid(id);
+	__ip_set_put_byindex(index);
 	return res;
 }
 
@@ -83,27 +83,27 @@ setlist_ktest(struct ip_set *set,
 	int i, res = 0;
 	
 	for (i = 0; i < map->size
-		    && map->id[i] != IP_SET_INVALID_ID
+		    && map->index[i] != IP_SET_INVALID_ID
 		    && res == 0; i++)
-		res = ip_set_testip_kernel(map->id[i], skb, flags);
+		res = ip_set_testip_kernel(map->index[i], skb, flags);
 	return res;
 }
 
 static inline int
-insert_setlist(struct ip_set_setlist *map, int i, ip_set_id_t id)
+insert_setlist(struct ip_set_setlist *map, int i, ip_set_id_t index)
 {
 	ip_set_id_t tmp;
 	int j;
 
-	printk("i: %u, last %u\n", i, map->id[map->size - 1]);	
-	if (i >= map->size || map->id[map->size - 1] != IP_SET_INVALID_ID)
+	DP("i: %u, last %u\n", i, map->index[map->size - 1]);	
+	if (i >= map->size || map->index[map->size - 1] != IP_SET_INVALID_ID)
 		return -ERANGE;
 	
 	for (j = i; j < map->size
-		    && id != IP_SET_INVALID_ID; j++) {
-		tmp = map->id[j];
-		map->id[j] = id;
-		id = tmp;
+		    && index != IP_SET_INVALID_ID; j++) {
+		tmp = map->index[j];
+		map->index[j] = index;
+		index = tmp;
 	}
 	return 0;
 }
@@ -114,15 +114,15 @@ setlist_uadd(struct ip_set *set, const void *data, size_t size,
 {
 	struct ip_set_setlist *map = set->data;
 	const struct ip_set_req_setlist *req = data;
-	ip_set_id_t id, ref = IP_SET_INVALID_ID;
+	ip_set_id_t index, ref = IP_SET_INVALID_ID;
 	int i, res = -ERANGE;
 	struct ip_set *s;
 	
 	if (req->before && req->ref[0] == '\0')
 		return -EINVAL;
 
-	id = __ip_set_get_byname(req->name, &s);
-	if (id == IP_SET_INVALID_ID)
+	index = __ip_set_get_byname(req->name, &s);
+	if (index == IP_SET_INVALID_ID)
 		return -EEXIST;
 	/* "Loop detection" */
 	if (strcmp(s->type->typename, "setlist") == 0)
@@ -136,22 +136,22 @@ setlist_uadd(struct ip_set *set, const void *data, size_t size,
 		}
 	}
 	for (i = 0; i < map->size; i++) {
-		if (map->id[i] != ref)
+		if (map->index[i] != ref)
 			continue;
 		if (req->before) 
-			res = insert_setlist(map, i, id);
+			res = insert_setlist(map, i, index);
 		else
 			res = insert_setlist(map,
 				ref == IP_SET_INVALID_ID ? i : i + 1,
-				id);
+				index);
 		break;
 	}
 	if (ref != IP_SET_INVALID_ID)
-		__ip_set_put_byid(ref);
-	/* In case of success, we keep the reference to the id */
+		__ip_set_put_byindex(ref);
+	/* In case of success, we keep the reference to the set */
 finish:
 	if (res != 0)
-		__ip_set_put_byid(id);
+		__ip_set_put_byindex(index);
 	return res;
 }
 
@@ -166,9 +166,9 @@ setlist_kadd(struct ip_set *set,
 	int i, res = -EINVAL;
 	
 	for (i = 0; i < map->size
-		    && map->id[i] != IP_SET_INVALID_ID
+		    && map->index[i] != IP_SET_INVALID_ID
 		    && res != 0; i++)
-		res = ip_set_addip_kernel(map->id[i], skb, flags);
+		res = ip_set_addip_kernel(map->index[i], skb, flags);
 	return res;
 }
 
@@ -178,8 +178,8 @@ unshift_setlist(struct ip_set_setlist *map, int i)
 	int j;
 	
 	for (j = i; j < map->size - 1; j++)
-		map->id[j] = map->id[j+1];
-	map->id[map->size-1] = IP_SET_INVALID_ID;
+		map->index[j] = map->index[j+1];
+	map->index[map->size-1] = IP_SET_INVALID_ID;
 	return 0;
 }
 
@@ -189,15 +189,15 @@ setlist_udel(struct ip_set *set, const void *data, size_t size,
 {
 	struct ip_set_setlist *map = set->data;
 	const struct ip_set_req_setlist *req = data;
-	ip_set_id_t id, ref = IP_SET_INVALID_ID;
+	ip_set_id_t index, ref = IP_SET_INVALID_ID;
 	int i, res = -EEXIST;
 	struct ip_set *s;
 	
 	if (req->before && req->ref[0] == '\0')
 		return -EINVAL;
 
-	id = __ip_set_get_byname(req->name, &s);
-	if (id == IP_SET_INVALID_ID)
+	index = __ip_set_get_byname(req->name, &s);
+	if (index == IP_SET_INVALID_ID)
 		return -EEXIST;
 	if (req->ref[0] != '\0') {
 		ref = __ip_set_get_byname(req->ref, &s);
@@ -205,31 +205,31 @@ setlist_udel(struct ip_set *set, const void *data, size_t size,
 			goto finish;
 	}
 	for (i = 0; i < map->size
-	            && map->id[i] != IP_SET_INVALID_ID; i++) {
+	            && map->index[i] != IP_SET_INVALID_ID; i++) {
 		if (req->before) {
-			if (map->id[i] == id
-			    && next_id_eq(map, i + 1, ref)) {
+			if (map->index[i] == index
+			    && next_index_eq(map, i + 1, ref)) {
 				res = unshift_setlist(map, i);
 				break;
 			}
 		} else if (ref == IP_SET_INVALID_ID) {
-			if (map->id[i] == id) {
+			if (map->index[i] == index) {
 				res = unshift_setlist(map, i);
 				break;
 			}
-		} else if (map->id[i] == ref
-			   && next_id_eq(map, i + 1, id)) {
+		} else if (map->index[i] == ref
+			   && next_index_eq(map, i + 1, index)) {
 			res = unshift_setlist(map, i + 1);
 			break;
 		}
 	}
 	if (ref != IP_SET_INVALID_ID)
-		__ip_set_put_byid(ref);
+		__ip_set_put_byindex(ref);
 finish:
-	__ip_set_put_byid(id);
-	/* In case of success, release the reference to the id */
+	__ip_set_put_byindex(index);
+	/* In case of success, release the reference to the set */
 	if (res == 0)
-		__ip_set_put_byid(id);
+		__ip_set_put_byindex(index);
 	return res;
 }
 
@@ -244,9 +244,9 @@ setlist_kdel(struct ip_set *set,
 	int i, res = -EINVAL;
 	
 	for (i = 0; i < map->size
-		    && map->id[i] != IP_SET_INVALID_ID
+		    && map->index[i] != IP_SET_INVALID_ID
 		    && res != 0; i++)
-		res = ip_set_delip_kernel(map->id[i], skb, flags);
+		res = ip_set_delip_kernel(map->index[i], skb, flags);
 	return res;
 }
 
@@ -263,7 +263,7 @@ setlist_create(struct ip_set *set, const void *data, size_t size)
 		return -ENOMEM;
 	map->size = req->size;
 	for (i = 0; i < map->size; i++)
-		map->id[i] = IP_SET_INVALID_ID;
+		map->index[i] = IP_SET_INVALID_ID;
 	
 	set->data = map;
 	return 0;
@@ -276,8 +276,8 @@ setlist_destroy(struct ip_set *set)
 	int i;
 	
 	for (i = 0; i < map->size
-		    && map->id[i] != IP_SET_INVALID_ID; i++)
-		__ip_set_put_byid(map->id[i]);
+		    && map->index[i] != IP_SET_INVALID_ID; i++)
+		__ip_set_put_byindex(map->index[i]);
 
 	kfree(map);
 	set->data = NULL;
@@ -290,9 +290,9 @@ setlist_flush(struct ip_set *set)
 	int i;
 	
 	for (i = 0; i < map->size
-		    && map->id[i] != IP_SET_INVALID_ID; i++) {
-		__ip_set_put_byid(map->id[i]);
-		map->id[i] = IP_SET_INVALID_ID;
+		    && map->index[i] != IP_SET_INVALID_ID; i++) {
+		__ip_set_put_byindex(map->index[i]);
+		map->index[i] = IP_SET_INVALID_ID;
 	}
 }
 
@@ -320,7 +320,7 @@ setlist_list_members(const struct ip_set *set, void *data)
 	int i;
 	
 	for (i = 0; i < map->size; i++)
-		*((ip_set_id_t *)data + i) = map->id[i];
+		*((ip_set_id_t *)data + i) = ip_set_id(map->index[i]);
 }
 
 IP_SET_TYPE(setlist, IPSET_TYPE_SETNAME | IPSET_DATA_SINGLE)

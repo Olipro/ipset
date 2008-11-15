@@ -20,7 +20,7 @@ ifndef V
 V=0
 endif
 
-IPSET_VERSION:=2.4.4
+IPSET_VERSION:=2.4.5
 
 PREFIX:=/usr/local
 LIBDIR:=$(PREFIX)/lib
@@ -55,6 +55,7 @@ WARN_FLAGS:=-Wall \
 	-Wswitch-enum \
 	-Wundef \
 	-Wwrite-strings \
+	-Wno-missing-field-initializers \
 	-Werror
 
 CFLAGS:=$(COPT_FLAGS) $(WARN_FLAGS) -Ikernel/include -I. # -g -DIPSET_DEBUG #-pg

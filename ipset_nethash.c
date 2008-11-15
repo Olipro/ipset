@@ -106,7 +106,7 @@ static const struct option create_opts[] = {
 	{.name = "hashsize",	.has_arg = required_argument,	.val = '1'},
 	{.name = "probes",	.has_arg = required_argument,	.val = '2'},
 	{.name = "resize",	.has_arg = required_argument,	.val = '3'},
-	{0, 0, 0, 0},
+	{NULL},
 };
 
 /* Add, del, test parser */

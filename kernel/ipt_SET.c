@@ -179,9 +179,9 @@ static void destroy(const struct xt_target *target,
 	}
 #endif
 	if (info->add_set.index != IP_SET_INVALID_ID)
-		ip_set_put(info->add_set.index);
+		ip_set_put_byindex(info->add_set.index);
 	if (info->del_set.index != IP_SET_INVALID_ID)
-		ip_set_put(info->del_set.index);
+		ip_set_put_byindex(info->del_set.index);
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)

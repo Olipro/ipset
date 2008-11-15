@@ -108,7 +108,7 @@ create_final(void *data, unsigned int flags)
 static const struct option create_opts[] = {
 	{.name = "from",	.has_arg = required_argument,	.val = '1'},
 	{.name = "to",		.has_arg = required_argument,	.val = '2'},
-	{0, 0, 0, 0},
+	{NULL},
 };
 
 /* Add, del, test parser */

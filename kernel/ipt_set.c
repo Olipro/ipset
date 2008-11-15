@@ -175,7 +175,7 @@ static void destroy(const struct xt_match *match,
 		return;
 	}
 #endif
-	ip_set_put(info->match_set.index);
+	ip_set_put_byindex(info->match_set.index);
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)

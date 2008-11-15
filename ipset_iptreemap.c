@@ -59,7 +59,7 @@ create_final(void *data UNUSED, unsigned int flags UNUSED)
 
 static const struct option create_opts[] = {
 	{.name = "gc",	.has_arg = required_argument,	.val = 'g'},
-	{0, 0, 0, 0},
+	{NULL},
 };
 
 static ip_set_ip_t

@@ -487,11 +487,12 @@ struct ip_set_hash {
 
 /* register and unregister set references */
 extern ip_set_id_t ip_set_get_byname(const char name[IP_SET_MAXNAMELEN]);
-extern ip_set_id_t ip_set_get_byindex(ip_set_id_t id);
-extern void ip_set_put(ip_set_id_t id);
+extern ip_set_id_t ip_set_get_byindex(ip_set_id_t index);
+extern void ip_set_put_byindex(ip_set_id_t index);
+extern ip_set_id_t ip_set_id(ip_set_id_t index);
 extern ip_set_id_t __ip_set_get_byname(const char name[IP_SET_MAXNAMELEN],
 				       struct ip_set **set);
-extern void __ip_set_put_byid(ip_set_id_t id);
+extern void __ip_set_put_byindex(ip_set_id_t index);
 
 /* API for iptables set match, and SET target */
 extern int ip_set_addip_kernel(ip_set_id_t id,

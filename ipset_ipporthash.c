@@ -184,7 +184,7 @@ static const struct option create_opts[] = {
 	{.name = "from",	.has_arg = required_argument,	.val = '4'},
 	{.name = "to",		.has_arg = required_argument,	.val = '5'},
 	{.name = "network",	.has_arg = required_argument,	.val = '6'},
-	{0, 0, 0, 0},
+	{NULL},
 };
 
 /* Add, del, test parser */

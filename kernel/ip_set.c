@@ -21,6 +21,7 @@
 #include <linux/random.h>
 #include <linux/jhash.h>
 #include <linux/errno.h>
+#include <linux/capability.h>
 #include <asm/uaccess.h>
 #include <asm/bitops.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,27)
@@ -378,7 +379,7 @@ __ip_set_get_byname(const char *name, struct ip_set **set)
 	return index;
 }
 
-void __ip_set_put_byid(ip_set_id_t index)
+void __ip_set_put_byindex(ip_set_id_t index)
 {
 	if (ip_set_list[index])
 		__ip_set_put(index);
@@ -434,11 +435,25 @@ ip_set_get_byindex(ip_set_id_t index)
 }
 
 /*
+ * Find the set id belonging to the index.
+ * We are protected by the mutex, so we do not need to use
+ * ip_set_lock. There is no need to reference the sets either.
+ */
+ip_set_id_t
+ip_set_id(ip_set_id_t index)
+{
+	if (index >= ip_set_max || !ip_set_list[index])
+		return IP_SET_INVALID_ID;
+	
+	return ip_set_list[index]->id;
+}
+
+/*
  * If the given set pointer points to a valid set, decrement
  * reference count by 1. The caller shall not assume the index
  * to be valid, after calling this function.
  */
-void ip_set_put(ip_set_id_t index)
+void ip_set_put_byindex(ip_set_id_t index)
 {
 	down(&ip_set_app_mutex);
 	if (ip_set_list[index])
@@ -2037,9 +2052,10 @@ EXPORT_SYMBOL(ip_set_unregister_set_type);
 
 EXPORT_SYMBOL(ip_set_get_byname);
 EXPORT_SYMBOL(ip_set_get_byindex);
-EXPORT_SYMBOL(ip_set_put);
+EXPORT_SYMBOL(ip_set_put_byindex);
+EXPORT_SYMBOL(ip_set_id);
 EXPORT_SYMBOL(__ip_set_get_byname);
-EXPORT_SYMBOL(__ip_set_put_byid);
+EXPORT_SYMBOL(__ip_set_put_byindex);
 
 EXPORT_SYMBOL(ip_set_addip_kernel);
 EXPORT_SYMBOL(ip_set_delip_kernel);

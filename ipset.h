@@ -68,10 +68,11 @@ enum set_commands {
 	CMD_ADT_GET,
 };
 
-/* Exit codes */
-#define OTHER_PROBLEM		1
-#define PARAMETER_PROBLEM	2
-#define VERSION_PROBLEM		3
+enum exittype {
+	OTHER_PROBLEM = 1,
+	PARAMETER_PROBLEM,
+	VERSION_PROBLEM
+};
 
 /* The view of an ipset in userspace */
 struct set {

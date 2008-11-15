@@ -10,7 +10,7 @@
 
 struct ip_set_setlist {
 	uint8_t size;
-	ip_set_id_t id[0];
+	ip_set_id_t index[0];
 };
 
 struct ip_set_req_setlist_create {
