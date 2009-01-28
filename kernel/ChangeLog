@@ -1,3 +1,7 @@
+2.4.7
+  - Typo which broke compilation with kernels < 2.6.28
+    fixed (reported by Richard Lucassen, Danny Rawlins)
+
 2.4.6
   - Compatibility fix for kernels >= 2.6.28
 

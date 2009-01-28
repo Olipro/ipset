@@ -187,7 +187,7 @@ static void destroy(const struct xt_tgdtor_param *par)
 #endif
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
-	const struct ipt_set_info_target *info = targinfo;
+	const struct ipt_set_info_target *info = targetinfo;
 #else
 	const struct ipt_set_info_target *info = par->targinfo;
 #endif
