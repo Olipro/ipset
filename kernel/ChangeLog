@@ -1,4 +1,6 @@
 2.4.8
+  - The Jenkins' hash lookup2() replaced with Jenkins' faster/better lookup3()
+    hash function.
   - Bug fixed: after elements are added and deleted from a hash, an element
     can successfully be added in spite it's already in the hash and thus
     duplicates can occur (Shih-Yi Chen). 
