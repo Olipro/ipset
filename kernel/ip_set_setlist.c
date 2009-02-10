@@ -16,6 +16,10 @@
 #include <linux/netfilter_ipv4/ip_set_bitmaps.h>
 #include <linux/netfilter_ipv4/ip_set_setlist.h>
 
+#ifndef bool
+#define bool	int
+#endif
+
 /*
  * before ==> index, ref
  * after  ==> ref, index
