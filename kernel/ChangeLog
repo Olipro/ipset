@@ -1,4 +1,7 @@
 2.4.8
+  - Bug fixed: after elements are added and deleted from a hash, an element
+    can successfully be added in spite it's already in the hash and thus
+    duplicates can occur (Shih-Yi Chen). 
   - Compatibility with old gcc without 'bool' added.
 
 2.4.7

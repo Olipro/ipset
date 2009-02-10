@@ -49,8 +49,7 @@ ipporthash_id(struct ip_set *set, ip_set_ip_t *hash_ip,
 		elem = HARRAY_ELEM(map->members, ip_set_ip_t *, id);
 		if (*elem == *hash_ip)
 			return id;
-		/* No shortcut at testing - there can be deleted
-		 * entries. */
+		/* No shortcut - there can be deleted entries. */
 	}
 	return UINT_MAX;
 }
@@ -86,18 +85,21 @@ __ipporthash_add(struct ip_set_ipporthash *map, ip_set_ip_t *ip)
 {
 	__u32 probe;
 	u_int16_t i;
-	ip_set_ip_t *elem;
+	ip_set_ip_t *elem, *slot = NULL;
 
 	for (i = 0; i < map->probes; i++) {
 		probe = jhash_ip(map, i, *ip) % map->hashsize;
 		elem = HARRAY_ELEM(map->members, ip_set_ip_t *, probe);
 		if (*elem == *ip)
 			return -EEXIST;
-		if (!*elem) {
-			*elem = *ip;
-			map->elements++;
-			return 0;
-		}
+		if (!(slot || *elem))
+			slot = elem;
+		/* There can be deleted entries, must check all slots */
+	}
+	if (slot) {
+		*slot = *ip;
+		map->elements++;
+		return 0;
 	}
 	/* Trigger rehashing */
 	return -EAGAIN;

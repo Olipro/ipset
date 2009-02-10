@@ -53,8 +53,7 @@ ipportnethash_id_cidr(struct ip_set *set, ip_set_ip_t *hash_ip,
 		elem = HARRAY_ELEM(map->members, struct ipportip *, id);
 		if (elem->ip == *hash_ip && elem->ip1 == ip1)
 			return id;
-		/* No shortcut at testing - there can be deleted
-		 * entries. */
+		/* No shortcut - there can be deleted entries. */
 	}
 	return UINT_MAX;
 }
@@ -137,19 +136,22 @@ __ipportnet_add(struct ip_set_ipportnethash *map,
 {
 	__u32 probe;
 	u_int16_t i;
-	struct ipportip *elem;
+	struct ipportip *elem, *slot = NULL;
 
 	for (i = 0; i < map->probes; i++) {
 		probe = jhash_ip2(map, i, hash_ip, ip1) % map->hashsize;
 		elem = HARRAY_ELEM(map->members, struct ipportip *, probe);
 		if (elem->ip == hash_ip && elem->ip1 == ip1)
 			return -EEXIST;
-		if (!(elem->ip || elem->ip1)) {
-			elem->ip = hash_ip;
-			elem->ip1 = ip1;
-			map->elements++;
-			return 0;
-		}
+		if (!(slot || elem->ip || elem->ip1))
+			slot = elem;
+		/* There can be deleted entries, must check all slots */
+	}
+	if (slot) {
+		slot->ip = hash_ip;
+		slot->ip1 = ip1;
+		map->elements++;
+		return 0;
 	}
 	/* Trigger rehashing */
 	return -EAGAIN;
