@@ -1,3 +1,7 @@
+2.4.8
+  - In order to disable the extra warning flags, NO_EXTRA_WARN_FLAGS
+    variable added to userspace Makefile
+
 2.4.5
   - Some compiler warning options are too aggressive and
     therefore disabled.

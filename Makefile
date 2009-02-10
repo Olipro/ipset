@@ -33,7 +33,8 @@ IPSET_LIB_DIR:=$(LIBDIR)/ipset
 RELEASE_DIR:=/tmp
 
 COPT_FLAGS:=-O2
-WARN_FLAGS:=-Wall \
+WARN_FLAGS:=-Wall
+EXTRA_WARN_FLAGS:=\
 	-Wextra \
 	-Waggregate-return \
 	-Wbad-function-cast \
@@ -57,6 +58,10 @@ WARN_FLAGS:=-Wall \
 	-Wwrite-strings \
 	-Wno-missing-field-initializers \
 	-Werror
+
+ifndef NO_EXTRA_WARN_FLAGS
+WARN_FLAGS+=$(EXTRA_WARN_FLAGS)
+endif
 
 CFLAGS:=$(COPT_FLAGS) $(WARN_FLAGS) -Ikernel/include -I. # -g -DIPSET_DEBUG #-pg
 SH_CFLAGS:=$(CFLAGS) -fPIC

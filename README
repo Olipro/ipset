@@ -14,6 +14,14 @@ This is the ipset source tree. Follow these steps to install ipset:
 	IP_NF_SET_MAX=<<your setsize number>> \
 	IP_NF_SET_HASHSIZE=<<your hashsize number>>
 
+   If your compiler does not support all of the extra warning
+   flags, you can disable those too:
+
+   # make KERNEL_DIR=<<where-you-built-your-kernel>> \
+	IP_NF_SET_MAX=<<your setsize number>> \
+	IP_NF_SET_HASHSIZE=<<your hashsize number>> \
+	NO_EXTRA_WARN_FLAGS=yes
+
 2. Install the binary and the modules
 
    # make KERNEL_DIR=<<where-you-built-your-kernel>> install
