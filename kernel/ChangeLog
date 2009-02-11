@@ -1,3 +1,7 @@
+2.4.9
+  - References to the old include file replaced with new one in order to
+    really use the new Jenkins' hash function.
+
 2.4.8
   - The Jenkins' hash lookup2() replaced with Jenkins' faster/better lookup3()
     hash function.

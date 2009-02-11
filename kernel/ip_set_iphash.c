@@ -11,7 +11,7 @@
 #include <linux/moduleparam.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
-#include <linux/jhash.h>
+#include <linux/netfilter_ipv4/ip_set_jhash.h>
 #include <linux/errno.h>
 #include <asm/uaccess.h>
 #include <asm/bitops.h>
