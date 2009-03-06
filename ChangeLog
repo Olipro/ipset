@@ -1,3 +1,8 @@
+2.5.0
+  - On parisc architecture cast increases required aligment (bugzilla
+    id 582), fixed.
+  - Respect LDFLAGS settings at compile time (Peter Volkov).
+
 2.4.8
   - In order to disable the extra warning flags, NO_EXTRA_WARN_FLAGS
     variable added to userspace Makefile
