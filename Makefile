@@ -110,14 +110,14 @@ ipset.o: ipset.c ipset.h
 	$(CC) $(CFLAGS) -DIPSET_VERSION=\"$(IPSET_VERSION)\" -DIPSET_LIB_DIR=\"$(IPSET_LIB_DIR)\" -c -o $@ $<
 
 ipset: ipset.o
-	$(CC) $(CFLAGS) -rdynamic -o $@ $^ -ldl
+	$(CC) $(CFLAGS) $(LDFLAGS) -rdynamic -o $@ $^ -ldl
 
 #Pooltypes
 ipset_%.o: ipset_%.c ipset.h
 	$(CC) $(SH_CFLAGS) -o $@ -c $<
 
 libipset_%.so: ipset_%.o
-	$(CC) -shared -o $@ $<
+	$(CC) -shared $(LDFLAGS) -o $@ $<
 
 $(DESTDIR)$(LIBDIR)/ipset/libipset_%.so: libipset_%.so
 	@[ -d $(DESTDIR)$(LIBDIR)/ipset ] || mkdir -p $(DESTDIR)$(LIBDIR)/ipset
