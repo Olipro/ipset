@@ -877,7 +877,7 @@ ip_set_create(const char *name,
 	set = kmalloc(sizeof(struct ip_set), GFP_KERNEL);
 	if (!set)
 		return -ENOMEM;
-	set->lock = RW_LOCK_UNLOCKED;
+	rwlock_init(&set->lock);
 	strncpy(set->name, name, IP_SET_MAXNAMELEN);
 	set->binding = IP_SET_INVALID_ID;
 	atomic_set(&set->ref, 0);
