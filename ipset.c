@@ -626,7 +626,8 @@ void parse_ip(const char *str, ip_set_ip_t * ip)
 				   "host/network `%s' resolves to serveral ip-addresses. "
 				   "Please specify one.", str);
 
-		*ip = ntohl(((struct in_addr *) host->h_addr_list[0])->s_addr);
+		memcpy(&addr, host->h_addr_list[0], sizeof(struct in_addr));
+		*ip = ntohl(addr.s_addr);
 		return;
 	}
 
