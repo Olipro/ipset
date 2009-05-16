@@ -318,7 +318,7 @@ unpack_ip_tostring(ip_set_ip_t ip, unsigned options UNUSED)
 }
 
 static void
-printips(struct set *set, void *data, size_t len, unsigned options)
+printips(struct set *set, void *data, u_int32_t len, unsigned options)
 {
 	struct ip_set_ipportnethash *mysetdata = set->settype->header;
 	size_t offset = 0;
@@ -357,7 +357,7 @@ saveheader(struct set *set, unsigned options)
 
 /* Print save for an IP */
 static void
-saveips(struct set *set, void *data, size_t len, unsigned options)
+saveips(struct set *set, void *data, u_int32_t len, unsigned options)
 {
 	struct ip_set_ipportnethash *mysetdata = set->settype->header;
 	size_t offset = 0;

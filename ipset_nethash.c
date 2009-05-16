@@ -224,7 +224,7 @@ unpack_ip_tostring(ip_set_ip_t ip, unsigned options UNUSED)
 }
 
 static void
-printips(struct set *set UNUSED, void *data, size_t len, unsigned options)
+printips(struct set *set UNUSED, void *data, u_int32_t len, unsigned options)
 {
 	size_t offset = 0;
 	ip_set_ip_t *ip;
@@ -249,7 +249,7 @@ saveheader(struct set *set, unsigned options UNUSED)
 
 /* Print save for an IP */
 static void
-saveips(struct set *set UNUSED, void *data, size_t len, unsigned options)
+saveips(struct set *set UNUSED, void *data, u_int32_t len, unsigned options)
 {
 	size_t offset = 0;
 	ip_set_ip_t *ip;

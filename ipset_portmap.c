@@ -149,7 +149,7 @@ printheader(struct set *set, unsigned options)
 
 static void
 printports_sorted(struct set *set, void *data,
-		  size_t len UNUSED, unsigned options)
+		  u_int32_t len UNUSED, unsigned options)
 {
 	struct ip_set_portmap *mysetdata = set->settype->header;
 	u_int32_t addr = mysetdata->first_ip;
@@ -184,7 +184,7 @@ saveheader(struct set *set, unsigned options)
 
 static void
 saveports(struct set *set, void *data,
-	  size_t len UNUSED, unsigned options)
+	  u_int32_t len UNUSED, unsigned options)
 {
 	struct ip_set_portmap *mysetdata = set->settype->header;
 	u_int32_t addr = mysetdata->first_ip;

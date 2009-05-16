@@ -248,7 +248,7 @@ printheader(struct set *set, unsigned options)
 
 static void
 printips_sorted(struct set *set, void *data,
-		size_t len UNUSED, unsigned options)
+		u_int32_t len UNUSED, unsigned options)
 {
 	struct ip_set_ipmap *mysetdata = set->settype->header;
 	ip_set_ip_t id;
@@ -279,7 +279,7 @@ saveheader(struct set *set, unsigned options)
 }
 
 static void
-saveips(struct set *set, void *data, size_t len UNUSED, unsigned options)
+saveips(struct set *set, void *data, u_int32_t len UNUSED, unsigned options)
 {
 	struct ip_set_ipmap *mysetdata = set->settype->header;
 	ip_set_ip_t id;

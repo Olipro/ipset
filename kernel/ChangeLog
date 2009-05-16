@@ -1,3 +1,9 @@
+3.0
+  - New kernel-userspace protocol release
+  - Bigendian and 64/32bit fixes (Stefan Gula, bugzilla id 593)
+  - Support of 2.4.3[67].*  kernels fixed
+  - Compiling with debugging enabled fixed
+
 2.5.0
   - Use the spinlock initiator instead of setting the locks directly
     as it causes compilation errors with 2.6.29-rt (Jan Engelhardt).

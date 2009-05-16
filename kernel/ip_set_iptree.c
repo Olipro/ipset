@@ -276,21 +276,21 @@ init_gc_timer(struct ip_set *set)
 }
 
 static int
-iptree_create(struct ip_set *set, const void *data, size_t size)
+iptree_create(struct ip_set *set, const void *data, u_int32_t size)
 {
 	const struct ip_set_req_iptree_create *req = data;
 	struct ip_set_iptree *map;
 
 	if (size != sizeof(struct ip_set_req_iptree_create)) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
+		ip_set_printk("data length wrong (want %lu, have %lu)",
 			      sizeof(struct ip_set_req_iptree_create),
-			      size);
+			      (unsigned long)size);
 		return -EINVAL;
 	}
 
 	map = kmalloc(sizeof(struct ip_set_iptree), GFP_KERNEL);
 	if (!map) {
-		DP("out of memory for %d bytes",
+		DP("out of memory for %lu bytes",
 		   sizeof(struct ip_set_iptree));
 		return -ENOMEM;
 	}

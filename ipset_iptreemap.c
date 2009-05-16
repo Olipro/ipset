@@ -115,7 +115,7 @@ printheader(struct set *set, unsigned int options UNUSED)
 
 static void
 printips_sorted(struct set *set UNUSED, void *data,
-		size_t len, unsigned int options)
+		u_int32_t len, unsigned int options)
 {
 	struct ip_set_req_iptreemap *req;
 	size_t offset = 0;
@@ -147,7 +147,7 @@ saveheader(struct set *set, unsigned int options UNUSED)
 
 static void
 saveips(struct set *set UNUSED, void *data,
-	size_t len, unsigned int options)
+	u_int32_t len, unsigned int options)
 {
 	struct ip_set_req_iptreemap *req;
 	size_t offset = 0;

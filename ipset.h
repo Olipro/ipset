@@ -95,7 +95,7 @@ struct settype {
 	 */
 
 	/* Size of create data. Will be sent to kernel */
-	size_t create_size;
+	u_int32_t create_size;
 
 	/* Initialize the create. */
 	void (*create_init) (void *data);
@@ -115,7 +115,7 @@ struct settype {
 	 */
 
 	/* Size of data. Will be sent to kernel */
-	size_t adt_size;
+	u_int32_t adt_size;
 
 	/* Function which parses command options */
 	ip_set_ip_t (*adt_parser) (int cmd, const char *optarg, void *data);
@@ -125,7 +125,7 @@ struct settype {
 	 */
 
 	/* Size of header. */
-	size_t header_size;
+	u_int32_t header_size;
 
 	/* Initialize the type-header */
 	void (*initheader) (struct set *set, const void *data);
@@ -134,16 +134,16 @@ struct settype {
 	void (*printheader) (struct set *set, unsigned options);
 
 	/* Pretty print all IPs */
-	void (*printips) (struct set *set, void *data, size_t len, unsigned options);
+	void (*printips) (struct set *set, void *data, u_int32_t len, unsigned options);
 
 	/* Pretty print all IPs sorted */
-	void (*printips_sorted) (struct set *set, void *data, size_t len, unsigned options);
+	void (*printips_sorted) (struct set *set, void *data, u_int32_t len, unsigned options);
 
 	/* Print save arguments for creating the set */
 	void (*saveheader) (struct set *set, unsigned options);
 
 	/* Print save for all IPs */
-	void (*saveips) (struct set *set, void *data, size_t len, unsigned options);
+	void (*saveips) (struct set *set, void *data, u_int32_t len, unsigned options);
 
 	/* Conver a single IP (binding) to string */
 	char * (*bindip_tostring)(struct set *set, ip_set_ip_t ip, unsigned options);
@@ -189,10 +189,13 @@ extern struct set *set_find_byid(ip_set_id_t id);
 
 extern unsigned warn_once;
 
-#define BITSPERBYTE	(8*sizeof(char))
-#define ID2BYTE(id)	((id)/BITSPERBYTE)
-#define ID2MASK(id)	(1 << ((id)%BITSPERBYTE))
-#define test_bit(id, heap)	((((char *)(heap))[ID2BYTE(id)] & ID2MASK(id)) != 0)
+#define BITS_PER_LONG	(8*sizeof(unsigned long))
+#define BIT_WORD(nr)	((nr) / BITS_PER_LONG)
+
+static inline int test_bit(int nr, const unsigned long *addr)
+{
+	return 1UL & (addr[BIT_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
+}
 
 #define UNUSED __attribute__ ((unused))
 #define CONSTRUCTOR(module) \

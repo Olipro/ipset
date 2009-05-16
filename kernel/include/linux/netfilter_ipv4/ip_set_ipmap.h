@@ -13,7 +13,7 @@ struct ip_set_ipmap {
 	ip_set_ip_t netmask;		/* subnet netmask */
 	ip_set_ip_t sizeid;		/* size of set in IPs */
 	ip_set_ip_t hosts;		/* number of hosts in a subnet */
-	size_t size;			/* size of the ipmap proper */
+	u_int32_t size;			/* size of the ipmap proper */
 };
 
 struct ip_set_req_ipmap_create {

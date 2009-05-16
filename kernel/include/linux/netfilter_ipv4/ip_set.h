@@ -40,7 +40,7 @@
 /* 
  * Used so that the kernel module and ipset-binary can match their versions 
  */
-#define IP_SET_PROTOCOL_VERSION 2
+#define IP_SET_PROTOCOL_VERSION 3
 
 #define IP_SET_MAXNAMELEN 32	/* set names and set typenames */
 
@@ -228,7 +228,7 @@ struct ip_set_req_max_sets {
 struct ip_set_req_setnames {
 	unsigned op;
 	ip_set_id_t index;		/* set to list/save */
-	size_t size;			/* size to get setdata/bindings */
+	u_int32_t size;			/* size to get setdata/bindings */
 	/* followed by sets number of struct ip_set_name_list */
 };
 
@@ -250,9 +250,9 @@ struct ip_set_list {
 	ip_set_id_t index;
 	ip_set_id_t binding;
 	u_int32_t ref;
-	size_t header_size;	/* Set header data of header_size */
-	size_t members_size;	/* Set members data of members_size */
-	size_t bindings_size;	/* Set bindings data of bindings_size */
+	u_int32_t header_size;	/* Set header data of header_size */
+	u_int32_t members_size;	/* Set members data of members_size */
+	u_int32_t bindings_size;/* Set bindings data of bindings_size */
 };
 
 struct ip_set_hash_list {
@@ -269,8 +269,8 @@ struct ip_set_hash_list {
 struct ip_set_save {
 	ip_set_id_t index;
 	ip_set_id_t binding;
-	size_t header_size;	/* Set header data of header_size */
-	size_t members_size;	/* Set members data of members_size */
+	u_int32_t header_size;	/* Set header data of header_size */
+	u_int32_t members_size;	/* Set members data of members_size */
 };
 
 /* At restoring, ip == 0 means default binding for the given set: */
@@ -290,8 +290,8 @@ struct ip_set_restore {
 	char name[IP_SET_MAXNAMELEN];
 	char typename[IP_SET_MAXNAMELEN];
 	ip_set_id_t index;
-	size_t header_size;	/* Create data of header_size */
-	size_t members_size;	/* Set members data of members_size */
+	u_int32_t header_size;	/* Create data of header_size */
+	u_int32_t members_size;	/* Set members data of members_size */
 };
 
 static inline int bitmap_bytes(ip_set_ip_t a, ip_set_ip_t b)
@@ -358,14 +358,14 @@ struct ip_set_type {
 	 * return 0 if not in set, 1 if in set.
 	 */
 	int (*testip) (struct ip_set *set,
-		       const void *data, size_t size,
+		       const void *data, u_int32_t size,
 		       ip_set_ip_t *ip);
 
 	/*
 	 * Size of the data structure passed by when
 	 * adding/deletin/testing an entry.
 	 */
-	size_t reqsize;
+	u_int32_t reqsize;
 
 	/* Add IP into set (userspace: ipset -A set IP)
 	 * Return -EEXIST if the address is already in the set,
@@ -373,7 +373,7 @@ struct ip_set_type {
 	 * If the address was not already in the set, 0 is returned.
 	 */
 	int (*addip) (struct ip_set *set, 
-		      const void *data, size_t size,
+		      const void *data, u_int32_t size,
 		      ip_set_ip_t *ip);
 
 	/* Add IP into set (kernel: iptables ... -j SET set src|dst)
@@ -393,7 +393,7 @@ struct ip_set_type {
 	 * If the address really was in the set, 0 is returned.
 	 */
 	int (*delip) (struct ip_set *set, 
-		      const void *data, size_t size,
+		      const void *data, u_int32_t size,
 		      ip_set_ip_t *ip);
 
 	/* remove IP from set (kernel: iptables ... -j SET --entry x)
@@ -410,7 +410,7 @@ struct ip_set_type {
 	/* new set creation - allocated type specific items
 	 */
 	int (*create) (struct ip_set *set,
-		       const void *data, size_t size);
+		       const void *data, u_int32_t size);
 
 	/* retry the operation after successfully tweaking the set
 	 */
@@ -429,7 +429,7 @@ struct ip_set_type {
 
 	/* Listing: size needed for header
 	 */
-	size_t header_size;
+	u_int32_t header_size;
 
 	/* Listing: Get the header
 	 *
@@ -515,7 +515,7 @@ extern int ip_set_testip_kernel(ip_set_id_t id,
 
 #define UADT0(type, adt, args...)					\
 static int								\
-FNAME(type,_u,adt)(struct ip_set *set, const void *data, size_t size,	\
+FNAME(type,_u,adt)(struct ip_set *set, const void *data, u_int32_t size,\
 	     ip_set_ip_t *hash_ip)					\
 {									\
 	const STRUCT(ip_set_req_,type) *req = data;			\

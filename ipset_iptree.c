@@ -123,7 +123,7 @@ printheader(struct set *set, unsigned options UNUSED)
 }
 
 static void
-printips_sorted(struct set *set, void *data, size_t len, unsigned options)
+printips_sorted(struct set *set, void *data, u_int32_t len, unsigned options)
 {
 	struct ip_set_iptree *mysetdata = set->settype->header;
 	struct ip_set_req_iptree *req;
@@ -155,7 +155,7 @@ saveheader(struct set *set, unsigned options UNUSED)
 }
 
 static void
-saveips(struct set *set, void *data, size_t len, unsigned options)
+saveips(struct set *set, void *data, u_int32_t len, unsigned options)
 {
 	struct ip_set_iptree *mysetdata = set->settype->header;
 	struct ip_set_req_iptree *req;

@@ -245,15 +245,14 @@ print_mac(unsigned char macaddress[ETH_ALEN])
 
 static void
 printips_sorted(struct set *set, void *data,
-		size_t len UNUSED, unsigned options)
+		u_int32_t len UNUSED, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata = set->settype->header;
 	struct ip_set_macip *table = data;
 	u_int32_t addr = mysetdata->first_ip;
 
 	while (addr <= mysetdata->last_ip) {
-		if (test_bit(IPSET_MACIP_ISSET,
-			     (void *)&table[addr - mysetdata->first_ip].flags)) {
+		if (table[addr - mysetdata->first_ip].match) {
 			printf("%s,", ip_tostring(addr, options));
 			print_mac(table[addr - mysetdata->first_ip].
 				  ethernet);
@@ -280,15 +279,14 @@ saveheader(struct set *set, unsigned options)
 
 static void
 saveips(struct set *set, void *data,
-	size_t len UNUSED, unsigned options)
+	u_int32_t len UNUSED, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata = set->settype->header;
 	struct ip_set_macip *table = data;
 	u_int32_t addr = mysetdata->first_ip;
 
 	while (addr <= mysetdata->last_ip) {
-		if (test_bit(IPSET_MACIP_ISSET,
-			     (void *)&table[addr - mysetdata->first_ip].flags)) {
+		if (table[addr - mysetdata->first_ip].match) {
 			printf("-A %s %s,",
 			       set->name, ip_tostring(addr, options));
 			print_mac(table[addr - mysetdata->first_ip].

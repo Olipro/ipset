@@ -58,6 +58,7 @@ static inline void *kzalloc(size_t size, gfp_t flags)
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,23)
+#include <linux/netfilter.h>
 #define KMEM_CACHE_CREATE(name, size) \
 	kmem_cache_create(name, size, 0, 0, NULL, NULL)
 #else

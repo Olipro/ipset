@@ -493,7 +493,7 @@ ip_set_find_byindex(ip_set_id_t index)
 static inline int
 __ip_set_testip(struct ip_set *set,
 	        const void *data,
-	        size_t size,
+	        u_int32_t size,
 	        ip_set_ip_t *ip)
 {
 	int res;
@@ -508,7 +508,7 @@ __ip_set_testip(struct ip_set *set,
 static int
 __ip_set_addip(ip_set_id_t index,
 	       const void *data,
-	       size_t size)
+	       u_int32_t size)
 {
 	struct ip_set *set = ip_set_list[index];
 	ip_set_ip_t ip;
@@ -529,15 +529,15 @@ __ip_set_addip(ip_set_id_t index,
 static int
 ip_set_addip(ip_set_id_t index,
 	     const void *data,
-	     size_t size)
+	     u_int32_t size)
 {
 	struct ip_set *set = ip_set_list[index];
 
 	IP_SET_ASSERT(set);
 
 	if (size - sizeof(struct ip_set_req_adt) != set->type->reqsize) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      set->type->reqsize,
+		ip_set_printk("data length wrong (want %lu, have %lu)",
+			      (long unsigned)set->type->reqsize,
 			      size - sizeof(struct ip_set_req_adt));
 		return -EINVAL;
 	}
@@ -549,7 +549,7 @@ ip_set_addip(ip_set_id_t index,
 static int
 ip_set_delip(ip_set_id_t index,
 	     const void *data,
-	     size_t size)
+	     u_int32_t size)
 {
 	struct ip_set *set = ip_set_list[index];
 	ip_set_ip_t ip;
@@ -558,8 +558,8 @@ ip_set_delip(ip_set_id_t index,
 	IP_SET_ASSERT(set);
 
 	if (size - sizeof(struct ip_set_req_adt) != set->type->reqsize) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      set->type->reqsize,
+		ip_set_printk("data length wrong (want %lu, have %lu)",
+			      (long unsigned)set->type->reqsize,
 			      size - sizeof(struct ip_set_req_adt));
 		return -EINVAL;
 	}
@@ -576,7 +576,7 @@ ip_set_delip(ip_set_id_t index,
 static int
 ip_set_testip(ip_set_id_t index,
 	      const void *data,
-	      size_t size)
+	      u_int32_t size)
 {
 	struct ip_set *set = ip_set_list[index];
 	ip_set_ip_t ip;
@@ -585,8 +585,8 @@ ip_set_testip(ip_set_id_t index,
 	IP_SET_ASSERT(set);
 	
 	if (size - sizeof(struct ip_set_req_adt) != set->type->reqsize) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      set->type->reqsize,
+		ip_set_printk("data length wrong (want %lu, have %lu)",
+			      (long unsigned)set->type->reqsize,
 			      size - sizeof(struct ip_set_req_adt));
 		return -EINVAL;
 	}
@@ -601,7 +601,7 @@ ip_set_testip(ip_set_id_t index,
 static int
 ip_set_bindip(ip_set_id_t index,
 	      const void *data,
-	      size_t size)
+	      u_int32_t size)
 {
 	struct ip_set *set = ip_set_list[index];
 	const struct ip_set_req_bind *req_bind;
@@ -687,7 +687,7 @@ __unbind_default(struct ip_set *set)
 static int
 ip_set_unbindip(ip_set_id_t index,
 	        const void *data,
-	        size_t size)
+	        u_int32_t size)
 {
 	struct ip_set *set;
 	const struct ip_set_req_bind *req_bind;
@@ -760,7 +760,7 @@ ip_set_unbindip(ip_set_id_t index,
 static int
 ip_set_testbind(ip_set_id_t index,
 	        const void *data,
-	        size_t size)
+	        u_int32_t size)
 {
 	struct ip_set *set = ip_set_list[index];
 	const struct ip_set_req_bind *req_bind;
@@ -862,7 +862,7 @@ ip_set_create(const char *name,
 	      const char *typename,
 	      ip_set_id_t restore,
 	      const void *data,
-	      size_t size)
+	      u_int32_t size)
 {
 	struct ip_set *set;
 	ip_set_id_t index = 0, id;
@@ -915,9 +915,9 @@ ip_set_create(const char *name,
 
 	/* Check request size */
 	if (size != set->type->header_size) {
-		ip_set_printk("data length wrong (want %zu, have %zu)",
-			      set->type->header_size,
-			      size);
+		ip_set_printk("data length wrong (want %lu, have %lu)",
+			      (long unsigned)set->type->header_size,
+			      (long unsigned)size);
 		goto put_out;
 	}
 
@@ -1109,7 +1109,7 @@ ip_set_swap(ip_set_id_t from_index, ip_set_id_t to_index)
 
 static inline void
 __set_hash_bindings_size_list(struct ip_set_hash *set_hash,
-			      ip_set_id_t id, size_t *size)
+			      ip_set_id_t id, u_int32_t *size)
 {
 	if (set_hash->id == id)
 		*size += sizeof(struct ip_set_hash_list);
@@ -1117,7 +1117,7 @@ __set_hash_bindings_size_list(struct ip_set_hash *set_hash,
 
 static inline void
 __set_hash_bindings_size_save(struct ip_set_hash *set_hash,
-			      ip_set_id_t id, size_t *size)
+			      ip_set_id_t id, u_int32_t *size)
 {
 	if (set_hash->id == id)
 		*size += sizeof(struct ip_set_hash_save);
@@ -1220,7 +1220,7 @@ static int ip_set_save_set(ip_set_id_t index,
 	*used += sizeof(struct ip_set_save);
 
 	set = ip_set_list[index];
-	DP("set: %s, used: %u(%u) %p %p", set->name, *used, len,
+	DP("set: %s, used: %i(%i) %p %p", set->name, *used, len,
 	   data, data + *used);
 
 	read_lock_bh(&set->lock);
@@ -1237,8 +1237,8 @@ static int ip_set_save_set(ip_set_id_t index,
 	set->type->list_header(set, data + *used);
 	*used += set_save->header_size;
 
-	DP("set header filled: %s, used: %u(%u) %p %p", set->name, *used,
-	   set_save->header_size, data, data + *used);
+	DP("set header filled: %s, used: %i(%lu) %p %p", set->name, *used,
+	   (unsigned long)set_save->header_size, data, data + *used);
 	/* Get and ensure set specific members size */
 	set_save->members_size = set->type->list_members_size(set);
 	if (*used + set_save->members_size > len)
@@ -1248,8 +1248,8 @@ static int ip_set_save_set(ip_set_id_t index,
 	set->type->list_members(set, data + *used);
 	*used += set_save->members_size;
 	read_unlock_bh(&set->lock);
-	DP("set members filled: %s, used: %u(%u) %p %p", set->name, *used,
-	   set_save->members_size, data, data + *used);
+	DP("set members filled: %s, used: %i(%lu) %p %p", set->name, *used,
+	   (unsigned long)set_save->members_size, data, data + *used);
 	return 0;
 
     unlock_set:
@@ -1329,7 +1329,7 @@ static int ip_set_restore(void *data,
 	while (1) {
 		line++;
 		
-		DP("%u %u %u", used, sizeof(struct ip_set_restore), len);
+		DP("%i %lu %i", used, sizeof(struct ip_set_restore), len);
 		/* Get and ensure header size */
 		if (used + sizeof(struct ip_set_restore) > len)
 			return line;
@@ -1367,12 +1367,13 @@ static int ip_set_restore(void *data,
 		/* Try to restore members data */
 		set = ip_set_list[index];
 		members_size = 0;
-		DP("members_size %u reqsize %u",
-		   set_restore->members_size, set->type->reqsize);
+		DP("members_size %lu reqsize %lu",
+		   (unsigned long)set_restore->members_size,
+		   (unsigned long)set->type->reqsize);
 		while (members_size + set->type->reqsize <=
 		       set_restore->members_size) {
 			line++;
-		       	DP("members: %u, line %u", members_size, line);
+		       	DP("members: %i, line %i", members_size, line);
 			res = __ip_set_addip(index,
 					   data + used + members_size,
 					   set->type->reqsize);
@@ -1381,8 +1382,8 @@ static int ip_set_restore(void *data,
 			members_size += set->type->reqsize;
 		}
 
-		DP("members_size %u  %u",
-		   set_restore->members_size, members_size);
+		DP("members_size %lu  %i",
+		   (unsigned long)set_restore->members_size, members_size);
 		if (members_size != set_restore->members_size)
 			return line++;
 		used += set_restore->members_size;		
@@ -1442,10 +1443,10 @@ ip_set_sockfn_set(struct sock *sk, int optval, void *user, unsigned int len)
 	struct ip_set_req_adt *req_adt;
 	ip_set_id_t index = IP_SET_INVALID_ID;
 	int (*adtfn)(ip_set_id_t index,
-		     const void *data, size_t size);
+		     const void *data, u_int32_t size);
 	struct fn_table {
 		int (*fn)(ip_set_id_t index,
-			  const void *data, size_t size);
+			  const void *data, u_int32_t size);
 	} adtfn_table[] =
 	{ { ip_set_addip }, { ip_set_delip }, { ip_set_testip},
 	  { ip_set_bindip}, { ip_set_unbindip }, { ip_set_testbind },
@@ -1938,8 +1939,8 @@ ip_set_sockfn_get(struct sock *sk, int optval, void *user, int *len)
 
 		if (*len < sizeof(struct ip_set_req_setnames)
 		    || *len != req_restore->size) {
-			ip_set_printk("invalid RESTORE (want =%zu, got %d)",
-				      req_restore->size, *len);
+			ip_set_printk("invalid RESTORE (want =%lu, got %u)",
+				      (long unsigned)req_restore->size, *len);
 			res = -EINVAL;
 			goto done;
 		}

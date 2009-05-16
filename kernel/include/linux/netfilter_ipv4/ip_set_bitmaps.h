@@ -6,7 +6,7 @@
 #ifdef __KERNEL__
 #define BITMAP_CREATE(type)						\
 static int								\
-type##_create(struct ip_set *set, const void *data, size_t size)	\
+type##_create(struct ip_set *set, const void *data, u_int32_t size)	\
 {									\
 	int newbytes;							\
 	const struct ip_set_req_##type##_create *req = data;		\
@@ -19,8 +19,8 @@ type##_create(struct ip_set *set, const void *data, size_t size)	\
 									\
 	map = kmalloc(sizeof(struct ip_set_##type), GFP_KERNEL);	\
 	if (!map) {							\
-		DP("out of memory for %d bytes",			\
-		   sizeof(struct ip_set_#type));			\
+		DP("out of memory for %lu bytes",			\
+		   sizeof(struct ip_set_##type));			\
 		return -ENOMEM;						\
 	}								\
 	map->first_ip = req->from;					\
@@ -35,7 +35,7 @@ type##_create(struct ip_set *set, const void *data, size_t size)	\
 	map->size = newbytes;						\
 	map->members = ip_set_malloc(newbytes);				\
 	if (!map->members) {						\
-		DP("out of memory for %d bytes", newbytes);		\
+		DP("out of memory for %i bytes", newbytes);		\
 		kfree(map);						\
 		return -ENOMEM;						\
 	}								\

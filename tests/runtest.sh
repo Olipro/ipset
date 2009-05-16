@@ -1,11 +1,11 @@
 #!/bin/bash
 
 tests="init"
-tests+=" ipmap macipmap portmap"
-tests+=" iphash nethash ipporthash"
-tests+=" ipportiphash ipportnethash"
-tests+=" iptree iptreemap"
-tests+=" setlist"
+tests="$tests ipmap macipmap portmap"
+tests="$tests iphash nethash ipporthash"
+tests="$tests ipportiphash ipportnethash"
+tests="$tests iptree iptreemap"
+tests="$tests setlist"
 
 if [ "$1" ]; then
 	tests="init $@"

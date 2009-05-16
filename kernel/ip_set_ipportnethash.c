@@ -102,7 +102,7 @@ ipportnethash_test(struct ip_set *set, ip_set_ip_t *hash_ip,
 }
 
 static int
-ipportnethash_utest(struct ip_set *set, const void *data, size_t size,
+ipportnethash_utest(struct ip_set *set, const void *data, u_int32_t size,
 		    ip_set_ip_t *hash_ip)
 {
 	const struct ip_set_req_ipportnethash *req = data;

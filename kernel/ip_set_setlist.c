@@ -32,7 +32,7 @@ next_index_eq(const struct ip_set_setlist *map, int i, ip_set_id_t index)
 }
 
 static int
-setlist_utest(struct ip_set *set, const void *data, size_t size,
+setlist_utest(struct ip_set *set, const void *data, u_int32_t size,
 	       ip_set_ip_t *hash_ip)
 {
 	const struct ip_set_setlist *map = set->data;
@@ -113,7 +113,7 @@ insert_setlist(struct ip_set_setlist *map, int i, ip_set_id_t index)
 }
 
 static int
-setlist_uadd(struct ip_set *set, const void *data, size_t size,
+setlist_uadd(struct ip_set *set, const void *data, u_int32_t size,
 	     ip_set_ip_t *hash_ip)
 {
 	struct ip_set_setlist *map = set->data;
@@ -188,7 +188,7 @@ unshift_setlist(struct ip_set_setlist *map, int i)
 }
 
 static int
-setlist_udel(struct ip_set *set, const void *data, size_t size,
+setlist_udel(struct ip_set *set, const void *data, u_int32_t size,
 	     ip_set_ip_t *hash_ip)
 {
 	struct ip_set_setlist *map = set->data;
@@ -255,7 +255,7 @@ setlist_kdel(struct ip_set *set,
 }
 
 static int
-setlist_create(struct ip_set *set, const void *data, size_t size)
+setlist_create(struct ip_set *set, const void *data, u_int32_t size)
 {
 	struct ip_set_setlist *map;
 	const struct ip_set_req_setlist_create *req = data;
