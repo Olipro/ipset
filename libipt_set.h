@@ -36,7 +36,7 @@ parse_bindings(const char *optarg, struct ipt_set_info *info)
 
 	if (tmp)
 		exit_error(PARAMETER_PROBLEM,
-			   "Can't follow bindings deeper than %i.", 
+			   "Can't follow bindings deeper than %d.", 
 			   IP_SET_MAX_BINDINGS);
 
 	free(saved);

@@ -1,3 +1,6 @@
+3.1
+  - Correct format specifiers and change %i to %d (Jan Engelhardt)
+
 3.0
   - New kernel-userspace protocol release
   - Bigendian and 64/32bit fixes (Stefan Gula, bugzilla id 593)

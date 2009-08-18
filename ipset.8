@@ -50,6 +50,9 @@ IP set bindings pointing to sets and iptables matches and targets
 referring to sets creates references, which protects the given sets in 
 the kernel. A set cannot be removed (destroyed) while there is a single
 reference pointing to it.
+.P
+.B
+Please note, binding sets is a deprecated feature and will be removed in a later release. Switch to the multidata type of sets from using bindings.
 .SH OPTIONS
 The options that are recognized by
 .B ipset

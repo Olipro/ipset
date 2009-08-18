@@ -19,7 +19,7 @@ type##_create(struct ip_set *set, const void *data, u_int32_t size)	\
 									\
 	map = kmalloc(sizeof(struct ip_set_##type), GFP_KERNEL);	\
 	if (!map) {							\
-		DP("out of memory for %lu bytes",			\
+		DP("out of memory for %zu bytes",			\
 		   sizeof(struct ip_set_##type));			\
 		return -ENOMEM;						\
 	}								\

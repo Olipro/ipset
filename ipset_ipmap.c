@@ -225,12 +225,12 @@ initheader(struct set *set, const void *data)
 		mask = range_to_mask(header->from, header->to, &mask_bits);
 		netmask_bits = mask_to_bits(header->netmask);
 
-		DP("bits: %i %i", mask_bits, netmask_bits);
+		DP("bits: %d %d", mask_bits, netmask_bits);
 		map->hosts = 2 << (32 - netmask_bits - 1);
 		map->sizeid = 2 << (netmask_bits - mask_bits - 1);
 	}
 
-	DP("%i %i", map->hosts, map->sizeid );
+	DP("%d %d", map->hosts, map->sizeid );
 }
 
 static void

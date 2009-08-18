@@ -36,14 +36,14 @@ type##_retry(struct ip_set *set)					\
 	tmp = kmalloc(sizeof(struct ip_set_##type)			\
 		      + map->probes * sizeof(initval_t), GFP_ATOMIC);	\
 	if (!tmp) {							\
-		DP("out of memory for %lu bytes",			\
+		DP("out of memory for %zu bytes",			\
 		   sizeof(struct ip_set_##type)				\
 		   + map->probes * sizeof(initval_t));			\
 		return -ENOMEM;						\
 	}								\
 	tmp->members = harray_malloc(hashsize, sizeof(dtype), GFP_ATOMIC);\
 	if (!tmp->members) {						\
-		DP("out of memory for %lu bytes", hashsize * sizeof(dtype));\
+		DP("out of memory for %zu bytes", hashsize * sizeof(dtype));\
 		kfree(tmp);						\
 		return -ENOMEM;						\
 	}								\
@@ -109,7 +109,7 @@ type##_create(struct ip_set *set, const void *data, u_int32_t size)	\
 	map = kmalloc(sizeof(struct ip_set_##type)			\
 		      + req->probes * sizeof(initval_t), GFP_KERNEL);	\
 	if (!map) {							\
-		DP("out of memory for %lu bytes",			\
+		DP("out of memory for %zu bytes",			\
 		   sizeof(struct ip_set_##type)				\
 		   + req->probes * sizeof(initval_t));			\
 		return -ENOMEM;						\
@@ -126,7 +126,7 @@ type##_create(struct ip_set *set, const void *data, u_int32_t size)	\
 	}								\
 	map->members = harray_malloc(map->hashsize, sizeof(dtype), GFP_KERNEL);\
 	if (!map->members) {						\
-		DP("out of memory for %lu bytes", map->hashsize * sizeof(dtype));\
+		DP("out of memory for %zu bytes", map->hashsize * sizeof(dtype));\
 		kfree(map);						\
 		return -ENOMEM;						\
 	}								\

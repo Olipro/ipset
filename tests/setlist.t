@@ -8,6 +8,8 @@
 0 ipset -A test foo
 # Setlist: Test foo set in setlist
 0 ipset -T test foo
+# Setlist: Test nonexistent set in setlist
+1 ipset -T test nonexistent
 # Setlist: Try to delete foo set
 1 ipset -X foo
 # Setlist: Add bar set to setlist, after foo
@@ -20,6 +22,8 @@
 1 ipset -T test bar,before,foo
 # Setlist: Test foo,after,bar
 1 ipset -T test foo,after,bar
+# Setlist: Save sets
+0 ipset -S > setlist.t.restore
 # Setlist: Delete bar,before,foo
 1 ipset -D test bar,before,foo
 # Setlist: Delete foo,after,bar
@@ -30,4 +34,12 @@
 0 ipset -F test
 # Setlist: Delete test set
 0 ipset -X test
+# Setlist: Delete all sets
+0 ipset -X
+# Setlist: Restore saved sets
+0 ipset -R < setlist.t.restore
+# Setlist: Flush all sets
+0 ipset -F
+# Setlist: Delete all sets
+0 ipset -X && rm setlist.t.restore
 # eof

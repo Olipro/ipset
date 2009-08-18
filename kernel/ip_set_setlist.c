@@ -16,8 +16,9 @@
 #include <linux/netfilter_ipv4/ip_set_bitmaps.h>
 #include <linux/netfilter_ipv4/ip_set_setlist.h>
 
-#ifndef bool
-#define bool	int
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 18)
+typedef _Bool bool;
+enum { false = 0, true = 1, };
 #endif
 
 /*
@@ -42,17 +43,15 @@ setlist_utest(struct ip_set *set, const void *data, u_int32_t size,
 	struct ip_set *s;
 	
 	if (req->before && req->ref[0] == '\0')
-		return -EINVAL;
+		return 0;
 
 	index = __ip_set_get_byname(req->name, &s);
 	if (index == IP_SET_INVALID_ID)
-		return -EEXIST;
+		return 0;
 	if (req->ref[0] != '\0') {
 		ref = __ip_set_get_byname(req->ref, &s);
-		if (ref == IP_SET_INVALID_ID) {
-			res = -EEXIST;
+		if (ref == IP_SET_INVALID_ID)
 			goto finish;
-		}
 	}
 	for (i = 0; i < map->size
 		    && map->index[i] != IP_SET_INVALID_ID; i++) {

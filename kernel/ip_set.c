@@ -536,7 +536,7 @@ ip_set_addip(ip_set_id_t index,
 	IP_SET_ASSERT(set);
 
 	if (size - sizeof(struct ip_set_req_adt) != set->type->reqsize) {
-		ip_set_printk("data length wrong (want %lu, have %lu)",
+		ip_set_printk("data length wrong (want %lu, have %zu)",
 			      (long unsigned)set->type->reqsize,
 			      size - sizeof(struct ip_set_req_adt));
 		return -EINVAL;
@@ -558,7 +558,7 @@ ip_set_delip(ip_set_id_t index,
 	IP_SET_ASSERT(set);
 
 	if (size - sizeof(struct ip_set_req_adt) != set->type->reqsize) {
-		ip_set_printk("data length wrong (want %lu, have %lu)",
+		ip_set_printk("data length wrong (want %lu, have %zu)",
 			      (long unsigned)set->type->reqsize,
 			      size - sizeof(struct ip_set_req_adt));
 		return -EINVAL;
@@ -585,7 +585,7 @@ ip_set_testip(ip_set_id_t index,
 	IP_SET_ASSERT(set);
 	
 	if (size - sizeof(struct ip_set_req_adt) != set->type->reqsize) {
-		ip_set_printk("data length wrong (want %lu, have %lu)",
+		ip_set_printk("data length wrong (want %lu, have %zu)",
 			      (long unsigned)set->type->reqsize,
 			      size - sizeof(struct ip_set_req_adt));
 		return -EINVAL;
@@ -1220,7 +1220,7 @@ static int ip_set_save_set(ip_set_id_t index,
 	*used += sizeof(struct ip_set_save);
 
 	set = ip_set_list[index];
-	DP("set: %s, used: %i(%i) %p %p", set->name, *used, len,
+	DP("set: %s, used: %d(%d) %p %p", set->name, *used, len,
 	   data, data + *used);
 
 	read_lock_bh(&set->lock);
@@ -1237,7 +1237,7 @@ static int ip_set_save_set(ip_set_id_t index,
 	set->type->list_header(set, data + *used);
 	*used += set_save->header_size;
 
-	DP("set header filled: %s, used: %i(%lu) %p %p", set->name, *used,
+	DP("set header filled: %s, used: %d(%lu) %p %p", set->name, *used,
 	   (unsigned long)set_save->header_size, data, data + *used);
 	/* Get and ensure set specific members size */
 	set_save->members_size = set->type->list_members_size(set);
@@ -1248,7 +1248,7 @@ static int ip_set_save_set(ip_set_id_t index,
 	set->type->list_members(set, data + *used);
 	*used += set_save->members_size;
 	read_unlock_bh(&set->lock);
-	DP("set members filled: %s, used: %i(%lu) %p %p", set->name, *used,
+	DP("set members filled: %s, used: %d(%lu) %p %p", set->name, *used,
 	   (unsigned long)set_save->members_size, data, data + *used);
 	return 0;
 
@@ -1329,7 +1329,7 @@ static int ip_set_restore(void *data,
 	while (1) {
 		line++;
 		
-		DP("%i %lu %i", used, sizeof(struct ip_set_restore), len);
+		DP("%d %zu %d", used, sizeof(struct ip_set_restore), len);
 		/* Get and ensure header size */
 		if (used + sizeof(struct ip_set_restore) > len)
 			return line;
@@ -1373,7 +1373,7 @@ static int ip_set_restore(void *data,
 		while (members_size + set->type->reqsize <=
 		       set_restore->members_size) {
 			line++;
-		       	DP("members: %i, line %i", members_size, line);
+		       	DP("members: %d, line %d", members_size, line);
 			res = __ip_set_addip(index,
 					   data + used + members_size,
 					   set->type->reqsize);
@@ -1382,7 +1382,7 @@ static int ip_set_restore(void *data,
 			members_size += set->type->reqsize;
 		}
 
-		DP("members_size %lu  %i",
+		DP("members_size %lu  %d",
 		   (unsigned long)set_restore->members_size, members_size);
 		if (members_size != set_restore->members_size)
 			return line++;
@@ -1911,12 +1911,22 @@ ip_set_sockfn_get(struct sock *sk, int optval, void *user, int *len)
 		    	res = -ENOENT;
 		    	goto done;
 		}
+
+#define SETLIST(set)	(strcmp(set->type->typename, "setlist") == 0)
+
 		used = 0;
 		if (index == IP_SET_INVALID_ID) {
-			/* Save all sets */
+			/* Save all sets: ugly setlist type dependency */
+			int setlist = 0;
+		setlists:
 			for (i = 0; i < ip_set_max && res == 0; i++) {
-				if (ip_set_list[i] != NULL)
+				if (ip_set_list[i] != NULL
+				    && !(setlist ^ SETLIST(ip_set_list[i])))
 					res = ip_set_save_set(i, data, &used, *len);
+			}
+			if (!setlist) {
+				setlist = 1;
+				goto setlists;
 			}
 		} else {
 			/* Save an individual set */
@@ -1939,14 +1949,14 @@ ip_set_sockfn_get(struct sock *sk, int optval, void *user, int *len)
 
 		if (*len < sizeof(struct ip_set_req_setnames)
 		    || *len != req_restore->size) {
-			ip_set_printk("invalid RESTORE (want =%lu, got %u)",
+			ip_set_printk("invalid RESTORE (want =%lu, got %d)",
 				      (long unsigned)req_restore->size, *len);
 			res = -EINVAL;
 			goto done;
 		}
 		line = ip_set_restore(data + sizeof(struct ip_set_req_setnames),
 				      req_restore->size - sizeof(struct ip_set_req_setnames));
-		DP("ip_set_restore: %u", line);
+		DP("ip_set_restore: %d", line);
 		if (line != 0) {
 			res = -EAGAIN;
 			req_restore->size = line;
@@ -1961,7 +1971,7 @@ ip_set_sockfn_get(struct sock *sk, int optval, void *user, int *len)
 	}	/* end of switch(op) */
 
     copy:
-   	DP("set %s, copylen %u", index != IP_SET_INVALID_ID
+   	DP("set %s, copylen %d", index != IP_SET_INVALID_ID
    	             		 && ip_set_list[index]
    	             ? ip_set_list[index]->name
    	             : ":all:", copylen);

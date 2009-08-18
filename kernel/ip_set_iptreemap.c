@@ -338,7 +338,7 @@ KADT(iptreemap, add, ipaddr, ip)
 
 static inline int
 __delip_single(struct ip_set *set, ip_set_ip_t *hash_ip,
-	       ip_set_ip_t ip, unsigned int __nocast flags)
+	       ip_set_ip_t ip, gfp_t flags)
 {
 	struct ip_set_iptreemap *map = set->data;
 	struct ip_set_iptreemap_b *btree;
@@ -364,7 +364,7 @@ __delip_single(struct ip_set *set, ip_set_ip_t *hash_ip,
 
 static inline int
 iptreemap_del(struct ip_set *set, ip_set_ip_t *hash_ip,
-	      ip_set_ip_t start, ip_set_ip_t end, unsigned int __nocast flags)
+	      ip_set_ip_t start, ip_set_ip_t end, gfp_t flags)
 {
 	struct ip_set_iptreemap *map = set->data;
 	struct ip_set_iptreemap_b *btree;

@@ -1577,7 +1577,7 @@ static int set_adtip(struct set *set, const char *adt,
 
 	/* Alloc memory for the data to send */
 	size = sizeof(struct ip_set_req_adt) + set->settype->adt_size ;
-	DP("alloc size %i", size);
+	DP("alloc size %d", size);
 	data = ipset_malloc(size);
 
 	/* Fill out the request */
@@ -1663,7 +1663,7 @@ static int set_bind(struct set *set, const char *adt,
 		size += IP_SET_MAXNAMELEN;
 	else if (!(op == IP_SET_OP_UNBIND_SET && set == NULL))
 		size += set->settype->adt_size;
-	DP("alloc size %i", size);
+	DP("alloc size %d", size);
 	data = ipset_malloc(size);
 
 	/* Fill out the request */
