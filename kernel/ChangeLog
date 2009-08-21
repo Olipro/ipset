@@ -1,3 +1,7 @@
+3.2
+  - Mixed up formats in ip_set_iptree.c (Rob Sterenborg)
+  - Don't use 'bool' for backward compatibility reasons (Rob Sterenborg)
+
 3.1
   - Nonexistent sets were reported as existing sets when testing
     from userspace in setlist type of sets (bug reported by Victor A.

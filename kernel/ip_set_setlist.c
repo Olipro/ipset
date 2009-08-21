@@ -16,17 +16,12 @@
 #include <linux/netfilter_ipv4/ip_set_bitmaps.h>
 #include <linux/netfilter_ipv4/ip_set_setlist.h>
 
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 18)
-typedef _Bool bool;
-enum { false = 0, true = 1, };
-#endif
-
 /*
  * before ==> index, ref
  * after  ==> ref, index
  */
 
-static inline bool
+static inline int
 next_index_eq(const struct ip_set_setlist *map, int i, ip_set_id_t index)
 {
 	return i < map->size && map->index[i] == index;
@@ -175,7 +170,7 @@ setlist_kadd(struct ip_set *set,
 	return res;
 }
 
-static inline bool
+static inline int
 unshift_setlist(struct ip_set_setlist *map, int i)
 {
 	int j;

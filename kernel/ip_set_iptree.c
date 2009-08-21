@@ -282,7 +282,7 @@ iptree_create(struct ip_set *set, const void *data, u_int32_t size)
 	struct ip_set_iptree *map;
 
 	if (size != sizeof(struct ip_set_req_iptree_create)) {
-		ip_set_printk("data length wrong (want %lu, have %zu)",
+		ip_set_printk("data length wrong (want %zu, have %lu)",
 			      sizeof(struct ip_set_req_iptree_create),
 			      (unsigned long)size);
 		return -EINVAL;
