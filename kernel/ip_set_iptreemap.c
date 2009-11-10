@@ -14,6 +14,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/ip.h>
+#include <linux/jiffies.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
@@ -250,7 +251,7 @@ free_b(struct ip_set_iptreemap_b *map)
 }
 
 static inline int
-iptreemap_test(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+iptreemap_test(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_iptreemap *map = set->data;
 	struct ip_set_iptreemap_b *btree;
@@ -258,9 +259,7 @@ iptreemap_test(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 	struct ip_set_iptreemap_d *dtree;
 	unsigned char a, b, c, d;
 
-	*hash_ip = ip;
-
-	ABCD(a, b, c, d, hash_ip);
+	ABCD(a, b, c, d, &ip);
 
 	TESTIP_WALK(map, a, btree, fullbitmap_b);
 	TESTIP_WALK(btree, b, ctree, fullbitmap_c);
@@ -275,7 +274,7 @@ UADT(iptreemap, test)
 KADT(iptreemap, test, ipaddr)
 
 static inline int
-__addip_single(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+__addip_single(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_iptreemap *map = (struct ip_set_iptreemap *) set->data;
 	struct ip_set_iptreemap_b *btree;
@@ -283,9 +282,7 @@ __addip_single(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 	struct ip_set_iptreemap_d *dtree;
 	unsigned char a, b, c, d;
 
-	*hash_ip = ip;
-
-	ABCD(a, b, c, d, hash_ip);
+	ABCD(a, b, c, d, &ip);
 
 	ADDIP_WALK(map, a, btree, struct ip_set_iptreemap_b, cachep_b, fullbitmap_b);
 	ADDIP_WALK(btree, b, ctree, struct ip_set_iptreemap_c, cachep_c, fullbitmap_c);
@@ -300,8 +297,7 @@ __addip_single(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 }
 
 static inline int
-iptreemap_add(struct ip_set *set, ip_set_ip_t *hash_ip,
-	      ip_set_ip_t start, ip_set_ip_t end)
+iptreemap_add(struct ip_set *set, ip_set_ip_t start, ip_set_ip_t end)
 {
 	struct ip_set_iptreemap *map = set->data;
 	struct ip_set_iptreemap_b *btree;
@@ -312,9 +308,7 @@ iptreemap_add(struct ip_set *set, ip_set_ip_t *hash_ip,
 	unsigned char a2, b2, c2, d2;
 
 	if (start == end)
-		return __addip_single(set, hash_ip, start);
-
-	*hash_ip = start;
+		return __addip_single(set, start);
 
 	ABCD(a1, b1, c1, d1, &start);
 	ABCD(a2, b2, c2, d2, &end);
@@ -337,8 +331,7 @@ UADT0(iptreemap, add, min(req->ip, req->end), max(req->ip, req->end))
 KADT(iptreemap, add, ipaddr, ip)
 
 static inline int
-__delip_single(struct ip_set *set, ip_set_ip_t *hash_ip,
-	       ip_set_ip_t ip, gfp_t flags)
+__delip_single(struct ip_set *set, ip_set_ip_t ip, gfp_t flags)
 {
 	struct ip_set_iptreemap *map = set->data;
 	struct ip_set_iptreemap_b *btree;
@@ -346,9 +339,7 @@ __delip_single(struct ip_set *set, ip_set_ip_t *hash_ip,
 	struct ip_set_iptreemap_d *dtree;
 	unsigned char a,b,c,d;
 
-	*hash_ip = ip;
-
-	ABCD(a, b, c, d, hash_ip);
+	ABCD(a, b, c, d, &ip);
 
 	DELIP_WALK(map, a, btree, cachep_b, fullbitmap_b, flags);
 	DELIP_WALK(btree, b, ctree, cachep_c, fullbitmap_c, flags);
@@ -363,7 +354,7 @@ __delip_single(struct ip_set *set, ip_set_ip_t *hash_ip,
 }
 
 static inline int
-iptreemap_del(struct ip_set *set, ip_set_ip_t *hash_ip,
+iptreemap_del(struct ip_set *set,
 	      ip_set_ip_t start, ip_set_ip_t end, gfp_t flags)
 {
 	struct ip_set_iptreemap *map = set->data;
@@ -375,9 +366,7 @@ iptreemap_del(struct ip_set *set, ip_set_ip_t *hash_ip,
 	unsigned char a2, b2, c2, d2;
 
 	if (start == end)
-		return __delip_single(set, hash_ip, start, flags);
-
-	*hash_ip = start;
+		return __delip_single(set, start, flags);
 
 	ABCD(a1, b1, c1, d1, &start);
 	ABCD(a2, b2, c2, d2, &end);
@@ -517,6 +506,7 @@ static void
 iptreemap_flush(struct ip_set *set)
 {
 	struct ip_set_iptreemap *map = set->data;
+	unsigned int gc_interval = map->gc_interval;
 
 	while (!del_timer(&map->gc))
 		msleep(IPTREEMAP_DESTROY_SLEEP);
@@ -524,6 +514,7 @@ iptreemap_flush(struct ip_set *set)
 	__flush(map);
 
 	memset(map, 0, sizeof(*map));
+	map->gc_interval = gc_interval;
 
 	init_gc_timer(set);
 }
@@ -538,7 +529,7 @@ iptreemap_list_header(const struct ip_set *set, void *data)
 }
 
 static int
-iptreemap_list_members_size(const struct ip_set *set)
+iptreemap_list_members_size(const struct ip_set *set, char dont_align)
 {
 	struct ip_set_iptreemap *map = set->data;
 	struct ip_set_iptreemap_b *btree;
@@ -564,31 +555,30 @@ iptreemap_list_members_size(const struct ip_set *set)
 	if (inrange)
 		count++;
 
-	return (count * sizeof(struct ip_set_req_iptreemap));
+	return (count * IPSET_VALIGN(sizeof(struct ip_set_req_iptreemap), dont_align));
 }
 
-static inline u_int32_t
+static inline void
 add_member(void *data, size_t offset, ip_set_ip_t start, ip_set_ip_t end)
 {
 	struct ip_set_req_iptreemap *entry = data + offset;
 
 	entry->ip = start;
 	entry->end = end;
-
-	return sizeof(*entry);
 }
 
 static void
-iptreemap_list_members(const struct ip_set *set, void *data)
+iptreemap_list_members(const struct ip_set *set, void *data, char dont_align)
 {
 	struct ip_set_iptreemap *map = set->data;
 	struct ip_set_iptreemap_b *btree;
 	struct ip_set_iptreemap_c *ctree;
 	struct ip_set_iptreemap_d *dtree;
 	unsigned int a, b, c, d, inrange = 0;
-	size_t offset = 0;
+	size_t offset = 0, datasize;
 	ip_set_ip_t start = 0, end = 0, ip;
 
+	datasize = IPSET_VALIGN(sizeof(struct ip_set_req_iptreemap), dont_align);
 	LOOP_WALK_BEGIN(map, a, btree) {
 		LOOP_WALK_BEGIN(btree, b, ctree) {
 			LOOP_WALK_BEGIN(ctree, c, dtree) {
@@ -599,12 +589,14 @@ iptreemap_list_members(const struct ip_set *set, void *data)
 							inrange = 1;
 							start = ip;
 						} else if (end < ip - 1) {
-							offset += add_member(data, offset, start, end);
+							add_member(data, offset, start, end);
+							offset += datasize;
 							start = ip;
 						}
 						end = ip;
 					} else if (inrange) {
-						offset += add_member(data, offset, start, end);
+						add_member(data, offset, start, end);
+						offset += datasize;
 						inrange = 0;
 					}
 				}

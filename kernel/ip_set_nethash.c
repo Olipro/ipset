@@ -26,7 +26,6 @@ static int limit = MAX_RANGE;
 
 static inline __u32
 nethash_id_cidr(const struct ip_set_nethash *map,
-		ip_set_ip_t *hash_ip,
 		ip_set_ip_t ip,
 		uint8_t cidr)
 {
@@ -34,15 +33,15 @@ nethash_id_cidr(const struct ip_set_nethash *map,
 	u_int16_t i;
 	ip_set_ip_t *elem;
 
-	*hash_ip = pack_ip_cidr(ip, cidr);
-	if (!*hash_ip)
+	ip = pack_ip_cidr(ip, cidr);
+	if (!ip)
 		return MAX_RANGE;
 	
 	for (i = 0; i < map->probes; i++) {
-		id = jhash_ip(map, i, *hash_ip) % map->hashsize;
+		id = jhash_ip(map, i, ip) % map->hashsize;
 	   	DP("hash key: %u", id);
 		elem = HARRAY_ELEM(map->members, ip_set_ip_t *, id);
-	   	if (*elem == *hash_ip)
+	   	if (*elem == ip)
 			return id;
 		/* No shortcut - there can be deleted entries. */
 	}
@@ -50,14 +49,14 @@ nethash_id_cidr(const struct ip_set_nethash *map,
 }
 
 static inline __u32
-nethash_id(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+nethash_id(struct ip_set *set, ip_set_ip_t ip)
 {
 	const struct ip_set_nethash *map = set->data;
 	__u32 id = UINT_MAX;
 	int i;
 
 	for (i = 0; i < 30 && map->cidr[i]; i++) {
-		id = nethash_id_cidr(map, hash_ip, ip, map->cidr[i]);
+		id = nethash_id_cidr(map, ip, map->cidr[i]);
 		if (id != UINT_MAX)
 			break;
 	}
@@ -65,30 +64,28 @@ nethash_id(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 }
 
 static inline int
-nethash_test_cidr(struct ip_set *set, ip_set_ip_t *hash_ip,
-		  ip_set_ip_t ip, uint8_t cidr)
+nethash_test_cidr(struct ip_set *set, ip_set_ip_t ip, uint8_t cidr)
 {
 	const struct ip_set_nethash *map = set->data;
 
-	return (nethash_id_cidr(map, hash_ip, ip, cidr) != UINT_MAX);
+	return (nethash_id_cidr(map, ip, cidr) != UINT_MAX);
 }
 
 static inline int
-nethash_test(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+nethash_test(struct ip_set *set, ip_set_ip_t ip)
 {
-	return (nethash_id(set, hash_ip, ip) != UINT_MAX);
+	return (nethash_id(set, ip) != UINT_MAX);
 }
 
 static int
-nethash_utest(struct ip_set *set, const void *data, u_int32_t size,
-	      ip_set_ip_t *hash_ip)
+nethash_utest(struct ip_set *set, const void *data, u_int32_t size)
 {
 	const struct ip_set_req_nethash *req = data;
 
 	if (req->cidr <= 0 || req->cidr > 32)
 		return -EINVAL;
-	return (req->cidr == 32 ? nethash_test(set, hash_ip, req->ip)
-		: nethash_test_cidr(set, hash_ip, req->ip, req->cidr));
+	return (req->cidr == 32 ? nethash_test(set, req->ip)
+		: nethash_test_cidr(set, req->ip, req->cidr));
 }
 
 #define KADT_CONDITION
@@ -121,8 +118,7 @@ __nethash_add(struct ip_set_nethash *map, ip_set_ip_t *ip)
 }
 
 static inline int
-nethash_add(struct ip_set *set, ip_set_ip_t *hash_ip,
-	    ip_set_ip_t ip, uint8_t cidr)
+nethash_add(struct ip_set *set, ip_set_ip_t ip, uint8_t cidr)
 {
 	struct ip_set_nethash *map = set->data;
 	int ret;
@@ -132,12 +128,11 @@ nethash_add(struct ip_set *set, ip_set_ip_t *hash_ip,
 	if (cidr <= 0 || cidr >= 32)
 		return -EINVAL;
 
-	*hash_ip = pack_ip_cidr(ip, cidr);
-	DP("%u.%u.%u.%u/%u, %u.%u.%u.%u", HIPQUAD(ip), cidr, HIPQUAD(*hash_ip));
-	if (!*hash_ip)
+	ip = pack_ip_cidr(ip, cidr);
+	if (!ip)
 		return -ERANGE;
 	
-	ret = __nethash_add(map, hash_ip);
+	ret = __nethash_add(map, &ip);
 	if (ret == 0) {
 		if (!map->nets[cidr-1]++)
 			add_cidr_size(map->cidr, cidr);
@@ -165,8 +160,7 @@ __nethash_retry(struct ip_set_nethash *tmp, struct ip_set_nethash *map)
 HASH_RETRY(nethash, ip_set_ip_t)
 
 static inline int
-nethash_del(struct ip_set *set, ip_set_ip_t *hash_ip,
-	    ip_set_ip_t ip, uint8_t cidr)
+nethash_del(struct ip_set *set, ip_set_ip_t ip, uint8_t cidr)
 {
 	struct ip_set_nethash *map = set->data;
 	ip_set_ip_t id, *elem;
@@ -174,7 +168,7 @@ nethash_del(struct ip_set *set, ip_set_ip_t *hash_ip,
 	if (cidr <= 0 || cidr >= 32)
 		return -EINVAL;	
 	
-	id = nethash_id_cidr(map, hash_ip, ip, cidr);
+	id = nethash_id_cidr(map, ip, cidr);
 	if (id == UINT_MAX)
 		return -EEXIST;
 		

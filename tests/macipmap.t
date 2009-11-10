@@ -26,6 +26,10 @@
 1 ipset -T test 2.0.0.2,00:11:22:33:44:56
 # Range: Test value with valid MAC
 0 ipset -T test 2.0.0.2,00:11:22:33:44:55
+# Range: List set
+0 ipset -L test > .foo
+# Range: Check listing
+0 diff .foo macipmap.t.list0 && rm .foo
 # Range: Flush test set
 0 ipset -F test
 # Range: Delete test set
@@ -52,6 +56,10 @@
 1 ipset -A test 1.255.255.255
 # Network: Try to add value after upper boundary
 1 ipset -A test 2.1.0.0
+# Network: List set
+0 ipset -L test > .foo
+# Network: Check listing
+0 diff .foo macipmap.t.list1 && rm .foo
 # Network: Flush test set
 0 ipset -F test
 # Network: Delete test set

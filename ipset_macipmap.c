@@ -39,7 +39,7 @@
 
 /* Initialize the create. */
 static void
-create_init(void *data UNUSED)
+macipmap_create_init(void *data UNUSED)
 {
 	DP("create INIT");
 	/* Nothing */
@@ -47,7 +47,7 @@ create_init(void *data UNUSED)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
+macipmap_create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_macipmap_create *mydata = data;
 
@@ -107,7 +107,7 @@ create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 
 /* Final check; exit if not ok. */
 static void
-create_final(void *data, unsigned int flags)
+macipmap_create_final(void *data, unsigned int flags)
 {
 	struct ip_set_req_macipmap_create *mydata = data;
 
@@ -176,7 +176,7 @@ parse_mac(const char *mac, unsigned char *ethernet)
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(int cmd UNUSED, const char *arg, void *data)
+macipmap_adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_macipmap *mydata = data;
 	char *saved = ipset_strdup(arg);
@@ -209,7 +209,7 @@ adt_parser(int cmd UNUSED, const char *arg, void *data)
  */
 
 static void
-initheader(struct set *set, const void *data)
+macipmap_initheader(struct set *set, const void *data)
 {
 	const struct ip_set_req_macipmap_create *header = data;
 	struct ip_set_macipmap *map = set->settype->header;
@@ -221,7 +221,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned options)
+macipmap_printheader(struct set *set, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata = set->settype->header;
 
@@ -243,9 +243,9 @@ print_mac(unsigned char macaddress[ETH_ALEN])
 		printf(":%02X", macaddress[i]);
 }
 
-static void
-printips_sorted(struct set *set, void *data,
-		u_int32_t len UNUSED, unsigned options)
+static inline void
+__macipmap_printips_sorted(struct set *set, void *data,
+			   u_int32_t len UNUSED, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata = set->settype->header;
 	struct ip_set_macip *table = data;
@@ -263,7 +263,27 @@ printips_sorted(struct set *set, void *data,
 }
 
 static void
-saveheader(struct set *set, unsigned options)
+macipmap_printips_sorted(struct set *set, void *data,
+			 u_int32_t len, unsigned options,
+			 char dont_align)
+{
+	struct ip_set_req_macipmap *d;
+	size_t offset = 0;
+	
+	if (dont_align)
+		return __macipmap_printips_sorted(set, data, len, options);
+	
+	while (offset < len) {
+		d = data + offset;
+		printf("%s,", ip_tostring(d->ip, options));
+		print_mac(d->ethernet);
+		printf("\n");
+		offset += IPSET_ALIGN(sizeof(struct ip_set_req_macipmap));
+	}
+}
+
+static void
+macipmap_saveheader(struct set *set, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata = set->settype->header;
 
@@ -277,9 +297,9 @@ saveheader(struct set *set, unsigned options)
 	printf("\n");
 }
 
-static void
-saveips(struct set *set, void *data,
-	u_int32_t len UNUSED, unsigned options)
+static inline void
+__macipmap_saveips(struct set *set, void *data,
+		   u_int32_t len UNUSED, unsigned options)
 {
 	struct ip_set_macipmap *mysetdata = set->settype->header;
 	struct ip_set_macip *table = data;
@@ -297,7 +317,28 @@ saveips(struct set *set, void *data,
 	}
 }
 
-static void usage(void)
+static void
+macipmap_saveips(struct set *set, void *data,
+		 u_int32_t len, unsigned options,
+		 char dont_align)
+{
+	struct ip_set_req_macipmap *d;
+	size_t offset = 0;
+	
+	if (dont_align)
+		return __macipmap_saveips(set, data, len, options);
+	
+	while (offset < len) {
+		d = data + offset;
+		printf("-A %s %s,", set->name, ip_tostring(d->ip, options));
+		print_mac(d->ethernet);
+		printf("\n");
+		offset += IPSET_ALIGN(sizeof(struct ip_set_req_macipmap));
+	}
+}
+
+static void
+macipmap_usage(void)
 {
 	printf
 	    ("-N set macipmap --from IP --to IP [--matchunset]\n"
@@ -313,29 +354,25 @@ static struct settype settype_macipmap = {
 
 	/* Create */
 	.create_size = sizeof(struct ip_set_req_macipmap_create),
-	.create_init = &create_init,
-	.create_parse = &create_parse,
-	.create_final = &create_final,
+	.create_init = macipmap_create_init,
+	.create_parse = macipmap_create_parse,
+	.create_final = macipmap_create_final,
 	.create_opts = create_opts,
 
 	/* Add/del/test */
 	.adt_size = sizeof(struct ip_set_req_macipmap),
-	.adt_parser = &adt_parser,
+	.adt_parser = macipmap_adt_parser,
 
 	/* Printing */
 	.header_size = sizeof(struct ip_set_macipmap),
-	.initheader = &initheader,
-	.printheader = &printheader,
-	.printips = &printips_sorted,	/* We only have sorted version */
-	.printips_sorted = &printips_sorted,
-	.saveheader = &saveheader,
-	.saveips = &saveips,
+	.initheader = macipmap_initheader,
+	.printheader = macipmap_printheader,
+	.printips = macipmap_printips_sorted,
+	.printips_sorted = macipmap_printips_sorted,
+	.saveheader = macipmap_saveheader,
+	.saveips = macipmap_saveips,
 
-	/* Bindings */
-	.bindip_tostring = &binding_ip_tostring,
-	.bindip_parse = &parse_ip,
-
-	.usage = &usage,
+	.usage = macipmap_usage,
 };
 
 CONSTRUCTOR(macipmap)

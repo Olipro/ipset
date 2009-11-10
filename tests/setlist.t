@@ -38,6 +38,10 @@
 0 ipset -X
 # Setlist: Restore saved sets
 0 ipset -R < setlist.t.restore
+# Setlist: List set
+0 ipset -L test > .foo
+# Setlist: Check listing
+0 diff .foo setlist.t.list0 && rm .foo
 # Setlist: Flush all sets
 0 ipset -F
 # Setlist: Delete all sets

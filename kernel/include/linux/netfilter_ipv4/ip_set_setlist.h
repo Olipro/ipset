@@ -3,7 +3,7 @@
 
 #include <linux/netfilter_ipv4/ip_set.h>
 
-#define SETTYPE_NAME "setlist"
+#define SETTYPE_NAME			"setlist"
 
 #define IP_SET_SETLIST_ADD_AFTER	0
 #define IP_SET_SETLIST_ADD_BEFORE	1

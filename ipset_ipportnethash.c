@@ -32,7 +32,7 @@
 
 /* Initialize the create. */
 static void
-create_init(void *data)
+ipportnethash_create_init(void *data)
 {
 	struct ip_set_req_ipportnethash_create *mydata = data;
 
@@ -46,7 +46,8 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
+ipportnethash_create_parse(int c, char *argv[] UNUSED, void *data,
+			   unsigned *flags)
 {
 	struct ip_set_req_ipportnethash_create *mydata = data;
 	ip_set_ip_t value;
@@ -137,7 +138,7 @@ create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 
 /* Final check; exit if not ok. */
 static void
-create_final(void *data, unsigned int flags)
+ipportnethash_create_final(void *data, unsigned int flags)
 {
 	struct ip_set_req_ipportnethash_create *mydata = data;
 
@@ -189,7 +190,7 @@ static const struct option create_opts[] = {
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(int cmd, const char *arg, void *data)
+ipportnethash_adt_parser(int cmd, const char *arg, void *data)
 {
 	struct ip_set_req_ipportnethash *mydata = data;
 	char *saved = ipset_strdup(arg);
@@ -238,7 +239,7 @@ adt_parser(int cmd, const char *arg, void *data)
  */
 
 static void
-initheader(struct set *set, const void *data)
+ipportnethash_initheader(struct set *set, const void *data)
 {
 	const struct ip_set_req_ipportnethash_create *header = data;
 	struct ip_set_ipportnethash *map = set->settype->header;
@@ -252,7 +253,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned options)
+ipportnethash_printheader(struct set *set, unsigned options)
 {
 	struct ip_set_ipportnethash *mysetdata = set->settype->header;
 
@@ -318,7 +319,8 @@ unpack_ip_tostring(ip_set_ip_t ip, unsigned options UNUSED)
 }
 
 static void
-printips(struct set *set, void *data, u_int32_t len, unsigned options)
+ipportnethash_printips(struct set *set, void *data, u_int32_t len,
+		       unsigned options, char dont_align)
 {
 	struct ip_set_ipportnethash *mysetdata = set->settype->header;
 	size_t offset = 0;
@@ -337,12 +339,12 @@ printips(struct set *set, void *data, u_int32_t len, unsigned options)
 			printf("%s\n", 
 			       unpack_ip_tostring(ipptr->ip1, options));
 		}
-		offset += sizeof(struct ipportip);
+		offset += IPSET_VALIGN(sizeof(struct ipportip), dont_align);
 	}
 }
 
 static void
-saveheader(struct set *set, unsigned options)
+ipportnethash_saveheader(struct set *set, unsigned options)
 {
 	struct ip_set_ipportnethash *mysetdata = set->settype->header;
 
@@ -357,7 +359,8 @@ saveheader(struct set *set, unsigned options)
 
 /* Print save for an IP */
 static void
-saveips(struct set *set, void *data, u_int32_t len, unsigned options)
+ipportnethash_saveips(struct set *set, void *data, u_int32_t len,
+		      unsigned options, char dont_align)
 {
 	struct ip_set_ipportnethash *mysetdata = set->settype->header;
 	size_t offset = 0;
@@ -376,11 +379,12 @@ saveips(struct set *set, void *data, u_int32_t len, unsigned options)
 			printf("%s\n",
 			       unpack_ip_tostring(ipptr->ip, options));
 		}
-		offset += sizeof(struct ipportip);
+		offset += IPSET_VALIGN(sizeof(struct ipportip), dont_align);
 	}
 }
 
-static void usage(void)
+static void
+ipportnethash_usage(void)
 {
 	printf
 	    ("-N set ipportnethash --from IP --to IP\n"
@@ -398,25 +402,25 @@ static struct settype settype_ipportnethash = {
 
 	/* Create */
 	.create_size = sizeof(struct ip_set_req_ipportnethash_create),
-	.create_init = &create_init,
-	.create_parse = &create_parse,
-	.create_final = &create_final,
+	.create_init = ipportnethash_create_init,
+	.create_parse = ipportnethash_create_parse,
+	.create_final = ipportnethash_create_final,
 	.create_opts = create_opts,
 
 	/* Add/del/test */
 	.adt_size = sizeof(struct ip_set_req_ipportnethash),
-	.adt_parser = &adt_parser,
+	.adt_parser = ipportnethash_adt_parser,
 
 	/* Printing */
 	.header_size = sizeof(struct ip_set_ipportnethash),
-	.initheader = &initheader,
-	.printheader = &printheader,
-	.printips = &printips,		/* We only have the unsorted version */
-	.printips_sorted = &printips,
-	.saveheader = &saveheader,
-	.saveips = &saveips,
+	.initheader = ipportnethash_initheader,
+	.printheader = ipportnethash_printheader,
+	.printips = ipportnethash_printips,
+	.printips_sorted = ipportnethash_printips,
+	.saveheader = ipportnethash_saveheader,
+	.saveips = ipportnethash_saveips,
 	
-	.usage = &usage,
+	.usage = ipportnethash_usage,
 };
 
 CONSTRUCTOR(ipportnethash)

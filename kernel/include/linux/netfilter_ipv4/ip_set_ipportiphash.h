@@ -4,7 +4,7 @@
 #include <linux/netfilter_ipv4/ip_set.h>
 #include <linux/netfilter_ipv4/ip_set_hashes.h>
 
-#define SETTYPE_NAME "ipportiphash"
+#define SETTYPE_NAME			"ipportiphash"
 
 struct ipportip {
 	ip_set_ip_t ip;

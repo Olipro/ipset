@@ -4,7 +4,7 @@
 #include <linux/netfilter_ipv4/ip_set.h>
 #include <linux/netfilter_ipv4/ip_set_hashes.h>
 
-#define SETTYPE_NAME "nethash"
+#define SETTYPE_NAME		"nethash"
 
 struct ip_set_nethash {
 	ip_set_ip_t *members;		/* the nethash proper */

@@ -65,7 +65,28 @@ static inline void *kzalloc(size_t size, gfp_t flags)
 #define KMEM_CACHE_CREATE(name, size) \
 	kmem_cache_create(name, size, 0, 0, NULL)
 #endif
-  
+
+#ifndef NIPQUAD
+#define NIPQUAD(addr) \
+	((unsigned char *)&addr)[0], \
+	((unsigned char *)&addr)[1], \
+	((unsigned char *)&addr)[2], \
+	((unsigned char *)&addr)[3]
+#endif
+
+#ifndef HIPQUAD
+#if defined(__LITTLE_ENDIAN)
+#define HIPQUAD(addr) \
+	((unsigned char *)&addr)[3], \
+	((unsigned char *)&addr)[2], \
+	((unsigned char *)&addr)[1], \
+	((unsigned char *)&addr)[0]
+#elif defined(__BIG_ENDIAN)
+#define HIPQUAD NIPQUAD
+#else
+#error "Please fix asm/byteorder.h"
+#endif /* __LITTLE_ENDIAN */
+#endif
 
 #endif /* __KERNEL__ */
 #endif /* _IP_SET_COMPAT_H */   

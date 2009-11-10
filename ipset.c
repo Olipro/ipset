@@ -32,6 +32,11 @@
 
 char program_name[] = "ipset";
 char program_version[] = IPSET_VERSION;
+static int protocol_version = 0;
+
+#define STREQ(a,b)	(strncmp(a,b,IP_SET_MAXNAMELEN) == 0)
+#define DONT_ALIGN	(protocol_version == IP_SET_PROTOCOL_UNALIGNED)
+#define ALIGNED(len)	IPSET_VALIGN(len, DONT_ALIGN)
 
 /* The list of loaded set types */
 static struct settype *all_settypes = NULL;
@@ -65,7 +70,7 @@ static unsigned int global_option_offset = 0;
 
 static const char cmdflags[] = { ' ',			/* CMD_NONE */ 
 	'N', 'X', 'F', 'E', 'W', 'L', 'S', 'R', 
-	'A', 'D', 'T', 'B', 'U', 'H', 'V',
+	'A', 'D', 'T', 'H', 'V',
 };
 
 /* Options */
@@ -74,11 +79,10 @@ static const char cmdflags[] = { ' ',			/* CMD_NONE */
 #define OPT_SORTED		0x0002U		/* -s */
 #define OPT_QUIET		0x0004U		/* -q */
 #define OPT_DEBUG		0x0008U		/* -z */
-#define OPT_BINDING		0x0010U		/* -b */
 #define OPT_RESOLVE		0x0020U		/* -r */
-#define NUMBER_OF_OPT 6
+#define NUMBER_OF_OPT 5
 static const char optflags[] =
-    { 'n', 's', 'q', 'z', 'b', 'r' };
+    { 'n', 's', 'q', 'z', 'r' };
 
 static struct option opts_long[] = {
 	/* set operations */
@@ -97,15 +101,10 @@ static struct option opts_long[] = {
 	{"del",     1, 0, 'D'},
 	{"test",    1, 0, 'T'},
 	
-	/* binding operations */
-	{"bind",    1, 0, 'B'},
-	{"unbind",  1, 0, 'U'},
-	
 	/* free options */
 	{"numeric", 0, 0, 'n'},
 	{"sorted",  0, 0, 's'},
 	{"quiet",   0, 0, 'q'},
-	{"binding", 1, 0, 'b'},
 	{"resolve", 0, 0, 'r'},
 
 #ifdef IPSET_DEBUG
@@ -122,7 +121,7 @@ static struct option opts_long[] = {
 };
 
 static char opts_short[] =
-    "-N:X::F::E:W:L::S::RA:D:T:B:U:nrsqzb:Vh::H::";
+    "-N:X::F::E:W:L::S::RA:D:T:nrsqzvVh::H::";
 
 /* Table of legal combinations of commands and options. If any of the
  * given commands make an option legal, that option is legal.
@@ -133,22 +132,20 @@ static char opts_short[] =
  */
 
 static char commands_v_options[NUMBER_OF_CMD][NUMBER_OF_OPT] = {
-	/*            -n   -s   -q   -z   -b  */
-	 /*CREATE*/  {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*DESTROY*/ {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*FLUSH*/   {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*RENAME*/  {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*SWAP*/    {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*LIST*/    {' ', ' ', 'x', ' ', 'x', ' '},
-	 /*SAVE*/    {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*RESTORE*/ {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*ADD*/     {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*DEL*/     {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*TEST*/    {'x', 'x', ' ', ' ', ' ', 'x'},
-	 /*BIND*/    {'x', 'x', ' ', ' ', '+', 'x'},
-	 /*UNBIND*/  {'x', 'x', ' ', ' ', 'x', 'x'},
-	 /*HELP*/    {'x', 'x', 'x', ' ', 'x', 'x'},
-	 /*VERSION*/ {'x', 'x', 'x', ' ', 'x', 'x'},
+	/*            -n   -s   -q   -z   -r */
+	 /*CREATE*/  {'x', 'x', ' ', ' ', 'x'},
+	 /*DESTROY*/ {'x', 'x', ' ', ' ', 'x'},
+	 /*FLUSH*/   {'x', 'x', ' ', ' ', 'x'},
+	 /*RENAME*/  {'x', 'x', ' ', ' ', 'x'},
+	 /*SWAP*/    {'x', 'x', ' ', ' ', 'x'},
+	 /*LIST*/    {' ', ' ', 'x', ' ', ' '},
+	 /*SAVE*/    {'x', 'x', ' ', ' ', 'x'},
+	 /*RESTORE*/ {'x', 'x', ' ', ' ', 'x'},
+	 /*ADD*/     {'x', 'x', ' ', ' ', 'x'},
+	 /*DEL*/     {'x', 'x', ' ', ' ', 'x'},
+	 /*TEST*/    {'x', 'x', ' ', ' ', 'x'},
+	 /*HELP*/    {'x', 'x', 'x', ' ', 'x'},
+	 /*VERSION*/ {'x', 'x', 'x', ' ', 'x'},
 };
 
 /* Main parser function */
@@ -451,25 +448,26 @@ static void check_protocolversion(void)
 {
 	struct ip_set_req_version req_version;
 	socklen_t size = sizeof(struct ip_set_req_version);
-	int sockfd = kernel_getsocket();
 	int res;
 
-	req_version.op = IP_SET_OP_VERSION;
-	res = getsockopt(sockfd, SOL_IP, SO_IP_SET, &req_version, &size);
-
-	if (res != 0) {
-		ipset_printf("I'm of protocol version %u.\n"
-			     "Kernel module is not loaded in, "
-			     "cannot verify kernel version.",
-			     IP_SET_PROTOCOL_VERSION);
+	if (protocol_version)
 		return;
-	}
-	if (req_version.version != IP_SET_PROTOCOL_VERSION)
+	
+	req_version.op = IP_SET_OP_VERSION;
+	res = wrapped_getsockopt(&req_version, &size);
+
+	if (res != 0)
 		exit_error(OTHER_PROBLEM,
-			   "Kernel ipset code is of protocol version %u."
+			   "Couldn't verify kernel module version!");
+
+	if (!(req_version.version == IP_SET_PROTOCOL_VERSION
+	      || req_version.version == IP_SET_PROTOCOL_UNALIGNED))
+		exit_error(OTHER_PROBLEM,
+			   "Kernel ip_set module is of protocol version %u."
 			   "I'm of protocol version %u.\n"
 			   "Please upgrade your kernel and/or ipset(8) utillity.",
 			   req_version.version, IP_SET_PROTOCOL_VERSION);
+	protocol_version = req_version.version;
 }
 
 static void set_command(int *cmd, int newcmd)
@@ -591,11 +589,6 @@ char *ip_tostring(ip_set_ip_t ip, unsigned options)
 	return inet_ntoa(addr);
 }
 
-char *binding_ip_tostring(struct set *set UNUSED,
-			  ip_set_ip_t ip, unsigned options)
-{
-	return ip_tostring(ip, options);
-}
 char *ip_tostring_numeric(ip_set_ip_t ip)
 {
 	return ip_tostring(ip, OPT_NUMERIC);
@@ -760,8 +753,7 @@ static struct settype *settype_find(const char *typename)
 	DP("%s", typename);
 
 	while (runner != NULL) {
-		if (strncmp(runner->typename, typename, 
-			    IP_SET_MAXNAMELEN) == 0)
+		if (STREQ(runner->typename, typename))
 			return runner;
 
 		runner = runner->next;
@@ -883,9 +875,7 @@ struct set *set_find_byname(const char *name)
 	ip_set_id_t i;
 	
 	for (i = 0; i < max_sets; i++)
-		if (set_list[i]
-		    && strncmp(set_list[i]->name, name,
-		    	       IP_SET_MAXNAMELEN) == 0) {
+		if (set_list[i] != NULL && STREQ(set_list[i]->name, name)) {
 			set = set_list[i];
 			break;
 		}
@@ -903,9 +893,7 @@ static ip_set_id_t set_find_free_index(const char *name)
 		if (idx == IP_SET_INVALID_ID
 		    && set_list[i] == NULL)
 			idx = i;
-		if (set_list[i] != NULL
-		    && strncmp(set_list[i]->name, name,
-			       IP_SET_MAXNAMELEN) == 0)
+		if (set_list[i] != NULL && STREQ(set_list[i]->name, name))
 			exit_error(PARAMETER_PROBLEM,
    				   "Set %s is already defined, cannot be restored",
    				   name);
@@ -932,7 +920,7 @@ static void set_create(const char *name, struct settype *settype)
 	DP("%s %s", name, settype->typename);
 
 	req_create.op = IP_SET_OP_CREATE;
-	req_create.version = IP_SET_PROTOCOL_VERSION;
+	req_create.version = protocol_version;
 	strcpy(req_create.name, name);
 	strcpy(req_create.typename, settype->typename);
 
@@ -956,14 +944,14 @@ static void set_restore_create(const char *name, struct settype *settype)
 {
 	struct set *set;
 	
-	DP("%s %s %u %u %u %u", name, settype->typename,
+	DP("%s %s %zu %zu %u %u", name, settype->typename,
 	   restore_offset, sizeof(struct ip_set_restore),
 	   settype->create_size, restore_size);
 
 	/* Sanity checking */
 	if (restore_offset
-	    + sizeof(struct ip_set_restore)
-	    + settype->create_size > restore_size)
+	    + ALIGNED(sizeof(struct ip_set_restore))
+	    + ALIGNED(settype->create_size) > restore_size)
 	    	exit_error(PARAMETER_PROBLEM,
 	    		   "Giving up, restore file is screwed up!");
 	    		   
@@ -982,11 +970,11 @@ static void set_restore_create(const char *name, struct settype *settype)
 	DP("name %s, restore index %u", restore_set->name, restore_set->index);
 	/* Add settype data */
 	
-	memcpy(restore_data + restore_offset + sizeof(struct ip_set_restore),
-	       settype->data, settype->create_size);
+	restore_offset += ALIGNED(sizeof(struct ip_set_restore));
+	memcpy(restore_data + restore_offset, settype->data, settype->create_size);
 
-	restore_offset += sizeof(struct ip_set_restore)
-			  + settype->create_size;	
+	restore_offset += ALIGNED(settype->create_size);
+	DP("restore_offset: %zu", restore_offset);
 	
 	/* Add set to set_list */
 	set = ipset_malloc(sizeof(struct set));
@@ -1006,7 +994,7 @@ static void set_destroy(const char *name, unsigned op, unsigned cmd)
 	DP("%s %s", cmd == CMD_DESTROY ? "destroy" : "flush", name);
 
 	req.op = op;
-	req.version = IP_SET_PROTOCOL_VERSION;
+	req.version = protocol_version;
 	strcpy(req.name, name);
 
 	kernel_sendto(cmd, &req, sizeof(struct ip_set_req_std));
@@ -1024,7 +1012,7 @@ static void set_rename(const char *name, const char *newname,
 		       name, newname);
 
 	req.op = op;
-	req.version = IP_SET_PROTOCOL_VERSION;
+	req.version = protocol_version;
 	strcpy(req.name, name);
 	strcpy(req.typename, newname);
 
@@ -1062,7 +1050,7 @@ tryagain:
 	}
 	/* Get max_sets */
 	req_max_sets.op = IP_SET_OP_MAX_SETS;
-	req_max_sets.version = IP_SET_PROTOCOL_VERSION;
+	req_max_sets.version = protocol_version;
 	strcpy(req_max_sets.set.name, name);
 	size = sizeof(req_max_sets);
 	kernel_getfrom(CMD_MAX_SETS, &req_max_sets, &size);
@@ -1080,8 +1068,8 @@ tryagain:
 		return 0;
 
 	/* Get setnames */
-	size = req_size = sizeof(struct ip_set_req_setnames) 
-			  + req_max_sets.sets * sizeof(struct ip_set_name_list);
+	size = req_size = ALIGNED(sizeof(struct ip_set_req_setnames)) 
+			  + req_max_sets.sets * ALIGNED(sizeof(struct ip_set_name_list));
 	data = ipset_malloc(size);
 	((struct ip_set_req_setnames *) data)->op = op;
 	((struct ip_set_req_setnames *) data)->index = *idx;
@@ -1099,8 +1087,8 @@ tryagain:
 	}
 		
 	/* Load in setnames */
-	size = sizeof(struct ip_set_req_setnames);			
-	while (size + sizeof(struct ip_set_name_list) <= req_size) {
+	size = ALIGNED(sizeof(struct ip_set_req_setnames));			
+	while (size + ALIGNED(sizeof(struct ip_set_name_list)) <= req_size) {
 		name_list = (struct ip_set_name_list *)
 			(data + size);
 		set = ipset_malloc(sizeof(struct set));
@@ -1111,9 +1099,9 @@ tryagain:
 		set_list[name_list->index] = set;
 		DP("loaded %s, type %s, index %u",
 		   set->name, set->settype->typename, set->index);
-		size += sizeof(struct ip_set_name_list);
+		size += ALIGNED(sizeof(struct ip_set_name_list));
 	}
-	/* Size to get set members, bindings */
+	/* Size to get set members  */
 	size = ((struct ip_set_req_setnames *)data)->size;
 	free(data);
 	
@@ -1123,36 +1111,7 @@ tryagain:
 /*
  * Save operation
  */
-static size_t save_bindings(void *data, size_t offset, size_t len)
-{
-	struct ip_set_hash_save *hash =
-		(struct ip_set_hash_save *) (data + offset);
-	struct set *set;
-
-	DP("offset %u, len %u", offset, len);
-	if (offset + sizeof(struct ip_set_hash_save) > len)
-		exit_error(OTHER_PROBLEM,
-			   "Save operation failed, try again later.");
-
-	set = set_find_byid(hash->id);
-	if (!(set && set_list[hash->binding]))
-		exit_error(OTHER_PROBLEM,
-			   "Save binding failed, try again later.");
-	if (!set->settype->bindip_tostring)
-		exit_error(OTHER_PROBLEM,
-			   "Internal error, binding is not supported with set %s"
-			   " of settype %s\n",
-			   set->name, set->settype->typename);
-	printf("-B %s %s -b %s\n",
-		set->name,
-		set->settype->bindip_tostring(set, hash->ip, OPT_NUMERIC),
-		set_list[hash->binding]->name);
-
-	return sizeof(struct ip_set_hash_save);
-}		
-
-static size_t save_set(void *data, int *bindings,
-		       size_t offset, size_t len)
+static size_t save_set(void *data, size_t offset, size_t len)
 {
 	struct ip_set_save *set_save =
 		(struct ip_set_save *) (data + offset);
@@ -1160,12 +1119,12 @@ static size_t save_set(void *data, int *bindings,
 	struct settype *settype;
 	size_t used;
 	
-	DP("offset %u (%u/%u/%u), len %u", offset,
+	DP("offset %zu (%zu/%u/%u), len %zu", offset,
 	   sizeof(struct ip_set_save), 
 	   set_save->header_size, set_save->members_size, 
 	   len);
-	if (offset + sizeof(struct ip_set_save) > len
-	    || offset + sizeof(struct ip_set_save)
+	if (offset + ALIGNED(sizeof(struct ip_set_save)) > len
+	    || offset + ALIGNED(sizeof(struct ip_set_save))
 	       + set_save->header_size + set_save->members_size > len)
 		exit_error(OTHER_PROBLEM,
 			   "Save operation failed, try again later.");
@@ -1173,8 +1132,7 @@ static size_t save_set(void *data, int *bindings,
 	DP("index: %u", set_save->index);
 	if (set_save->index == IP_SET_INVALID_ID) {
 		/* Marker */
-		*bindings = 1;
-		return sizeof(struct ip_set_save);
+		return ALIGNED(sizeof(struct ip_set_save));
 	}
 	set = set_list[set_save->index];
 	if (!set)
@@ -1183,7 +1141,7 @@ static size_t save_set(void *data, int *bindings,
 	settype = set->settype;
 
 	/* Init set header */
-	used = sizeof(struct ip_set_save);
+	used = ALIGNED(sizeof(struct ip_set_save));
 	settype->initheader(set, data + offset + used);
 
 	/* Print create set */
@@ -1192,36 +1150,10 @@ static size_t save_set(void *data, int *bindings,
 	/* Print add IPs */
 	used += set_save->header_size;
 	settype->saveips(set, data + offset + used,
-			 set_save->members_size, OPT_NUMERIC);
+			 set_save->members_size, OPT_NUMERIC,
+			 DONT_ALIGN);
 
 	return (used + set_save->members_size);
-}
-
-static size_t save_default_bindings(void *data, int *bindings)
-{
-	struct ip_set_save *set_save = (struct ip_set_save *) data;
-	struct set *set;
-	
-	if (set_save->index == IP_SET_INVALID_ID) {
-		/* Marker */
-		*bindings = 1;
-		return sizeof(struct ip_set_save);
-	}
-
-	set = set_list[set_save->index];
-	DP("%s, binding %u", set->name, set_save->binding);
-	if (set_save->binding != IP_SET_INVALID_ID) {
-		if (!set_list[set_save->binding])
-			exit_error(OTHER_PROBLEM,
-				   "Save set failed, try again later.");
-
-		printf("-B %s %s -b %s\n",
-			set->name, IPSET_TOKEN_DEFAULT, 
-			set_list[set_save->binding]->name);
-	}
-	return (sizeof(struct ip_set_save)
-	        + set_save->header_size
-	        + set_save->members_size);
 }
 
 static int try_save_sets(const char name[IP_SET_MAXNAMELEN])
@@ -1229,7 +1161,7 @@ static int try_save_sets(const char name[IP_SET_MAXNAMELEN])
 	void *data = NULL;
 	socklen_t size, req_size = 0;
 	ip_set_id_t idx;
-	int res = 0, bindings = 0;
+	int res = 0;
 	time_t now = time(NULL);
 
 	/* Load set_list from kernel */
@@ -1237,15 +1169,17 @@ static int try_save_sets(const char name[IP_SET_MAXNAMELEN])
 			     IP_SET_OP_SAVE_SIZE, CMD_SAVE);
 	
 	if (size) {
-		/* Get sets, bindings and print them */
+		/* Get sets and print them */
 		/* Take into account marker */
-		req_size = (size += sizeof(struct ip_set_save));
+		req_size = (size += ALIGNED(sizeof(struct ip_set_save)));
 		data = ipset_malloc(size);
 		((struct ip_set_req_list *) data)->op = IP_SET_OP_SAVE;
 		((struct ip_set_req_list *) data)->index = idx;
 		res = kernel_getfrom_handleerrno(CMD_SAVE, data, &size);
 
 		if (res != 0 || size != req_size) {
+			DP("Try again: res: %i, size %u, req_size: %u",
+			   res, size, req_size);
 			free(data);
 			return -EAGAIN;
 		}
@@ -1255,17 +1189,8 @@ static int try_save_sets(const char name[IP_SET_MAXNAMELEN])
 	size = 0;
 	while (size < req_size) {
 		DP("size: %u, req_size: %u", size, req_size);
-		if (bindings)
-			size += save_bindings(data, size, req_size);
-		else
-			size += save_set(data, &bindings, size, req_size);
+		size += save_set(data, size, req_size);
 	}
-	/* Re-read data to save default bindings */
-	bindings = 0;
-	size = 0;
-	while (size < req_size && bindings == 0)
-		size += save_default_bindings(data + size, &bindings);
-
 	printf("COMMIT\n");
 	now = time(NULL);
 	printf("# Completed on %s", ctime(&now));
@@ -1363,7 +1288,7 @@ static void set_restore(char *argv0)
 	char buffer[1024];	
 	char *ptr, *name = NULL;
 	char cmd = ' ';
-	int first_pass, i, bindings = 0;
+	int first_pass, i;
 	struct settype *settype = NULL;
 	struct ip_set_req_setnames *header;
 	ip_set_id_t idx;
@@ -1378,8 +1303,7 @@ static void set_restore(char *argv0)
 		      IP_SET_OP_LIST_SIZE, CMD_RESTORE);
 	
 	restore_line = 0;
-	restore_size = sizeof(struct ip_set_req_setnames)/* header */
-		       + sizeof(struct ip_set_restore);  /* marker */
+	restore_size = ALIGNED(sizeof(struct ip_set_req_setnames)); /* header */
 	DP("restore_size: %u", restore_size);
 	/* First pass: calculate required amount of data */
 	while (fgets(buffer, sizeof(buffer), in)) {
@@ -1426,13 +1350,9 @@ static void set_restore(char *argv0)
 			        exit_error(PARAMETER_PROBLEM,
 			        	   "Missing settype in line %u\n",
 		        		   restore_line);
-			if (bindings)
-			        exit_error(PARAMETER_PROBLEM,
-			        	   "Invalid line %u: create must precede bindings\n",
-		        		   restore_line);
 			settype = check_set_typename(ptr);
-			restore_size += sizeof(struct ip_set_restore)
-					+ settype->create_size;
+			restore_size += ALIGNED(sizeof(struct ip_set_restore))
+					+ ALIGNED(settype->create_size);
 			DP("restore_size (N): %u", restore_size);
 			break; 
 		}
@@ -1443,18 +1363,8 @@ static void set_restore(char *argv0)
 			        	   "Add IP to set %s in line %u without "
 					   "preceding corresponding create set line\n",
 		        		   ptr, restore_line);
-			if (bindings)
-			        exit_error(PARAMETER_PROBLEM,
-			        	   "Invalid line %u: adding entries must precede bindings\n",
-		        		   restore_line);
-			restore_size += settype->adt_size;
+			restore_size += ALIGNED(settype->adt_size);
 			DP("restore_size (A): %u", restore_size);
-			break;
-		}
-		case 'B': {
-			bindings = 1;
-			restore_size += sizeof(struct ip_set_hash_save);
-			DP("restore_size (B): %u", restore_size);
 			break;
 		}
 		default: {
@@ -1468,12 +1378,13 @@ static void set_restore(char *argv0)
 	if (!restore)
 		exit_error(PARAMETER_PROBLEM,
 		      	   "Missing COMMIT line\n");
+	restore_size += ALIGNED(sizeof(struct ip_set_restore)); /* marker */
 	DP("restore_size: %u", restore_size);
 	restore_data = ipset_malloc(restore_size);
 	header = (struct ip_set_req_setnames *) restore_data;
 	header->op = IP_SET_OP_RESTORE; 
 	header->size = restore_size; 
-	restore_offset = sizeof(struct ip_set_req_setnames);
+	restore_offset = ALIGNED(sizeof(struct ip_set_req_setnames));
 
 	/* Rewind to scan the file again */
 	fseek(in, 0L, SEEK_SET);
@@ -1505,17 +1416,15 @@ static void set_restore(char *argv0)
 	exit_error(PARAMETER_PROBLEM,
 	      	   "Broken restore file\n");
    do_restore:
-   	if (bindings == 0
-   	    && restore_size == 
-   	       (restore_offset + sizeof(struct ip_set_restore))) {
+   	if (restore_size == (restore_offset + ALIGNED(sizeof(struct ip_set_restore)))) {
    		/* No bindings */
 		struct ip_set_restore *marker = 
 			(struct ip_set_restore *) (restore_data + restore_offset);
 
-		DP("restore marker");
 		marker->index = IP_SET_INVALID_ID;
 		marker->header_size = marker->members_size = 0;
-		restore_offset += sizeof(struct ip_set_restore);
+		restore_offset += ALIGNED(sizeof(struct ip_set_restore));
+		DP("restore marker, restore_offset: %zu", restore_offset);
 	}
 	if (restore_size != restore_offset)
 		exit_error(PARAMETER_PROBLEM,
@@ -1547,8 +1456,10 @@ static struct set *set_adt_get(const char *name)
 
 	DP("%s", name);
 
+	check_protocolversion();
+
 	req_adt_get.op = IP_SET_OP_ADT_GET;
-	req_adt_get.version = IP_SET_PROTOCOL_VERSION;
+	req_adt_get.version = protocol_version;
 	strcpy(req_adt_get.set.name, name);
 	size = sizeof(struct ip_set_req_adt_get);
 
@@ -1576,15 +1487,15 @@ static int set_adtip(struct set *set, const char *adt,
 	DP("%s -> %s", set->name, adt);
 
 	/* Alloc memory for the data to send */
-	size = sizeof(struct ip_set_req_adt) + set->settype->adt_size ;
-	DP("alloc size %d", size);
+	size = ALIGNED(sizeof(struct ip_set_req_adt)) + set->settype->adt_size ;
+	DP("alloc size %zu", size);
 	data = ipset_malloc(size);
 
 	/* Fill out the request */
 	req_adt = (struct ip_set_req_adt *) data;
 	req_adt->op = op;
 	req_adt->index = set->index;
-	memcpy(data + sizeof(struct ip_set_req_adt),
+	memcpy(data + ALIGNED(sizeof(struct ip_set_req_adt)),
 	       set->settype->data, set->settype->adt_size);
 	
 	if (kernel_sendto_handleerrno(cmd, data, size) == -1)
@@ -1622,154 +1533,21 @@ static void set_restore_add(struct set *set, const char *adt UNUSED)
 {
 	DP("%s %s", set->name, adt);
 	/* Sanity checking */
-	if (restore_offset + set->settype->adt_size > restore_size)
+	if (restore_offset + ALIGNED(set->settype->adt_size) > restore_size)
 	    	exit_error(PARAMETER_PROBLEM,
 	    		   "Giving up, restore file is screwed up!");
 	    		   
 	memcpy(restore_data + restore_offset,
 	       set->settype->data, set->settype->adt_size);
-	restore_set->members_size += set->settype->adt_size;
-	restore_offset += set->settype->adt_size;
-}
+	restore_set->members_size += ALIGNED(set->settype->adt_size);
+	restore_offset += ALIGNED(set->settype->adt_size);
 
-/*
- * Send bind/unbind/test binding order to kernel for a set
- */
-static int set_bind(struct set *set, const char *adt,
-		    const char *binding,
-		    unsigned op, unsigned cmd)
-{
-	struct ip_set_req_bind *req_bind;
-	size_t size;
-	void *data;
-	int res = 0;
-
-	/* set may be null: '-U :all: :all:|:default:' */
-	DP("(%s, %s) -> %s", set ? set->name : IPSET_TOKEN_ALL, adt, binding);
-
-	/* Ugly */
-	if (set != NULL
-	    && ((strcmp(set->settype->typename, "iptreemap") == 0)
-	        || (strcmp(set->settype->typename, "ipportiphash") == 0)
-	        || (strcmp(set->settype->typename, "ipportnethash") == 0)
-	        || (strcmp(set->settype->typename, "setlist") == 0)))
-		exit_error(PARAMETER_PROBLEM,
-			"%s type of sets cannot be used at binding operations\n",
-			set->settype->typename);
-	/* Alloc memory for the data to send */
-	size = sizeof(struct ip_set_req_bind);
-	if (op != IP_SET_OP_UNBIND_SET && adt[0] == ':')
-		/* Set default binding */
-		size += IP_SET_MAXNAMELEN;
-	else if (!(op == IP_SET_OP_UNBIND_SET && set == NULL))
-		size += set->settype->adt_size;
-	DP("alloc size %d", size);
-	data = ipset_malloc(size);
-
-	/* Fill out the request */
-	req_bind = (struct ip_set_req_bind *) data;
-	req_bind->op = op;
-	req_bind->index = set ? set->index : IP_SET_INVALID_ID;
-	if (adt[0] == ':') {
-		/* ':default:' and ':all:' */
-		strncpy(req_bind->binding, adt, IP_SET_MAXNAMELEN);
-		if (op != IP_SET_OP_UNBIND_SET && adt[0] == ':')
-			strncpy(data + sizeof(struct ip_set_req_bind),
-				binding, IP_SET_MAXNAMELEN);
-	} else {
-		strncpy(req_bind->binding, binding, IP_SET_MAXNAMELEN);
-		memcpy(data + sizeof(struct ip_set_req_bind),
-		       set->settype->data, set->settype->adt_size);
-	}
-
-	if (op == IP_SET_OP_TEST_BIND_SET) {
-		if (kernel_sendto_handleerrno(cmd, data, size) == -1) {
-			ipset_printf("%s in set %s is bound to %s.",
-				     adt, set->name, binding);
-			res = 0;
-		} else {
-			ipset_printf("%s in set %s is NOT bound to %s.",
-				     adt, set->name, binding);
-			res = 1;
-		}
-	} else 	
-		kernel_sendto(cmd, data, size);
-	free(data);
-
-	return res;
-}
-
-static void set_restore_bind(struct set *set,
-			     const char *adt,
-			     const char *binding)
-{
-	struct ip_set_hash_save *hash_restore;
-
-	if (restore == 1) {
-		/* Marker */
-		struct ip_set_restore *marker = 
-			(struct ip_set_restore *) (restore_data + restore_offset);
-
-		DP("restore marker");
-		if (restore_offset + sizeof(struct ip_set_restore) 
-		    > restore_size)
-		    	exit_error(PARAMETER_PROBLEM,
-		    		   "Giving up, restore file is screwed up!");
-		marker->index = IP_SET_INVALID_ID;
-		marker->header_size = marker->members_size = 0;
-		restore_offset += sizeof(struct ip_set_restore);
-		restore = 2;
-	}
-	/* Sanity checking */
-	if (restore_offset + sizeof(struct ip_set_hash_save) > restore_size)
-	    	exit_error(PARAMETER_PROBLEM,
-	    		   "Giving up, restore file is screwed up!");
-
-	hash_restore = (struct ip_set_hash_save *) (restore_data + restore_offset);
-	DP("%s -> %s", adt, binding);
-	if (strcmp(adt, IPSET_TOKEN_DEFAULT) == 0)
-		hash_restore->ip = 0;
-	else {
-		if (!set->settype->bindip_parse)
-			exit_error(OTHER_PROBLEM,
-				   "Internal error, binding is not supported with set %s"
-				   " of settype %s\n",
-				   set->name, set->settype->typename);
-		set->settype->bindip_parse(adt, &hash_restore->ip);
-	}
-	hash_restore->id = set->index;	    		   
-	hash_restore->binding = (set_find_byname(binding))->index;	
-	DP("id %u, ip %u, binding %u",
-	   hash_restore->id, hash_restore->ip, hash_restore->binding);
-	restore_offset += sizeof(struct ip_set_hash_save);
+	DP("restore_offset: %zu", restore_offset);
 }
 
 /*
  * Print operation
  */
-
-static void print_bindings(struct set *set,
-			   void *data, size_t size, unsigned options,
-			   char * (*printip)(struct set *set, 
-					     ip_set_ip_t ip, unsigned options))
-{
-	size_t offset = 0;
-	struct ip_set_hash_list *hash;
-
-	if (offset < size && !printip)
-		exit_error(OTHER_PROBLEM,
-			   "Internal error, binding is not supported with set %s"
-			   " of settype %s\n",
-			   set->name, set->settype->typename);
-
-	while (offset < size) {
-		hash = (struct ip_set_hash_list *) (data + offset);
-		printf("%s -> %s\n", 
-			printip(set, hash->ip, options),
-			set_list[hash->binding]->name);
-		offset += sizeof(struct ip_set_hash_list);
-	}
-}
 
 /* Help function to set_list() */
 static size_t print_set(void *data, unsigned options)
@@ -1780,15 +1558,14 @@ static size_t print_set(void *data, unsigned options)
 	size_t offset;
 
 	/* Pretty print the set */
+	DP("header size: %u, members size: %u",
+	   setlist->header_size, setlist->members_size);
 	printf("Name: %s\n", set->name);
 	printf("Type: %s\n", settype->typename);
 	printf("References: %d\n", setlist->ref);
-	printf("Default binding: %s\n",
-	       setlist->binding == IP_SET_INVALID_ID ? ""
-	       : set_list[setlist->binding]->name);
 
 	/* Init header */
-	offset = sizeof(struct ip_set_list);
+	offset = ALIGNED(sizeof(struct ip_set_list));
 	settype->initheader(set, data + offset);
 
 	/* Pretty print the type header */
@@ -1798,24 +1575,20 @@ static size_t print_set(void *data, unsigned options)
 	/* Pretty print all IPs */
 	printf("Members:\n");
 	offset += setlist->header_size;
+	DP("Aligned: %u, offset: %zu, members_size %u\n", !DONT_ALIGN, offset,
+	   setlist->members_size);
 	if (options & OPT_SORTED)
 		settype->printips_sorted(set, data + offset,
-					 setlist->members_size, options);
+					 setlist->members_size, options,
+					 DONT_ALIGN);
 	else
 		settype->printips(set, data + offset,
-				  setlist->members_size, options);
-
-	/* Print bindings */
-	printf("Bindings:\n");
-	offset += setlist->members_size;
-	if (set->settype->bindip_tostring)
-		print_bindings(set,
-		       data + offset, setlist->bindings_size, options,
-		       settype->bindip_tostring);
+				  setlist->members_size, options,
+				  DONT_ALIGN);
 
 	printf("\n");		/* One newline between sets */
 	
-	return (offset + setlist->bindings_size);
+	return (offset + setlist->members_size);
 }
 
 static int try_list_sets(const char name[IP_SET_MAXNAMELEN],
@@ -1886,9 +1659,9 @@ static void set_help(const struct settype *settype)
 	       "Usage: %s -N new-set settype [options]\n"
 	       "       %s -[XFLSH] [set] [options]\n"
 	       "       %s -[EW] from-set to-set\n"
-	       "       %s -[ADTU] set IP\n"
-	       "       %s -B set IP option\n"
+	       "       %s -[ADT] set IP\n"
 	       "       %s -R\n"
+	       "       %s -v\n"
 	       "       %s -h (print this help information)\n\n",
 	       program_name, program_version, 
 	       program_name, program_name, program_name,
@@ -1919,13 +1692,6 @@ static void set_help(const struct settype *settype)
 	       "                    Deletes an IP from a set\n"
 	       "  --test    -T setname IP \n"
 	       "                    Tests if an IP exists in a set.\n"
-	       "  --bind    -B setname IP|:default: -b bind-setname\n"
-	       "                    Bind the IP in setname to bind-setname.\n"
-	       "  --unbind  -U setname IP|:all:|:default:\n"
-	       "                    Delete binding belonging to IP,\n"
-	       "                    all bindings or default binding of setname.\n"
-	       "  --unbind  -U :all: :all:|:default:\n"
-	       "                    Delete all bindings or all default bindings.\n"
 	       "  --help    -H [settype]\n"
 	       "                    Prints this help, and settype specific help\n"
 	       "  --version -V\n"
@@ -1934,8 +1700,7 @@ static void set_help(const struct settype *settype)
 	       "  --sorted     -s   Numeric sort of the IPs in -L\n"
 	       "  --numeric    -n   Numeric output of addresses in a -L (default)\n"
 	       "  --resolve    -r   Try to resolve addresses in a -L\n"
-	       "  --quiet      -q   Suppress any output to stdout and stderr.\n"
-	       "  --binding    -b   Specifies the binding for -B\n");
+	       "  --quiet      -q   Suppress any output to stdout and stderr.\n");
 #ifdef IPSET_DEBUG
 	printf("  --debug      -z   Enable debugging\n\n");
 #else
@@ -1967,40 +1732,13 @@ static int parse_adt_cmdline(int command,
 {
 	int res = 0;
 
-	/* -U :all: :all:|:default: */
-	if (command == CMD_UNBIND) {
-		if (strcmp(name, IPSET_TOKEN_ALL) == 0) {
-			if (strcmp(adt, IPSET_TOKEN_DEFAULT) == 0
-			    || strcmp(adt, IPSET_TOKEN_ALL) == 0) {
-			    	*set = NULL;
-			    	*settype = NULL;
-			    	return 1;
-			} else
-				exit_error(PARAMETER_PROBLEM,
-					   "-U %s requires %s or %s as binding name",
-					   IPSET_TOKEN_ALL,
-					   IPSET_TOKEN_DEFAULT,
-					   IPSET_TOKEN_ALL);
-		}
-	}
-	*set = restore ? set_find_byname(name)
-		       : set_adt_get(name);
+	*set = restore ? set_find_byname(name) : set_adt_get(name);
 					
 	/* Reset space for adt data */
 	*settype = (*set)->settype;
 	memset((*settype)->data, 0, (*settype)->adt_size);
 
-	if ((command == CMD_TEST
-	     || command == CMD_BIND
-	     || command == CMD_UNBIND)
-	    && (strcmp(adt, IPSET_TOKEN_DEFAULT) == 0
-		|| strcmp(adt, IPSET_TOKEN_ALL) == 0))
-		res = 1;
-	else
-		res = (*settype)->adt_parser(
-				command,
-				adt,
-				(*settype)->data);
+	res = (*settype)->adt_parser(command, adt, (*settype)->data);
 
 	return res;
 }
@@ -2015,9 +1753,8 @@ int parse_commandline(int argc, char *argv[])
 	
 	char *name = NULL;		/* All except -H, -R */
 	char *newname = NULL;		/* -E, -W */
-	char *adt = NULL;		/* -A, -D, -T, -B, -U */
-	char *binding = NULL;		/* -B */
-	struct set *set = NULL;		/* -A, -D, -T, -B, -U */
+	char *adt = NULL;		/* -A, -D, -T */
+	struct set *set = NULL;		/* -A, -D, -T */
 	struct settype *settype = NULL;	/* -N, -H */
 	char all_sets[] = IPSET_TOKEN_ALL;
 	
@@ -2051,11 +1788,14 @@ int parse_commandline(int argc, char *argv[])
 				break;
 			}
 
-		case 'V':{	/* Version */
-				printf("%s v%s Protocol version %u.\n",
+		case 'V':
+		case 'v': {	/* Version */
+				printf("%s v%s, protocol version %u.\n",
 				       program_name, program_version,
 				       IP_SET_PROTOCOL_VERSION);
 				check_protocolversion();
+				printf("Kernel module protocol version %u.\n",
+				       protocol_version);
 				exit(0);
 			}
 
@@ -2064,7 +1804,7 @@ int parse_commandline(int argc, char *argv[])
 
 				name = check_set_name(optarg);
 				
-				/* Protect reserved names (binding) */
+				/* Protect reserved names */
 				if (name[0] == ':')
 					exit_error(PARAMETER_PROBLEM,
 						   "setname might not start with colon",
@@ -2139,9 +1879,7 @@ int parse_commandline(int argc, char *argv[])
 
 		case 'A':	/* Add IP */
 		case 'D':	/* Del IP */
-		case 'T':	/* Test IP */
-		case 'B':	/* Bind IP */
-		case 'U':{	/* Unbind IP */
+		case 'T':{	/* Test IP */
 				set_command(&command, find_cmd(c));
 
 				name = check_set_name(optarg);
@@ -2194,11 +1932,6 @@ int parse_commandline(int argc, char *argv[])
 			break;
 #endif
 
-		case 'b':
-			add_option(&options, OPT_BINDING);
-			binding = check_set_name(optarg);
-			break;
-
 		case 1:	/* non option */
 			printf("Bad argument `%s'\n", optarg);
 			exit_tryhelp(PARAMETER_PROBLEM);
@@ -2245,6 +1978,8 @@ int parse_commandline(int argc, char *argv[])
 	generic_opt_check(command, options);
 
 	DP("cmd: %c", cmd2char(command));
+	
+	check_protocolversion();
 
 	switch (command) {
 	case CMD_CREATE:
@@ -2295,26 +2030,7 @@ int parse_commandline(int argc, char *argv[])
 		break;
 
 	case CMD_TEST:
-		if (binding)
-			res = set_bind(set, adt, binding, 
-				       IP_SET_OP_TEST_BIND_SET, CMD_TEST);
-		else
-			res = set_adtip(set, adt, 
-					IP_SET_OP_TEST_IP, CMD_TEST);
-		break;
-
-	case CMD_BIND:
-		fprintf(stderr, "Warning: binding will be removed from the next release.\n"
-			        "Please replace bindigs with sets of ipportmap and ipportiphash types\n");
-		if (restore)
-			set_restore_bind(set, adt, binding);
-		else
-			set_bind(set, adt, binding,
-				 IP_SET_OP_BIND_SET, CMD_BIND);
-		break;
-
-	case CMD_UNBIND:
-		set_bind(set, adt, "", IP_SET_OP_UNBIND_SET, CMD_UNBIND);
+		res = set_adtip(set, adt, IP_SET_OP_TEST_IP, CMD_TEST);
 		break;
 
 	case CMD_HELP:

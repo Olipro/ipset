@@ -20,6 +20,10 @@
 1 ipset -A test 2.0.0.0
 # Range: Try to add value after upper boundary
 1 ipset -A test 2.1.0.1
+# Range: List set
+0 ipset -L test > .foo
+# Range: Check listing
+0 diff .foo ipmap.t.list0 && rm .foo
 # Range: Flush test set
 0 ipset -F test
 # Range: Delete test set
@@ -46,6 +50,10 @@
 1 ipset -A test 1.255.255.255
 # Network: Try to add value after upper boundary
 1 ipset -A test 2.1.0.0
+# Network: List set
+0 ipset -L test > .foo
+# Network: Check listing
+0 diff .foo ipmap.t.list1 && rm .foo
 # Network: Flush test set
 0 ipset -F test
 # Network: Delete test set
@@ -70,6 +78,10 @@
 1 ipset -A test 9.255.255.255
 # Subnets: Try to add value after upper boundary
 1 ipset -A test 11.0.0.0
+# Subnets: List set
+0 ipset -L test > .foo
+# Subnets: Check listing
+0 diff .foo ipmap.t.list2 && rm .foo
 # Subnets: FLush test set
 0 ipset -F test
 # Subnets: Delete test set
@@ -86,6 +98,10 @@
 0 ipset -T test 255.255.255.255
 # Full: Test value not added to the set
 1 ipset -T test 0.1.0.0
+# Full: List set
+0 ipset -L test > .foo
+# Full: Check listing
+0 diff .foo ipmap.t.list3 && rm .foo
 # Full: Delete test set
 0 ipset -X test
 # eof

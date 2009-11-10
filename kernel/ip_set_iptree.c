@@ -62,7 +62,7 @@ static __KMEM_CACHE_T__ *leaf_cachep;
 } while (0)
 
 static inline int
-iptree_test(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+iptree_test(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_iptree *map = set->data;
 	struct ip_set_iptreeb *btree;
@@ -73,8 +73,7 @@ iptree_test(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 	if (!ip)
 		return -ERANGE;
 	
-	*hash_ip = ip;
-	ABCD(a, b, c, d, hash_ip);
+	ABCD(a, b, c, d, &ip);
 	DP("%u %u %u %u timeout %u", a, b, c, d, map->timeout);
 	TESTIP_WALK(map, a, btree);
 	TESTIP_WALK(btree, b, ctree);
@@ -106,8 +105,7 @@ KADT(iptree, test, ipaddr)
 } while (0)	
 
 static inline int
-iptree_add(struct ip_set *set, ip_set_ip_t *hash_ip,
-	   ip_set_ip_t ip, unsigned int timeout)
+iptree_add(struct ip_set *set, ip_set_ip_t ip, unsigned int timeout)
 {
 	struct ip_set_iptree *map = set->data;
 	struct ip_set_iptreeb *btree;
@@ -121,8 +119,7 @@ iptree_add(struct ip_set *set, ip_set_ip_t *hash_ip,
 		 * but it's probably overkill */
 		return -ERANGE;
 	
-	*hash_ip = ip;
-	ABCD(a, b, c, d, hash_ip);
+	ABCD(a, b, c, d, &ip);
 	DP("%u %u %u %u timeout %u", a, b, c, d, timeout);
 	ADDIP_WALK(map, a, btree, struct ip_set_iptreeb, branch_cachep);
 	ADDIP_WALK(btree, b, ctree, struct ip_set_iptreec, branch_cachep);
@@ -153,7 +150,7 @@ KADT(iptree, add, ipaddr, 0)
 } while (0)
 
 static inline int
-iptree_del(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+iptree_del(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_iptree *map = set->data;
 	struct ip_set_iptreeb *btree;
@@ -164,8 +161,7 @@ iptree_del(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 	if (!ip)
 		return -ERANGE;
 		
-	*hash_ip = ip;
-	ABCD(a, b, c, d, hash_ip);
+	ABCD(a, b, c, d, &ip);
 	DELIP_WALK(map, a, btree);
 	DELIP_WALK(btree, b, ctree);
 	DELIP_WALK(ctree, c, dtree);
@@ -364,7 +360,7 @@ iptree_list_header(const struct ip_set *set, void *data)
 }
 
 static int
-iptree_list_members_size(const struct ip_set *set)
+iptree_list_members_size(const struct ip_set *set, char dont_align)
 {
 	const struct ip_set_iptree *map = set->data;
 	struct ip_set_iptreeb *btree;
@@ -386,20 +382,21 @@ iptree_list_members_size(const struct ip_set *set)
 	LOOP_WALK_END;
 
 	DP("members %u", count);
-	return (count * sizeof(struct ip_set_req_iptree));
+	return (count * IPSET_VALIGN(sizeof(struct ip_set_req_iptree), dont_align));
 }
 
 static void
-iptree_list_members(const struct ip_set *set, void *data)
+iptree_list_members(const struct ip_set *set, void *data, char dont_align)
 {
 	const struct ip_set_iptree *map = set->data;
 	struct ip_set_iptreeb *btree;
 	struct ip_set_iptreec *ctree;
 	struct ip_set_iptreed *dtree;
 	unsigned int a,b,c,d;
-	size_t offset = 0;
+	size_t offset = 0, datasize;
 	struct ip_set_req_iptree *entry;
 
+	datasize = IPSET_VALIGN(sizeof(struct ip_set_req_iptree), dont_align);
 	LOOP_WALK_BEGIN(map, a, btree);
 	LOOP_WALK_BEGIN(btree, b, ctree);
 	LOOP_WALK_BEGIN(ctree, c, dtree);
@@ -410,7 +407,7 @@ iptree_list_members(const struct ip_set *set, void *data)
 		    	entry->ip = ((a << 24) | (b << 16) | (c << 8) | d);
 		    	entry->timeout = !map->timeout ? 0
 				: (dtree->expires[d] - jiffies)/HZ;
-			offset += sizeof(struct ip_set_req_iptree);
+			offset += datasize;
 		}
 	}
 	LOOP_WALK_END;

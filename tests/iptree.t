@@ -12,6 +12,10 @@
 1 ipset -T test 2.0.0.2
 # Static: Test value not added to the set
 1 ipset -T test 192.168.68.70
+# Static: List set
+0 ipset -L test > .foo
+# Static: Check listing
+0 diff .foo iptree.t.list0 && rm .foo
 # Static: Flush test set
 0 ipset -F test
 # Static: Delete test set

@@ -28,8 +28,7 @@ next_index_eq(const struct ip_set_setlist *map, int i, ip_set_id_t index)
 }
 
 static int
-setlist_utest(struct ip_set *set, const void *data, u_int32_t size,
-	       ip_set_ip_t *hash_ip)
+setlist_utest(struct ip_set *set, const void *data, u_int32_t size)
 {
 	const struct ip_set_setlist *map = set->data;
 	const struct ip_set_req_setlist *req = data;
@@ -72,10 +71,8 @@ finish:
 
 static int
 setlist_ktest(struct ip_set *set,
-	       const struct sk_buff *skb,
-	       ip_set_ip_t *hash_ip,
-	       const u_int32_t *flags,
-	       unsigned char index)
+	      const struct sk_buff *skb,
+	      const u_int32_t *flags)
 {
 	struct ip_set_setlist *map = set->data;
 	int i, res = 0;
@@ -107,8 +104,7 @@ insert_setlist(struct ip_set_setlist *map, int i, ip_set_id_t index)
 }
 
 static int
-setlist_uadd(struct ip_set *set, const void *data, u_int32_t size,
-	     ip_set_ip_t *hash_ip)
+setlist_uadd(struct ip_set *set, const void *data, u_int32_t size)
 {
 	struct ip_set_setlist *map = set->data;
 	const struct ip_set_req_setlist *req = data;
@@ -156,9 +152,7 @@ finish:
 static int
 setlist_kadd(struct ip_set *set,
 	     const struct sk_buff *skb,
-	     ip_set_ip_t *hash_ip,
-	     const u_int32_t *flags,
-	     unsigned char index)
+	     const u_int32_t *flags)
 {
 	struct ip_set_setlist *map = set->data;
 	int i, res = -EINVAL;
@@ -182,8 +176,7 @@ unshift_setlist(struct ip_set_setlist *map, int i)
 }
 
 static int
-setlist_udel(struct ip_set *set, const void *data, u_int32_t size,
-	     ip_set_ip_t *hash_ip)
+setlist_udel(struct ip_set *set, const void *data, u_int32_t size)
 {
 	struct ip_set_setlist *map = set->data;
 	const struct ip_set_req_setlist *req = data;
@@ -234,9 +227,7 @@ finish:
 static int
 setlist_kdel(struct ip_set *set,
 	     const struct sk_buff *skb,
-	     ip_set_ip_t *hash_ip,
-	     const u_int32_t *flags,
-	     unsigned char index)
+	     const u_int32_t *flags)
 {
 	struct ip_set_setlist *map = set->data;
 	int i, res = -EINVAL;
@@ -304,21 +295,24 @@ setlist_list_header(const struct ip_set *set, void *data)
 }
 
 static int
-setlist_list_members_size(const struct ip_set *set)
+setlist_list_members_size(const struct ip_set *set, char dont_align)
 {
 	const struct ip_set_setlist *map = set->data;
 	
-	return map->size * sizeof(ip_set_id_t);
+	return map->size * IPSET_VALIGN(sizeof(ip_set_id_t), dont_align);
 }
 
 static void
-setlist_list_members(const struct ip_set *set, void *data)
+setlist_list_members(const struct ip_set *set, void *data, char dont_align)
 {
 	struct ip_set_setlist *map = set->data;
+	ip_set_id_t *d;
 	int i;
 	
-	for (i = 0; i < map->size; i++)
-		*((ip_set_id_t *)data + i) = ip_set_id(map->index[i]);
+	for (i = 0; i < map->size; i++) {
+		d = data + i * IPSET_VALIGN(sizeof(ip_set_id_t), dont_align);
+		*d = ip_set_id(map->index[i]);
+	}
 }
 
 IP_SET_TYPE(setlist, IPSET_TYPE_SETNAME | IPSET_DATA_SINGLE)

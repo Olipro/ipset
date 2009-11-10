@@ -31,7 +31,7 @@
 
 /* Initialize the create. */
 static void
-create_init(void *data)
+nethash_create_init(void *data)
 {
 	struct ip_set_req_nethash_create *mydata = data;
 
@@ -45,7 +45,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
+nethash_create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_nethash_create *mydata = data;
 	ip_set_ip_t value;
@@ -97,7 +97,7 @@ create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 
 /* Final check; exit if not ok. */
 static void
-create_final(void *data UNUSED, unsigned int flags UNUSED)
+nethash_create_final(void *data UNUSED, unsigned int flags UNUSED)
 {
 }
 
@@ -111,7 +111,7 @@ static const struct option create_opts[] = {
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(int cmd, const char *arg, void *data)
+nethash_adt_parser(int cmd, const char *arg, void *data)
 {
 	struct ip_set_req_nethash *mydata = data;
 	char *saved = ipset_strdup(arg);
@@ -148,7 +148,7 @@ adt_parser(int cmd, const char *arg, void *data)
  */
 
 static void
-initheader(struct set *set, const void *data)
+nethash_initheader(struct set *set, const void *data)
 {
 	const struct ip_set_req_nethash_create *header = data;
 	struct ip_set_nethash *map = set->settype->header;
@@ -160,7 +160,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned options UNUSED)
+nethash_printheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_nethash *mysetdata = set->settype->header;
 
@@ -224,7 +224,8 @@ unpack_ip_tostring(ip_set_ip_t ip, unsigned options UNUSED)
 }
 
 static void
-printips(struct set *set UNUSED, void *data, u_int32_t len, unsigned options)
+nethash_printips(struct set *set UNUSED, void *data, u_int32_t len,
+		 unsigned options, char dont_align)
 {
 	size_t offset = 0;
 	ip_set_ip_t *ip;
@@ -233,12 +234,12 @@ printips(struct set *set UNUSED, void *data, u_int32_t len, unsigned options)
 		ip = data + offset;
 		if (*ip)
 			printf("%s\n", unpack_ip_tostring(*ip, options));
-		offset += sizeof(ip_set_ip_t);
+		offset += IPSET_VALIGN(sizeof(ip_set_ip_t), dont_align);
 	}
 }
 
 static void
-saveheader(struct set *set, unsigned options UNUSED)
+nethash_saveheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_nethash *mysetdata = set->settype->header;
 
@@ -249,7 +250,8 @@ saveheader(struct set *set, unsigned options UNUSED)
 
 /* Print save for an IP */
 static void
-saveips(struct set *set UNUSED, void *data, u_int32_t len, unsigned options)
+nethash_saveips(struct set *set UNUSED, void *data, u_int32_t len,
+		unsigned options, char dont_align)
 {
 	size_t offset = 0;
 	ip_set_ip_t *ip;
@@ -259,40 +261,12 @@ saveips(struct set *set UNUSED, void *data, u_int32_t len, unsigned options)
 		if (*ip)
 			printf("-A %s %s\n", set->name, 
 			       unpack_ip_tostring(*ip, options));
-		offset += sizeof(ip_set_ip_t);
+		offset += IPSET_VALIGN(sizeof(ip_set_ip_t), dont_align);
 	}
 }
 
-static char *
-net_tostring(struct set *set UNUSED, ip_set_ip_t ip, unsigned options)
-{
-	return unpack_ip_tostring(ip, options);
-}
-
 static void
-parse_net(const char *str, ip_set_ip_t *ip)
-{
-	char *saved = ipset_strdup(str);
-	char *ptr, *tmp = saved;
-	ip_set_ip_t cidr;
-
-	ptr = strsep(&tmp, "/");
-	
-	if (tmp == NULL)
-		exit_error(PARAMETER_PROBLEM,
-			   "Missing cidr from `%s'", str);
-
-	if (string_to_number(tmp, 1, 31, &cidr))
-		exit_error(PARAMETER_PROBLEM,
-			   "Out of range cidr `%s' specified", str);
-	
-	parse_ip(ptr, ip);
-	ipset_free(saved);
-	
-	*ip = pack_ip_cidr(*ip, cidr);
-}
-
-static void usage(void)
+nethash_usage(void)
 {
 	printf
 	    ("-N set nethash [--hashsize hashsize] [--probes probes ]\n"
@@ -308,29 +282,25 @@ static struct settype settype_nethash = {
 
 	/* Create */
 	.create_size = sizeof(struct ip_set_req_nethash_create),
-	.create_init = &create_init,
-	.create_parse = &create_parse,
-	.create_final = &create_final,
+	.create_init = nethash_create_init,
+	.create_parse = nethash_create_parse,
+	.create_final = nethash_create_final,
 	.create_opts = create_opts,
 
 	/* Add/del/test */
 	.adt_size = sizeof(struct ip_set_req_nethash),
-	.adt_parser = &adt_parser,
+	.adt_parser = nethash_adt_parser,
 
 	/* Printing */
 	.header_size = sizeof(struct ip_set_nethash),
-	.initheader = &initheader,
-	.printheader = &printheader,
-	.printips = &printips,		/* We only have the unsorted version */
-	.printips_sorted = &printips,
-	.saveheader = &saveheader,
-	.saveips = &saveips,
+	.initheader = nethash_initheader,
+	.printheader = nethash_printheader,
+	.printips = nethash_printips,
+	.printips_sorted = nethash_printips,
+	.saveheader = nethash_saveheader,
+	.saveips = nethash_saveips,
 	
-	/* Bindings */
-	.bindip_tostring = &net_tostring,
-	.bindip_parse = &parse_net,
-
-	.usage = &usage,
+	.usage = nethash_usage,
 };
 
 CONSTRUCTOR(nethash)

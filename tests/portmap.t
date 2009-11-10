@@ -18,6 +18,10 @@
 1 ipset -A test 0
 # Range: Try to add value after upper boundary
 1 ipset -A test 1025
+# Range: List set
+0 ipset -L test > .foo
+# Range: Check listing
+0 diff .foo portmap.t.list0 && rm .foo
 # Range: Flush test set
 0 ipset -F test
 # Range: Delete test set
@@ -34,6 +38,10 @@
 0 ipset -T test 65535
 # Full: Test value not added to the set
 1 ipset -T test 1
+# Full: List set
+0 ipset -L test > .foo
+# Full: Check listing
+0 diff .foo portmap.t.list1 && rm .foo
 # Full: Flush test set
 0 ipset -F test
 # Full: Delete test set

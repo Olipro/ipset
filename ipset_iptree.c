@@ -29,7 +29,7 @@
 
 /* Initialize the create. */
 static void
-create_init(void *data)
+iptree_create_init(void *data)
 {
 	struct ip_set_req_iptree_create *mydata = data;
 
@@ -39,7 +39,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
+iptree_create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_iptree_create *mydata = data;
 
@@ -63,7 +63,7 @@ create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 
 /* Final check; exit if not ok. */
 static void
-create_final(void *data UNUSED, unsigned int flags UNUSED)
+iptree_create_final(void *data UNUSED, unsigned int flags UNUSED)
 {
 }
 
@@ -75,7 +75,7 @@ static const struct option create_opts[] = {
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(int cmd UNUSED, const char *arg, void *data)
+iptree_adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_iptree *mydata = data;
 	char *saved = ipset_strdup(arg);
@@ -104,7 +104,7 @@ adt_parser(int cmd UNUSED, const char *arg, void *data)
  */
 
 static void
-initheader(struct set *set, const void *data)
+iptree_initheader(struct set *set, const void *data)
 {
 	const struct ip_set_req_iptree_create *header = data;
 	struct ip_set_iptree *map = set->settype->header;
@@ -113,7 +113,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned options UNUSED)
+iptree_printheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_iptree *mysetdata = set->settype->header;
 
@@ -123,7 +123,8 @@ printheader(struct set *set, unsigned options UNUSED)
 }
 
 static void
-printips_sorted(struct set *set, void *data, u_int32_t len, unsigned options)
+iptree_printips_sorted(struct set *set, void *data, u_int32_t len,
+		       unsigned options, char dont_align)
 {
 	struct ip_set_iptree *mysetdata = set->settype->header;
 	struct ip_set_req_iptree *req;
@@ -136,12 +137,12 @@ printips_sorted(struct set *set, void *data, u_int32_t len, unsigned options)
 					  req->timeout);
 		else
 			printf("%s\n", ip_tostring(req->ip, options));
-		offset += sizeof(struct ip_set_req_iptree);
+		offset += IPSET_VALIGN(sizeof(struct ip_set_req_iptree), dont_align);
 	}
 }
 
 static void
-saveheader(struct set *set, unsigned options UNUSED)
+iptree_saveheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_iptree *mysetdata = set->settype->header;
 
@@ -155,7 +156,8 @@ saveheader(struct set *set, unsigned options UNUSED)
 }
 
 static void
-saveips(struct set *set, void *data, u_int32_t len, unsigned options)
+iptree_saveips(struct set *set, void *data, u_int32_t len,
+	       unsigned options, char dont_align)
 {
 	struct ip_set_iptree *mysetdata = set->settype->header;
 	struct ip_set_req_iptree *req;
@@ -174,11 +176,12 @@ saveips(struct set *set, void *data, u_int32_t len, unsigned options)
 			printf("-A %s %s\n", 
 				set->name,
 				ip_tostring(req->ip, options));
-		offset += sizeof(struct ip_set_req_iptree);
+		offset += IPSET_VALIGN(sizeof(struct ip_set_req_iptree), dont_align);
 	}
 }
 
-static void usage(void)
+static void
+iptree_usage(void)
 {
 	printf
 	    ("-N set iptree [--timeout value]\n"
@@ -193,29 +196,25 @@ static struct settype settype_iptree = {
 
 	/* Create */
 	.create_size = sizeof(struct ip_set_req_iptree_create),
-	.create_init = &create_init,
-	.create_parse = &create_parse,
-	.create_final = &create_final,
+	.create_init = iptree_create_init,
+	.create_parse = iptree_create_parse,
+	.create_final = iptree_create_final,
 	.create_opts = create_opts,
 
 	/* Add/del/test */
 	.adt_size = sizeof(struct ip_set_req_iptree),
-	.adt_parser = &adt_parser,
+	.adt_parser = iptree_adt_parser,
 
 	/* Printing */
 	.header_size = sizeof(struct ip_set_iptree),
-	.initheader = &initheader,
-	.printheader = &printheader,
-	.printips = &printips_sorted,	/* We only have sorted version */
-	.printips_sorted = &printips_sorted,
-	.saveheader = &saveheader,
-	.saveips = &saveips,
+	.initheader = iptree_initheader,
+	.printheader = iptree_printheader,
+	.printips = iptree_printips_sorted,	/* We only have sorted version */
+	.printips_sorted = iptree_printips_sorted,
+	.saveheader = iptree_saveheader,
+	.saveips = iptree_saveips,
 	
-	/* Bindings */
-	.bindip_tostring = &binding_ip_tostring,
-	.bindip_parse	= &parse_ip,
-
-	.usage = &usage,
+	.usage = iptree_usage,
 };
 
 CONSTRUCTOR(iptree)

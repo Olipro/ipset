@@ -4,7 +4,7 @@
 #include <linux/netfilter_ipv4/ip_set.h>
 #include <linux/netfilter_ipv4/ip_set_bitmaps.h>
 
-#define SETTYPE_NAME	"portmap"
+#define SETTYPE_NAME		"portmap"
 
 struct ip_set_portmap {
 	void *members;			/* the portmap proper */

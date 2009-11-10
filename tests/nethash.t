@@ -16,18 +16,22 @@
 0 ipset -T test 0.0.0.0/1
 # Range: Delete almost zero valued element
 0 ipset -D test 0.0.0.0/1
-# Add first random network
+# Range:  Add first random network
 0 ipset -A test 2.0.0.1/24
-# Add second random network
+# Range:  Add second random network
 0 ipset -A test 192.168.68.69/27
-# Test first random value
+# Range:  Test first random value
 0 ipset -T test 2.0.0.255
-# Test second random value
+# Range:  Test second random value
 0 ipset -T test 192.168.68.95
-# Test value not added to the set
+# Range:  Test value not added to the set
 1 ipset -T test 2.0.1.0
-# Try to add IP address
+# Range:  Try to add IP address
 2 ipset -A test 2.0.0.1
+# Range: List set
+0 ipset -L test > .foo0 && ./sort.sh .foo0
+# Range: Check listing
+0 diff .foo nethash.t.list0 && rm .foo
 # Flush test set
 0 ipset -F test
 # Delete test set

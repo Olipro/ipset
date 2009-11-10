@@ -35,7 +35,7 @@
 
 /* Initialize the create. */
 static void
-create_init(void *data)
+ipmap_create_init(void *data)
 {
 	struct ip_set_req_ipmap_create *mydata = data;
 
@@ -45,7 +45,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
+ipmap_create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_ipmap_create *mydata = data;
 	unsigned int bits;
@@ -115,7 +115,7 @@ create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 
 /* Final check; exit if not ok. */
 static void
-create_final(void *data, unsigned int flags)
+ipmap_create_final(void *data, unsigned int flags)
 {
 	struct ip_set_req_ipmap_create *mydata = data;
 	ip_set_ip_t range;
@@ -188,7 +188,7 @@ static const struct option create_opts[] = {
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(int cmd UNUSED, const char *arg, void *data)
+ipmap_adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_ipmap *mydata = data;
 
@@ -205,7 +205,7 @@ adt_parser(int cmd UNUSED, const char *arg, void *data)
  */
 
 static void
-initheader(struct set *set, const void *data)
+ipmap_initheader(struct set *set, const void *data)
 {
 	const struct ip_set_req_ipmap_create *header = data;
 	struct ip_set_ipmap *map = set->settype->header;
@@ -234,7 +234,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned options)
+ipmap_printheader(struct set *set, unsigned options)
 {
 	struct ip_set_ipmap *mysetdata = set->settype->header;
 
@@ -246,9 +246,9 @@ printheader(struct set *set, unsigned options)
 		printf(" netmask: %d\n", mask_to_bits(mysetdata->netmask));
 }
 
-static void
-printips_sorted(struct set *set, void *data,
-		u_int32_t len UNUSED, unsigned options)
+static inline void
+__ipmap_printips_sorted(struct set *set, void *data,
+			u_int32_t len UNUSED, unsigned options)
 {
 	struct ip_set_ipmap *mysetdata = set->settype->header;
 	ip_set_ip_t id;
@@ -262,7 +262,26 @@ printips_sorted(struct set *set, void *data,
 }
 
 static void
-saveheader(struct set *set, unsigned options)
+ipmap_printips_sorted(struct set *set, void *data,
+		      u_int32_t len, unsigned options,
+		      char dont_align)
+{
+	ip_set_ip_t *ip;
+	size_t offset = 0;
+	
+	if (dont_align)
+		return __ipmap_printips_sorted(set, data, len, options);
+	
+	while (offset < len) {
+		DP("offset: %zu, len %u\n", offset, len);
+		ip = data + offset;
+		printf("%s\n", ip_tostring(*ip, options));
+		offset += IPSET_ALIGN(sizeof(ip_set_ip_t));
+	}
+}
+
+static void
+ipmap_saveheader(struct set *set, unsigned options)
 {
 	struct ip_set_ipmap *mysetdata = set->settype->header;
 
@@ -278,8 +297,9 @@ saveheader(struct set *set, unsigned options)
 		       mask_to_bits(mysetdata->netmask));
 }
 
-static void
-saveips(struct set *set, void *data, u_int32_t len UNUSED, unsigned options)
+static inline void
+__ipmap_saveips(struct set *set, void *data, u_int32_t len UNUSED,
+		unsigned options)
 {
 	struct ip_set_ipmap *mysetdata = set->settype->header;
 	ip_set_ip_t id;
@@ -294,7 +314,25 @@ saveips(struct set *set, void *data, u_int32_t len UNUSED, unsigned options)
 					   options));
 }
 
-static void usage(void)
+static void
+ipmap_saveips(struct set *set, void *data, u_int32_t len,
+	      unsigned options, char dont_align)
+{
+	ip_set_ip_t *ip;
+	size_t offset = 0;
+	
+	if (dont_align)
+		return __ipmap_saveips(set, data, len, options);
+	
+	while (offset < len) {
+		ip = data + offset;
+		printf("-A %s %s\n", set->name, ip_tostring(*ip, options));
+		offset += IPSET_ALIGN(sizeof(ip_set_ip_t));
+	}
+}
+
+static void
+ipmap_usage(void)
 {
 	printf
 	    ("-N set ipmap --from IP --to IP [--netmask CIDR-netmask]\n"
@@ -310,29 +348,25 @@ static struct settype settype_ipmap = {
 
 	/* Create */
 	.create_size = sizeof(struct ip_set_req_ipmap_create),
-	.create_init = &create_init,
-	.create_parse = &create_parse,
-	.create_final = &create_final,
+	.create_init = ipmap_create_init,
+	.create_parse = ipmap_create_parse,
+	.create_final = ipmap_create_final,
 	.create_opts = create_opts,
 
 	/* Add/del/test */
 	.adt_size = sizeof(struct ip_set_req_ipmap),
-	.adt_parser = &adt_parser,
+	.adt_parser = ipmap_adt_parser,
 
 	/* Printing */
 	.header_size = sizeof(struct ip_set_ipmap),
-	.initheader = &initheader,
-	.printheader = &printheader,
-	.printips = &printips_sorted,	/* We only have sorted version */
-	.printips_sorted = &printips_sorted,
-	.saveheader = &saveheader,
-	.saveips = &saveips,
+	.initheader = ipmap_initheader,
+	.printheader = ipmap_printheader,
+	.printips = ipmap_printips_sorted,
+	.printips_sorted = ipmap_printips_sorted,
+	.saveheader = ipmap_saveheader,
+	.saveips = ipmap_saveips,
 	
-	/* Bindings */
-	.bindip_tostring = &binding_ip_tostring,
-	.bindip_parse	= &parse_ip,
-
-	.usage = &usage,
+	.usage = ipmap_usage,
 };
 
 CONSTRUCTOR(ipmap)

@@ -26,7 +26,7 @@
 #define OPT_CREATE_GC 0x1
 
 static void
-create_init(void *data)
+iptreemap_create_init(void *data)
 {
 	struct ip_set_req_iptreemap_create *mydata = data;
 
@@ -34,7 +34,8 @@ create_init(void *data)
 }
 
 static int
-create_parse(int c, char *argv[] UNUSED, void *data, unsigned int *flags)
+iptreemap_create_parse(int c, char *argv[] UNUSED, void *data,
+		       unsigned int *flags)
 {
 	struct ip_set_req_iptreemap_create *mydata = data;
 
@@ -53,7 +54,7 @@ create_parse(int c, char *argv[] UNUSED, void *data, unsigned int *flags)
 }
 
 static void
-create_final(void *data UNUSED, unsigned int flags UNUSED)
+iptreemap_create_final(void *data UNUSED, unsigned int flags UNUSED)
 {
 }
 
@@ -63,7 +64,7 @@ static const struct option create_opts[] = {
 };
 
 static ip_set_ip_t
-adt_parser(int cmd UNUSED, const char *arg, void *data)
+iptreemap_adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_iptreemap *mydata = data;
 	ip_set_ip_t mask;
@@ -94,7 +95,7 @@ adt_parser(int cmd UNUSED, const char *arg, void *data)
 }
 
 static void
-initheader(struct set *set, const void *data)
+iptreemap_initheader(struct set *set, const void *data)
 {
 	const struct ip_set_req_iptreemap_create *header = data;
 	struct ip_set_iptreemap *map = set->settype->header;
@@ -103,7 +104,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned int options UNUSED)
+iptreemap_printheader(struct set *set, unsigned int options UNUSED)
 {
 	struct ip_set_iptreemap *mysetdata = set->settype->header;
 
@@ -114,8 +115,8 @@ printheader(struct set *set, unsigned int options UNUSED)
 }
 
 static void
-printips_sorted(struct set *set UNUSED, void *data,
-		u_int32_t len, unsigned int options)
+iptreemap_printips_sorted(struct set *set UNUSED, void *data,
+			  u_int32_t len, unsigned int options, char dont_align)
 {
 	struct ip_set_req_iptreemap *req;
 	size_t offset = 0;
@@ -128,12 +129,12 @@ printips_sorted(struct set *set UNUSED, void *data,
 			printf("-%s", ip_tostring(req->end, options));
 		printf("\n");
 
-		offset += sizeof(struct ip_set_req_iptreemap);
+		offset += IPSET_VALIGN(sizeof(struct ip_set_req_iptreemap), dont_align);
 	}
 }
 
 static void
-saveheader(struct set *set, unsigned int options UNUSED)
+iptreemap_saveheader(struct set *set, unsigned int options UNUSED)
 {
 	struct ip_set_iptreemap *mysetdata = set->settype->header;
 
@@ -146,8 +147,8 @@ saveheader(struct set *set, unsigned int options UNUSED)
 }
 
 static void
-saveips(struct set *set UNUSED, void *data,
-	u_int32_t len, unsigned int options)
+iptreemap_saveips(struct set *set UNUSED, void *data,
+		  u_int32_t len, unsigned int options, char dont_align)
 {
 	struct ip_set_req_iptreemap *req;
 	size_t offset = 0;
@@ -162,12 +163,12 @@ saveips(struct set *set UNUSED, void *data,
 
 		printf("\n");
 
-		offset += sizeof(struct ip_set_req_iptreemap);
+		offset += IPSET_VALIGN(sizeof(struct ip_set_req_iptreemap), dont_align);
 	}
 }
 
 static void
-usage(void)
+iptreemap_usage(void)
 {
 	printf(
 		"-N set iptreemap --gc interval\n"
@@ -182,26 +183,23 @@ static struct settype settype_iptreemap = {
 	.protocol_version = IP_SET_PROTOCOL_VERSION,
 
 	.create_size = sizeof(struct ip_set_req_iptreemap_create),
-	.create_init = &create_init,
-	.create_parse = &create_parse,
-	.create_final = &create_final,
+	.create_init = iptreemap_create_init,
+	.create_parse = iptreemap_create_parse,
+	.create_final = iptreemap_create_final,
 	.create_opts = create_opts,
 
 	.adt_size = sizeof(struct ip_set_req_iptreemap),
-	.adt_parser = &adt_parser,
+	.adt_parser = iptreemap_adt_parser,
 
 	.header_size = sizeof(struct ip_set_iptreemap),
-	.initheader = &initheader,
-	.printheader = &printheader,
-	.printips = &printips_sorted,
-	.printips_sorted = &printips_sorted,
-	.saveheader = &saveheader,
-	.saveips = &saveips,
+	.initheader = iptreemap_initheader,
+	.printheader = iptreemap_printheader,
+	.printips = iptreemap_printips_sorted,
+	.printips_sorted = iptreemap_printips_sorted,
+	.saveheader = iptreemap_saveheader,
+	.saveips = iptreemap_saveips,
 
-	.bindip_tostring = &binding_ip_tostring,
-	.bindip_parse = &parse_ip,
-
-	.usage = &usage,
+	.usage = iptreemap_usage,
 };
 
 CONSTRUCTOR(iptreemap)

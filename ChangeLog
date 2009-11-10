@@ -1,3 +1,8 @@
+4.0
+  - New protocol is introduced to handle aligment issues properly
+    (bug reported by Georg Chini)
+  - Binding support is removed
+
 3.1
   - Correct format specifiers and change %i to %d (Jan Engelhardt)
 

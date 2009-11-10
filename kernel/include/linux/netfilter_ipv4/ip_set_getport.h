@@ -7,7 +7,7 @@
 
 /* We must handle non-linear skbs */
 static inline ip_set_ip_t
-get_port(const struct sk_buff *skb, u_int32_t flags)
+get_port(const struct sk_buff *skb, const u_int32_t *flags)
 {
 	struct iphdr *iph = ip_hdr(skb);
 	u_int16_t offset = ntohs(iph->frag_off) & IP_OFFSET;
@@ -23,7 +23,7 @@ get_port(const struct sk_buff *skb, u_int32_t flags)
 			/* No choice either */
 			return INVALID_PORT;
 	     	
-	     	return ntohs(flags & IPSET_SRC ?
+	     	return ntohs(flags[0] & IPSET_SRC ?
 			     tcph.source : tcph.dest);
 	    }
 	case IPPROTO_UDP: {
@@ -36,7 +36,7 @@ get_port(const struct sk_buff *skb, u_int32_t flags)
 			/* No choice either */
 			return INVALID_PORT;
 	     	
-	     	return ntohs(flags & IPSET_SRC ?
+	     	return ntohs(flags[0] & IPSET_SRC ?
 			     udph.source : udph.dest);
 	    }
 	default:

@@ -32,7 +32,7 @@
 
 /* Initialize the create. */
 static void
-create_init(void *data)
+iphash_create_init(void *data)
 {
 	struct ip_set_req_iphash_create *mydata = data;
 
@@ -48,7 +48,7 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
+iphash_create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 {
 	struct ip_set_req_iphash_create *mydata =
 	    (struct ip_set_req_iphash_create *) data;
@@ -117,7 +117,7 @@ create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags)
 
 /* Final check; exit if not ok. */
 static void
-create_final(void *data UNUSED, unsigned int flags UNUSED)
+iphash_create_final(void *data UNUSED, unsigned int flags UNUSED)
 {
 }
 
@@ -132,7 +132,7 @@ static const struct option create_opts[] = {
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(int cmd UNUSED, const char *arg, void *data)
+iphash_adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_iphash *mydata = data;
 
@@ -149,7 +149,7 @@ adt_parser(int cmd UNUSED, const char *arg, void *data)
  */
 
 static void
-initheader(struct set *set, const void *data)
+iphash_initheader(struct set *set, const void *data)
 {
 	const struct ip_set_req_iphash_create *header = data;
 	struct ip_set_iphash *map = set->settype->header;
@@ -178,7 +178,7 @@ mask_to_bits(ip_set_ip_t mask)
 }
 
 static void
-printheader(struct set *set, unsigned options UNUSED)
+iphash_printheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_iphash *mysetdata = set->settype->header;
 
@@ -192,7 +192,8 @@ printheader(struct set *set, unsigned options UNUSED)
 }
 
 static void
-printips(struct set *set UNUSED, void *data, u_int32_t len, unsigned options)
+iphash_printips(struct set *set UNUSED, void *data, u_int32_t len,
+		unsigned options, char dont_align)
 {
 	size_t offset = 0;
 	ip_set_ip_t *ip;
@@ -201,12 +202,12 @@ printips(struct set *set UNUSED, void *data, u_int32_t len, unsigned options)
 		ip = data + offset;
 		if (*ip)
 			printf("%s\n", ip_tostring(*ip, options));
-		offset += sizeof(ip_set_ip_t);
+		offset += IPSET_VALIGN(sizeof(ip_set_ip_t), dont_align);
 	}
 }
 
 static void
-saveheader(struct set *set, unsigned options UNUSED)
+iphash_saveheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_iphash *mysetdata = set->settype->header;
 
@@ -221,7 +222,8 @@ saveheader(struct set *set, unsigned options UNUSED)
 
 /* Print save for an IP */
 static void
-saveips(struct set *set UNUSED, void *data, u_int32_t len, unsigned options)
+iphash_saveips(struct set *set UNUSED, void *data, u_int32_t len,
+	       unsigned options, char dont_align)
 {
 	size_t offset = 0;
 	ip_set_ip_t *ip;
@@ -231,11 +233,12 @@ saveips(struct set *set UNUSED, void *data, u_int32_t len, unsigned options)
 		if (*ip)
 			printf("-A %s %s\n", set->name, 
 			       ip_tostring(*ip, options));
-		offset += sizeof(ip_set_ip_t);
+		offset += IPSET_VALIGN(sizeof(ip_set_ip_t), dont_align);
 	}
 }
 
-static void usage(void)
+static void
+iphash_usage(void)
 {
 	printf
 	    ("-N set iphash [--hashsize hashsize] [--probes probes ]\n"
@@ -251,29 +254,25 @@ static struct settype settype_iphash = {
 
 	/* Create */
 	.create_size = sizeof(struct ip_set_req_iphash_create),
-	.create_init = &create_init,
-	.create_parse = &create_parse,
-	.create_final = &create_final,
+	.create_init = iphash_create_init,
+	.create_parse = iphash_create_parse,
+	.create_final = iphash_create_final,
 	.create_opts = create_opts,
 
 	/* Add/del/test */
 	.adt_size = sizeof(struct ip_set_req_iphash),
-	.adt_parser = &adt_parser,
+	.adt_parser = iphash_adt_parser,
 
 	/* Printing */
 	.header_size = sizeof(struct ip_set_iphash),
-	.initheader = &initheader,
-	.printheader = &printheader,
-	.printips = &printips,		/* We only have the unsorted version */
-	.printips_sorted = &printips,
-	.saveheader = &saveheader,
-	.saveips = &saveips,
+	.initheader = iphash_initheader,
+	.printheader = iphash_printheader,
+	.printips = iphash_printips,
+	.printips_sorted = iphash_printips,
+	.saveheader = iphash_saveheader,
+	.saveips = iphash_saveips,
 	
-	/* Bindings */
-	.bindip_tostring = &binding_ip_tostring,
-	.bindip_parse = &parse_ip,
-	
-	.usage = &usage,
+	.usage = iphash_usage,
 };
 
 CONSTRUCTOR(iphash)

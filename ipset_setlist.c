@@ -27,7 +27,7 @@
 
 /* Initialize the create. */
 static void
-create_init(void *data)
+setlist_create_init(void *data)
 {
 	struct ip_set_req_setlist_create *mydata = data;
 	
@@ -36,7 +36,8 @@ create_init(void *data)
 
 /* Function which parses command options; returns true if it ate an option */
 static int
-create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags UNUSED)
+setlist_create_parse(int c, char *argv[] UNUSED, void *data,
+		     unsigned *flags UNUSED)
 {
 	struct ip_set_req_setlist_create *mydata = data;
 	unsigned int size;
@@ -57,7 +58,7 @@ create_parse(int c, char *argv[] UNUSED, void *data, unsigned *flags UNUSED)
 
 /* Final check; exit if not ok. */
 static void
-create_final(void *data UNUSED, unsigned int flags UNUSED)
+setlist_create_final(void *data UNUSED, unsigned int flags UNUSED)
 {
 }
 
@@ -67,7 +68,8 @@ static const struct option create_opts[] = {
 	{NULL},
 };
 
-static void check_setname(const char *name)
+static void
+check_setname(const char *name)
 {
 	if (strlen(name) > IP_SET_MAXNAMELEN - 1)
 		exit_error(PARAMETER_PROBLEM,
@@ -77,7 +79,7 @@ static void check_setname(const char *name)
 
 /* Add, del, test parser */
 static ip_set_ip_t
-adt_parser(int cmd UNUSED, const char *arg, void *data)
+setlist_adt_parser(int cmd UNUSED, const char *arg, void *data)
 {
 	struct ip_set_req_setlist *mydata = data;
 	char *saved = ipset_strdup(arg);
@@ -115,7 +117,7 @@ adt_parser(int cmd UNUSED, const char *arg, void *data)
  */
 
 static void
-initheader(struct set *set, const void *data)
+setlist_initheader(struct set *set, const void *data)
 {
 	const struct ip_set_req_setlist_create *header = data;
 	struct ip_set_setlist *map = set->settype->header;
@@ -125,7 +127,7 @@ initheader(struct set *set, const void *data)
 }
 
 static void
-printheader(struct set *set, unsigned options UNUSED)
+setlist_printheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_setlist *mysetdata = set->settype->header;
 
@@ -133,25 +135,29 @@ printheader(struct set *set, unsigned options UNUSED)
 }
 
 static void
-printips_sorted(struct set *set, void *data,
-		u_int32_t len UNUSED, unsigned options UNUSED)
+setlist_printips_sorted(struct set *set, void *data,
+			u_int32_t len UNUSED, unsigned options UNUSED,
+			char dont_align)
 {
 	struct ip_set_setlist *mysetdata = set->settype->header;
-	int i;
-	ip_set_id_t id;
+	int i, asize;
+	ip_set_id_t *id;
 	struct set *elem;
 
+	asize = IPSET_VALIGN(sizeof(ip_set_id_t), dont_align);
 	for (i = 0; i < mysetdata->size; i++ ) {
-		id = *((ip_set_id_t *)data + i);
-		if (id == IP_SET_INVALID_ID)
+		DP("Try %u", i);
+		id = (ip_set_id_t *)(data + i * asize);
+		DP("Try %u, check", i);
+		if (*id == IP_SET_INVALID_ID)
 			return;
-		elem = set_find_byid(id);
+		elem = set_find_byid(*id);
 		printf("%s\n", elem->name);
 	}
 }
 
 static void
-saveheader(struct set *set, unsigned options UNUSED)
+setlist_saveheader(struct set *set, unsigned options UNUSED)
 {
 	struct ip_set_setlist *mysetdata = set->settype->header;
 
@@ -161,24 +167,26 @@ saveheader(struct set *set, unsigned options UNUSED)
 }
 
 static void
-saveips(struct set *set, void *data,
-	u_int32_t len UNUSED, unsigned options UNUSED)
+setlist_saveips(struct set *set, void *data,
+		u_int32_t len UNUSED, unsigned options UNUSED, char dont_align)
 {
 	struct ip_set_setlist *mysetdata = set->settype->header;
-	int i;
-	ip_set_id_t id;
+	int i, asize;
+	ip_set_id_t *id;
 	struct set *elem;
 
+	asize = IPSET_VALIGN(sizeof(ip_set_id_t), dont_align);
 	for (i = 0; i < mysetdata->size; i++ ) {
-		id = *((ip_set_id_t *)data + i);
-		if (id == IP_SET_INVALID_ID)
+		id = (ip_set_id_t *)(data + i * asize);
+		if (*id == IP_SET_INVALID_ID)
 			return;
-		elem = set_find_byid(id);
+		elem = set_find_byid(*id);
 		printf("-A %s %s\n", set->name, elem->name);
 	}
 }
 
-static void usage(void)
+static void
+setlist_usage(void)
 {
 	printf
 	    ("-N set setlist --size size\n"
@@ -193,25 +201,25 @@ static struct settype settype_setlist = {
 
 	/* Create */
 	.create_size = sizeof(struct ip_set_req_setlist_create),
-	.create_init = &create_init,
-	.create_parse = &create_parse,
-	.create_final = &create_final,
+	.create_init = setlist_create_init,
+	.create_parse = setlist_create_parse,
+	.create_final = setlist_create_final,
 	.create_opts = create_opts,
 
 	/* Add/del/test */
 	.adt_size = sizeof(struct ip_set_req_setlist),
-	.adt_parser = &adt_parser,
+	.adt_parser = setlist_adt_parser,
 
 	/* Printing */
 	.header_size = sizeof(struct ip_set_setlist),
-	.initheader = &initheader,
-	.printheader = &printheader,
-	.printips = &printips_sorted,	/* We only have sorted version */
-	.printips_sorted = &printips_sorted,
-	.saveheader = &saveheader,
-	.saveips = &saveips,
+	.initheader = setlist_initheader,
+	.printheader = setlist_printheader,
+	.printips = setlist_printips_sorted,
+	.printips_sorted = setlist_printips_sorted,
+	.saveheader = setlist_saveheader,
+	.saveips = setlist_saveips,
 	
-	.usage = &usage,
+	.usage = setlist_usage,
 };
 
 CONSTRUCTOR(setlist)

@@ -3,7 +3,7 @@
 
 #include <linux/netfilter_ipv4/ip_set.h>
 
-#define SETTYPE_NAME "iptree"
+#define SETTYPE_NAME		"iptree"
 
 struct ip_set_iptreed {
 	unsigned long expires[256];	   	/* x.x.x.ADDR */

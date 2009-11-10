@@ -31,7 +31,7 @@ static int limit = MAX_RANGE;
 	jhash_2words(ipport, ip1, *(map->initval + i))
 
 static inline __u32
-ipportnethash_id_cidr(struct ip_set *set, ip_set_ip_t *hash_ip,
+ipportnethash_id_cidr(struct ip_set *set,
 		      ip_set_ip_t ip, ip_set_ip_t port,
 		      ip_set_ip_t ip1, uint8_t cidr)
 {
@@ -40,18 +40,16 @@ ipportnethash_id_cidr(struct ip_set *set, ip_set_ip_t *hash_ip,
 	u_int16_t i;
 	struct ipportip *elem;
 
-	*hash_ip = pack_ip_port(map, ip, port);
-	DP("set: %s, ipport:%u.%u.%u.%u:%u, %u.%u.%u.%u",
-	   set->name, HIPQUAD(ip), port, HIPQUAD(*hash_ip));
+	ip = pack_ip_port(map, ip, port);
 	ip1 = pack_ip_cidr(ip1, cidr);
-	if (!(*hash_ip || ip1))
+	if (!(ip || ip1))
 		return UINT_MAX;
 	
 	for (i = 0; i < map->probes; i++) {
-		id = jhash_ip2(map, i, *hash_ip, ip1) % map->hashsize;
+		id = jhash_ip2(map, i, ip, ip1) % map->hashsize;
 		DP("hash key: %u", id);
 		elem = HARRAY_ELEM(map->members, struct ipportip *, id);
-		if (elem->ip == *hash_ip && elem->ip1 == ip1)
+		if (elem->ip == ip && elem->ip1 == ip1)
 			return id;
 		/* No shortcut - there can be deleted entries. */
 	}
@@ -59,7 +57,7 @@ ipportnethash_id_cidr(struct ip_set *set, ip_set_ip_t *hash_ip,
 }
 
 static inline __u32
-ipportnethash_id(struct ip_set *set, ip_set_ip_t *hash_ip,
+ipportnethash_id(struct ip_set *set,
 		 ip_set_ip_t ip, ip_set_ip_t port, ip_set_ip_t ip1)
 {
 	struct ip_set_ipportnethash *map = set->data;
@@ -67,8 +65,7 @@ ipportnethash_id(struct ip_set *set, ip_set_ip_t *hash_ip,
 	int i;
 
 	for (i = 0; i < 30 && map->cidr[i]; i++) {
-		id = ipportnethash_id_cidr(set, hash_ip, ip, port, ip1, 
-					   map->cidr[i]);
+		id = ipportnethash_id_cidr(set, ip, port, ip1, map->cidr[i]);
 		if (id != UINT_MAX)
 			break;
 	}
@@ -76,7 +73,7 @@ ipportnethash_id(struct ip_set *set, ip_set_ip_t *hash_ip,
 }
 
 static inline int
-ipportnethash_test_cidr(struct ip_set *set, ip_set_ip_t *hash_ip,
+ipportnethash_test_cidr(struct ip_set *set,
 			ip_set_ip_t ip, ip_set_ip_t port,
 			ip_set_ip_t ip1, uint8_t cidr)
 {
@@ -85,12 +82,11 @@ ipportnethash_test_cidr(struct ip_set *set, ip_set_ip_t *hash_ip,
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -ERANGE;
 
-	return (ipportnethash_id_cidr(set, hash_ip, ip, port, ip1,
-				      cidr) != UINT_MAX);
+	return (ipportnethash_id_cidr(set, ip, port, ip1, cidr) != UINT_MAX);
 }
 
 static inline int
-ipportnethash_test(struct ip_set *set, ip_set_ip_t *hash_ip,
+ipportnethash_test(struct ip_set *set,
 		  ip_set_ip_t ip, ip_set_ip_t port, ip_set_ip_t ip1)
 {
 	struct ip_set_ipportnethash *map = set->data;
@@ -98,32 +94,30 @@ ipportnethash_test(struct ip_set *set, ip_set_ip_t *hash_ip,
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -ERANGE;
 
-	return (ipportnethash_id(set, hash_ip, ip, port, ip1) != UINT_MAX);
+	return (ipportnethash_id(set, ip, port, ip1) != UINT_MAX);
 }
 
 static int
-ipportnethash_utest(struct ip_set *set, const void *data, u_int32_t size,
-		    ip_set_ip_t *hash_ip)
+ipportnethash_utest(struct ip_set *set, const void *data, u_int32_t size)
 {
 	const struct ip_set_req_ipportnethash *req = data;
 
 	if (req->cidr <= 0 || req->cidr > 32)
 		return -EINVAL;
 	return (req->cidr == 32 
-		? ipportnethash_test(set, hash_ip, req->ip, req->port,
-				     req->ip1)
-		: ipportnethash_test_cidr(set, hash_ip, req->ip, req->port,
+		? ipportnethash_test(set, req->ip, req->port, req->ip1)
+		: ipportnethash_test_cidr(set, req->ip, req->port,
 					  req->ip1, req->cidr));
 }
 
 #define KADT_CONDITION						\
 	ip_set_ip_t port, ip1;					\
 								\
-	if (flags[index+2] == 0)				\
+	if (flags[2] == 0)					\
 		return 0;					\
 								\
-	port = get_port(skb, flags[index+1]);			\
-	ip1 = ipaddr(skb, flags[index+2]);			\
+	port = get_port(skb, flags++);				\
+	ip1 = ipaddr(skb, flags++);				\
 								\
 	if (port == INVALID_PORT)				\
 		return 0;
@@ -132,23 +126,23 @@ KADT(ipportnethash, test, ipaddr, port, ip1)
 
 static inline int
 __ipportnet_add(struct ip_set_ipportnethash *map,
-		ip_set_ip_t hash_ip, ip_set_ip_t ip1)
+		ip_set_ip_t ip, ip_set_ip_t ip1)
 {
 	__u32 probe;
 	u_int16_t i;
 	struct ipportip *elem, *slot = NULL;
 
 	for (i = 0; i < map->probes; i++) {
-		probe = jhash_ip2(map, i, hash_ip, ip1) % map->hashsize;
+		probe = jhash_ip2(map, i, ip, ip1) % map->hashsize;
 		elem = HARRAY_ELEM(map->members, struct ipportip *, probe);
-		if (elem->ip == hash_ip && elem->ip1 == ip1)
+		if (elem->ip == ip && elem->ip1 == ip1)
 			return -EEXIST;
 		if (!(slot || elem->ip || elem->ip1))
 			slot = elem;
 		/* There can be deleted entries, must check all slots */
 	}
 	if (slot) {
-		slot->ip = hash_ip;
+		slot->ip = ip;
 		slot->ip1 = ip1;
 		map->elements++;
 		return 0;
@@ -165,7 +159,7 @@ __ipportnethash_add(struct ip_set_ipportnethash *map,
 }
 
 static inline int
-ipportnethash_add(struct ip_set *set, ip_set_ip_t *hash_ip,
+ipportnethash_add(struct ip_set *set,
 		 ip_set_ip_t ip, ip_set_ip_t port,
 		 ip_set_ip_t ip1, uint8_t cidr)
 {
@@ -182,12 +176,12 @@ ipportnethash_add(struct ip_set *set, ip_set_ip_t *hash_ip,
 	if (map->nets[cidr-1] == UINT16_MAX)
 		return -ERANGE;
 
-	*hash_ip = pack_ip_port(map, ip, port);
+	ip = pack_ip_port(map, ip, port);
 	ip1 = pack_ip_cidr(ip1, cidr);
-	if (!(*hash_ip || ip1))
+	if (!(ip || ip1))
 		return -ERANGE;
 	
-	ret =__ipportnet_add(map, *hash_ip, ip1);
+	ret =__ipportnet_add(map, ip, ip1);
 	if (ret == 0) {
 		if (!map->nets[cidr-1]++)
 			add_cidr_size(map->cidr, cidr);
@@ -202,11 +196,11 @@ ipportnethash_add(struct ip_set *set, ip_set_ip_t *hash_ip,
 	uint8_t cidr = map->cidr[0] ? map->cidr[0] : 31;		\
 	ip_set_ip_t port, ip1;						\
 									\
-	if (flags[index+2] == 0)					\
+	if (flags[2] == 0)						\
 		return 0;						\
 									\
-	port = get_port(skb, flags[index+1]);				\
-	ip1 = ipaddr(skb, flags[index+2]);				\
+	port = get_port(skb, flags++);					\
+	ip1 = ipaddr(skb, flags++);					\
 									\
 	if (port == INVALID_PORT)					\
 		return 0;
@@ -227,7 +221,7 @@ __ipportnethash_retry(struct ip_set_ipportnethash *tmp,
 HASH_RETRY2(ipportnethash, struct ipportip)
 
 static inline int
-ipportnethash_del(struct ip_set *set, ip_set_ip_t *hash_ip,
+ipportnethash_del(struct ip_set *set,
 	          ip_set_ip_t ip, ip_set_ip_t port,
 	          ip_set_ip_t ip1, uint8_t cidr)
 {
@@ -242,7 +236,7 @@ ipportnethash_del(struct ip_set *set, ip_set_ip_t *hash_ip,
 	if (cidr <= 0 || cidr >= 32)
 		return -EINVAL;	
 
-	id = ipportnethash_id_cidr(set, hash_ip, ip, port, ip1, cidr);
+	id = ipportnethash_id_cidr(set, ip, port, ip1, cidr);
 
 	if (id == UINT_MAX)
 		return -EEXIST;

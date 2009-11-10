@@ -23,16 +23,14 @@
 #include <linux/netfilter_ipv4/ip_set_getport.h>
 
 static inline int
-portmap_test(const struct ip_set *set, ip_set_ip_t *hash_port,
-	     ip_set_ip_t port)
+portmap_test(const struct ip_set *set, ip_set_ip_t port)
 {
 	const struct ip_set_portmap *map = set->data;
 
 	if (port < map->first_ip || port > map->last_ip)
 		return -ERANGE;
 		
-	*hash_port = port;
-	DP("set: %s, port:%u, %u", set->name, port, *hash_port);
+	DP("set: %s, port: %u", set->name, port);
 	return !!test_bit(port - map->first_ip, map->members);
 }
 
@@ -44,7 +42,7 @@ UADT(portmap, test)
 KADT(portmap, test, get_port)
 
 static inline int
-portmap_add(struct ip_set *set, ip_set_ip_t *hash_port, ip_set_ip_t port)
+portmap_add(struct ip_set *set, ip_set_ip_t port)
 {
 	struct ip_set_portmap *map = set->data;
 
@@ -52,9 +50,8 @@ portmap_add(struct ip_set *set, ip_set_ip_t *hash_port, ip_set_ip_t port)
 		return -ERANGE;
 	if (test_and_set_bit(port - map->first_ip, map->members))
 		return -EEXIST;
-		
-	*hash_port = port;
-	DP("port %u", port);
+	
+	DP("set: %s, port %u", set->name, port);
 	return 0;
 }
 
@@ -62,7 +59,7 @@ UADT(portmap, add)
 KADT(portmap, add, get_port)
 
 static inline int
-portmap_del(struct ip_set *set, ip_set_ip_t *hash_port, ip_set_ip_t port)
+portmap_del(struct ip_set *set, ip_set_ip_t port)
 {
 	struct ip_set_portmap *map = set->data;
 
@@ -70,9 +67,8 @@ portmap_del(struct ip_set *set, ip_set_ip_t *hash_port, ip_set_ip_t port)
 		return -ERANGE;
 	if (!test_and_clear_bit(port - map->first_ip, map->members))
 		return -EEXIST;
-		
-	*hash_port = port;
-	DP("port %u", port);
+	
+	DP("set: %s, port %u", set->name, port);
 	return 0;
 }
 
@@ -102,8 +98,28 @@ __portmap_list_header(const struct ip_set_portmap *map,
 }
 
 BITMAP_LIST_HEADER(portmap)
-BITMAP_LIST_MEMBERS_SIZE(portmap)
-BITMAP_LIST_MEMBERS(portmap)
+BITMAP_LIST_MEMBERS_SIZE(portmap, ip_set_ip_t, (map->last_ip - map->first_ip + 1),
+			 test_bit(i, map->members))
+
+static void
+portmap_list_members(const struct ip_set *set, void *data, char dont_align)
+{
+	const struct ip_set_portmap *map = set->data;
+	uint32_t i, n = 0;
+	ip_set_ip_t *d;
+	
+	if (dont_align) {
+		memcpy(data, map->members, map->size);
+		return;
+	}
+	
+	for (i = 0; i < map->last_ip - map->first_ip + 1; i++)
+		if (test_bit(i, map->members)) {
+			d = data + n * IPSET_ALIGN(sizeof(ip_set_ip_t));
+			*d = map->first_ip + i;
+			n++;
+		}
+}
 
 IP_SET_TYPE(portmap, IPSET_TYPE_PORT | IPSET_DATA_SINGLE)
 

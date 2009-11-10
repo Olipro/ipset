@@ -28,26 +28,23 @@
 static int limit = MAX_RANGE;
 
 static inline __u32
-ipporthash_id(struct ip_set *set, ip_set_ip_t *hash_ip,
-	      ip_set_ip_t ip, ip_set_ip_t port)
+ipporthash_id(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t port)
 {
 	struct ip_set_ipporthash *map = set->data;
 	__u32 id;
 	u_int16_t i;
 	ip_set_ip_t *elem;
 
-	*hash_ip = pack_ip_port(map, ip, port);
+	ip = pack_ip_port(map, ip, port);
 		
-	DP("set: %s, ipport:%u.%u.%u.%u:%u, %u.%u.%u.%u",
-	   set->name, HIPQUAD(ip), port, HIPQUAD(*hash_ip));
-	if (!*hash_ip)
+	if (!ip)
 		return UINT_MAX;
 	
 	for (i = 0; i < map->probes; i++) {
-		id = jhash_ip(map, i, *hash_ip) % map->hashsize;
+		id = jhash_ip(map, i, ip) % map->hashsize;
 		DP("hash key: %u", id);
 		elem = HARRAY_ELEM(map->members, ip_set_ip_t *, id);
-		if (*elem == *hash_ip)
+		if (*elem == ip)
 			return id;
 		/* No shortcut - there can be deleted entries. */
 	}
@@ -55,24 +52,23 @@ ipporthash_id(struct ip_set *set, ip_set_ip_t *hash_ip,
 }
 
 static inline int
-ipporthash_test(struct ip_set *set, ip_set_ip_t *hash_ip,
-		ip_set_ip_t ip, ip_set_ip_t port)
+ipporthash_test(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t port)
 {
 	struct ip_set_ipporthash *map = set->data;
 	
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -ERANGE;
 
-	return (ipporthash_id(set, hash_ip, ip, port) != UINT_MAX);
+	return (ipporthash_id(set, ip, port) != UINT_MAX);
 }
 
 #define KADT_CONDITION						\
 	ip_set_ip_t port;					\
 								\
-	if (flags[index+1] == 0)				\
+	if (flags[1] == 0)					\
 		return 0;					\
 								\
-	port = get_port(skb, flags[index+1]);			\
+	port = get_port(skb, flags++);				\
 								\
 	if (port == INVALID_PORT)				\
 		return 0;
@@ -106,8 +102,7 @@ __ipporthash_add(struct ip_set_ipporthash *map, ip_set_ip_t *ip)
 }
 
 static inline int
-ipporthash_add(struct ip_set *set, ip_set_ip_t *hash_ip,
-	       ip_set_ip_t ip, ip_set_ip_t port)
+ipporthash_add(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t port)
 {
 	struct ip_set_ipporthash *map = set->data;
 	if (map->elements > limit)
@@ -115,12 +110,12 @@ ipporthash_add(struct ip_set *set, ip_set_ip_t *hash_ip,
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -ERANGE;
 
-	*hash_ip = pack_ip_port(map, ip, port);
+	ip = pack_ip_port(map, ip, port);
 
-	if (!*hash_ip)
+	if (!ip)
 		return -ERANGE;
 	
-	return __ipporthash_add(map, hash_ip);
+	return __ipporthash_add(map, &ip);
 }
 
 UADT(ipporthash, add, req->port)
@@ -137,8 +132,7 @@ __ipporthash_retry(struct ip_set_ipporthash *tmp,
 HASH_RETRY(ipporthash, ip_set_ip_t)
 
 static inline int
-ipporthash_del(struct ip_set *set, ip_set_ip_t *hash_ip,
-	       ip_set_ip_t ip, ip_set_ip_t port)
+ipporthash_del(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t port)
 {
 	struct ip_set_ipporthash *map = set->data;
 	ip_set_ip_t id;
@@ -147,7 +141,7 @@ ipporthash_del(struct ip_set *set, ip_set_ip_t *hash_ip,
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -ERANGE;
 
-	id = ipporthash_id(set, hash_ip, ip, port);
+	id = ipporthash_id(set, ip, port);
 
 	if (id == UINT_MAX)
 		return -EEXIST;

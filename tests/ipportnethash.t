@@ -36,6 +36,10 @@
 1 ipset -A test 2.0.0.0,5,1.1.1.1/24
 # Range: Try to add value after upper boundary
 1 ipset -A test 2.1.0.1,128,2.2.2.2/12
+# Range: List set
+0 ipset -L test > .foo0 && ./sort.sh .foo0
+# Range: Check listing
+0 diff .foo ipportnethash.t.list0 && rm .foo
 # Range: Flush test set
 0 ipset -F test
 # Range: Delete test set
@@ -64,6 +68,10 @@
 1 ipset -A test 1.255.255.255,5,1.1.1.1/24
 # Network: Try to add value after upper boundary
 1 ipset -A test 2.1.0.0,128,2.2.2.2/12
+# Network: List set
+0 ipset -L test > .foo0 && ./sort.sh .foo0
+# Network: Check listing
+0 diff .foo ipportnethash.t.list1 && rm .foo
 # Network: Flush test set
 0 ipset -F test
 # Network: Delete test set

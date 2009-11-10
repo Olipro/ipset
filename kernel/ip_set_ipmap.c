@@ -22,21 +22,19 @@
 static inline ip_set_ip_t
 ip_to_id(const struct ip_set_ipmap *map, ip_set_ip_t ip)
 {
-	return (ip - map->first_ip)/map->hosts;
+	return ((ip & map->netmask) - map->first_ip)/map->hosts;
 }
 
 static inline int
-ipmap_test(const struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+ipmap_test(const struct ip_set *set, ip_set_ip_t ip)
 {
 	const struct ip_set_ipmap *map = set->data;
 	
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -ERANGE;
 
-	*hash_ip = ip & map->netmask;
-	DP("set: %s, ip:%u.%u.%u.%u, %u.%u.%u.%u",
-	   set->name, HIPQUAD(ip), HIPQUAD(*hash_ip));
-	return !!test_bit(ip_to_id(map, *hash_ip), map->members);
+	DP("set: %s, ip:%u.%u.%u.%u", set->name, HIPQUAD(ip));
+	return !!test_bit(ip_to_id(map, ip), map->members);
 }
 
 #define KADT_CONDITION
@@ -45,16 +43,15 @@ UADT(ipmap, test)
 KADT(ipmap, test, ipaddr)
 
 static inline int
-ipmap_add(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+ipmap_add(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_ipmap *map = set->data;
 
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -ERANGE;
 
-	*hash_ip = ip & map->netmask;
-	DP("%u.%u.%u.%u, %u.%u.%u.%u", HIPQUAD(ip), HIPQUAD(*hash_ip));
-	if (test_and_set_bit(ip_to_id(map, *hash_ip), map->members))
+	DP("set: %s, ip:%u.%u.%u.%u", set->name, HIPQUAD(ip));
+	if (test_and_set_bit(ip_to_id(map, ip), map->members))
 		return -EEXIST;
 
 	return 0;
@@ -64,16 +61,15 @@ UADT(ipmap, add)
 KADT(ipmap, add, ipaddr)
 
 static inline int
-ipmap_del(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+ipmap_del(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_ipmap *map = set->data;
 
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -ERANGE;
 
-	*hash_ip = ip & map->netmask;
-	DP("%u.%u.%u.%u, %u.%u.%u.%u", HIPQUAD(ip), HIPQUAD(*hash_ip));
-	if (!test_and_clear_bit(ip_to_id(map, *hash_ip), map->members))
+	DP("set: %s, ip:%u.%u.%u.%u", set->name, HIPQUAD(ip));
+	if (!test_and_clear_bit(ip_to_id(map, ip), map->members))
 		return -EEXIST;
 	
 	return 0;
@@ -130,8 +126,28 @@ __ipmap_list_header(const struct ip_set_ipmap *map,
 }
 
 BITMAP_LIST_HEADER(ipmap)
-BITMAP_LIST_MEMBERS_SIZE(ipmap)
-BITMAP_LIST_MEMBERS(ipmap)
+BITMAP_LIST_MEMBERS_SIZE(ipmap, ip_set_ip_t, map->sizeid,
+			 test_bit(i, map->members))
+
+static void
+ipmap_list_members(const struct ip_set *set, void *data, char dont_align)
+{
+	const struct ip_set_ipmap *map = set->data;
+	uint32_t i, n = 0;
+	ip_set_ip_t *d;
+	
+	if (dont_align) {
+		memcpy(data, map->members, map->size);
+		return;
+	}
+	
+	for (i = 0; i < map->sizeid; i++)
+		if (test_bit(i, map->members)) {
+			d = data + n * IPSET_ALIGN(sizeof(ip_set_ip_t));
+			*d = map->first_ip + i * map->hosts;
+			n++;
+		}
+}
 
 IP_SET_TYPE(ipmap, IPSET_TYPE_IP | IPSET_DATA_SINGLE)
 

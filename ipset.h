@@ -56,8 +56,6 @@ enum set_commands {
 	CMD_ADD,		/* -A */
 	CMD_DEL,		/* -D */
 	CMD_TEST,		/* -T */
-	CMD_BIND,		/* -B */
-	CMD_UNBIND,		/* -U */
 	CMD_HELP,		/* -H */
 	CMD_VERSION,		/* -V */
 	NUMBER_OF_CMD = CMD_VERSION,
@@ -134,22 +132,19 @@ struct settype {
 	void (*printheader) (struct set *set, unsigned options);
 
 	/* Pretty print all IPs */
-	void (*printips) (struct set *set, void *data, u_int32_t len, unsigned options);
+	void (*printips) (struct set *set, void *data, u_int32_t len,
+			  unsigned options, char dont_align);
 
 	/* Pretty print all IPs sorted */
-	void (*printips_sorted) (struct set *set, void *data, u_int32_t len, unsigned options);
+	void (*printips_sorted) (struct set *set, void *data, u_int32_t len,
+				 unsigned options, char dont_align);
 
 	/* Print save arguments for creating the set */
 	void (*saveheader) (struct set *set, unsigned options);
 
 	/* Print save for all IPs */
-	void (*saveips) (struct set *set, void *data, u_int32_t len, unsigned options);
-
-	/* Conver a single IP (binding) to string */
-	char * (*bindip_tostring)(struct set *set, ip_set_ip_t ip, unsigned options);
-	
-	/* Parse an IP at restoring bindings. FIXME */
-	void (*bindip_parse) (const char *str, ip_set_ip_t * ip);
+	void (*saveips) (struct set *set, void *data, u_int32_t len,
+			 unsigned options, char dont_align);
 
 	/* Print usage */
 	void (*usage) (void);
@@ -189,12 +184,12 @@ extern struct set *set_find_byid(ip_set_id_t id);
 
 extern unsigned warn_once;
 
-#define BITS_PER_LONG	(8*sizeof(unsigned long))
+#define BITS_PER_LONG	(8*sizeof(ip_set_ip_t))
 #define BIT_WORD(nr)	((nr) / BITS_PER_LONG)
 
-static inline int test_bit(int nr, const unsigned long *addr)
+static inline int test_bit(int nr, const ip_set_ip_t *addr)
 {
-	return 1UL & (addr[BIT_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
+	return 1 & (addr[BIT_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
 }
 
 #define UNUSED __attribute__ ((unused))

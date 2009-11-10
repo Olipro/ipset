@@ -25,22 +25,21 @@
 static int limit = MAX_RANGE;
 
 static inline __u32
-iphash_id(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+iphash_id(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_iphash *map = set->data;
 	__u32 id;
 	u_int16_t i;
 	ip_set_ip_t *elem;
 
-	*hash_ip = ip & map->netmask;
-	DP("set: %s, ip:%u.%u.%u.%u, %u.%u.%u.%u, %u.%u.%u.%u",
-	   set->name, HIPQUAD(ip), HIPQUAD(*hash_ip), HIPQUAD(map->netmask));
-	
+
+	ip &= map->netmask;	
+	DP("set: %s, ip:%u.%u.%u.%u", set->name, HIPQUAD(ip));
 	for (i = 0; i < map->probes; i++) {
-		id = jhash_ip(map, i, *hash_ip) % map->hashsize;
+		id = jhash_ip(map, i, ip) % map->hashsize;
 		DP("hash key: %u", id);
 		elem = HARRAY_ELEM(map->members, ip_set_ip_t *, id);
-		if (*elem == *hash_ip)
+		if (*elem == ip)
 			return id;
 		/* No shortcut - there can be deleted entries. */
 	}
@@ -48,9 +47,9 @@ iphash_id(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 }
 
 static inline int
-iphash_test(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+iphash_test(struct ip_set *set, ip_set_ip_t ip)
 {
-	return (ip && iphash_id(set, hash_ip, ip) != UINT_MAX);
+	return (ip && iphash_id(set, ip) != UINT_MAX);
 }
 
 #define KADT_CONDITION
@@ -84,16 +83,15 @@ __iphash_add(struct ip_set_iphash *map, ip_set_ip_t *ip)
 }
 
 static inline int
-iphash_add(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+iphash_add(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_iphash *map = set->data;
 	
 	if (!ip || map->elements >= limit)
 		return -ERANGE;
 
-	*hash_ip = ip & map->netmask;
-	
-	return __iphash_add(map, hash_ip);
+	ip &= map->netmask;
+	return __iphash_add(map, &ip);
 }
 
 UADT(iphash, add)
@@ -108,7 +106,7 @@ __iphash_retry(struct ip_set_iphash *tmp, struct ip_set_iphash *map)
 HASH_RETRY(iphash, ip_set_ip_t)
 
 static inline int
-iphash_del(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+iphash_del(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_iphash *map = set->data;
 	ip_set_ip_t id, *elem;
@@ -116,7 +114,7 @@ iphash_del(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 	if (!ip)
 		return -ERANGE;
 
-	id = iphash_id(set, hash_ip, ip);
+	id = iphash_id(set, ip);
 	if (id == UINT_MAX)
 		return -EEXIST;
 		

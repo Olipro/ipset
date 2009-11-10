@@ -22,8 +22,7 @@
 #include <linux/netfilter_ipv4/ip_set_macipmap.h>
 
 static int
-macipmap_utest(struct ip_set *set, const void *data, u_int32_t size,
-	       ip_set_ip_t *hash_ip)
+macipmap_utest(struct ip_set *set, const void *data, u_int32_t size)
 {
 	const struct ip_set_macipmap *map = set->data;
 	const struct ip_set_macip *table = map->members;	
@@ -32,9 +31,7 @@ macipmap_utest(struct ip_set *set, const void *data, u_int32_t size,
 	if (req->ip < map->first_ip || req->ip > map->last_ip)
 		return -ERANGE;
 
-	*hash_ip = req->ip;
-	DP("set: %s, ip:%u.%u.%u.%u, %u.%u.%u.%u",
-	   set->name, HIPQUAD(req->ip), HIPQUAD(*hash_ip));		
+	DP("set: %s, ip:%u.%u.%u.%u", set->name, HIPQUAD(req->ip));		
 	if (table[req->ip - map->first_ip].match) {
 		return (memcmp(req->ethernet,
 			       &table[req->ip - map->first_ip].ethernet,
@@ -47,22 +44,18 @@ macipmap_utest(struct ip_set *set, const void *data, u_int32_t size,
 static int
 macipmap_ktest(struct ip_set *set,
 	       const struct sk_buff *skb,
-	       ip_set_ip_t *hash_ip,
-	       const u_int32_t *flags,
-	       unsigned char index)
+	       const u_int32_t *flags)
 {
 	const struct ip_set_macipmap *map = set->data;
 	const struct ip_set_macip *table = map->members;
 	ip_set_ip_t ip;
 	
-	ip = ipaddr(skb, flags[index]);
+	ip = ipaddr(skb, flags);
 
 	if (ip < map->first_ip || ip > map->last_ip)
 		return 0;
 
-	*hash_ip = ip;	
-	DP("set: %s, ip:%u.%u.%u.%u, %u.%u.%u.%u",
-	   set->name, HIPQUAD(ip), HIPQUAD(*hash_ip));		
+	DP("set: %s, ip:%u.%u.%u.%u", set->name, HIPQUAD(ip));
 	if (table[ip - map->first_ip].match) {
 		/* Is mac pointer valid?
 		 * If so, compare... */
@@ -78,7 +71,7 @@ macipmap_ktest(struct ip_set *set,
 
 /* returns 0 on success */
 static inline int
-macipmap_add(struct ip_set *set, ip_set_ip_t *hash_ip,
+macipmap_add(struct ip_set *set,
 	     ip_set_ip_t ip, const unsigned char *ethernet)
 {
 	struct ip_set_macipmap *map = set->data;
@@ -89,8 +82,7 @@ macipmap_add(struct ip_set *set, ip_set_ip_t *hash_ip,
 	if (table[ip - map->first_ip].match)
 		return -EEXIST;
 
-	*hash_ip = ip;
-	DP("%u.%u.%u.%u, %u.%u.%u.%u", HIPQUAD(ip), HIPQUAD(*hash_ip));
+	DP("set: %s, ip: %u.%u.%u.%u", set->name, HIPQUAD(ip));
 	memcpy(&table[ip - map->first_ip].ethernet, ethernet, ETH_ALEN);
 	table[ip - map->first_ip].match = IPSET_MACIP_ISSET;
 	return 0;
@@ -105,7 +97,7 @@ UADT(macipmap, add, req->ethernet)
 KADT(macipmap, add, ipaddr, eth_hdr(skb)->h_source)
 
 static inline int
-macipmap_del(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
+macipmap_del(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_macipmap *map = set->data;
 	struct ip_set_macip *table = map->members;
@@ -115,9 +107,8 @@ macipmap_del(struct ip_set *set, ip_set_ip_t *hash_ip, ip_set_ip_t ip)
 	if (!table[ip - map->first_ip].match)
 		return -EEXIST;
 
-	*hash_ip = ip;
 	table[ip - map->first_ip].match = 0;
-	DP("%u.%u.%u.%u, %u.%u.%u.%u", HIPQUAD(ip), HIPQUAD(*hash_ip));
+	DP("set: %s, ip: %u.%u.%u.%u", set->name, HIPQUAD(ip));
 	return 0;
 }
 
@@ -152,8 +143,32 @@ __macipmap_list_header(const struct ip_set_macipmap *map,
 }
 
 BITMAP_LIST_HEADER(macipmap)
-BITMAP_LIST_MEMBERS_SIZE(macipmap)
-BITMAP_LIST_MEMBERS(macipmap)
+BITMAP_LIST_MEMBERS_SIZE(macipmap, struct ip_set_req_macipmap,
+			 (map->last_ip - map->first_ip + 1),
+			 ((const struct ip_set_macip *)map->members)[i].match)
+
+
+static void
+macipmap_list_members(const struct ip_set *set, void *data, char dont_align)
+{
+	const struct ip_set_macipmap *map = set->data;
+	const struct ip_set_macip *table = map->members;
+	uint32_t i, n = 0;
+	struct ip_set_req_macipmap *d;
+	
+	if (dont_align) {
+		memcpy(data, map->members, map->size);
+		return;
+	}
+	
+	for (i = 0; i < map->last_ip - map->first_ip + 1; i++)
+		if (table[i].match) {
+			d = data + n * IPSET_ALIGN(sizeof(struct ip_set_req_macipmap));
+			d->ip = map->first_ip + i;
+			memcpy(d->ethernet, &table[i].ethernet, ETH_ALEN);
+			n++;
+		}
+}
 
 IP_SET_TYPE(macipmap, IPSET_TYPE_IP | IPSET_DATA_SINGLE)
 
