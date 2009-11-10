@@ -4,7 +4,7 @@
   - Do not use DECLARE_MUTEX (compatibility fix on 2.6.31-rt, Jan
     Engelhardt)
   - Flushing iptreemap type of sets caused high ksoftirqd load due to
-    zeroed out timeout parameter (bug reported by Georg Chini)
+    zeroed out gc parameter (bug reported by Georg Chini)
   - New protocol is introduced to handle aligment issues properly
     (bug reported by Georg Chini)
   - Binding support is removed
