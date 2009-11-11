@@ -284,7 +284,8 @@ __ipportnethash_list_header(const struct ip_set_ipportnethash *map,
 HASH_LIST_HEADER(ipportnethash)
 
 HASH_LIST_MEMBERS_SIZE(ipportnethash, struct ipportip)
-HASH_LIST_MEMBERS_MEMCPY(ipportnethash, struct ipportip)
+HASH_LIST_MEMBERS_MEMCPY(ipportnethash, struct ipportip,
+			 (elem->ip || elem->ip1))
 
 IP_SET_RTYPE(ipportnethash, IPSET_TYPE_IP | IPSET_TYPE_PORT
 			    | IPSET_TYPE_IP1 | IPSET_DATA_TRIPLE)

@@ -1,3 +1,8 @@
+4.1
+  - Do not use init_MUTEX either (Jan Engelhardt)
+  - Improve listing/saving hash type of sets by not copying empty
+    entries unnecessarily to userspace.
+
 4.0
   - Compilation of ip_set_iptree.c fails with kernel 2.6.20 due to
     missing include of linux/jiffies.h (Jan Engelhardt)

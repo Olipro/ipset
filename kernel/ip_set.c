@@ -1474,7 +1474,8 @@ ip_set_init(void)
 {
 	int res;
 
-	init_MUTEX(&ip_set_app_mutex);
+	/* For the -rt branch, DECLARE_MUTEX/init_MUTEX avoided */
+	sema_init(&ip_set_app_mutex, 1);
 
 	if (max_sets)
 		ip_set_max = max_sets;

@@ -200,7 +200,8 @@ __ipportiphash_list_header(const struct ip_set_ipportiphash *map,
 
 HASH_LIST_HEADER(ipportiphash)
 HASH_LIST_MEMBERS_SIZE(ipportiphash, struct ipportip)
-HASH_LIST_MEMBERS_MEMCPY(ipportiphash, struct ipportip)
+HASH_LIST_MEMBERS_MEMCPY(ipportiphash, struct ipportip,
+			 (elem->ip || elem->ip1))
 
 IP_SET_RTYPE(ipportiphash, IPSET_TYPE_IP | IPSET_TYPE_PORT
 			   | IPSET_TYPE_IP1 | IPSET_DATA_TRIPLE)
