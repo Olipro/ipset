@@ -1,3 +1,8 @@
+4.2
+  - nethash and ipportnethash types counted every entry twice
+    which could produce bogus entries when listing/saving these types
+    of sets (bug reported by Husnu Demir)
+
 4.1
   - Do not use init_MUTEX either (Jan Engelhardt)
   - Improve listing/saving hash type of sets by not copying empty

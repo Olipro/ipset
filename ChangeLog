@@ -1,3 +1,7 @@
+4.2
+  - Checking null entries when listing/saving hash types of sets
+    deleted because it's unnecessary and can mask possible errors.
+
 4.1
   - Manpage fixes and corrections (Jan Engelhardt)
 

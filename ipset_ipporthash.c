@@ -259,13 +259,11 @@ ipporthash_printips(struct set *set, void *data, u_int32_t len,
 
 	while (offset < len) {
 		ipptr = data + offset;
-		if (*ipptr) {
-			ip = (*ipptr>>16) + mysetdata->first_ip;
-			port = (uint16_t) *ipptr;
-			printf("%s,%s\n", 
-			       ip_tostring(ip, options),
-			       port_tostring(port, options));
-		}
+		ip = (*ipptr>>16) + mysetdata->first_ip;
+		port = (uint16_t) *ipptr;
+		printf("%s,%s\n", 
+		       ip_tostring(ip, options),
+		       port_tostring(port, options));
 		offset += IPSET_VALIGN(sizeof(ip_set_ip_t), dont_align);
 	}
 }
@@ -296,13 +294,11 @@ ipporthash_saveips(struct set *set, void *data, u_int32_t len,
 
 	while (offset < len) {
 		ipptr = data + offset;
-		if (*ipptr) {
-			ip = (*ipptr>>16) + mysetdata->first_ip;
-			port = (uint16_t) *ipptr;
-			printf("-A %s %s,%s\n", set->name, 
-			       ip_tostring(ip, options),
-			       port_tostring(port, options));
-		}
+		ip = (*ipptr>>16) + mysetdata->first_ip;
+		port = (uint16_t) *ipptr;
+		printf("-A %s %s,%s\n", set->name, 
+		       ip_tostring(ip, options),
+		       port_tostring(port, options));
 		offset += IPSET_VALIGN(sizeof(ip_set_ip_t), dont_align);
 	}
 }

@@ -232,8 +232,7 @@ nethash_printips(struct set *set UNUSED, void *data, u_int32_t len,
 
 	while (offset < len) {
 		ip = data + offset;
-		if (*ip)
-			printf("%s\n", unpack_ip_tostring(*ip, options));
+		printf("%s\n", unpack_ip_tostring(*ip, options));
 		offset += IPSET_VALIGN(sizeof(ip_set_ip_t), dont_align);
 	}
 }
@@ -258,9 +257,8 @@ nethash_saveips(struct set *set UNUSED, void *data, u_int32_t len,
 
 	while (offset < len) {
 		ip = data + offset;
-		if (*ip)
-			printf("-A %s %s\n", set->name, 
-			       unpack_ip_tostring(*ip, options));
+		printf("-A %s %s\n", set->name,
+		       unpack_ip_tostring(*ip, options));
 		offset += IPSET_VALIGN(sizeof(ip_set_ip_t), dont_align);
 	}
 }

@@ -185,7 +185,6 @@ ipportnethash_add(struct ip_set *set,
 	if (ret == 0) {
 		if (!map->nets[cidr-1]++)
 			add_cidr_size(map->cidr, cidr);
-		map->elements++;
 	}
 	return ret;
 }
