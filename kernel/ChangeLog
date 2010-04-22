@@ -1,3 +1,6 @@
+5.0
+ - New main branch - ipset completely rewritten
+
 4.2
   - nethash and ipportnethash types counted every entry twice
     which could produce bogus entries when listing/saving these types

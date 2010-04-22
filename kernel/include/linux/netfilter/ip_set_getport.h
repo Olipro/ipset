@@ -2,45 +2,73 @@
 #define _IP_SET_GETPORT_H
 
 #ifdef __KERNEL__
+#include <linux/netfilter_ipv6/ip6_tables.h>
+#include <net/ip.h>
 
-#define INVALID_PORT	(MAX_RANGE + 1)
+#define IPSET_INVALID_PORT	65536
 
 /* We must handle non-linear skbs */
-static inline ip_set_ip_t
-get_port(const struct sk_buff *skb, const u_int32_t *flags)
+static uint32_t
+get_port(uint8_t pf, const struct sk_buff *skb, const uint8_t *flags)
 {
-	struct iphdr *iph = ip_hdr(skb);
-	u_int16_t offset = ntohs(iph->frag_off) & IP_OFFSET;
-	switch (iph->protocol) {
-	case IPPROTO_TCP: {
-		struct tcphdr tcph;
-		
-		/* See comments at tcp_match in ip_tables.c */
-		if (offset)
-			return INVALID_PORT;
+	unsigned short protocol;
+	unsigned int protoff;
+	int fragoff;
+	
+	switch (pf) {
+	case AF_INET: {
+		const struct iphdr *iph = ip_hdr(skb);
 
-		if (skb_copy_bits(skb, ip_hdr(skb)->ihl*4, &tcph, sizeof(tcph)) < 0)
+		protocol = iph->protocol;
+		fragoff = ntohs(iph->frag_off) & IP_OFFSET;
+		protoff = ip_hdrlen(skb);
+		break;
+	}
+	case AF_INET6: {
+		int protohdr;
+		unsigned short frag_off;
+		
+		protohdr = ipv6_find_hdr(skb, &protoff, -1, &frag_off);
+		if (protohdr < 0)
+			return IPSET_INVALID_PORT;
+
+		protocol = protohdr;
+		fragoff = frag_off;
+		break;
+	}
+	default:
+		return IPSET_INVALID_PORT;
+	}
+
+	/* See comments at tcp_match in ip_tables.c */
+	if (fragoff)
+		return IPSET_INVALID_PORT;
+
+	switch (protocol) {
+	case IPPROTO_TCP: {
+		struct tcphdr _tcph;
+		const struct tcphdr *th;
+		
+		th = skb_header_pointer(skb, protoff, sizeof(_tcph), &_tcph);
+		if (th == NULL)
 			/* No choice either */
-			return INVALID_PORT;
+			return IPSET_INVALID_PORT;
 	     	
-	     	return ntohs(flags[0] & IPSET_SRC ?
-			     tcph.source : tcph.dest);
+	     	return flags[0] & IPSET_SRC ? th->source : th->dest;
 	    }
 	case IPPROTO_UDP: {
-		struct udphdr udph;
+		struct udphdr _udph;
+		const struct udphdr *uh;
 
-		if (offset)
-			return INVALID_PORT;
-
-		if (skb_copy_bits(skb, ip_hdr(skb)->ihl*4, &udph, sizeof(udph)) < 0)
+		uh = skb_header_pointer(skb, protoff, sizeof(_udph), &_udph);
+		if (uh == NULL)
 			/* No choice either */
-			return INVALID_PORT;
+			return IPSET_INVALID_PORT;
 	     	
-	     	return ntohs(flags[0] & IPSET_SRC ?
-			     udph.source : udph.dest);
+	     	return flags[0] & IPSET_SRC ? uh->source : uh->dest;
 	    }
 	default:
-		return INVALID_PORT;
+		return IPSET_INVALID_PORT;
 	}
 }
 #endif				/* __KERNEL__ */

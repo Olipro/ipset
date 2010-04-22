@@ -26,30 +26,30 @@
 #define __rot(x,k) (((x)<<(k)) | ((x)>>(32-(k))))
 
 /* __jhash_mix - mix 3 32-bit values reversibly. */
-#define __jhash_mix(a,b,c) \
-{ \
-  a -= c;  a ^= __rot(c, 4);  c += b; \
-  b -= a;  b ^= __rot(a, 6);  a += c; \
-  c -= b;  c ^= __rot(b, 8);  b += a; \
-  a -= c;  a ^= __rot(c,16);  c += b; \
-  b -= a;  b ^= __rot(a,19);  a += c; \
-  c -= b;  c ^= __rot(b, 4);  b += a; \
+#define __jhash_mix(a,b,c) 		\
+{ 					\
+  a -= c;  a ^= __rot(c, 4);  c += b; 	\
+  b -= a;  b ^= __rot(a, 6);  a += c; 	\
+  c -= b;  c ^= __rot(b, 8);  b += a; 	\
+  a -= c;  a ^= __rot(c,16);  c += b; 	\
+  b -= a;  b ^= __rot(a,19);  a += c; 	\
+  c -= b;  c ^= __rot(b, 4);  b += a; 	\
 }
 
 /* __jhash_final - final mixing of 3 32-bit values (a,b,c) into c */
-#define __jhash_final(a,b,c) \
-{ \
-  c ^= b; c -= __rot(b,14); \
-  a ^= c; a -= __rot(c,11); \
-  b ^= a; b -= __rot(a,25); \
-  c ^= b; c -= __rot(b,16); \
-  a ^= c; a -= __rot(c,4);  \
-  b ^= a; b -= __rot(a,14); \
-  c ^= b; c -= __rot(b,24); \
+#define __jhash_final(a,b,c) 		\
+{ 					\
+  c ^= b; c -= __rot(b,14); 		\
+  a ^= c; a -= __rot(c,11); 		\
+  b ^= a; b -= __rot(a,25); 		\
+  c ^= b; c -= __rot(b,16); 		\
+  a ^= c; a -= __rot(c,4);  		\
+  b ^= a; b -= __rot(a,14); 		\
+  c ^= b; c -= __rot(b,24); 		\
 }
 
-/* The golden ration: an arbitrary value */
-#define JHASH_GOLDEN_RATIO	0xdeadbeef
+/* An arbitrary value */
+#define JHASH_RANDOM_PARAM	0xdeadbeef
 
 /* The most generic version, hashes an arbitrary sequence
  * of bytes.  No alignment or length assumptions are made about
@@ -61,7 +61,7 @@ static inline u32 jhash(const void *key, u32 length, u32 initval)
 	const u8 *k = key;
 
 	/* Set up the internal state */
-	a = b = c = JHASH_GOLDEN_RATIO + length + initval;
+	a = b = c = JHASH_RANDOM_PARAM + length + initval;
 
 	/* all but the last block: affect some 32 bits of (a,b,c) */
 	while (length > 12) {
@@ -104,7 +104,7 @@ static inline u32 jhash2(const u32 *k, u32 length, u32 initval)
 	u32 a, b, c;
 
 	/* Set up the internal state */
-	a = b = c = JHASH_GOLDEN_RATIO + (length<<2) + initval;
+	a = b = c = JHASH_RANDOM_PARAM + (length<<2) + initval;
 
 	/* handle most of the key */
 	while (length > 3) {
@@ -135,9 +135,9 @@ static inline u32 jhash2(const u32 *k, u32 length, u32 initval)
  */
 static inline u32 jhash_3words(u32 a, u32 b, u32 c, u32 initval)
 {
-	a += JHASH_GOLDEN_RATIO + initval;
-	b += JHASH_GOLDEN_RATIO + initval;
-	c += JHASH_GOLDEN_RATIO + initval;
+	a += JHASH_RANDOM_PARAM + initval;
+	b += JHASH_RANDOM_PARAM + initval;
+	c += JHASH_RANDOM_PARAM + initval;
 
 	__jhash_final(a, b, c);
 
