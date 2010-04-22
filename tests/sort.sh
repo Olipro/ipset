@@ -1,5 +1,6 @@
 #!/bin/sh
 
-awk '/^[A-Za-z]+:/ { print $0 }' $1 > .foo
-awk '!/^[A-Za-z]+:/ && !/inding/ { print $0 }' | sort >> .foo
+head -n 7 $1 > .foo
+tail -n +8 $1 | grep  '[[:alnum:]]' | sort >> .foo
+echo >> .foo
 rm $1

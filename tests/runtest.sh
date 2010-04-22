@@ -1,18 +1,29 @@
 #!/bin/bash
 
 tests="init"
-tests="$tests ipmap macipmap portmap"
-tests="$tests iphash nethash ipporthash"
-tests="$tests ipportiphash ipportnethash"
-tests="$tests iptree iptreemap"
-tests="$tests setlist"
+tests="$tests ipmap bitmap:ip macipmap portmap"
+tests="$tests iphash hash:ip"
+# nethash ipporthash"
+# tests="$tests ipportiphash ipportnethash"
+# tests="$tests iptree iptreemap"
+# tests="$tests setlist"
 
 if [ "$1" ]; then
 	tests="init $@"
 fi
 
+if [ ! -x ../src/ipset ]; then
+	echo "Please rune `make` first and create the ipset binary."
+	exit 1
+fi
+
 for types in $tests; do
-    ipset -X test >/dev/null 2>&1
+    ../src/ipset -X test >/dev/null 2>&1
+    if [ -f $types ]; then
+    	filename=$types
+    else
+    	filename=$types.t
+    fi
     while read ret cmd; do
 	case $ret in
 	    \#)
@@ -26,7 +37,8 @@ for types in $tests; do
 		;;
 	esac
 	echo -ne "$types: $what: "
-	eval $cmd >/dev/null 2>&1
+	cmd=`echo $cmd | sed 's/ipset/..\/src\/ipset 2>.foo.err/'`
+	eval $cmd
 	r=$?
 	# echo $ret $r
 	if [ "$ret" = "$r" ]; then
@@ -34,22 +46,26 @@ for types in $tests; do
 	else
 		echo "FAILED"
 		echo "Failed test: $cmd"
+		cat .foo.err
 		exit 1
 	fi
 	# sleep 1
-    done < $types.t
+    done < $filename
 done
 # Remove test sets created by setlist.t
-ipset -X
+../src/ipset -X >/dev/null 2>&1
 for x in $tests; do
 	case $x in
 	init)
 		;;
 	*)
-		rmmod ip_set_$x >/dev/null 2>&1
+		for x in `lsmod | grep ip_set_ | awk '{print $1}'`; do
+			rmmod $x >/dev/null 2>&1
+		done
 		;;
 	esac
 done
 rmmod ip_set >/dev/null 2>&1
+rm -f .foo.err
 echo "All tests are passed"
 

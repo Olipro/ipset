@@ -1,7 +1,9 @@
 Name: test
-Type: portmap
+Type: bitmap:port
+Header: range 1-1024 
+Elements: 2
+Size in memory: 128
 References: 0
-Header: from: 1 to: 1024
 Members:
 1
 1024

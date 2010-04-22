@@ -1,7 +1,10 @@
 Name: test
-Type: iphash
+Type: hash:ip
+Header: hashsize 128 maxelem 65536 probes 4 resize 50 netmask 24 
+Elements: 2
+Size in memory: 512
 References: 0
-Header: hashsize: 128 probes: 8 resize: 50 netmask: 24
 Members:
 192.168.68.0
 2.0.0.0
+

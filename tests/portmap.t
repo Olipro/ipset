@@ -18,6 +18,10 @@
 1 ipset -A test 0
 # Range: Try to add value after upper boundary
 1 ipset -A test 1025
+# Range: Add element in the middle
+0 ipset -A test 567
+# Range: Delete the same element
+0 ipset -D test 567
 # Range: List set
 0 ipset -L test > .foo
 # Range: Check listing
@@ -42,6 +46,32 @@
 0 ipset -L test > .foo
 # Full: Check listing
 0 diff .foo portmap.t.list1 && rm .foo
+# Full: Flush test set
+0 ipset -F test
+# Full: Delete test set
+0 ipset -X test
+# Full: Create a full set of ports and timeout
+0 ipset -N test portmap --from 0 --to 65535 timeout 8
+# Full: Add lower boundary
+0 ipset -A test 0 timeout 5
+# Full: Add upper boundary
+0 ipset -A test 65535 timeout 0
+# Full: Test lower boundary
+0 ipset -T test 0
+# Full: Test upper boundary
+0 ipset -T test 65535
+# Full: Test value not added to the set
+1 ipset -T test 1
+# Full: Add element in the middle
+0 ipset -A test 567
+# Full: Delete the same element
+0 ipset -D test 567
+# Full: sleep 10s so that elements can timeout
+0 sleep 10
+# Full: List set
+0 ipset -L test > .foo
+# Full: Check listing
+# 0 diff .foo portmap.t.list2 && rm .foo
 # Full: Flush test set
 0 ipset -F test
 # Full: Delete test set

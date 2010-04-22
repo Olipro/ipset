@@ -1,55 +1,40 @@
 This is the ipset source tree. Follow these steps to install ipset:
 
-0. You need the source tree of your kernel (version >= 2.6.16 or 2.4.36.x)
+0. You need the source tree of your kernel (version >= 2.6.16)
    and it have to be configured, modules compiled.
 
-1. Compile ipset and it's kernel modules
+1. Initialize the environment
 
-   # make KERNEL_DIR=<<where-you-built-your-kernel>>
+   % ./autogen.sh
 
-   You can specify the maximum number of sets (default 256)
-   and/or the hash size for bindings (default 1024) if you want:
+2. Run `./configure` and then compile the ipset binary and the kernel
+   modules.
 
-   # make KERNEL_DIR=<<where-you-built-your-kernel>> \
-	IP_NF_SET_MAX=<<your setsize number>> \
-	IP_NF_SET_HASHSIZE=<<your hashsize number>>
+   Configure parameters can be used to to override the default path
+   to the kernel source tree (/lib/modules/`uname -r`/build),
+   the maximum number of sets (256), the default hash sizes (1024)
+   or disable the extra compiler warning flags if your compiler
+   does not support all of them.
 
-   If your compiler does not support all of the extra warning
-   flags, you can disable those too:
+   % ./configure
+   % make
+   % make modules
 
-   # make KERNEL_DIR=<<where-you-built-your-kernel>> \
-	IP_NF_SET_MAX=<<your setsize number>> \
-	IP_NF_SET_HASHSIZE=<<your hashsize number>> \
-	NO_EXTRA_WARN_FLAGS=yes
+3. Install the binary and the modules
 
-2. Install the binary and the modules
+   # make install
+   # make modules_install
 
-   # make KERNEL_DIR=<<where-you-built-your-kernel>> install
+   After installing the modules, you can run the testsuite as well:
 
-3. Cleanup the source tree
+   # make tests
 
-   # make KERNEL_DIR=<<where-you-built-your-kernel>> clean
+4. Cleanup the source tree
+
+   % make clean
+   % make modules_clean
 
 That's it! 
 
 Read the ipset(8) and iptables(8) manpages on how to use ipset 
 and its match and target from iptables.
-
-If you want to build a non-modular >= 2.6.16 kernel or has got a 2.4.36.x
-kernel tree, then proceed with the following steps:
-
-1. Compile the ipset binaries
-
-  # make KERNEL_DIR=<<where-you-built-your-kernel>> binaries
-
-2. Install the ipset binaries
-
-  # make KERNEL_DIR=<<where-you-built-your-kernel>> binaries_install
-
-3. Patch your kernel source
-
-  # make KERNEL_DIR=<<where-you-built-your-kernel>> patch_kernel
-
-4. Go to the kernel source and run 'make oldconfig', enable the ipset
-   functionality and compile, install your kernel.
-
