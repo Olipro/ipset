@@ -39,11 +39,11 @@ tests:
 
 cleanup_dirs := . include/libipset lib src tests
 
-tidy: distclean
+tidy: distclean modules_clean
 	rm -rf .deps $(foreach dir,$(cleanup_dirs),$(wildcard $(dir)/*~))
 	rm -rf aclocal.m4 autom4te.cache 
 	rm -rf config.* configure depcomp install-sh libtool ltmain.sh
-	rm -rf Makefile Makefile.in */Makefile */Makefile.in
+	rm -rf Makefile Makefile.in lib/Makefile lib/Makefile.in src/Makefile src/Makefile.in
 	rm -rf missing stamp-h1
 
 .PHONY: modules modules_instal modules_clean update_includes tests
