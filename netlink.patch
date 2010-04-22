@@ -1,0 +1,86 @@
+diff --git a/include/linux/netfilter/nfnetlink.h b/include/linux/netfilter/nfnetlink.h
+index 9f00da2..9f51ff6 100644
+--- a/include/linux/netfilter/nfnetlink.h
++++ b/include/linux/netfilter/nfnetlink.h
+@@ -47,7 +47,8 @@ struct nfgenmsg {
+ #define NFNL_SUBSYS_QUEUE		3
+ #define NFNL_SUBSYS_ULOG		4
+ #define NFNL_SUBSYS_OSF			5
+-#define NFNL_SUBSYS_COUNT		6
++#define NFNL_SUBSYS_IPSET		6
++#define NFNL_SUBSYS_COUNT		7
+ 
+ #ifdef __KERNEL__
+ 
+diff --git a/include/linux/netlink.h b/include/linux/netlink.h
+index ab5d312..ef8b229 100644
+--- a/include/linux/netlink.h
++++ b/include/linux/netlink.h
+@@ -263,11 +263,14 @@ __nlmsg_put(struct sk_buff *skb, u32 pid, u32 seq, int type, int len, int flags)
+ #define NLMSG_PUT(skb, pid, seq, type, len) \
+ 	NLMSG_NEW(skb, pid, seq, type, len, 0)
+ 
+-extern int netlink_dump_start(struct sock *ssk, struct sk_buff *skb,
+-			      const struct nlmsghdr *nlh,
+-			      int (*dump)(struct sk_buff *skb, struct netlink_callback*),
+-			      int (*done)(struct netlink_callback*));
+-
++extern int netlink_dump_init(struct sock *ssk, struct sk_buff *skb,
++			     const struct nlmsghdr *nlh,
++			     int (*dump)(struct sk_buff *skb, struct netlink_callback*),
++			     int (*done)(struct netlink_callback*),
++			     unsigned char init, ...);
++
++#define netlink_dump_start(ssk, skb, nlh, dump, done) \
++	netlink_dump_init(ssk, skb, nlh, dump, done, 0)
+ 
+ #define NL_NONROOT_RECV 0x1
+ #define NL_NONROOT_SEND 0x2
+diff --git a/net/netlink/af_netlink.c b/net/netlink/af_netlink.c
+index 19e9800..1b9dbe8 100644
+--- a/net/netlink/af_netlink.c
++++ b/net/netlink/af_netlink.c
+@@ -1714,15 +1714,18 @@ errout:
+ 	return err;
+ }
+ 
+-int netlink_dump_start(struct sock *ssk, struct sk_buff *skb,
+-		       const struct nlmsghdr *nlh,
+-		       int (*dump)(struct sk_buff *skb,
+-				   struct netlink_callback *),
+-		       int (*done)(struct netlink_callback *))
++int netlink_dump_init(struct sock *ssk, struct sk_buff *skb,
++		      const struct nlmsghdr *nlh,
++		      int (*dump)(struct sk_buff *skb,
++				  struct netlink_callback *),
++		      int (*done)(struct netlink_callback *),
++		      unsigned char init, ...)
+ {
+ 	struct netlink_callback *cb;
+ 	struct sock *sk;
+ 	struct netlink_sock *nlk;
++	va_list args;
++	unsigned char i;
+ 
+ 	cb = kzalloc(sizeof(*cb), GFP_KERNEL);
+ 	if (cb == NULL)
+@@ -1748,6 +1751,10 @@ int netlink_dump_start(struct sock *ssk, struct sk_buff *skb,
+ 		sock_put(sk);
+ 		return -EBUSY;
+ 	}
++	va_start(args, init);
++	for (i = 0; i < init; i++)
++		cb->args[i] = va_arg(args, unsigned long);
++	va_end(args);
+ 	nlk->cb = cb;
+ 	mutex_unlock(nlk->cb_mutex);
+ 
+@@ -1759,7 +1766,7 @@ int netlink_dump_start(struct sock *ssk, struct sk_buff *skb,
+ 	 */
+ 	return -EINTR;
+ }
+-EXPORT_SYMBOL(netlink_dump_start);
++EXPORT_SYMBOL(netlink_dump_init);
+ 
+ void netlink_ack(struct sk_buff *in_skb, struct nlmsghdr *nlh, int err)
+ {
