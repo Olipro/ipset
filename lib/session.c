@@ -1248,36 +1248,16 @@ callback_noop(const struct nlmsghdr *nlh UNUSED, void *data UNUSED)
  * Build and send messages
  */
 
-static inline struct nlattr *
-nla_nest_start(struct nlmsghdr *nlh,  int attr)
-{
-	struct nlattr *start = mnl_nlmsg_get_payload_tail(nlh);
-
-	start->nla_type = attr | NLA_F_NESTED;
-	start->nla_len = MNL_ALIGN(sizeof(struct nlattr));
-	
-	nlh->nlmsg_len += start->nla_len;
-
-	return start;
-}
-
-static inline void
-nla_nest_end(struct nlmsghdr *nlh, struct nlattr *start)
-{
-	start->nla_len = (void *) mnl_nlmsg_get_payload_tail(nlh)
-			 - (void *) start;
-}
-
 static inline void
 open_nested(struct ipset_session *session, struct nlmsghdr *nlh, int attr)
 {
-	session->nested[session->nestid++] = nla_nest_start(nlh, attr);
+	session->nested[session->nestid++] = mnl_attr_nest_start(nlh, attr);
 }
 
 static inline void
 close_nested(struct ipset_session *session, struct nlmsghdr *nlh)
 {
-	nla_nest_end(nlh, session->nested[session->nestid-1]);
+	mnl_attr_nest_end(nlh, session->nested[session->nestid-1]);
 	session->nested[--session->nestid] = NULL;
 }
 
