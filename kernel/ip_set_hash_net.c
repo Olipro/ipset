@@ -1,218 +1,488 @@
-/* Copyright (C) 2003-2008 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
+/* Copyright (C) 2003-2010 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
-/* Kernel module implementing a cidr nethash set */
+/* Kernel module implementing an IP set type: the hash:net type */
 
+#include <linux/netfilter/ip_set_kernel.h>
+#include <linux/netfilter/ip_set_jhash.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
-#include <linux/netfilter_ipv4/ip_set_jhash.h>
 #include <linux/errno.h>
 #include <asm/uaccess.h>
 #include <asm/bitops.h>
 #include <linux/spinlock.h>
 #include <linux/random.h>
-
 #include <net/ip.h>
+#include <net/ipv6.h>
+#include <net/netlink.h>
+#include <net/pfxlen.h>
 
-#include <linux/netfilter_ipv4/ip_set_nethash.h>
-
-static int limit = MAX_RANGE;
-
-static inline __u32
-nethash_id_cidr(const struct ip_set_nethash *map,
-		ip_set_ip_t ip,
-		uint8_t cidr)
-{
-	__u32 id;
-	u_int16_t i;
-	ip_set_ip_t *elem;
-
-	ip = pack_ip_cidr(ip, cidr);
-	if (!ip)
-		return MAX_RANGE;
-	
-	for (i = 0; i < map->probes; i++) {
-		id = jhash_ip(map, i, ip) % map->hashsize;
-	   	DP("hash key: %u", id);
-		elem = HARRAY_ELEM(map->members, ip_set_ip_t *, id);
-	   	if (*elem == ip)
-			return id;
-		/* No shortcut - there can be deleted entries. */
-	}
-	return UINT_MAX;
-}
-
-static inline __u32
-nethash_id(struct ip_set *set, ip_set_ip_t ip)
-{
-	const struct ip_set_nethash *map = set->data;
-	__u32 id = UINT_MAX;
-	int i;
-
-	for (i = 0; i < 30 && map->cidr[i]; i++) {
-		id = nethash_id_cidr(map, ip, map->cidr[i]);
-		if (id != UINT_MAX)
-			break;
-	}
-	return id;
-}
-
-static inline int
-nethash_test_cidr(struct ip_set *set, ip_set_ip_t ip, uint8_t cidr)
-{
-	const struct ip_set_nethash *map = set->data;
-
-	return (nethash_id_cidr(map, ip, cidr) != UINT_MAX);
-}
-
-static inline int
-nethash_test(struct ip_set *set, ip_set_ip_t ip)
-{
-	return (nethash_id(set, ip) != UINT_MAX);
-}
-
-static int
-nethash_utest(struct ip_set *set, const void *data, u_int32_t size)
-{
-	const struct ip_set_req_nethash *req = data;
-
-	if (req->cidr <= 0 || req->cidr > 32)
-		return -EINVAL;
-	return (req->cidr == 32 ? nethash_test(set, req->ip)
-		: nethash_test_cidr(set, req->ip, req->cidr));
-}
-
-#define KADT_CONDITION
-
-KADT(nethash, test, ipaddr)
-
-static inline int
-__nethash_add(struct ip_set_nethash *map, ip_set_ip_t *ip)
-{
-	__u32 probe;
-	u_int16_t i;
-	ip_set_ip_t *elem, *slot = NULL;
-	
-	for (i = 0; i < map->probes; i++) {
-		probe = jhash_ip(map, i, *ip) % map->hashsize;
-		elem = HARRAY_ELEM(map->members, ip_set_ip_t *, probe);
-		if (*elem == *ip)
-			return -EEXIST;
-		if (!(slot || *elem))
-			slot = elem;
-		/* There can be deleted entries, must check all slots */
-	}
-	if (slot) {
-		*slot = *ip;
-		map->elements++;
-		return 0;
-	}
-	/* Trigger rehashing */
-	return -EAGAIN;
-}
-
-static inline int
-nethash_add(struct ip_set *set, ip_set_ip_t ip, uint8_t cidr)
-{
-	struct ip_set_nethash *map = set->data;
-	int ret;
-	
-	if (map->elements >= limit || map->nets[cidr-1] == UINT16_MAX)
-		return -ERANGE;	
-	if (cidr <= 0 || cidr >= 32)
-		return -EINVAL;
-
-	ip = pack_ip_cidr(ip, cidr);
-	if (!ip)
-		return -ERANGE;
-	
-	ret = __nethash_add(map, &ip);
-	if (ret == 0) {
-		if (!map->nets[cidr-1]++)
-			add_cidr_size(map->cidr, cidr);
-	}
-	
-	return ret;
-}
-
-#undef KADT_CONDITION
-#define KADT_CONDITION							\
-	struct ip_set_nethash *map = set->data;				\
-	uint8_t cidr = map->cidr[0] ? map->cidr[0] : 31;
-
-UADT(nethash, add, req->cidr)
-KADT(nethash, add, ipaddr, cidr)
-
-static inline void
-__nethash_retry(struct ip_set_nethash *tmp, struct ip_set_nethash *map)
-{
-	memcpy(tmp->cidr, map->cidr, sizeof(tmp->cidr));
-	memcpy(tmp->nets, map->nets, sizeof(tmp->nets));
-}
-
-HASH_RETRY(nethash, ip_set_ip_t)
-
-static inline int
-nethash_del(struct ip_set *set, ip_set_ip_t ip, uint8_t cidr)
-{
-	struct ip_set_nethash *map = set->data;
-	ip_set_ip_t id, *elem;
-
-	if (cidr <= 0 || cidr >= 32)
-		return -EINVAL;	
-	
-	id = nethash_id_cidr(map, ip, cidr);
-	if (id == UINT_MAX)
-		return -EEXIST;
-		
-	elem = HARRAY_ELEM(map->members, ip_set_ip_t *, id);
-	*elem = 0;
-	map->elements--;
-	if (!map->nets[cidr-1]--)
-		del_cidr_size(map->cidr, cidr);
-	return 0;
-}
-
-UADT(nethash, del, req->cidr)
-KADT(nethash, del, ipaddr, cidr)
-
-static inline int
-__nethash_create(const struct ip_set_req_nethash_create *req,
-		 struct ip_set_nethash *map)
-{
-	memset(map->cidr, 0, sizeof(map->cidr));
-	memset(map->nets, 0, sizeof(map->nets));
-	
-	return 0;
-}
-
-HASH_CREATE(nethash, ip_set_ip_t)
-HASH_DESTROY(nethash)
-
-HASH_FLUSH_CIDR(nethash, ip_set_ip_t)
-
-static inline void
-__nethash_list_header(const struct ip_set_nethash *map,
-		      struct ip_set_req_nethash_create *header)
-{    
-}
-
-HASH_LIST_HEADER(nethash)
-HASH_LIST_MEMBERS_SIZE(nethash, ip_set_ip_t)
-HASH_LIST_MEMBERS(nethash, ip_set_ip_t)
-
-IP_SET_RTYPE(nethash, IPSET_TYPE_IP | IPSET_DATA_SINGLE)
+#include <linux/netfilter.h>
+#include <linux/netfilter/ip_set.h>
+#include <linux/netfilter/ip_set_timeout.h>
+#include <linux/netfilter/ip_set_hash.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
-MODULE_DESCRIPTION("nethash type of IP sets");
-module_param(limit, int, 0600);
-MODULE_PARM_DESC(limit, "maximal number of elements stored in the sets");
+MODULE_DESCRIPTION("hash:net type of IP sets");
+MODULE_ALIAS("ip_set_hash:net");
 
-REGISTER_MODULE(nethash)
+/* Type specific function prefix */
+#define TYPE		hash_net
+
+static bool
+hash_net_same_set(const struct ip_set *a, const struct ip_set *b);
+
+#define hash_net4_same_set	hash_net_same_set
+#define hash_net6_same_set	hash_net_same_set
+
+/* The type variant functions: IPv4 */
+
+/* Member elements without timeout */
+struct hash_net4_elem {
+	u32 ip;
+	u8 cidr;	/* Not hashed, zero for null value */
+};
+
+/* Member elements with timeout support */
+struct hash_net4_telem {
+	u32 ip;
+	u8 cidr;	/* Not hashed, zero for null value */
+	unsigned long timeout;
+};
+
+static inline bool
+hash_net4_data_equal(const struct hash_net4_elem *ip1,
+		    const struct hash_net4_elem *ip2)
+{
+	/* We don't have to check the cidr equality
+	 * because overlapping nets cannot be added to the set
+	 */
+	return ip1->ip == ip2->ip;
+}
+
+static inline bool
+hash_net4_data_isnull(const struct hash_net4_elem *elem)
+{
+	return elem->cidr == 0;
+}
+
+static inline void
+hash_net4_data_copy(struct hash_net4_elem *dst,
+		    const struct hash_net4_elem *src)
+{
+	dst->ip = src->ip;
+	dst->cidr = src->cidr;
+}
+
+static inline void
+hash_net4_data_swap(struct hash_net4_elem *dst,
+		    struct hash_net4_elem *src)
+{
+	swap(dst->ip, src->ip);
+	swap(dst->cidr, src->cidr);
+}
+
+static inline void
+hash_net4_data_netmask(struct hash_net4_elem *elem, u8 cidr)
+{
+	elem->ip &= NETMASK(cidr);
+	elem->cidr = cidr;
+}
+
+/* Zero CIDR values cannot be stored */
+static inline void
+hash_net4_data_zero_out(struct hash_net4_elem *elem)
+{
+	elem->cidr = 0;
+}
+
+static inline bool
+hash_net4_data_list(struct sk_buff *skb, const struct hash_net4_elem *data)
+{
+	NLA_PUT_NET32(skb, IPSET_ATTR_IP, data->ip);
+	NLA_PUT_U8(skb, IPSET_ATTR_CIDR, data->cidr);
+	return 0;
+
+nla_put_failure:
+	return 1;
+}
+
+static inline bool
+hash_net4_data_tlist(struct sk_buff *skb, const struct hash_net4_elem *data)
+{
+	const struct hash_net4_telem *tdata =
+		(const struct hash_net4_telem *)data;
+
+	NLA_PUT_NET32(skb, IPSET_ATTR_IP, tdata->ip);
+	NLA_PUT_U8(skb, IPSET_ATTR_CIDR, tdata->cidr);
+	NLA_PUT_NET32(skb, IPSET_ATTR_TIMEOUT,
+		      htonl(ip_set_timeout_get(tdata->timeout)));
+
+	return 0;
+
+nla_put_failure:
+	return 1;
+}
+
+#define IP_SET_HASH_WITH_NETS
+
+#define PF		4
+#define HOST_MASK	32
+#include <linux/netfilter/ip_set_chash.h>
+
+static int
+hash_net4_kadt(struct ip_set *set, const struct sk_buff *skb,
+	       enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
+{
+	struct chash *h = set->data;
+	ipset_adtfn adtfn = set->variant->adt[adt];
+	struct hash_net4_elem data = { .cidr = h->nets[0].cidr || HOST_MASK };
+	
+	if (data.cidr == 0)
+		return -EINVAL;
+	if (adt == IPSET_TEST)
+		data.cidr = HOST_MASK;
+
+	ip4addrptr(skb, flags & IPSET_DIM_ONE_SRC, &data.ip);
+	data.ip &= NETMASK(data.cidr);
+
+	return adtfn(set, &data, GFP_ATOMIC, h->timeout);
+}
+
+static const struct nla_policy
+hash_net4_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
+	[IPSET_ATTR_IP]		= { .type = NLA_U32 },
+	[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
+	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+};
+
+static int
+hash_net4_uadt(struct ip_set *set, struct nlattr *head, int len,
+	       enum ipset_adt adt, u32 *lineno, u32 flags)
+{
+	struct chash *h = set->data;
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	bool eexist = flags & IPSET_FLAG_EXIST;
+	ipset_adtfn adtfn = set->variant->adt[adt];
+	struct hash_net4_elem data = { .cidr = HOST_MASK };
+	u32 timeout = h->timeout;
+	int ret;
+
+	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
+		      hash_net4_adt_policy))
+		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_IP])
+		data.ip = ip_set_get_n32(tb[IPSET_ATTR_IP]);
+	else
+		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_CIDR])
+		data.cidr = nla_get_u8(tb[IPSET_ATTR_CIDR]);
+
+	if (!data.cidr)
+		return -IPSET_ERR_INVALID_CIDR;
+
+	data.ip &= NETMASK(data.cidr);
+
+	if (tb[IPSET_ATTR_TIMEOUT]) {
+		if (!with_timeout(h->timeout))
+			return -IPSET_ERR_TIMEOUT;
+		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
+	}
+
+	ret = adtfn(set, &data, GFP_KERNEL, timeout);
+
+	if (ret && !(ret == -IPSET_ERR_EXIST && eexist)) {
+		if (tb[IPSET_ATTR_LINENO])
+			*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
+	}
+	return ret;
+}
+
+static bool
+hash_net_same_set(const struct ip_set *a, const struct ip_set *b)
+{
+	struct chash *x = a->data;
+	struct chash *y = b->data;
+	
+	return x->maxelem == y->maxelem
+	       && x->timeout == y->timeout
+	       && x->htable_bits == y->htable_bits	/* resizing ? */
+	       && x->array_size == y->array_size
+	       && x->chain_limit == y->chain_limit;
+}
+
+/* The type variant functions: IPv6 */
+
+struct hash_net6_elem {
+	union nf_inet_addr ip;
+	u8 cidr;	/* Not hashed */
+};
+
+struct hash_net6_telem {
+	union nf_inet_addr ip;
+	u8 cidr;	/* Not hashed */
+	unsigned long timeout;
+};
+
+static inline bool
+hash_net6_data_equal(const struct hash_net6_elem *ip1,
+		     const struct hash_net6_elem *ip2)
+{
+	return ipv6_addr_cmp(&ip1->ip.in6, &ip2->ip.in6) == 0;
+}
+
+static inline bool
+hash_net6_data_isnull(const struct hash_net6_elem *elem)
+{
+	return elem->cidr == 0;
+}
+
+static inline void
+hash_net6_data_copy(struct hash_net6_elem *dst,
+		    const struct hash_net6_elem *src)
+{
+	ipv6_addr_copy(&dst->ip.in6, &src->ip.in6);
+	dst->cidr = src->cidr;
+}
+
+static inline void
+hash_net6_data_swap(struct hash_net6_elem *dst, struct hash_net6_elem *src)
+{
+	struct hash_net6_elem tmp;
+
+	memcpy(&tmp, dst, sizeof(tmp));
+	memcpy(dst, src, sizeof(tmp));
+	memcpy(src, &tmp, sizeof(tmp));
+}
+
+static inline void
+hash_net6_data_zero_out(struct hash_net6_elem *elem)
+{
+	elem->cidr = 0;
+}
+
+static inline void
+ip6_netmask(union nf_inet_addr *ip, u8 prefix)
+{
+	ip->ip6[0] &= NETMASK6(prefix)[0];
+	ip->ip6[1] &= NETMASK6(prefix)[1];
+	ip->ip6[2] &= NETMASK6(prefix)[2];
+	ip->ip6[3] &= NETMASK6(prefix)[3];
+}
+
+static inline void
+hash_net6_data_netmask(struct hash_net6_elem *elem, u8 cidr)
+{
+	ip6_netmask(&elem->ip, cidr);
+	elem->cidr = cidr;
+}
+
+static inline bool
+hash_net6_data_list(struct sk_buff *skb, const struct hash_net6_elem *data)
+{
+	NLA_PUT(skb, IPSET_ATTR_IP, sizeof(struct in6_addr), &data->ip);
+	NLA_PUT_U8(skb, IPSET_ATTR_CIDR, data->cidr);
+	return 0;
+
+nla_put_failure:
+	return 1;
+}
+
+static inline bool
+hash_net6_data_tlist(struct sk_buff *skb, const struct hash_net6_elem *data)
+{
+	const struct hash_net6_telem *e = 
+		(const struct hash_net6_telem *)data;
+	
+	NLA_PUT(skb, IPSET_ATTR_IP, sizeof(struct in6_addr), &e->ip);
+	NLA_PUT_U8(skb, IPSET_ATTR_CIDR, e->cidr);
+	NLA_PUT_NET32(skb, IPSET_ATTR_TIMEOUT,
+		      htonl(ip_set_timeout_get(e->timeout)));
+	return 0;
+
+nla_put_failure:
+	return 1;
+}
+
+#undef PF
+#undef HOST_MASK
+
+#define PF		6
+#define HOST_MASK	128
+#include <linux/netfilter/ip_set_chash.h>
+
+static int
+hash_net6_kadt(struct ip_set *set, const struct sk_buff *skb,
+	       enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
+{
+	struct chash *h = set->data;
+	ipset_adtfn adtfn = set->variant->adt[adt];
+	struct hash_net6_elem data = { .cidr = h->nets[0].cidr || HOST_MASK };
+
+	if (data.cidr == 0)
+		return -EINVAL;
+	if (adt == IPSET_TEST)
+		data.cidr = HOST_MASK;
+
+	ip6addrptr(skb, flags & IPSET_DIM_ONE_SRC, &data.ip.in6);
+	ip6_netmask(&data.ip, data.cidr);
+
+	return adtfn(set, &data, GFP_ATOMIC, h->timeout);
+}
+
+static const struct nla_policy
+hash_net6_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
+	[IPSET_ATTR_IP]		= { .type = NLA_BINARY,
+				    .len = sizeof(struct in6_addr) },
+	[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
+	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+};
+
+static int
+hash_net6_uadt(struct ip_set *set, struct nlattr *head, int len,
+	       enum ipset_adt adt, u32 *lineno, u32 flags)
+{
+	struct chash *h = set->data;
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	ipset_adtfn adtfn = set->variant->adt[adt];
+	struct hash_net6_elem data = { .cidr = HOST_MASK };
+	u32 timeout = h->timeout;
+
+	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
+		      hash_net6_adt_policy))
+		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_IP])
+		memcpy(&data.ip, nla_data(tb[IPSET_ATTR_IP]),
+		       sizeof(struct in6_addr));
+	else
+		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_CIDR])
+		data.cidr = nla_get_u8(tb[IPSET_ATTR_CIDR]);
+
+	if (!data.cidr)
+		return -IPSET_ERR_INVALID_CIDR;
+
+	ip6_netmask(&data.ip, data.cidr);
+
+	if (tb[IPSET_ATTR_TIMEOUT]) {
+		if (!with_timeout(h->timeout))
+			return -IPSET_ERR_TIMEOUT;
+		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
+	}
+
+	return adtfn(set, &data, GFP_KERNEL, timeout);
+}
+
+/* Create hash:ip type of sets */
+
+static const struct nla_policy
+hash_net_create_policy[IPSET_ATTR_CREATE_MAX+1] __read_mostly = {
+	[IPSET_ATTR_HASHSIZE]	= { .type = NLA_U32 },
+	[IPSET_ATTR_MAXELEM]	= { .type = NLA_U32 },
+	[IPSET_ATTR_PROBES]	= { .type = NLA_U8 },
+	[IPSET_ATTR_RESIZE]	= { .type = NLA_U8  },
+	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+};
+
+static int
+hash_net_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
+{
+	struct nlattr *tb[IPSET_ATTR_CREATE_MAX];
+	u32 hashsize = IPSET_DEFAULT_HASHSIZE, maxelem = IPSET_DEFAULT_MAXELEM;
+	struct chash *h;
+
+	if (!(set->family == AF_INET || set->family == AF_INET6))
+		return -IPSET_ERR_INVALID_FAMILY;
+
+	if (nla_parse(tb, IPSET_ATTR_CREATE_MAX, head, len,
+		      hash_net_create_policy))
+		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_HASHSIZE]) {
+		hashsize = ip_set_get_h32(tb[IPSET_ATTR_HASHSIZE]);
+		if (hashsize < IPSET_MIMINAL_HASHSIZE)
+			hashsize = IPSET_MIMINAL_HASHSIZE;
+	}
+
+	if (tb[IPSET_ATTR_MAXELEM])
+		maxelem = ip_set_get_h32(tb[IPSET_ATTR_MAXELEM]);
+
+	h = kzalloc(sizeof(*h)
+		    + sizeof(struct chash_nets)
+		      * (set->family == AF_INET ? 31 : 127), GFP_KERNEL);
+	if (!h)
+		return -ENOMEM;
+
+	h->maxelem = maxelem;
+	h->htable_bits = htable_bits(hashsize);
+	h->array_size = CHASH_DEFAULT_ARRAY_SIZE;
+	h->chain_limit = CHASH_DEFAULT_CHAIN_LIMIT;
+	get_random_bytes(&h->initval, sizeof(h->initval));
+	h->timeout = IPSET_NO_TIMEOUT;
+
+	h->htable = ip_set_alloc(jhash_size(h->htable_bits) * sizeof(struct slist),
+				 GFP_KERNEL, &set->flags);
+	if (!h->htable) {
+		kfree(h);
+		return -ENOMEM;
+	}
+
+	set->data = h;
+
+	if (tb[IPSET_ATTR_TIMEOUT]) {
+		h->timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
+		
+		set->variant = set->family == AF_INET
+			? &hash_net4_tvariant : &hash_net6_tvariant;
+
+		if (set->family == AF_INET)
+			hash_net4_gc_init(set);
+		else
+			hash_net6_gc_init(set);
+	} else {
+		set->variant = set->family == AF_INET
+			? &hash_net4_variant : &hash_net6_variant;
+	}
+	
+	pr_debug("create %s hashsize %u (%u) maxelem %u: %p(%p)",
+		 set->name, jhash_size(h->htable_bits),
+		 h->htable_bits, h->maxelem, set->data, h->htable);
+	   
+	return 0;
+}
+
+static struct ip_set_type hash_net_type = {
+	.name		= "hash:net",
+	.protocol	= IPSET_PROTOCOL,
+	.features	= IPSET_TYPE_IP,
+	.dimension	= IPSET_DIM_ONE,
+	.family		= AF_UNSPEC,
+	.revision	= 0,
+	.create		= hash_net_create,
+	.me		= THIS_MODULE,
+};
+
+static int __init
+hash_net_init(void)
+{
+	return ip_set_type_register(&hash_net_type);
+}
+
+static void __exit
+hash_net_fini(void)
+{
+	ip_set_type_unregister(&hash_net_type);
+}
+
+module_init(hash_net_init);
+module_exit(hash_net_fini);

@@ -12,6 +12,7 @@
 #include <string.h>				/* memset */
 
 #include <libipset/linux_ip_set.h>		/* IPSET_MAXNAMELEN */
+#include <libipset/debug.h>			/* D() */
 #include <libipset/types.h>			/* struct ipset_type */
 #include <libipset/utils.h>			/* inXcpy */
 #include <libipset/data.h>			/* prototypes */
@@ -26,13 +27,16 @@
 struct ipset_data {
 	/* Option bits: which fields are set */
 	uint64_t bits;
+	/* Option bits: which options are ignored */
+	uint64_t ignored;
 	/* Setname  */
 	char setname[IPSET_MAXNAMELEN];
 	const struct ipset_type *type;
 	/* Common CADT options */
 	uint8_t cidr;
 	uint8_t family;
-	uint32_t flags;
+	uint32_t flags;		/* command level flags */
+	uint32_t cadt_flags;	/* data level flags */
 	uint32_t timeout;
 	union nf_inet_addr ip;
 	union nf_inet_addr ip_to;
@@ -79,6 +83,25 @@ copy_addr(uint8_t family, union nf_inet_addr *ip, const void *value)
 }
 
 /**
+ * ipset_strncpy - copy the string from src to dst
+ * @dst: the target string buffer
+ * @src: the source string buffer
+ * @len: the length of bytes to copy, including the terminating null byte.
+ *
+ * Copy the string from src to destination, but at most len bytes are
+ * copied. The target is unconditionally terminated by the null byte.
+ */
+void
+ipset_strncpy(char *dst, const char *src, size_t len)
+{
+	assert(dst);
+	assert(src);
+
+	strncpy(dst, src, len);
+	dst[len - 1] = '\0';
+}
+
+/**
  * ipset_data_flags_test - test option bits in the data blob
  * @data: data blob
  * @flags: the option flags to test
@@ -122,11 +145,36 @@ ipset_data_flags_unset(struct ipset_data *data, uint64_t flags)
 	data->bits &= ~flags;
 }
 
-#define flag_type_attr(data, opt, flag)				\
-do {								\
-	data->flags |= (1 << flag);				\
-	opt = IPSET_OPT_FLAGS;					\
+#define flag_type_attr(data, opt, flag)		\
+do {						\
+	data->flags |= flag;			\
+	opt = IPSET_OPT_FLAGS;			\
 } while (0)
+
+#define cadt_flag_type_attr(data, opt, flag)	\
+do {						\
+	data->cadt_flags |= flag;		\
+	opt = IPSET_OPT_CADT_FLAGS;		\
+} while (0)
+
+/**
+ * ipset_data_ignored - test and set ignored bits in the data blob
+ * @data: data blob
+ * @flags: the option flags which is ignored
+ *
+ * Returns true if the option was not already ignored.
+ */
+bool
+ipset_data_ignored(struct ipset_data *data, enum ipset_opt opt)
+{
+	bool ignored;
+	assert(data);
+	
+	ignored = data->ignored & IPSET_FLAG(opt);
+	data->ignored |= IPSET_FLAG(opt);
+
+	return ignored;
+}
 
 /**
  * ipset_data_set - put data into the data blob
@@ -249,10 +297,13 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		flag_type_attr(data, opt, IPSET_FLAG_EXIST);
 		break;
 	case IPSET_OPT_BEFORE:
-		flag_type_attr(data, opt, IPSET_FLAG_BEFORE);
+		cadt_flag_type_attr(data, opt, IPSET_FLAG_BEFORE);
 		break;
 	case IPSET_OPT_FLAGS:
 		data->flags = *(const uint32_t *)value;
+		break;
+	case IPSET_OPT_CADT_FLAGS:
+		data->cadt_flags = *(const uint32_t *)value;
 		break;
 	default:
 		return -1;
@@ -351,8 +402,10 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 	/* flags */
 	case IPSET_OPT_FLAGS:
 	case IPSET_OPT_EXIST:
-	case IPSET_OPT_BEFORE:
 		return &data->flags;
+	case IPSET_OPT_CADT_FLAGS:
+	case IPSET_OPT_BEFORE:
+		return &data->cadt_flags;
 	default:
 		return NULL;
 	}

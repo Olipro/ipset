@@ -11,14 +11,10 @@
  * published by the Free Software Foundation.  
  */
 
-#if 1
-#define IP_SET_DEBUG
-#endif
-
 /* The protocol version */
 #define IPSET_PROTOCOL		5
 
-/* The max length of strings: set and type identifiers */
+/* The max length of strings including NUL: set and type identifiers */
 #define IPSET_MAXNAMELEN	32
 
 /* Message types and commands */
@@ -43,6 +39,7 @@ enum ipset_cmd {
 	IPSET_CMD_RESTORE = IPSET_MSG_MAX, /* Enter restore mode */	
 	IPSET_CMD_HELP,		/* Get help */
 	IPSET_CMD_VERSION,	/* Get program version */
+	IPSET_CMD_QUIT,		/* Quit from interactive mode */
 
 	IPSET_CMD_MAX,
 
@@ -58,6 +55,7 @@ enum {
 	IPSET_ATTR_SETNAME2 = IPSET_ATTR_TYPENAME, /* rename/swap */
 	IPSET_ATTR_REVISION,	/* Settype revision */
 	IPSET_ATTR_FAMILY,	/* Settype family */
+	IPSET_ATTR_FLAGS,	/* Flags at command level */
 	IPSET_ATTR_DATA,	/* Nested attributes */
 	IPSET_ATTR_ADT,		/* Multiple data containers */
 	IPSET_ATTR_LINENO,	/* Restore lineno */
@@ -77,8 +75,8 @@ enum {
 	IPSET_ATTR_PORT_FROM = IPSET_ATTR_PORT,
 	IPSET_ATTR_PORT_TO,
 	IPSET_ATTR_TIMEOUT,
-	IPSET_ATTR_FLAGS,
-	/* IPSET_ATTR_LINENO */
+	IPSET_ATTR_CADT_FLAGS,
+	IPSET_ATTR_CADT_LINENO = IPSET_ATTR_LINENO,
 	/* Reserve empty slots */
 	IPSET_ATTR_CADT_MAX = 16,
 	/* Create-only specific attributes */
@@ -123,15 +121,19 @@ enum ipset_errno {
 	IPSET_ERR_INVALID_NETMASK,
 	IPSET_ERR_INVALID_FAMILY,
 	IPSET_ERR_TIMEOUT,
+	IPSET_ERR_REFERENCED,
 
+	/* Type specific error codes */
 	IPSET_ERR_TYPE_SPECIFIC = 160,
 };
-	                                
-enum ipset_data_flags {
+
+enum ipset_cmd_flags {
 	IPSET_FLAG_BIT_EXIST	= 0,
 	IPSET_FLAG_EXIST	= (1 << IPSET_FLAG_BIT_EXIST),
-	
-	IPSET_FLAG_BIT_BEFORE	= 2,
+};
+
+enum ipset_cadt_flags {
+	IPSET_FLAG_BIT_BEFORE	= 0,
 	IPSET_FLAG_BEFORE	= (1 << IPSET_FLAG_BIT_BEFORE),
 };
 
@@ -140,35 +142,13 @@ enum ipset_adt {
 	IPSET_ADD,
 	IPSET_DEL,
 	IPSET_TEST,
-	IPSET_CREATE,
+	IPSET_ADT_MAX,
+	IPSET_CREATE = IPSET_ADT_MAX,
 	IPSET_CADT_MAX,
 };
 
-#ifndef __KERNEL__
-#ifdef IP_SET_DEBUG
-#include <stdio.h>
-#include <sys/socket.h>
-#include <linux/netlink.h>
-#define D(format, args...)	do {				\
-	fprintf(stderr, "%s: %s: ", __FILE__, __FUNCTION__);	\
-	fprintf(stderr, format "\n" , ## args);			\
-} while (0)
-static inline void
-dump_nla(struct  nlattr *nla[], int maxlen)
-{
-	int i;
-	
-	for (i = 0; i < maxlen; i++)
-		D("nla[%u] does%s exist", i, !nla[i] ? " NOT" : "");
-}
-
-#else
-#define D(format, args...)
-#define dump_nla(nla, maxlen)
-#endif
-#endif /* !__KERNEL__ */
-
 #ifdef __KERNEL__
+#include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/netlink.h>
 #include <net/netlink.h>
@@ -176,19 +156,27 @@ dump_nla(struct  nlattr *nla[], int maxlen)
 /* Sets are identified by an index in kernel space. Tweak with ip_set_id_t
  * and IPSET_INVALID_ID if you want to increase the max number of sets.
  */
-typedef uint16_t ip_set_id_t;
+typedef u16 ip_set_id_t;
 
 #define IPSET_INVALID_ID		65535
 
+enum ip_set_dim {
+	IPSET_DIM_ZERO = 0,
+	IPSET_DIM_ONE,
+	IPSET_DIM_TWO,
+	IPSET_DIM_THREE,
+	/* Max dimension in elements.
+	 * If changed, new revision of iptables match/target is required.
+	 */
+	IPSET_DIM_MAX = 6,
+};
+
 /* Option flags for kernel operations */
 enum ip_set_kopt {
-	/* Bit 0 is reserved */
-	IPSET_SRC_FLAG = 1,
-	IPSET_SRC = (1 << IPSET_SRC_FLAG),
-	IPSET_DST_FLAG = 2,
-	IPSET_DST = (1 << IPSET_DST_FLAG),
-	IPSET_INV_FLAG = 3,
-	IPSET_INV = (1 << IPSET_INV_FLAG),
+	IPSET_INV_MATCH = (1 << IPSET_DIM_ZERO),
+	IPSET_DIM_ONE_SRC = (1 << IPSET_DIM_ONE),
+	IPSET_DIM_TWO_SRC = (1 << IPSET_DIM_TWO),
+	IPSET_DIM_THREE_SRC = (1 << IPSET_DIM_THREE),
 };
 
 /* Set features */
@@ -203,72 +191,60 @@ enum ip_set_feature {
 	IPSET_TYPE_IP2 = (1 << IPSET_TYPE_IP2_FLAG),
 	IPSET_TYPE_NAME_FLAG = 4,
 	IPSET_TYPE_NAME = (1 << IPSET_TYPE_NAME_FLAG),
+	/* Actually just a flag for dumping */
+	IPSET_DUMP_LAST_FLAG = 7,
+	IPSET_DUMP_LAST = (1 << IPSET_DUMP_LAST_FLAG),
 };
 
+/* Calculate the bytes required to store the inclusive range of a-b */
 static inline int
-bitmap_bytes(uint32_t a, uint32_t b)
+bitmap_bytes(u32 a, u32 b)
 {
 	return 4 * ((((b - a + 8) / 8) + 3) / 4);
 }
 
-#define ip_set_printk(format, args...) 				\
-	do {							\
-		printk("%s: %s: ", __FILE__, __FUNCTION__);	\
-		printk(format "\n" , ## args);			\
-	} while (0)
-
-#if defined(IP_SET_DEBUG)
-#define D(format, args...) 					\
-	do {							\
-		printk("%s: %s (DBG): ", __FILE__, __FUNCTION__);\
-		printk(format "\n" , ## args);			\
-	} while (0)
-
-static inline void
-dump_nla(const struct nlattr * const nla[], int maxlen)
-{
-	int i;
-	
-	for (i = 0; i < maxlen; i++)
-		printk("nlattr[%u] does%s exist\n", i, nla[i] ? "" : " NOT");
-}
-#else
-#define D(format, args...)
-#define dump_nla(nla, maxlen)
-#endif
-
 struct ip_set;
+
+typedef int (*ipset_adtfn)(struct ip_set *set, void *value,
+			   gfp_t gfp_flags, u32 timeout);
 
 /* Set type, variant-specific part */
 struct ip_set_type_variant {
 	/* Kernelspace: test/add/del entries */
 	int (*kadt)(struct ip_set *set, const struct sk_buff * skb,
-		    enum ipset_adt adt, uint8_t pf, const uint8_t *flags);
+		    enum ipset_adt adt, u8 pf, u8 dim, u8 flags);
 
 	/* Userspace: test/add/del entries */
 	int (*uadt)(struct ip_set *set, struct nlattr *head, int len,
-		    enum ipset_adt adt, uint32_t *lineno, uint32_t flags);
+		    enum ipset_adt adt, u32 *lineno, u32 flags);
+
+	/* Low level add/del/test entries */
+	ipset_adtfn adt[IPSET_ADT_MAX];
 
 	/* When adding entries and set is full, try to resize the set */
-	int (*resize)(struct ip_set *set, uint8_t retried);
+	int (*resize)(struct ip_set *set, gfp_t gfp_flags, bool retried);
 	/* Destroy the set */
 	void (*destroy)(struct ip_set *set);
 	/* Flush the elements */
 	void (*flush)(struct ip_set *set);
-
+	/* Expire entries before listing */
+	void (*expire)(struct ip_set *set);
 	/* List set header data */
 	int (*head)(struct ip_set *set, struct sk_buff *skb);
 	/* List elements */
 	int (*list)(struct ip_set *set, struct sk_buff *skb,
 		    struct netlink_callback *cb);
+
+	/* Return true if "b" set is the same as "a"
+	 * according to the set parameters */
+	bool (*same_set)(const struct ip_set *a, const struct ip_set *b);
 };
 
 /* Flags for the set type variants */
 enum ip_set_type_flags {
-	IP_SET_FLAG_VMALLOC_BIT = 0,
-	IP_SET_FLAG_VMALLOC = (1 << IP_SET_FLAG_VMALLOC_BIT),
-	IP_SET_FLAG_TIMEOUT_BIT = 1,
-	IP_SET_FLAG_TIMEOUT = (1 << IP_SET_FLAG_TIMEOUT_BIT),
+	/* Set members created by kmalloc */
+	IP_SET_FLAG_KMALLOC_BIT = 0,
+	IP_SET_FLAG_KMALLOC = (1 << IP_SET_FLAG_KMALLOC_BIT),
 };
 
 /* The core set type structure */
@@ -278,17 +254,19 @@ struct ip_set_type {
 	/* Typename */
 	char name[IPSET_MAXNAMELEN];
 	/* Protocol version */
-	uint8_t protocol;
+	u8 protocol;
 	/* Set features to control swapping */
-	uint8_t features;
+	u8 features;
+	/* Set type dimension */
+	u8 dimension;
 	/* Supported family: may be AF_UNSPEC for both AF_INET/AF_INET6 */
-	uint8_t family;
+	u8 family;
 	/* Type revision */
-	uint8_t revision;
+	u8 revision;
 
 	/* Create set */
 	int (*create)(struct ip_set *set,
-		      struct nlattr *head, int len, uint32_t flags);
+		      struct nlattr *head, int len, u32 flags);
 
 	/* Set this to THIS_MODULE if you are a module, otherwise NULL */
 	struct module *me;
@@ -310,86 +288,90 @@ struct ip_set {
 	/* The type variant doing the real job */
 	const struct ip_set_type_variant *variant;
 	/* The actual INET family */
-	uint8_t family;
+	u8 family;
 	/* Set type flags, filled/modified by create/resize */
-	uint8_t flags;
+	u8 flags;
 	/* The type specific data */
 	void *data;
 };
 
 /* register and unregister set references */
-extern ip_set_id_t ip_set_get_byname(const char name[IPSET_MAXNAMELEN]);
+extern ip_set_id_t ip_set_get_byname(const char *name, struct ip_set **set);
 extern void ip_set_put_byindex(ip_set_id_t index);
+extern const char * ip_set_name_byindex(ip_set_id_t index);
+extern ip_set_id_t ip_set_nfnl_get(const char *name);
+extern ip_set_id_t ip_set_nfnl_get_byindex(ip_set_id_t index);
+extern void ip_set_nfnl_put(ip_set_id_t index);
 
 /* API for iptables set match, and SET target */
 extern int ip_set_add(ip_set_id_t id, const struct sk_buff *skb,
-		      uint8_t family, const uint8_t *flags);
+		      u8 family, u8 dim, u8 flags);
 extern int ip_set_del(ip_set_id_t id, const struct sk_buff *skb,
-		      uint8_t family, const uint8_t *flags);
+		      u8 family, u8 dim, u8 flags);
 extern int ip_set_test(ip_set_id_t id, const struct sk_buff *skb,
-		       uint8_t family, const uint8_t *flags);
+		       u8 family, u8 dim, u8 flags);
 
 /* Allocate members */
 static inline void *
-ip_set_alloc(size_t size, gfp_t gfp_mask, uint8_t *flags)
+ip_set_alloc(size_t size, gfp_t gfp_mask, u8 *flags)
 {
-	void *members = kzalloc(size, gfp_mask);
+	void *members = kzalloc(size, gfp_mask | __GFP_NOWARN);
 	
 	if (members) {
-		*flags &= ~IP_SET_FLAG_VMALLOC;
-		D("allocated with kmalloc %p", members);
+		*flags |= IP_SET_FLAG_KMALLOC;
+		pr_debug("%p: allocated with kmalloc", members);
 		return members;
 	}
 	
 	members = __vmalloc(size, gfp_mask | __GFP_ZERO, PAGE_KERNEL);
 	if (!members)
 		return NULL;
-	*flags |= IP_SET_FLAG_VMALLOC;
-	D("allocated with vmalloc %p", members);
+	*flags &= ~IP_SET_FLAG_KMALLOC;
+	pr_debug("%p: allocated with vmalloc", members);
 	
 	return members;
 }
 
 static inline void
-ip_set_free(void *members, uint8_t flags)
+ip_set_free(void *members, u8 flags)
 {
-	D("free with %s %p", flags & IP_SET_FLAG_VMALLOC ? "vmalloc" : "kmalloc",
-	  members);
-	if (flags & IP_SET_FLAG_VMALLOC)
-		vfree(members);
-	else
+	pr_debug("%p: free with %s", members,
+		 flags & IP_SET_FLAG_KMALLOC ? "kmalloc" : "vmalloc");
+	if (flags & IP_SET_FLAG_KMALLOC)
 		kfree(members);
+	else
+		vfree(members);
 }
 
 /* Useful converters */
-static inline uint32_t
+static inline u32
 ip_set_get_h32(const struct nlattr *attr)
 {
-	uint32_t value = nla_get_u32(attr);
+	u32 value = nla_get_u32(attr);
 	
 	return attr->nla_type & NLA_F_NET_BYTEORDER ? ntohl(value) : value;
 }
 
-static inline uint16_t
+static inline u16
 ip_set_get_h16(const struct nlattr *attr)
 {
-	uint16_t value = nla_get_u16(attr);
+	u16 value = nla_get_u16(attr);
 	
 	return attr->nla_type & NLA_F_NET_BYTEORDER ? ntohs(value) : value;
 }
 
-static inline uint32_t
+static inline u32
 ip_set_get_n32(const struct nlattr *attr)
 {
-	uint32_t value = nla_get_u32(attr);
+	u32 value = nla_get_u32(attr);
 	
 	return attr->nla_type & NLA_F_NET_BYTEORDER ? value : htonl(value);
 }
 
-static inline uint16_t
+static inline u16
 ip_set_get_n16(const struct nlattr *attr)
 {
-	uint16_t value = nla_get_u16(attr);
+	u16 value = nla_get_u16(attr);
 	
 	return attr->nla_type & NLA_F_NET_BYTEORDER ? value : htons(value);
 }
@@ -404,31 +386,49 @@ ip_set_get_n16(const struct nlattr *attr)
 	NLA_PUT_BE16(skb, type | NLA_F_NET_BYTEORDER, value)
 
 /* Get address from skbuff */
-static inline uint32_t
-ip4addr(const struct sk_buff *skb, const uint8_t *flags)
+static inline u32
+ip4addr(const struct sk_buff *skb, bool src)
 {
-	return flags[0] & IPSET_SRC ? ip_hdr(skb)->saddr
-				    : ip_hdr(skb)->daddr;
+	return src ? ip_hdr(skb)->saddr : ip_hdr(skb)->daddr;
 }
 
 static inline void
-ip4addrptr(const struct sk_buff *skb, const uint8_t *flags, uint32_t *addr)
+ip4addrptr(const struct sk_buff *skb, bool src, u32 *addr)
 {
-	*addr = flags[0] & IPSET_SRC ? ip_hdr(skb)->saddr
-				     : ip_hdr(skb)->daddr;
+	*addr = src ? ip_hdr(skb)->saddr : ip_hdr(skb)->daddr;
 }
 
 static inline void
-ip6addrptr(const struct sk_buff *skb, const uint8_t *flags,
-	   struct in6_addr *addr)
+ip6addrptr(const struct sk_buff *skb, bool src, struct in6_addr *addr)
 {
-	memcpy(addr, flags[0] & IPSET_SRC ? &ipv6_hdr(skb)->saddr
-					  : &ipv6_hdr(skb)->daddr,
+	memcpy(addr, src ? &ipv6_hdr(skb)->saddr : &ipv6_hdr(skb)->daddr,
 	       sizeof(*addr));
 }
 
-#define pack_ip_port(map, ip, port) \
-	(port + ((ip - ((map)->first_ip)) << 16))
+/* Interface to iptables/ip6tables */
+
+#define SO_IP_SET 		83
+
+union ip_set_name_index {
+	char name[IPSET_MAXNAMELEN];
+	ip_set_id_t index;
+};
+
+#define IP_SET_OP_GET_BYNAME	0x00000006	/* Get set index by name */
+struct ip_set_req_get_set {
+	unsigned op;
+	unsigned version;
+	union ip_set_name_index set;
+};
+
+#define IP_SET_OP_GET_BYINDEX	0x00000007	/* Get set name by index */
+/* Uses ip_set_req_get_set */
+
+#define IP_SET_OP_VERSION	0x00000100	/* Ask kernel version */
+struct ip_set_req_version {
+	unsigned op;
+	unsigned version;
+};
 
 #endif	/* __KERNEL__ */
 

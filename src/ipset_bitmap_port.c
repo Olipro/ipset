@@ -11,20 +11,20 @@
 
 /* Parse commandline arguments */
 static const struct ipset_arg bitmap_port_create_args[] = {
-	{ .name = { "range", "--range", NULL },
+	{ .name = { "range", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PORT,
 	  .parse = ipset_parse_port,		.print = ipset_print_port,
 	},
-	{ .name = { "timeout", "--timeout", NULL },
+	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	/* Backward compatibility */
-	{ .name = { "--from", NULL },
+	{ .name = { "from", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PORT,
 	  .parse = ipset_parse_single_port,
 	},
-	{ .name = { "--to", NULL },
+	{ .name = { "to", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PORT_TO,
 	  .parse = ipset_parse_single_port,
 	},
@@ -32,7 +32,7 @@ static const struct ipset_arg bitmap_port_create_args[] = {
 }; 
 
 static const struct ipset_arg bitmap_port_add_args[] = {
-	{ .name = { "timeout", "--timeout", NULL },
+	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
@@ -48,7 +48,7 @@ static const char bitmap_port_usage[] =
 
 struct ipset_type ipset_bitmap_port0 = {
 	.name = "bitmap:port",
-	.alias = "portmap",
+	.alias = { "portmap", NULL },
 	.revision = 0,
 	.family = AF_UNSPEC,
 	.dimension = IPSET_DIM_ONE,

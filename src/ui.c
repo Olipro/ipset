@@ -4,107 +4,155 @@
  * it under the terms of the GNU General Public License version 2 as 
  * published by the Free Software Foundation.
  */
+#include <assert.h>				/* assert */
+#include <ctype.h>				/* tolower */
+#include <string.h>				/* memcmp, str* */
+
 #include <libipset/linux_ip_set.h>		/* IPSET_CMD_* */
 #include <libipset/types.h>			/* IPSET_*_ARG */
 #include <libipset/session.h>			/* ipset_envopt_parse */
 #include <libipset/parse.h>			/* ipset_parse_family */
 #include <libipset/print.h>			/* ipset_print_family */
+#include <libipset/utils.h>			/* STREQ */
 #include <libipset/ui.h>			/* prototypes */
 
 /* Commands and environment options */
 
 const struct ipset_commands ipset_commands[] = {
-	[IPSET_CMD_CREATE - 1] = {
-		.name = { "create", "c",  "-N", "--create", NULL },
+	/* Order is important */
+
+	{	/* c[reate], --create, n, -N */
+		.cmd = IPSET_CMD_CREATE,
+		.name = { "create", "n" },
 		.has_arg = IPSET_MANDATORY_ARG2,
 		.help = "SETNAME TYPENAME [type-specific-options]\n"
 			"        Create a new set",
 	},
-	[IPSET_CMD_DESTROY - 1] = {
-		.name = { "destroy", "x", "-X", "--destroy", NULL },
+	{	/* a[dd], --add, -A  */
+		.cmd = IPSET_CMD_ADD,
+		.name = { "add", NULL },
+		.has_arg = IPSET_MANDATORY_ARG2,
+		.help = "SETNAME ENTRY\n"
+		        "        Add entry to the named set",
+	},
+	{	/* d[el], --del, -D */
+		.cmd = IPSET_CMD_DEL,
+		.name = { "del", NULL },
+		.has_arg = IPSET_MANDATORY_ARG2,
+		.help = "SETNAME ENTRY\n"
+		        "        Delete entry from the named set",
+	},
+	{	/* t[est], --test, -T */
+		.cmd = IPSET_CMD_TEST,
+		.name = { "test", NULL },
+		.has_arg = IPSET_MANDATORY_ARG2,
+		.help = "SETNAME ENTRY\n"
+		        "        Test entry in the named set",
+	},
+	{	/* des[troy], --destroy, x, -X */
+		.cmd = IPSET_CMD_DESTROY,
+		.name = { "destroy", "x" },
 		.has_arg = IPSET_OPTIONAL_ARG,
 		.help = "[SETNAME]\n"
 		        "        Destroy a named set or all sets",
 	},
-	[IPSET_CMD_FLUSH - 1] = {
-		.name = { "flush", "f",   "-F", "--flush", NULL },
-		.has_arg = IPSET_OPTIONAL_ARG,
-		.help = "[SETNAME]\n"
-		        "        Flush a named set or all sets",
-	},
-	[IPSET_CMD_RENAME - 1] = {
-		.name = { "rename", "e",  "-E", "--rename", NULL },
-		.has_arg = IPSET_MANDATORY_ARG2,
-		.help = "FROM-SETNAME TO-SETNAME\n"
-		        "        Rename two sets",
-	},
-	[IPSET_CMD_SWAP - 1] = {
-		.name = { "swap", "w",    "-W", "--swap", NULL },
-		.has_arg = IPSET_MANDATORY_ARG2,
-		.help = "FROM-SETNAME TO-SETNAME\n"
-		        "        Swap the contect of two existing sets",
-	},
-	[IPSET_CMD_LIST - 1] = {
-		.name = { "list", "l",    "-L", "--list", NULL },
+	{	/* l[ist], --list, -L */
+		.cmd = IPSET_CMD_LIST,
+		.name = { "list", NULL },
 		.has_arg = IPSET_OPTIONAL_ARG,
 		.help = "[SETNAME]\n"
 		        "        List the entries of a named set or all sets",
 	},
-	[IPSET_CMD_SAVE - 1] = {
-		.name = { "save", "s",    "-S", "--save", NULL },
+	{	/* s[save], --save, -S */
+		.cmd = IPSET_CMD_SAVE,
+		.name = { "save", NULL },
 		.has_arg = IPSET_OPTIONAL_ARG,
 		.help = "[SETNAME]\n"
 		        "        Save the named set or all sets to stdout",
 	},
-	[IPSET_CMD_ADD - 1] = {
-		.name = { "add", "a",     "-A", "--add", NULL },
-		.has_arg = IPSET_MANDATORY_ARG2,
-		.help = "SETNAME ENTRY\n"
-		        "        Add entry to a named set",
-	},
-	[IPSET_CMD_DEL - 1] = {
-		.name = { "del", "d",     "-D", "--del", NULL },
-		.has_arg = IPSET_MANDATORY_ARG2,
-		.help = "SETNAME ENTRY\n"
-		        "        Delete entry from a named set",
-	},
-	[IPSET_CMD_TEST - 1] = {
-		.name = { "test", "t",    "-T", "--test", NULL },
-		.has_arg = IPSET_MANDATORY_ARG2,
-		.help = "SETNAME ENTRY\n"
-		        "        Test if entry exists in the named set",
-	},
-	[IPSET_CMD_HELP - 1] = {
-		.name = { "help", "h",    "-H", "-h", "--help", NULL },
-		.has_arg = IPSET_OPTIONAL_ARG,
-		.help = "[TYPENAME]\n"
-		        "        Print help, and settype specific help",
-	},
-	[IPSET_CMD_RESTORE - 1] = {
-		.name = { "restore", "r", "-R", "--restore", NULL },
+	{	/* r[estore], --restore, -R */
+		.cmd = IPSET_CMD_RESTORE,
+		.name = { "restore", NULL },
 		.has_arg = IPSET_NO_ARG,
 		.help = "\n"
 		        "        Restore a saved state",
 	},
-	[IPSET_CMD_VERSION - 1] = {
-		.name = { "version", "v", "-V", "-v", "--version", NULL },
+	{	/* f[lush], --flush, -F */
+		.cmd = IPSET_CMD_FLUSH,
+		.name = { "flush", NULL },
+		.has_arg = IPSET_OPTIONAL_ARG,
+		.help = "[SETNAME]\n"
+		        "        Flush a named set or all sets",
+	},
+	{	/* ren[ame], --rename, e, -E */
+		.cmd = IPSET_CMD_RENAME,
+		.name = { "rename", "e" },
+		.has_arg = IPSET_MANDATORY_ARG2,
+		.help = "FROM-SETNAME TO-SETNAME\n"
+		        "        Rename two sets",
+	},
+	{	/* sw[ap], --swap, w, -W */
+		.cmd = IPSET_CMD_SWAP,
+		.name = { "swap", "w" },
+		.has_arg = IPSET_MANDATORY_ARG2,
+		.help = "FROM-SETNAME TO-SETNAME\n"
+		        "        Swap the contect of two existing sets",
+	},
+	{	/* h[elp, --help, -H */
+		.cmd = IPSET_CMD_HELP,
+		.name = { "help", NULL },
+		.has_arg = IPSET_OPTIONAL_ARG,
+		.help = "[TYPENAME]\n"
+		        "        Print help, and settype specific help",
+	},
+	{	/* v[ersion], --version, -V */
+		.cmd = IPSET_CMD_VERSION,
+		.name = { "version", NULL },
 		.has_arg = IPSET_NO_ARG,
 		.help = "\n"
 		        "        Print version information",
 	},
-	[IPSET_CMD_MAX - 1] = { },
+	{	/* q[uit] */
+		.cmd = IPSET_CMD_QUIT,
+		.name = { "quit", NULL },
+		.has_arg = IPSET_NO_ARG,
+		.help = "\n"
+		        "        Quit interactive mode",
+	},
+	{ },
 };
 
+/* Match a command: try to match as a prefix or letter-command */
+bool
+ipset_match_cmd(const char *arg, const char * const name[])
+{
+	size_t len;
+
+	assert(arg);
+	assert(name && name[0]);
+
+	/* Ignore (two) leading dashes */
+	if (arg[0] == '-')
+		arg++;
+	if (arg[0] == '-')
+		arg++;
+
+	len = strlen(arg);
+
+	if (len > strlen(name[0]) || !len)
+		return false;
+	else if (memcmp(arg, name[0], len) == 0)
+		return true;
+	else if (len != 1)
+		return false;
+	else if (name[1] == NULL)
+		return tolower(arg[0]) == name[0][0];
+	else
+		return tolower(arg[0]) == name[1][0];	
+}
+
 const struct ipset_envopts ipset_envopts[] = {
-	{ .name = { "family", "--family", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.flag = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,		.print = ipset_print_family,
-	  .help = "inet|inet6\n"
-	  	  "       Specify family when creating a set\n"
-	  	  "       which supports multiple families.\n"
-	  	  "       The default family is INET.",
-	},
-	{ .name = { "-o", "--output", NULL },
+	{ .name = { "-o", "-output" },
 	  .has_arg = IPSET_MANDATORY_ARG,	.flag = IPSET_OPT_MAX,
 	  .parse = ipset_parse_output,
 	  .help = "plain|save|xml\n"
@@ -112,25 +160,25 @@ const struct ipset_envopts ipset_envopts[] = {
 	  	  "       Default value for \"list\" command is mode \"plain\"\n"
 	  	  "       and for \"save\" command is mode \"save\".",
 	},
-	{ .name = { "-s", "--sorted", NULL },
+	{ .name = { "-s", "-sorted" },
 	  .parse = ipset_envopt_parse,
 	  .has_arg = IPSET_NO_ARG,	.flag = IPSET_ENV_SORTED,
 	  .help = "\n"
 	          "        Print elements sorted (if supported by the set type).",
 	},
-	{ .name = { "-q", "--quiet", NULL },
+	{ .name = { "-q", "-quiet" },
 	  .parse = ipset_envopt_parse,
 	  .has_arg = IPSET_NO_ARG,	.flag = IPSET_ENV_QUIET,
 	  .help = "\n"
 	          "        Suppress any notice or warning message.",
 	},
-	{ .name = { "-r", "--resolve", NULL },
+	{ .name = { "-r", "-resolve" },
 	  .parse = ipset_envopt_parse,
 	  .has_arg = IPSET_NO_ARG,	.flag = IPSET_ENV_RESOLVE,
 	  .help = "\n"
 	          "        Try to resolve IP addresses in the output (slow!)",
 	},
-	{ .name = { "-x", "--exist", NULL },
+	{ .name = { "-!", "-exist" },
 	  .parse = ipset_envopt_parse,
 	  .has_arg = IPSET_NO_ARG,	.flag = IPSET_ENV_EXIST,
 	  .help = "\n"
@@ -138,14 +186,59 @@ const struct ipset_envopts ipset_envopts[] = {
 	          "        when adding already existing elements\n"
 		  "        or when deleting non-existing elements.",
 	},
-	/* Aliases */
-	{ .name = { "-4", NULL },
-	  .has_arg = IPSET_NO_ARG,		.flag = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	{ .name = { "-6", NULL },
-	  .has_arg = IPSET_NO_ARG,		.flag = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
 	{ },
 };
+
+/* Strict option matching */
+bool
+ipset_match_option(const char *arg, const char * const name[])
+{
+	assert(arg);
+	assert(name && name[0]);
+	
+	/* Skip two leading dashes */
+	if (arg[0] == '-' && arg[1] == '-')
+		arg++, arg++;
+
+	return STREQ(arg, name[0])
+	       || (name[1] != NULL && STREQ(arg, name[1]));
+}
+
+/* Strict envopt matching */
+bool
+ipset_match_envopt(const char *arg, const char * const name[])
+{
+	assert(arg);
+	assert(name && name[0]);
+	
+	/* Skip one leading dash */
+	if (arg[0] == '-' && arg[1] == '-')
+		arg++;
+
+	return STREQ(arg, name[0])
+	       || (name[1] != NULL && STREQ(arg, name[1]));
+}
+
+/**
+ * ipset_shift_argv - shift off an argument
+ * @arc: argument count
+ * @argv: array of argument strings
+ * @from: from where shift off an argument
+ *
+ * Shift off the argument at "from" from the array of
+ * arguments argv of size argc.
+ */
+void
+ipset_shift_argv(int *argc, char *argv[], int from)
+{
+	int i;
+	
+	assert(*argc >= from + 1);
+
+	for (i = from + 1; i <= *argc; i++) {
+		argv[i-1] = argv[i];
+	}
+	(*argc)--;
+	return;
+}
+

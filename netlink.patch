@@ -37,7 +37,7 @@ index ab5d312..ef8b229 100644
  #define NL_NONROOT_RECV 0x1
  #define NL_NONROOT_SEND 0x2
 diff --git a/net/netlink/af_netlink.c b/net/netlink/af_netlink.c
-index 19e9800..1b9dbe8 100644
+index 19e9800..7d85d45 100644
 --- a/net/netlink/af_netlink.c
 +++ b/net/netlink/af_netlink.c
 @@ -1714,15 +1714,18 @@ errout:
@@ -64,17 +64,17 @@ index 19e9800..1b9dbe8 100644
  
  	cb = kzalloc(sizeof(*cb), GFP_KERNEL);
  	if (cb == NULL)
-@@ -1748,6 +1751,10 @@ int netlink_dump_start(struct sock *ssk, struct sk_buff *skb,
- 		sock_put(sk);
- 		return -EBUSY;
- 	}
+@@ -1733,6 +1736,10 @@ int netlink_dump_start(struct sock *ssk, struct sk_buff *skb,
+ 	cb->nlh = nlh;
+ 	atomic_inc(&skb->users);
+ 	cb->skb = skb;
 +	va_start(args, init);
 +	for (i = 0; i < init; i++)
-+		cb->args[i] = va_arg(args, unsigned long);
++		cb->args[i] = va_arg(args, long);
 +	va_end(args);
- 	nlk->cb = cb;
- 	mutex_unlock(nlk->cb_mutex);
  
+ 	sk = netlink_lookup(sock_net(ssk), ssk->sk_protocol, NETLINK_CB(skb).pid);
+ 	if (sk == NULL) {
 @@ -1759,7 +1766,7 @@ int netlink_dump_start(struct sock *ssk, struct sk_buff *skb,
  	 */
  	return -EINTR;

@@ -13,6 +13,7 @@
 #include <stdlib.h>				/* malloc, free */
 #include <stdio.h>				/* FIXME: debug */
 
+#include <libipset/debug.h>			/* D() */
 #include <libipset/data.h>			/* ipset_data_* */
 #include <libipset/session.h>			/* ipset_cmd */
 #include <libipset/utils.h>			/* STREQ */
@@ -23,6 +24,7 @@
 struct ipset {
 	char name[IPSET_MAXNAMELEN];		/* set name */
 	const struct ipset_type *type;		/* set type */
+	uint8_t family;				/* family */
 	struct ipset *next;
 };
 
@@ -40,7 +42,8 @@ static struct ipset *setlist = NULL;		/* cached sets */
  * Returns 0 on success or a negative error code.
  */
 int
-ipset_cache_add(const char *name, const struct ipset_type *type)
+ipset_cache_add(const char *name, const struct ipset_type *type,
+		uint8_t family)
 {
 	struct ipset *s, *n;
 
@@ -53,13 +56,14 @@ ipset_cache_add(const char *name, const struct ipset_type *type)
 
 	ipset_strncpy(n->name, name, IPSET_MAXNAMELEN);
 	n->type = type;
+	n->family = family;
 	n->next = NULL;	
 
 	if (setlist == NULL) {
 		setlist = n;
 		return 0;
 	}
-	for (s = setlist; s->next == NULL; s = s->next) {
+	for (s = setlist; s->next != NULL; s = s->next) {
 		if (STREQ(name, s->name)) {
 			free(n);
 			return -EEXIST;
@@ -171,6 +175,22 @@ ipset_cache_swap(const char *from, const char *to)
 #define MATCH_FAMILY(type, f)	\
 	(f == AF_UNSPEC || type->family == f || type->family == AF_INET46)
 
+bool
+ipset_match_typename(const char *name, const struct ipset_type *type)
+{
+	const char * const * alias = type->alias;
+
+	if (STREQ(name, type->name))
+		return true;
+
+	while (alias[0]) {
+		if (STREQ(name, alias[0]))
+			return true;
+		alias++;
+	}
+	return false;
+} 
+
 static inline const struct ipset_type *
 create_type_get(struct ipset_session *session)
 {
@@ -192,7 +212,7 @@ create_type_get(struct ipset_session *session)
 		/* Skip revisions which are unsupported by the kernel */
 		if (t->kernel_check == IPSET_KERNEL_MISMATCH)
 			continue;
-		if ((STREQ(typename, t->name) || STREQ(typename, t->alias))
+		if (ipset_match_typename(typename, t)
 		    && MATCH_FAMILY(t, family)) {
 			if (match == NULL) {
 		    		match = t;
@@ -390,8 +410,9 @@ ipset_type_check(struct ipset_session *session)
 	for (t = typelist; t != NULL && match == NULL; t = t->next) {
 		if (t->kernel_check == IPSET_KERNEL_MISMATCH)
 			continue;
-		if ((STREQ(typename, t->name) || STREQ(typename, t->alias))
-		    && MATCH_FAMILY(t, family) && t->revision == revision)
+		if (ipset_match_typename(typename, t)
+		    && MATCH_FAMILY(t, family)
+		    && t->revision == revision)
 			match = t;
 	}
 	if (!match)
@@ -503,7 +524,7 @@ ipset_typename_resolve(const char *str)
 	const struct ipset_type *t;
 
 	for (t = typelist; t != NULL; t = t->next)
-		if (STREQ(str, t->name) || STREQ(str, t->alias))
+		if (ipset_match_typename(str, t))
 			return t->name;
 	return NULL;
 }
@@ -523,38 +544,25 @@ ipset_types(void)
 }
 
 /**
- * ipset_types_init - initialize known set types
+ * ipset_cache_init - initialize set cache
  *
- * Initialize the type list with the known, supported set types.
+ * Initialize the set cache in userspace.
  *
  * Returns 0 on success or a negative error code.
  */
 int
-ipset_types_init(void)
+ipset_cache_init(void)
 {
-	if (typelist != NULL)
-		return 0;
-
-	ipset_type_add(&ipset_bitmap_ip0);
-	ipset_type_add(&ipset_bitmap_ipmac0);
-	ipset_type_add(&ipset_bitmap_port0);
-	ipset_type_add(&ipset_hash_ip0);
-	ipset_type_add(&ipset_hash_net0);
-	ipset_type_add(&ipset_hash_ipport0);
-	ipset_type_add(&ipset_hash_ipportip0);
-	ipset_type_add(&ipset_hash_ipportnet0);
-	ipset_type_add(&ipset_tree_ip0);
-	ipset_type_add(&ipset_list_set0);
 	return 0;
 }
 
 /**
- * ipset_types_fini - release initialized known set types
+ * ipset_cache_fini - release the set cache
  *
- * Release initialized known set types and remove the set cache.
+ * Release the set cache.
  */
 void
-ipset_types_fini(void)
+ipset_cache_fini(void)
 {
 	struct ipset *set;
 	

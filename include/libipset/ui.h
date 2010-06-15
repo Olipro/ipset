@@ -9,24 +9,13 @@
 
 /* Commands in userspace */
 struct ipset_commands {
-	const char *name[6];
-	const char *help;
+	enum ipset_cmd cmd;
 	int has_arg;
+	const char *name[2];
+	const char *help;
 };
 
 extern const struct ipset_commands ipset_commands[];
-
-/* Environment option flags */
-enum ipset_envopt {
-	IPSET_ENV_BIT_SORTED	= 0,
-	IPSET_ENV_SORTED	= (1 << IPSET_ENV_BIT_SORTED),
-	IPSET_ENV_BIT_QUIET	= 1,
-	IPSET_ENV_QUIET		= (1 << IPSET_ENV_BIT_QUIET),
-	IPSET_ENV_BIT_RESOLVE	= 2,
-	IPSET_ENV_RESOLVE	= (1 << IPSET_ENV_BIT_RESOLVE),
-	IPSET_ENV_BIT_EXIST	= 3,
-	IPSET_ENV_EXIST		= (1 << IPSET_ENV_BIT_EXIST),
-};
 
 struct ipset_session;
 struct ipset_data;
@@ -35,7 +24,7 @@ struct ipset_data;
 struct ipset_envopts {
 	int flag;
 	int has_arg;
-	const char *name[3];
+	const char *name[2];
 	const char *help;
 	int (*parse)(struct ipset_session *s, int flag, const char *str);
 	int (*print)(char *buf, unsigned int len,
@@ -43,5 +32,10 @@ struct ipset_envopts {
 };
 
 extern const struct ipset_envopts ipset_envopts[];
+
+extern bool ipset_match_cmd(const char *arg, const char * const name[]);
+extern bool ipset_match_option(const char *arg, const char * const name[]);
+extern bool ipset_match_envopt(const char *arg, const char * const name[]);
+extern void ipset_shift_argv(int *argc, char *argv[], int from);
 
 #endif /* LIBIPSET_UI_H */

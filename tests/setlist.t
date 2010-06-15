@@ -1,9 +1,15 @@
+# Setlist: Create dummy set
+0 ipset -N dummy list:set
 # Setlist: Create base set foo
 0 ipset -N foo ipmap --from 2.0.0.1 --to 2.1.0.0
 # Setlist: Create base set bar
 0 ipset -N bar iphash
 # Setlist: Create setlist kind of set
 0 ipset -N test setlist
+# Setlist: Swap test and dumy sets
+0 ipset -W test dummy
+# Setlist: Destroy dummy set
+0 ipset -X dummy
 # Setlist: Add foo set to setlist
 0 ipset -A test foo
 # Setlist: Test foo set in setlist

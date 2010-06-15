@@ -9,11 +9,15 @@
 
 #include <libipset/data.h>			/* enum ipset_opt */
 
+typedef int (*ipset_printfn)(char *buf, unsigned int len,
+			     const struct ipset_data *data, enum ipset_opt opt,
+			     uint8_t env);
+
 extern int ipset_print_ether(char *buf, unsigned int len,
 			     const struct ipset_data *data, enum ipset_opt opt,
 			     uint8_t env);
 extern int ipset_print_family(char *buf, unsigned int len,
-			      const struct ipset_data *data, int opt,
+			      const struct ipset_data *data, enum ipset_opt opt,
 			      uint8_t env);
 extern int ipset_print_type(char *buf, unsigned int len,
 			    const struct ipset_data *data, enum ipset_opt opt,

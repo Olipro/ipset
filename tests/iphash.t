@@ -18,10 +18,14 @@
 0 ipset -A test 200.100.0.12
 # IP: Delete the same value
 0 ipset -D test 200.100.0.12
+# IP: Delete element not added to the set
+1 ipset -D test 200.100.0.12
+# IP: Delete element not added to the set, ignoring error
+0 ipset -! -D test 200.100.0.12
 # IP: List set
 0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
 # IP: Check listing
-0 diff .foo iphash.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo iphash.t.list0 && rm .foo
 # IP: Flush test set
 0 ipset -F test
 # IP: Delete test set
@@ -62,10 +66,12 @@
 0 ipset -A test 200.100.0.12
 # Network: Delete the same network
 0 ipset -D test 200.100.0.12
+# Network: Delete element not added to the set
+1 ipset -D test 200.100.0.12
 # Network: List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
 # Network: Check listing
-0 diff .foo iphash.t.list1 && rm .foo
+0 diff -I 'Size in memory.*' .foo iphash.t.list1 && rm .foo
 # Network: Flush test set
 0 ipset -F test
 # Network: Delete test set

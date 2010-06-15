@@ -11,21 +11,29 @@
 
 /* Parse commandline arguments */
 static const struct ipset_arg list_set_create_args[] = {
-	{ .name = { "size", "--size", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_MAXELEM,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_ip,
+	{ .name = { "size", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_SIZE,
+	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
-	{ .name = { "timeout", "--timeout", NULL },
+	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	{ },
 }; 
 
-static const struct ipset_arg list_set_add_args[] = {
-	{ .name = { "timeout", "--timeout", NULL },
+static const struct ipset_arg list_set_adt_args[] = {
+	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
+	},
+	{ .name = { "before", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_NAMEREF,
+	  .parse = ipset_parse_before,
+	},
+	{ .name = { "after", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_NAMEREF,
+	  .parse = ipset_parse_after,
 	},
 	{ },
 }; 
@@ -33,26 +41,29 @@ static const struct ipset_arg list_set_add_args[] = {
 static const char list_set_usage[] =
 "create SETNAME list:set\n"
 "               [size VALUE] [timeout VALUE]\n"
-"add    SETNAME NAME[,before|after,NAME] [timeout VALUE]\n"
+"add    SETNAME NAME [before|after NAME] [timeout VALUE]\n"
 "del    SETNAME NAME\n"
 "test   SETNAME NAME\n";
 
 struct ipset_type ipset_list_set0 = {
 	.name = "list:set",
-	.alias = "setlist",
+	.alias = { "setlist", NULL },
 	.revision = 0,
 	.family = AF_UNSPEC,
 	.dimension = IPSET_DIM_ONE,
 	.elem = { 
 		[IPSET_DIM_ONE] = { 
-			.parse = ipset_parse_name,
+			.parse = ipset_parse_setname,
 			.print = ipset_print_name,
 			.opt = IPSET_OPT_NAME
 		},
 	},
+	.compat_parse_elem = ipset_parse_name_compat,
 	.args = {
 		[IPSET_CREATE] = list_set_create_args,
-		[IPSET_ADD] = list_set_add_args,
+		[IPSET_ADD] = list_set_adt_args,
+		[IPSET_DEL] = list_set_adt_args,
+		[IPSET_TEST] = list_set_adt_args,
 	},
 	.mandatory = {
 		[IPSET_CREATE] = 0,

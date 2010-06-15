@@ -15,11 +15,12 @@
 
 #include <config.h>
 
+#include <libipset/debug.h>		/* D() */
 #include <libipset/parse.h>		/* ipset_parse_* */
 #include <libipset/session.h>		/* ipset_session_* */
 #include <libipset/types.h>		/* struct ipset_type */
 #include <libipset/ui.h>		/* core options, commands */
-#include <libipset/utils.h>		/* ipset_name_match */
+#include <libipset/utils.h>		/* STREQ */
 
 static char program_name[] = PACKAGE;
 static char program_version[] = PACKAGE_VERSION;
@@ -31,6 +32,18 @@ static char cmdline[1024];
 static char *newargv[255];
 static int newargc = 0;
 
+/* The known set types: (typename, revision, family) is unique */
+extern struct ipset_type ipset_bitmap_ip0;
+extern struct ipset_type ipset_bitmap_ipmac0;
+extern struct ipset_type ipset_bitmap_port0;
+extern struct ipset_type ipset_hash_ip0;
+extern struct ipset_type ipset_hash_net0;
+extern struct ipset_type ipset_hash_ipport0;
+extern struct ipset_type ipset_hash_ipportip0;
+extern struct ipset_type ipset_hash_ipportnet0;
+extern struct ipset_type ipset_tree_ip0;
+extern struct ipset_type ipset_list_set0;
+
 enum exittype {
 	NO_PROBLEM = 0,
 	OTHER_PROBLEM,
@@ -38,7 +51,7 @@ enum exittype {
 	VERSION_PROBLEM,
 };
 
-static void __attribute__((format(printf,2,3)))
+static int __attribute__((format(printf,2,3)))
 exit_error(int status, const char *msg, ...)
 {
 	bool quiet = !interactive
@@ -52,7 +65,8 @@ exit_error(int status, const char *msg, ...)
 		va_start(args, msg);
 		vfprintf(stderr, msg, args);
 		va_end(args);
-		fprintf(stderr, "\n");
+		if (msg[strlen(msg) - 1] != '\n')
+			fprintf(stderr, "\n");
 
 		if (status == PARAMETER_PROBLEM)
 			fprintf(stderr,
@@ -63,7 +77,7 @@ exit_error(int status, const char *msg, ...)
 	if (status && interactive) {
 		if (session)
 			ipset_session_report_reset(session);
-		return;
+		return -1;
 	}
 
 	if (session)
@@ -71,6 +85,8 @@ exit_error(int status, const char *msg, ...)
 
 	D("status: %u", status);
 	exit(status);
+	/* Unreached */
+	return -1;
 }
 
 static int
@@ -81,8 +97,8 @@ handle_error(void)
 		fprintf(stderr, "Warning: %s\n",
 			ipset_session_warning(session));
 	if (ipset_session_error(session))
-		exit_error(OTHER_PROBLEM, "%s",
-			   ipset_session_error(session));
+		return exit_error(OTHER_PROBLEM, "%s",
+				  ipset_session_error(session));
 
 	if (!interactive) {
 		ipset_session_fini(session);
@@ -96,19 +112,15 @@ handle_error(void)
 static void
 help(void)
 {
-	enum ipset_cmd cmd;
+	const struct ipset_commands *c;
 	const struct ipset_envopts *opt = ipset_envopts;
 	
 	printf("%s v%s\n\n"
 	       "Usage: %s [options] COMMAND\n\nCommands:\n",
 	       program_name, program_version, program_name);
 
-	for (cmd = IPSET_CMD_NONE + 1; cmd < IPSET_CMD_MAX; cmd++) {
-		if (!ipset_commands[cmd-1].name[0])
-			continue;
-		printf("%s %s\n",
-		       ipset_commands[cmd-1].name[0],
-		       ipset_commands[cmd-1].help);
+	for (c = ipset_commands; c->cmd; c++) {
+		printf("%s %s\n", c->name[0], c->help);
 	}
 	printf("\nOptions:\n");
 	
@@ -136,9 +148,11 @@ build_argv(char *buffer)
 	while ((ptr = strtok(NULL, " \t\n")) != NULL) {
 		if ((newargc + 1) < (int)(sizeof(newargv)/sizeof(char *)))
 			newargv[newargc++] = ptr;
-		else
+		else {
 			exit_error(PARAMETER_PROBLEM,
 				   "Line is too long to parse.");
+			return;
+		}
 	}
 }
 
@@ -188,57 +202,61 @@ restore(char *argv0)
 }
 
 static int
-call_parser(int argc, char *argv[],  const struct ipset_arg *args)
+call_parser(int argc, char *argv[], const struct ipset_arg *args)
 {
 	int i = 1, ret = 0;
 	const struct ipset_arg *arg;
+	const char *optstr;
 	
-	/* Currently CREATE and ADD may have got additional arguments */
+	/* Currently CREATE and ADT may have got additional arguments */
 	if (!args)
 		goto done;
 	for (arg = args; arg->opt; arg++) {
 		for (i = 1; i < argc; ) {
-			D("argc: %u, i: %u", argc, i);
-			if (!(ipset_name_match(argv[i], arg->name))) {
+			D("argc: %u, i: %u: %s vs %s", argc, i, argv[i], arg->name[0]);
+			if (!(ipset_match_option(argv[i], arg->name))) {
 				i++;
 				continue;
 			}
+			optstr = argv[i];
 			/* Shift off matched option */
 			D("match %s", arg->name[0]);
 			ipset_shift_argv(&argc, argv, i);
 			D("argc: %u, i: %u", argc, i);
 			switch (arg->has_arg) {
 			case IPSET_MANDATORY_ARG:
-				if (i + 1 > argc) {
-					exit_error(PARAMETER_PROBLEM,
-						   "Missing mandatory argument of option `%s'",
-						   arg->name[0]);
-					return 1;
-				}
+				if (i + 1 > argc)
+					return exit_error(PARAMETER_PROBLEM,
+						"Missing mandatory argument of option `%s'",
+						arg->name[0]);
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
 				if (i + 1 <= argc) {
-					ret = arg->parse(session, arg->opt,
-							 argv[i]);
+					ret = ipset_call_parser(session,
+							arg->parse,
+							optstr, arg->opt,
+							argv[i]);
 					if (ret < 0)
 						return ret;
 					ipset_shift_argv(&argc, argv, i);
+					break;
 				}
-				break;
+				/* Fall through */
 			default:
-				ret = ipset_data_set(ipset_session_data(session),
-						     arg->opt, arg->name[0]);
+				ret = ipset_call_parser(session,
+							arg->parse,
+							optstr, arg->opt,
+							optstr);
 				if (ret < 0)
 					return ret;
 			}
 		}
 	}
 done:
-	if (i < argc) {
-		exit_error(PARAMETER_PROBLEM, "Unknown argument: `%s'",
-			   argv[i]);
-		return 1;
-	}
+	if (i < argc)
+		return exit_error(PARAMETER_PROBLEM,
+				  "Unknown argument: `%s'",
+				  argv[i]);
 	return ret;
 }
 
@@ -256,12 +274,20 @@ check_mandatory(const struct ipset_type *type, int cmd)
 	mandatory &= ~flags;
 	if (!mandatory)
 		return;
+	if (!arg) {
+		exit_error(OTHER_PROBLEM,
+			"There are missing mandatory flags but can't check them. "
+			"It's a bug, please report the problem.");
+		return;
+	}
 
 	for (; arg->opt; arg++)
-		if (mandatory & IPSET_FLAG(arg->opt))
+		if (mandatory & IPSET_FLAG(arg->opt)) {
 			exit_error(PARAMETER_PROBLEM,
 				   "Mandatory option `%s' is missing",
 				   arg->name[0]);
+			return;
+		}
 }
 
 static const struct ipset_type *
@@ -270,7 +296,7 @@ type_find(const char *name)
 	const struct ipset_type *t = ipset_types();
 	
 	while (t) {
-		if (STREQ(t->name, name) || STREQ(t->alias, name))
+		if (ipset_match_typename(name, t))
 			return t;
 		t = t->next;
 	}
@@ -299,7 +325,7 @@ parse_commandline(int argc, char *argv[])
 {
 	int ret = 0;
 	enum ipset_cmd cmd = IPSET_CMD_NONE;
-	int i = 0, j;
+	int i;
 	char *arg0 = NULL, *arg1 = NULL, *c;
 	const struct ipset_envopts *opt;
 	const struct ipset_commands *command;
@@ -309,16 +335,16 @@ parse_commandline(int argc, char *argv[])
 	if (session == NULL) {
 		session = ipset_session_init(printf);
 		if (session == NULL)
-			exit_error(OTHER_PROBLEM,
-				   "Cannot initialize ipset session, aborting.");
+			return exit_error(OTHER_PROBLEM,
+				"Cannot initialize ipset session, aborting.");
 	}
 
 	/* Commandline parsing, somewhat similar to that of 'ip' */
 
 	/* First: parse core options */
-	for (opt = ipset_envopts; opt->flag ; opt++) {
+	for (opt = ipset_envopts; opt->flag; opt++) {
 		for (i = 1; i < argc; ) {
-			if (!ipset_name_match(argv[i], opt->name)) {
+			if (!ipset_match_envopt(argv[i], opt->name)) {
 				i++;
 				continue;
 			}
@@ -327,9 +353,9 @@ parse_commandline(int argc, char *argv[])
 			switch (opt->has_arg) {
 			case IPSET_MANDATORY_ARG:
 				if (i + 1 > argc)
-					exit_error(PARAMETER_PROBLEM,
-						   "Missing mandatory argument to option %s",
-						   opt->name[0]);
+					return exit_error(PARAMETER_PROBLEM,
+						"Missing mandatory argument to option %s",
+						opt->name[0]);
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
 				if (i + 1 <= argc) {
@@ -340,53 +366,49 @@ parse_commandline(int argc, char *argv[])
 					ipset_shift_argv(&argc, argv, i);
 				}
 				break;
-			default:
-				ret = opt->parse(session, opt->flag, argv[i]);
+			case IPSET_NO_ARG:
+				ret = opt->parse(session, opt->flag,
+						 opt->name[0]);
 				if (ret < 0)
 					return handle_error();
+				break;
+			default:
 				break;
 			}
 		}
 	}
 
 	/* Second: parse command */
-	for (j = IPSET_CMD_NONE + 1; j < IPSET_CMD_MAX; j++) {
-		command = &ipset_commands[j - 1];
-		if (!command->name[0])
-			continue;
+	for (command = ipset_commands;
+	     command->cmd && cmd == IPSET_CMD_NONE;
+	     command++) {
 		for (i = 1; i < argc; ) {
-			if (!ipset_name_match(argv[i], command->name)) {
+			if (!ipset_match_cmd(argv[1], command->name)) {
 				i++;
 				continue;
 			}
-			if (cmd != IPSET_CMD_NONE)
-				exit_error(PARAMETER_PROBLEM,
-					   "Commands `%s' and `%s'"
-					   "cannot be specified together.",
-					   ipset_commands[cmd - 1].name[0],
-					   command->name[0]);
 			if (restore_line != 0
-			    && (j == IPSET_CMD_RESTORE
-			    	|| j == IPSET_CMD_VERSION
-			    	|| j == IPSET_CMD_HELP))
-				exit_error(PARAMETER_PROBLEM,
-					   "Command `%s' is invalid in restore mode.",
-					   command->name[0]);
-			if (interactive && j == IPSET_CMD_RESTORE) {
-				printf("Restore command ignored in interactive mode\n");
+			    && (command->cmd == IPSET_CMD_RESTORE
+			    	|| command->cmd == IPSET_CMD_VERSION
+			    	|| command->cmd == IPSET_CMD_HELP))
+				return exit_error(PARAMETER_PROBLEM,
+					"Command `%s' is invalid in restore mode.",
+					command->name[0]);
+				if (interactive && command->cmd == IPSET_CMD_RESTORE) {
+					printf("Restore command ignored in interactive mode\n");
 				return 0;
 			}
 
 			/* Shift off matched command arg */
 			ipset_shift_argv(&argc, argv, i);
-			cmd = j;
+			cmd = command->cmd;
 			switch (command->has_arg) {
 			case IPSET_MANDATORY_ARG:
 			case IPSET_MANDATORY_ARG2:
 				if (i + 1 > argc)
-					exit_error(PARAMETER_PROBLEM,
-						   "Missing mandatory argument to command %s",
-						   command->name[0]);
+					return exit_error(PARAMETER_PROBLEM,
+						"Missing mandatory argument to command %s",
+						command->name[0]);
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
 				arg0 = argv[i];
@@ -399,13 +421,14 @@ parse_commandline(int argc, char *argv[])
 			}
 			if (command->has_arg == IPSET_MANDATORY_ARG2) {
 				if (i + 1 > argc)
-					exit_error(PARAMETER_PROBLEM,
-						   "Missing second mandatory argument to command %s",
-						   command->name[0]);
+					return exit_error(PARAMETER_PROBLEM,
+						"Missing second mandatory argument to command %s",
+						command->name[0]);
 				arg1 = argv[i];
 				/* Shift off second arg */
 				ipset_shift_argv(&argc, argv, i);
 			}
+			break;
 		}
 	}
 
@@ -433,14 +456,14 @@ parse_commandline(int argc, char *argv[])
 				parse_commandline(newargc, newargv);
 				printf("%s> ", program_name);
 			}
-			exit_error(NO_PROBLEM, NULL);
+			return exit_error(NO_PROBLEM, NULL);
 		}
-		exit_error(PARAMETER_PROBLEM, "No command specified.");
+		return exit_error(PARAMETER_PROBLEM, "No command specified.");
 	case IPSET_CMD_VERSION:
 		printf("%s v%s.\n", program_name, program_version);
 		if (interactive)
 			return 0;
-		exit_error(NO_PROBLEM, NULL);
+		return exit_error(NO_PROBLEM, NULL);
 	case IPSET_CMD_HELP:
 		help();
 
@@ -450,8 +473,8 @@ parse_commandline(int argc, char *argv[])
 				/* Type-specific help, without kernel checking */
 				type = type_find(arg0);
 				if (!type)
-					exit_error(PARAMETER_PROBLEM,
-						   "Unknown settype: `%s'", arg0);
+					return exit_error(PARAMETER_PROBLEM,
+						"Unknown settype: `%s'", arg0);
 				printf("\n%s type specific options:\n\n%s",
 				       type->name, type->usage);
 				if (type->family == AF_UNSPEC)
@@ -475,7 +498,9 @@ parse_commandline(int argc, char *argv[])
 		}
 		if (interactive)
 			return 0;
-		exit_error(NO_PROBLEM, NULL);
+		return exit_error(NO_PROBLEM, NULL);
+	case IPSET_CMD_QUIT:
+		return exit_error(NO_PROBLEM, NULL);
 	default:
 		break;
 	}
@@ -525,7 +550,7 @@ parse_commandline(int argc, char *argv[])
 		ret = ipset_parse_setname(session, IPSET_SETNAME, arg0);
 		if (ret < 0)
 			return handle_error();
-		ret = ipset_parse_name(session, IPSET_OPT_SETNAME2, arg1);
+		ret = ipset_parse_setname(session, IPSET_OPT_SETNAME2, arg1);
 		if (ret < 0)
 			return handle_error();
 		break;
@@ -582,5 +607,16 @@ parse_commandline(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
+	/* Register types */
+	ipset_type_add(&ipset_bitmap_ip0);
+	ipset_type_add(&ipset_bitmap_ipmac0);
+	ipset_type_add(&ipset_bitmap_port0);
+	ipset_type_add(&ipset_hash_ip0);
+	ipset_type_add(&ipset_hash_net0);
+	ipset_type_add(&ipset_hash_ipport0);
+	ipset_type_add(&ipset_hash_ipportip0);
+	ipset_type_add(&ipset_hash_ipportnet0);
+	ipset_type_add(&ipset_list_set0);
+
 	return parse_commandline(argc, argv);
 }

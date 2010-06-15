@@ -20,6 +20,8 @@
 1 ipset -A test 2.0.0.0
 # Range: Try to add value after upper boundary
 1 ipset -A test 2.1.0.1
+# Range: Delete element not added to the set
+1 ipset -D test 2.0.0.2
 # Range: Try to add value with MAC
 0 ipset -A test 2.0.0.2,00:11:22:33:44:55
 # Range: Test value with invalid MAC
@@ -28,6 +30,10 @@
 0 ipset -T test 2.0.0.2,00:11:22:33:44:55
 # Range: Add MAC to already added element
 0 ipset -A test 2.0.0.1,00:11:22:33:44:56
+# Range: Test value without supplying MAC
+0 ipset -T test 2.0.0.1
+# Range: Test value with valid MAC
+0 ipset -T test 2.0.0.1,00:11:22:33:44:56
 # Range: Add an element in the middle
 0 ipset -A test 2.0.200.214,00:11:22:33:44:57
 # Range: Delete the same element
@@ -62,6 +68,8 @@
 1 ipset -A test 1.255.255.255
 # Network: Try to add value after upper boundary
 1 ipset -A test 2.1.0.0
+# Network: Delete element not added to the set
+1 ipset -D test 2.0.0.2
 # Network: Try to add value with MAC
 0 ipset -A test 2.0.0.2,00:11:22:33:44:55
 # Network: Test value with invalid MAC
@@ -110,8 +118,10 @@
 0 ipset -A test 2.0.200.214,00:11:22:33:44:57
 # Range: Delete the same element
 0 ipset -D test 2.0.200.214
+# Range: List set
+0 ipset -L test | sed 's/timeout ./timeout x/' > .foo
 # Range: Check listing
-0 ipset -L test | grep '2.0.0.2,00:11:22:33:44:55 timeout' >/dev/null
+0 diff .foo macipmap.t.list3 && rm .foo
 # Range: wait 10s so that elements can timeout
 0 sleep 10
 # Range: List set

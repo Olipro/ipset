@@ -33,6 +33,7 @@ update_includes:
 	./update ip_set.h
 	./update ip_set_bitmap.h
 	./update ip_set_hash.h
+	./update ip_set_list.h
 
 tests:
 	cd tests; ./runtest.sh

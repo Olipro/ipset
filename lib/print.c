@@ -13,6 +13,7 @@
 #include <arpa/inet.h>				/* inet_ntop */
 #include <net/ethernet.h>			/* ETH_ALEN */
 
+#include <libipset/debug.h>			/* D() */
 #include <libipset/data.h>			/* ipset_data_* */
 #include <libipset/parse.h>			/* IPSET_*_SEPARATOR */
 #include <libipset/types.h>			/* ipset set types */
@@ -86,7 +87,7 @@ ipset_print_ether(char *buf, unsigned int len,
  */
 int
 ipset_print_family(char *buf, unsigned int len,
-		   const struct ipset_data *data, int opt,
+		   const struct ipset_data *data, enum ipset_opt opt,
 		   uint8_t env UNUSED)
 {
 	uint8_t family;
@@ -172,10 +173,10 @@ snprintf_ipv##f(char *buf, unsigned int len, int flags,			\
 	size = __getnameinfo##f(buf, len, flags, ip);			\
 	SNPRINTF_FAILURE(size, len, offset);				\
 									\
+	D("cidr %u mask %u", cidr, mask);				\
 	if (cidr == mask)						\
 		return offset;						\
-	if ((unsigned int)(size + 5) < len) 				\
-		return -1;						\
+	D("print cidr");						\
 	size = snprintf(buf + offset, len,				\
 			"%s%u", IPSET_CIDR_SEPARATOR, cidr);		\
 	SNPRINTF_FAILURE(size, len, offset);				\
@@ -218,9 +219,10 @@ ipset_print_ip(char *buf, unsigned int len,
 	D("len: %u", len);
 	family = ipset_data_family(data);
 	cidropt = opt == IPSET_OPT_IP ? IPSET_OPT_CIDR : IPSET_OPT_CIDR2;
-	if (ipset_data_test(data, cidropt))
+	if (ipset_data_test(data, cidropt)) {
 		cidr = *(uint8_t *) ipset_data_get(data, cidropt);
-	else
+		D("CIDR: %u", cidr);
+	} else
 		cidr = family == AF_INET6 ? 128 : 32;
 	flags = env & (1 << IPSET_ENV_RESOLVE) ? 0 : NI_NUMERICHOST;
 	
@@ -373,11 +375,14 @@ ipset_print_name(char *buf, unsigned int len,
 	SNPRINTF_FAILURE(size, len, offset);	
 
 	if (ipset_data_test(data, IPSET_OPT_NAMEREF)) {
-		bool before = ipset_data_test(data, IPSET_OPT_BEFORE);
+		bool before = false;
+		if (ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_FLAGS))) {
+			uint32_t *flags =
+				(uint32_t *)ipset_data_get(data, IPSET_OPT_FLAGS);
+			before = (*flags) & IPSET_FLAG_BEFORE;
+		}
 		size = snprintf(buf + offset, len,
-			        "%s%s%s%s", IPSET_ELEM_SEPARATOR,
-			        before ? "before" : "after",
-			        IPSET_ELEM_SEPARATOR,
+			        " %s %s", before ? "before" : "after",
 			        (const char *) ipset_data_get(data,
 			        	IPSET_OPT_NAMEREF));
 		SNPRINTF_FAILURE(size, len, offset);	
@@ -468,8 +473,8 @@ ipset_print_elem(char *buf, unsigned int len,
 	size = type->elem[IPSET_DIM_ONE].print(buf, len, data,
 			type->elem[IPSET_DIM_ONE].opt, env);
 	SNPRINTF_FAILURE(size, len, offset);
-	if (ipset_data_test(data, type->elem[IPSET_DIM_TWO].opt))
-		D("print second elem");
+	IF_D(ipset_data_test(data, type->elem[IPSET_DIM_TWO].opt),
+	     "print second elem");
 	if (type->dimension == IPSET_DIM_ONE
 	    || (type->last_elem_optional
 	        && !ipset_data_test(data, type->elem[IPSET_DIM_TWO].opt)))

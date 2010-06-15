@@ -12,7 +12,6 @@ ipset_SOURCES	= ipset.c \
 	ipset_hash_ipportnet.c \
 	ipset_hash_net.c \
 	ipset_list_set.c \
-	ipset_tree_ip.c \
 	ui.c
 ipset_LDADD	= ../lib/libipset.la
 AM_LDFLAGS	= -static

@@ -33,7 +33,7 @@
 # Range: Check listing
 0 diff .foo ipmap.t.list0 && rm .foo
 # Range: Delete a range of elements
-0 ipset -D test -x 2.0.0.128-2.0.0.132
+0 ipset -! -D test 2.0.0.128-2.0.0.132
 # Range: List set
 0 ipset -L test > .foo
 # Range: Check listing

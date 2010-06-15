@@ -1,20 +1,17 @@
 #!/bin/bash
 
 tests="init"
-tests="$tests ipmap bitmap:ip macipmap portmap"
-tests="$tests iphash hash:ip"
-# nethash ipporthash"
-# tests="$tests ipportiphash ipportnethash"
-# tests="$tests iptree iptreemap"
-# tests="$tests setlist"
+tests="$tests ipmap bitmap:ip"
+tests="$tests macipmap portmap"
+tests="$tests iphash hash:ip hash:ip6"
+tests="$tests ipporthash hash:ip,port hash:ip6,port"
+tests="$tests ipportiphash hash:ip,port,ip hash:ip6,port,ip6"
+tests="$tests nethash hash:net hash:net6"
+tests="$tests setlist"
+tests="$tests iptree iptreemap"
 
 if [ "$1" ]; then
 	tests="init $@"
-fi
-
-if [ ! -x ../src/ipset ]; then
-	echo "Please rune `make` first and create the ipset binary."
-	exit 1
 fi
 
 for types in $tests; do

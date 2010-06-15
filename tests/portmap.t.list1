@@ -1,8 +1,7 @@
 Name: test
 Type: bitmap:port
 Header: range 0-65535 
-Elements: 2
-Size in memory: 8192
+Size in memory: 8216
 References: 0
 Members:
 0

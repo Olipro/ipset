@@ -12,10 +12,10 @@ enum {
 
 /* Common functions */
 
-static inline uint32_t
-range_to_mask(uint32_t from, uint32_t to, uint8_t *bits)
+static inline u32
+range_to_mask(u32 from, u32 to, u8 *bits)
 {
-	uint32_t mask = 0xFFFFFFFE;
+	u32 mask = 0xFFFFFFFE;
 	
 	*bits = 32;
 	while (--(*bits) > 0 && mask && (to & mask) != from)

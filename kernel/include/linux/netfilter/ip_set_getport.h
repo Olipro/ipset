@@ -8,8 +8,8 @@
 #define IPSET_INVALID_PORT	65536
 
 /* We must handle non-linear skbs */
-static uint32_t
-get_port(uint8_t pf, const struct sk_buff *skb, const uint8_t *flags)
+static bool
+get_port(u8 pf, const struct sk_buff *skb, bool src, u16 *port)
 {
 	unsigned short protocol;
 	unsigned int protoff;
@@ -30,19 +30,19 @@ get_port(uint8_t pf, const struct sk_buff *skb, const uint8_t *flags)
 		
 		protohdr = ipv6_find_hdr(skb, &protoff, -1, &frag_off);
 		if (protohdr < 0)
-			return IPSET_INVALID_PORT;
+			return false;
 
 		protocol = protohdr;
 		fragoff = frag_off;
 		break;
 	}
 	default:
-		return IPSET_INVALID_PORT;
+		return false;
 	}
 
 	/* See comments at tcp_match in ip_tables.c */
 	if (fragoff)
-		return IPSET_INVALID_PORT;
+		return false;
 
 	switch (protocol) {
 	case IPPROTO_TCP: {
@@ -52,9 +52,10 @@ get_port(uint8_t pf, const struct sk_buff *skb, const uint8_t *flags)
 		th = skb_header_pointer(skb, protoff, sizeof(_tcph), &_tcph);
 		if (th == NULL)
 			/* No choice either */
-			return IPSET_INVALID_PORT;
+			return false;
 	     	
-	     	return flags[0] & IPSET_SRC ? th->source : th->dest;
+	     	*port = src ? th->source : th->dest;
+	     	break;
 	    }
 	case IPPROTO_UDP: {
 		struct udphdr _udph;
@@ -63,14 +64,16 @@ get_port(uint8_t pf, const struct sk_buff *skb, const uint8_t *flags)
 		uh = skb_header_pointer(skb, protoff, sizeof(_udph), &_udph);
 		if (uh == NULL)
 			/* No choice either */
-			return IPSET_INVALID_PORT;
+			return false;
 	     	
-	     	return flags[0] & IPSET_SRC ? uh->source : uh->dest;
+	     	*port = src ? uh->source : uh->dest;
+	     	break;
 	    }
 	default:
-		return IPSET_INVALID_PORT;
+		return false;
 	}
+	return true;
 }
-#endif				/* __KERNEL__ */
+#endif /* __KERNEL__ */
 
 #endif /*_IP_SET_GETPORT_H*/

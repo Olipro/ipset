@@ -12,7 +12,6 @@
 #include <stdio.h>				/* printf */
 
 #include <libipset/linux_ip_set.h>		/* enum ipset_cmd */
-#include <libipset/ui.h>			/* enum ipset_envopt */
 
 /* Report and output buffer sizes */
 #define IPSET_ERRORBUFLEN		1024
@@ -54,6 +53,23 @@ extern const char * ipset_session_warning(const struct ipset_session *session);
 #define ipset_session_data_get(session, opt)		\
 	ipset_data_get(ipset_session_data(session), opt)
 
+/* Environment option flags */
+enum ipset_envopt {
+	IPSET_ENV_BIT_SORTED	= 0,
+	IPSET_ENV_SORTED	= (1 << IPSET_ENV_BIT_SORTED),
+	IPSET_ENV_BIT_QUIET	= 1,
+	IPSET_ENV_QUIET		= (1 << IPSET_ENV_BIT_QUIET),
+	IPSET_ENV_BIT_RESOLVE	= 2,
+	IPSET_ENV_RESOLVE	= (1 << IPSET_ENV_BIT_RESOLVE),
+	IPSET_ENV_BIT_EXIST	= 3,
+	IPSET_ENV_EXIST		= (1 << IPSET_ENV_BIT_EXIST),
+};
+
+extern int ipset_envopt_parse(struct ipset_session *session,
+			      int env, const char *str);
+extern bool ipset_envopt_test(struct ipset_session *session,
+			      enum ipset_envopt env);
+
 enum ipset_output_mode {
 	IPSET_LIST_NONE,
 	IPSET_LIST_PLAIN,
@@ -61,10 +77,6 @@ enum ipset_output_mode {
 	IPSET_LIST_XML,
 };
 
-extern int ipset_envopt_parse(struct ipset_session *session,
-			      int env, const char *str);
-extern bool ipset_envopt_test(struct ipset_session *session,
-			      enum ipset_envopt env);
 extern int ipset_session_output(struct ipset_session *session,
 				enum ipset_output_mode mode);
 

@@ -10,21 +10,33 @@
 
 #ifdef __KERNEL__
 
-/* How often should the gc be run at a minimum */
+/* How often should the gc be run by default */
 #define IPSET_GC_TIME			(3 * 60)
 
 /* Timeout period depending on the timeout value of the given set */
 #define IPSET_GC_PERIOD(timeout) \
-	max_t(uint32_t, (timeout)/10, IPSET_GC_TIME)
+	((timeout/3) ? min_t(u32, (timeout)/3, IPSET_GC_TIME) : 1)
 
-/* How much msec to sleep before retrying to destroy gc timer */
-#define IPSET_DESTROY_TIMER_SLEEP	10
+/* Set is defined without timeout support */
+#define IPSET_NO_TIMEOUT	UINT_MAX
 
-/* Timing out etries: unset and permanent */
-#define IPSET_ELEM_UNSET	0
-#define IPSET_ELEM_PERMANENT	UINT_MAX/2
+#define with_timeout(timeout)	((timeout) != IPSET_NO_TIMEOUT)
+
+static inline unsigned int
+ip_set_timeout_uget(struct nlattr *tb)
+{
+	unsigned int timeout = ip_set_get_h32(tb);
+
+	return timeout == IPSET_NO_TIMEOUT ? IPSET_NO_TIMEOUT - 1 : timeout;
+}
 
 #ifdef IP_SET_BITMAP_TIMEOUT
+
+/* Bitmap entry is unset */
+#define IPSET_ELEM_UNSET	0
+/* Bitmap entry is set with no timeout value */
+#define IPSET_ELEM_PERMANENT	UINT_MAX/2
+
 static inline bool
 ip_set_timeout_test(unsigned long timeout)
 {
@@ -42,7 +54,7 @@ ip_set_timeout_expired(unsigned long timeout)
 }
 
 static inline unsigned long
-ip_set_timeout_set(uint32_t timeout)
+ip_set_timeout_set(u32 timeout)
 {
 	unsigned long t;
 	
@@ -56,13 +68,16 @@ ip_set_timeout_set(uint32_t timeout)
 	return t;
 }
 
-static inline uint32_t
+static inline u32
 ip_set_timeout_get(unsigned long timeout)
 {
 	return timeout == IPSET_ELEM_PERMANENT ? 0 : (timeout - jiffies)/HZ;
 }
 
 #else
+
+/* Hash entry is set with no timeout value */
+#define IPSET_ELEM_UNSET	0
 
 static inline bool
 ip_set_timeout_test(unsigned long timeout)
@@ -77,7 +92,7 @@ ip_set_timeout_expired(unsigned long timeout)
 }
 
 static inline unsigned long
-ip_set_timeout_set(uint32_t timeout)
+ip_set_timeout_set(u32 timeout)
 {
 	unsigned long t;
 	
@@ -91,7 +106,7 @@ ip_set_timeout_set(uint32_t timeout)
 	return t;
 }
 
-static inline uint32_t
+static inline u32
 ip_set_timeout_get(unsigned long timeout)
 {
 	return timeout == IPSET_ELEM_UNSET ? 0 : (timeout - jiffies)/HZ;

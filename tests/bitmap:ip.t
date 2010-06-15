@@ -23,21 +23,21 @@
 # Range: Delete element not added to the set
 1 ipset -D test 2.0.0.2
 # Range: Delete element not added to the set, with exist flag
-0 ipset -x -D test 2.0.0.2
+0 ipset -! -D test 2.0.0.2
 # Range: Add element in the middle
 0 ipset -A test 2.0.0.128
 # Range: Add element in the middle again
 1 ipset -A test 2.0.0.128
 # Range: Add element in the middle again, with exist flag
-0 ipset -x -A test 2.0.0.128
+0 ipset -! -A test 2.0.0.128
 # Range: Delete the same element
 0 ipset -D test 2.0.0.128
 # Range: Add a range of elements
 0 ipset -A test 2.0.0.128-2.0.0.131 timeout 6
 # Range: List set
-0 ipset list test > .foo
+0 ipset list test | sed 's/timeout ./timeout x/' > .foo
 # Range: Check listing
-0 grep '2.0.0.1 timeout' .foo >/dev/null
+0 diff .foo bitmap:ip.t.list4 && rm .foo
 # Sleep 10s so that entries can time out
 0 sleep 10s
 # Range: List set after timeout
@@ -77,9 +77,9 @@
 # Network: Delete the same element
 0 ipset -D test 2.0.0.128
 # Network: List set
-0 ipset list test > .foo
+0 ipset list test | sed 's/timeout ./timeout x/' > .foo
 # Network: Check listing
-0 grep '2.0.255.255 timeout' .foo >/dev/null
+0 diff .foo bitmap:ip.t.list5 && rm .foo
 # Sleep 10s so that entries can time out
 0 sleep 10s
 # Network: List set
@@ -118,8 +118,10 @@
 0 ipset -D test 10.2.0.0
 # Subnets: Add a subnet of subnets
 0 ipset -A test 10.8.0.0/16 timeout 8
+# Subnets: List set
+0 ipset list test | sed 's/timeout ./timeout x/' > .foo
 # Subnets: Check listing
-0 ipset list test | grep '10.0.0.0 timeout' >/dev/null
+0 diff .foo bitmap:ip.t.list6 && rm .foo
 # Sleep 10s so that entries can time out
 0 sleep 10s
 # Subnets: List set

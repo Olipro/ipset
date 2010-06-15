@@ -8,8 +8,10 @@
 #include <errno.h>				/* errno */
 #include <stdlib.h>				/* calloc, free */
 #include <time.h>				/* time */
+#include <arpa/inet.h>				/* hto* */
 
 #include <libipset/linux_ip_set.h>		/* enum ipset_cmd */
+#include <libipset/debug.h>			/* D() */
 #include <libipset/session.h>			/* ipset_session_handle */
 #include <libipset/ui.h>			/* IPSET_ENV_EXIST */
 #include <libipset/utils.h>			/* UNUSED */

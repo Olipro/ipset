@@ -9,12 +9,11 @@ enum {
 
 #ifdef __KERNEL__
 
-#define initval_t uint32_t
-
 #define IPSET_DEFAULT_HASHSIZE		1024
+#define IPSET_MIMINAL_HASHSIZE		64
 #define IPSET_DEFAULT_MAXELEM		65536
 #define IPSET_DEFAULT_PROBES		4
-#define IPSET_DEFAULT_RESIZE		50
+#define IPSET_DEFAULT_RESIZE		100
 
 #endif /* __KERNEL__ */
 	

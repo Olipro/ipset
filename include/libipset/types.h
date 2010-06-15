@@ -10,6 +10,8 @@
 #include <stdint.h>				/* uintxx_t */
 
 #include <libipset/data.h>			/* enum ipset_opt */
+#include <libipset/parse.h>			/* ipset_parsefn */
+#include <libipset/print.h>			/* ipset_printfn */
 #include <libipset/linux_ip_set.h>		/* IPSET_MAXNAMELEN */
 
 #define AF_INET46		255
@@ -39,15 +41,9 @@ enum {
 
 struct ipset_session;
 
-typedef int (*ipset_parsefn)(struct ipset_session *s,
-			     enum ipset_opt opt, const char *str);
-typedef int (*ipset_printfn)(char *buf, unsigned int len,
-			     const struct ipset_data *data, enum ipset_opt opt,
-			     uint8_t env);
-
 /* Parse and print type-specific arguments */
 struct ipset_arg {
-	const char *name[3];		/* option names */
+	const char *name[2];		/* option names */
 	int has_arg;			/* mandatory/optional/no arg */
 	enum ipset_opt opt;		/* argumentum type */
 	ipset_parsefn parse;		/* parser function */
@@ -81,13 +77,13 @@ struct ipset_elem {
   */
 struct ipset_type {
 	char name[IPSET_MAXNAMELEN];			/* type name */
-	char alias[IPSET_MAXNAMELEN];			/* name alias */
 	uint8_t revision;				/* revision number */
 	uint8_t family;					/* supported family */
 	uint8_t dimension;				/* elem dimension */
 	int8_t kernel_check;				/* kernel check */
 	bool last_elem_optional;			/* last element optional */
 	struct ipset_elem elem[IPSET_DIM_MAX];		/* parse elem */
+	ipset_parsefn compat_parse_elem;		/* compatibility parser */
 	const struct ipset_arg *args[IPSET_CADT_MAX];	/* create/ADT args except elem */
 	uint64_t mandatory[IPSET_CADT_MAX];		/* create/ADT mandatory flags */
 	uint64_t full[IPSET_CADT_MAX];			/* full args flags */
@@ -95,12 +91,17 @@ struct ipset_type {
 	const char *usage;				/* terse usage */
 
 	struct ipset_type *next;
+	const char *alias[];					/* name alias(es) */
 };
 
-extern int ipset_cache_add(const char *name, const struct ipset_type *type);
+extern int ipset_cache_add(const char *name, const struct ipset_type *type,
+			   uint8_t family);
 extern int ipset_cache_del(const char *name);
 extern int ipset_cache_rename(const char *from, const char *to);
 extern int ipset_cache_swap(const char *from, const char *to);
+
+extern int ipset_cache_init(void);
+extern void ipset_cache_fini(void);
 
 extern const struct ipset_type * ipset_type_get(struct ipset_session *session,
 						enum ipset_cmd cmd);
@@ -109,20 +110,7 @@ extern const struct ipset_type * ipset_type_check(struct ipset_session *session)
 extern int ipset_type_add(struct ipset_type *type);
 extern const struct ipset_type * ipset_types(void);
 extern const char * ipset_typename_resolve(const char *str);
-
-extern int ipset_types_init(void);
-extern void ipset_types_fini(void);
-
-/* The known set types: (typename, revision, family) is unique */
-extern struct ipset_type ipset_bitmap_ip0;
-extern struct ipset_type ipset_bitmap_ipmac0;
-extern struct ipset_type ipset_bitmap_port0;
-extern struct ipset_type ipset_hash_ip0;
-extern struct ipset_type ipset_hash_net0;
-extern struct ipset_type ipset_hash_ipport0;
-extern struct ipset_type ipset_hash_ipportip0;
-extern struct ipset_type ipset_hash_ipportnet0;
-extern struct ipset_type ipset_tree_ip0;
-extern struct ipset_type ipset_list_set0;
+extern bool ipset_match_typename(const char *str,
+				 const struct ipset_type *t);
 
 #endif /* LIBIPSET_TYPES_H */

@@ -18,6 +18,8 @@
 1 ipset -A test 0
 # Range: Try to add value after upper boundary
 1 ipset -A test 1025
+# Range: Delete element not added to the set
+1 ipset -D test 567
 # Range: Add element in the middle
 0 ipset -A test 567
 # Range: Delete the same element
@@ -66,6 +68,10 @@
 0 ipset -A test 567
 # Full: Delete the same element
 0 ipset -D test 567
+# Full: List set
+0 ipset -L test | sed 's/timeout ./timeout x/' > .foo
+# Full: Check listing
+0 diff .foo portmap.t.list3 && rm .foo
 # Full: sleep 10s so that elements can timeout
 0 sleep 10
 # Full: List set

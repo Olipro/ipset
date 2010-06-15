@@ -7,7 +7,6 @@
 #ifndef LIBIPSET_UTILS_H
 #define LIBIPSET_UTILS_H
 
-#include <stdbool.h>				/* bool */
 #include <string.h>				/* strcmp */
 #include <netinet/in.h>				/* struct in[6]_addr */
 
@@ -36,10 +35,5 @@ in6cpy(struct in6_addr *dest, const struct in6_addr *src)
 {
 	memcpy(dest, src, sizeof(struct in6_addr));
 }
-
-extern char * ipset_strchr(const char *str, const char *sep);
-extern bool ipset_name_match(const char *arg, const char * const name[]);
-extern void ipset_shift_argv(int *argc, char *argv[], int from);
-extern void ipset_strncpy(char *dst, const char *src, size_t len);
 
 #endif	/* LIBIPSET_UTILS_H */

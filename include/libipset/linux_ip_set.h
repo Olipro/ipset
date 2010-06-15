@@ -11,14 +11,10 @@
  * published by the Free Software Foundation.  
  */
 
-#if 1
-#define IP_SET_DEBUG
-#endif
-
 /* The protocol version */
 #define IPSET_PROTOCOL		5
 
-/* The max length of strings: set and type identifiers */
+/* The max length of strings including NUL: set and type identifiers */
 #define IPSET_MAXNAMELEN	32
 
 /* Message types and commands */
@@ -43,6 +39,7 @@ enum ipset_cmd {
 	IPSET_CMD_RESTORE = IPSET_MSG_MAX, /* Enter restore mode */	
 	IPSET_CMD_HELP,		/* Get help */
 	IPSET_CMD_VERSION,	/* Get program version */
+	IPSET_CMD_QUIT,		/* Quit from interactive mode */
 
 	IPSET_CMD_MAX,
 
@@ -58,6 +55,7 @@ enum {
 	IPSET_ATTR_SETNAME2 = IPSET_ATTR_TYPENAME, /* rename/swap */
 	IPSET_ATTR_REVISION,	/* Settype revision */
 	IPSET_ATTR_FAMILY,	/* Settype family */
+	IPSET_ATTR_FLAGS,	/* Flags at command level */
 	IPSET_ATTR_DATA,	/* Nested attributes */
 	IPSET_ATTR_ADT,		/* Multiple data containers */
 	IPSET_ATTR_LINENO,	/* Restore lineno */
@@ -77,8 +75,8 @@ enum {
 	IPSET_ATTR_PORT_FROM = IPSET_ATTR_PORT,
 	IPSET_ATTR_PORT_TO,
 	IPSET_ATTR_TIMEOUT,
-	IPSET_ATTR_FLAGS,
-	/* IPSET_ATTR_LINENO */
+	IPSET_ATTR_CADT_FLAGS,
+	IPSET_ATTR_CADT_LINENO = IPSET_ATTR_LINENO,
 	/* Reserve empty slots */
 	IPSET_ATTR_CADT_MAX = 16,
 	/* Create-only specific attributes */
@@ -123,15 +121,19 @@ enum ipset_errno {
 	IPSET_ERR_INVALID_NETMASK,
 	IPSET_ERR_INVALID_FAMILY,
 	IPSET_ERR_TIMEOUT,
+	IPSET_ERR_REFERENCED,
 
+	/* Type specific error codes */
 	IPSET_ERR_TYPE_SPECIFIC = 160,
 };
-	                                
-enum ipset_data_flags {
+
+enum ipset_cmd_flags {
 	IPSET_FLAG_BIT_EXIST	= 0,
 	IPSET_FLAG_EXIST	= (1 << IPSET_FLAG_BIT_EXIST),
-	
-	IPSET_FLAG_BIT_BEFORE	= 2,
+};
+
+enum ipset_cadt_flags {
+	IPSET_FLAG_BIT_BEFORE	= 0,
 	IPSET_FLAG_BEFORE	= (1 << IPSET_FLAG_BIT_BEFORE),
 };
 
@@ -140,32 +142,9 @@ enum ipset_adt {
 	IPSET_ADD,
 	IPSET_DEL,
 	IPSET_TEST,
-	IPSET_CREATE,
+	IPSET_ADT_MAX,
+	IPSET_CREATE = IPSET_ADT_MAX,
 	IPSET_CADT_MAX,
 };
-
-#ifndef __KERNEL__
-#ifdef IP_SET_DEBUG
-#include <stdio.h>
-#include <sys/socket.h>
-#include <linux/netlink.h>
-#define D(format, args...)	do {				\
-	fprintf(stderr, "%s: %s: ", __FILE__, __FUNCTION__);	\
-	fprintf(stderr, format "\n" , ## args);			\
-} while (0)
-static inline void
-dump_nla(struct  nlattr *nla[], int maxlen)
-{
-	int i;
-	
-	for (i = 0; i < maxlen; i++)
-		D("nla[%u] does%s exist", i, !nla[i] ? " NOT" : "");
-}
-
-#else
-#define D(format, args...)
-#define dump_nla(nla, maxlen)
-#endif
-#endif /* !__KERNEL__ */
 
 #endif /* __IP_SET_H */

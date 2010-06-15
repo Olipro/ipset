@@ -8,6 +8,7 @@
 #include <errno.h>				/* errno */
 #include <string.h>				/* strerror */
 
+#include <libipset/debug.h>			/* D() */
 #include <libipset/data.h>			/* ipset_data_get */
 #include <libipset/session.h>			/* ipset_err */
 #include <libipset/types.h>			/* struct ipset_type */
@@ -15,6 +16,7 @@
 #include <libipset/errcode.h>			/* prototypes */
 #include <libipset/linux_ip_set_bitmap.h>	/* bitmap specific errcodes */
 #include <libipset/linux_ip_set_hash.h>		/* hash specific errcodes */
+#include <libipset/linux_ip_set_list.h>		/* list specific errcodes */
 
 /* Core kernel error codes */
 static const struct ipset_errcode_table core_errcode_table[] = {
@@ -45,6 +47,8 @@ static const struct ipset_errcode_table core_errcode_table[] = {
 	/* RENAME specific error codes */
 	{ IPSET_ERR_EXIST_SETNAME2, IPSET_CMD_RENAME,
 	  "Set cannot be renamed: a set with the new name already exists" },
+	{ IPSET_ERR_REFERENCED, IPSET_CMD_RENAME,
+	  "Set cannot be renamed: it is in use by another system" },
 
 	/* SWAP specific error codes */
 	{ IPSET_ERR_EXIST_SETNAME2, IPSET_CMD_SWAP,
@@ -101,6 +105,24 @@ static const struct ipset_errcode_table hash_errcode_table[] = {
 	{ },
 };
 
+/* List type-specific error codes */
+static const struct ipset_errcode_table list_errcode_table[] = {
+	/* Generic (CADT) error codes */
+	{ IPSET_ERR_NAME, 0,
+	  "Set to be added/deleted/tested as element does not exist." },
+	{ IPSET_ERR_LOOP, 0,
+	  "Sets with list:set type cannot be added to the set." },
+	{ IPSET_ERR_BEFORE, 0,
+	  "No reference set specified." },
+	{ IPSET_ERR_NAMEREF, 0,
+	  "The set to which you referred with 'before' or 'after' does not exist." },
+	{ IPSET_ERR_LIST_FULL, 0,
+	  "The set is full, more elements cannot be added." },
+	{ IPSET_ERR_REF_EXIST, 0,
+	  "The set to which you referred with 'before' or 'after' is not added to the set." },
+	{ },
+};
+
 #define MATCH_TYPENAME(a, b)	STRNEQ(a, b, strlen(b))
 
 /**
@@ -126,8 +148,10 @@ ipset_errcode(struct ipset_session *session, enum ipset_cmd cmd, int errcode)
 		if (type) {
 			if (MATCH_TYPENAME(type->name, "bitmap:"))
 				table = bitmap_errcode_table;
-			if (MATCH_TYPENAME(type->name, "hash:"))
+			else if (MATCH_TYPENAME(type->name, "hash:"))
 				table = hash_errcode_table;
+			else if (MATCH_TYPENAME(type->name, "list:"))
+				table = list_errcode_table;
 		}
 	}
 

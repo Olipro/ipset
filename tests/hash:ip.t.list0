@@ -1,8 +1,7 @@
 Name: test
 Type: hash:ip
-Header: hashsize 128 maxelem 65536 probes 4 resize 50 timeout 5 
-Elements: 1
-Size in memory: 2048
+Header: family inet hashsize 128 maxelem 65536 timeout 5 
+Size in memory: 1208
 References: 0
 Members:
 192.168.68.69 timeout 0

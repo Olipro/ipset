@@ -11,48 +11,58 @@
 
 /* Parse commandline arguments */
 static const struct ipset_arg hash_ipport_create_args[] = {
-	{ .name = { "range", "--range", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_IP,
-	  .parse = ipset_parse_netrange,	.print = ipset_print_ip,
+	{ .name = { "family", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_FAMILY,
+	  .parse = ipset_parse_family,		.print = ipset_print_family,
 	},
-	{ .name = { "hashsize", "--hashsize", NULL },
+	/* Alias: family inet */
+	{ .name = { "-4", NULL },
+	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
+	  .parse = ipset_parse_family,
+	},
+	/* Alias: family inet6 */
+	{ .name = { "-6", NULL },
+	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
+	  .parse = ipset_parse_family,
+	},
+	{ .name = { "hashsize", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_HASHSIZE,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
-	{ .name = { "maxelem", "--maxleme", NULL },
+	{ .name = { "maxelem", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_MAXELEM,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
-	{ .name = { "probes", "--probes", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROBES,
-	  .parse = ipset_parse_uint8,		.print = ipset_print_number,
-	},
-	{ .name = { "resize", "--resize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_RESIZE,
-	  .parse = ipset_parse_uint8,		.print = ipset_print_number,
-	},
-	{ .name = { "timeout", "--timeout", NULL },
+	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	/* Backward compatibility */
-	{ .name = { "--from", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_IP,
-	  .parse = ipset_parse_single_ip,
+	{ .name = { "probes", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROBES,
+	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
 	},
-	{ .name = { "--to", NULL },
+	{ .name = { "resize", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_RESIZE,
+	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
+	},
+	{ .name = { "from", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_IP,
+	  .parse = ipset_parse_ignored,
+	},
+	{ .name = { "to", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_IP_TO,
-	  .parse = ipset_parse_single_ip,
+	  .parse = ipset_parse_ignored,
 	},
-	{ .name = { "--network", NULL },
+	{ .name = { "network", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_IP,
-	  .parse = ipset_parse_net,
+	  .parse = ipset_parse_ignored,
 	},
 	{ },
 }; 
 
 static const struct ipset_arg hash_ipport_add_args[] = {
-	{ .name = { "timeout", "--timeout", NULL },
+	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
@@ -60,10 +70,9 @@ static const struct ipset_arg hash_ipport_add_args[] = {
 }; 
 
 static const char hash_ipport_usage[] =
-"create SETNAME hash:ip,port range IP/CIDR|FROM-TO\n"
+"create SETNAME hash:ip,port\n"
 "		[family inet|inet6]\n"
 "               [hashsize VALUE] [maxelem VALUE]\n"
-"               [probes VALUE] [resize VALUE]\n"
 "               [timeout VALUE]\n"
 "add    SETNAME IP,PORT [timeout VALUE]\n"
 "del    SETNAME IP,PORT\n"
@@ -71,7 +80,7 @@ static const char hash_ipport_usage[] =
 
 struct ipset_type ipset_hash_ipport0 = {
 	.name = "hash:ip,port",
-	.alias = "ipporthash",
+	.alias = { "ipporthash", NULL },
 	.revision = 0,
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_TWO,
@@ -92,8 +101,7 @@ struct ipset_type ipset_hash_ipport0 = {
 		[IPSET_ADD] = hash_ipport_add_args,
 	},
 	.mandatory = {
-		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_IP_TO),
+		[IPSET_CREATE] = 0,
 		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT),
 		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
@@ -102,12 +110,8 @@ struct ipset_type ipset_hash_ipport0 = {
 			| IPSET_FLAG(IPSET_OPT_PORT),
 	},
 	.full = {
-		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_IP_TO)
-			| IPSET_FLAG(IPSET_OPT_HASHSIZE)
+		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
 			| IPSET_FLAG(IPSET_OPT_MAXELEM)
-			| IPSET_FLAG(IPSET_OPT_PROBES)
-			| IPSET_FLAG(IPSET_OPT_RESIZE)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
 		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)

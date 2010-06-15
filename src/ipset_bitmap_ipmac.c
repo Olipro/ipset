@@ -11,24 +11,24 @@
 
 /* Parse commandline arguments */
 static const struct ipset_arg bitmap_ipmac_create_args[] = {
-	{ .name = { "range", "--range", NULL },
+	{ .name = { "range", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_IP,
 	  .parse = ipset_parse_netrange,	.print = ipset_print_ip,
 	},
-	{ .name = { "timeout", "--timeout", NULL },
+	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	/* Backward compatibility */
-	{ .name = { "--from", NULL },
+	{ .name = { "from", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_IP,
 	  .parse = ipset_parse_single_ip,
 	},
-	{ .name = { "--to", NULL },
+	{ .name = { "to", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_IP_TO,
 	  .parse = ipset_parse_single_ip,
 	},
-	{ .name = { "--network", NULL },
+	{ .name = { "network", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_IP,
 	  .parse = ipset_parse_net,
 	},
@@ -36,7 +36,7 @@ static const struct ipset_arg bitmap_ipmac_create_args[] = {
 }; 
 
 static const struct ipset_arg bitmap_ipmac_add_args[] = {
-	{ .name = { "timeout", "--timeout", NULL },
+	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
@@ -52,7 +52,7 @@ static const char bitmap_ipmac_usage[] =
 
 struct ipset_type ipset_bitmap_ipmac0 = {
 	.name = "bitmap:ip,mac",
-	.alias = "macipmap",
+	.alias = { "macipmap", NULL },
 	.revision = 0,
 	.family = AF_INET,
 	.dimension = IPSET_DIM_TWO,

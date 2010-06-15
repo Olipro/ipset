@@ -1,8 +1,7 @@
 Name: test
 Type: bitmap:ip
 Header: range 10.0.0.0-10.255.255.255 netmask 24 
-Elements: 258
-Size in memory: 8192
+Size in memory: 8232
 References: 0
 Members:
 10.0.0.0

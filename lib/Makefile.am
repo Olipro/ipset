@@ -12,9 +12,7 @@ libipset_la_SOURCES = \
 	parse.c \
 	print.c \
 	session.c \
-	types.c \
-	utils.c
-
+	types.c
 
 #%.o: %.c
 #	${AM_VERBOSE_CC} ${CC} ${AM_DEPFLAGS} ${AM_CFLAGS} ${CFLAGS} -o $@ -c $<

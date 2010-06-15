@@ -50,7 +50,8 @@ enum ipset_opt {
 	IPSET_OPT_EXIST,
 	IPSET_OPT_BEFORE,
 	/* Internal options */
-	IPSET_OPT_FLAGS = 48,
+	IPSET_OPT_FLAGS = 48,	/* IPSET_FLAG_EXIST| */
+	IPSET_OPT_CADT_FLAGS,	/* IPSET_FLAG_BEFORE| */
 	IPSET_OPT_ELEM,
 	IPSET_OPT_TYPE,
 	IPSET_OPT_LINENO,
@@ -63,7 +64,10 @@ enum ipset_opt {
 #define IPSET_FLAGS_ALL		(~0LL)
 
 #define IPSET_CREATE_FLAGS		\
-	( IPSET_FLAG(IPSET_OPT_IP)	\
+	( IPSET_FLAG(IPSET_OPT_FAMILY)	\
+	| IPSET_FLAG(IPSET_OPT_TYPENAME)\
+	| IPSET_FLAG(IPSET_OPT_TYPE)	\
+	| IPSET_FLAG(IPSET_OPT_IP)	\
 	| IPSET_FLAG(IPSET_OPT_IP_TO)	\
 	| IPSET_FLAG(IPSET_OPT_CIDR)	\
 	| IPSET_FLAG(IPSET_OPT_PORT)	\
@@ -89,14 +93,17 @@ enum ipset_opt {
 	| IPSET_FLAG(IPSET_OPT_NAMEREF)	\
 	| IPSET_FLAG(IPSET_OPT_IP2)	\
 	| IPSET_FLAG(IPSET_OPT_CIDR2)	\
+	| IPSET_FLAG(IPSET_OPT_CADT_FLAGS)\
 	| IPSET_FLAG(IPSET_OPT_BEFORE))
 
 struct ipset_data;
 
+extern void ipset_strncpy(char *dst, const char *src, size_t len);
 extern bool ipset_data_flags_test(const struct ipset_data *data,
 				  uint64_t flags);
 extern void ipset_data_flags_set(struct ipset_data *data, uint64_t flags);
 extern void ipset_data_flags_unset(struct ipset_data *data, uint64_t flags);
+extern bool ipset_data_ignored(struct ipset_data *data, enum ipset_opt opt);
 
 extern int ipset_data_set(struct ipset_data *data, enum ipset_opt opt,
 			  const void *value);

@@ -39,7 +39,7 @@ AM_CFLAGS = -std=gnu99 \
 	-Wwrite-strings \
 	-Wno-missing-field-initializers \
 	-Werror \
-	-g -ggdb
+	-g -ggdb -gdwarf-2 -g3
 endif
 
 if ! ENABLE_VERBOSE
