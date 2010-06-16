@@ -22,7 +22,9 @@ MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
 MODULE_DESCRIPTION("Xtables: IP set match and target module");
 MODULE_ALIAS("xt_SET");
 MODULE_ALIAS("ipt_set");
+MODULE_ALIAS("ip6t_set");
 MODULE_ALIAS("ipt_SET");
+MODULE_ALIAS("ip6t_SET");
 
 static inline int
 match_set(ip_set_id_t index, const struct sk_buff *skb,
