@@ -488,13 +488,16 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 			break;
 		}
 	}
+#ifdef IPSET_DEBUG
 	if (type == IPSET_ATTR_TYPENAME) 
 		D("nla typename %s", (char *) d);
+#endif
 	ret = ipset_data_set(data, attr->opt, d);
+#ifdef IPSET_DEBUG
 	if (type == IPSET_ATTR_TYPENAME) 
 		D("nla typename %s",
 		  (char *) ipset_data_get(data, IPSET_OPT_TYPENAME));
-	
+#endif	
 	return ret;
 }
 

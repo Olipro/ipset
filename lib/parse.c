@@ -21,6 +21,10 @@
 #include <libipset/utils.h>			/* string utilities */
 #include <libipset/parse.h>			/* prototypes */
 
+#ifndef ULLONG_MAX
+#define ULLONG_MAX	18446744073709551615ULL
+#endif
+
 /* Parse input data */
 
 #define cidr_separator(str)	ipset_strchr(str, IPSET_CIDR_SEPARATOR)

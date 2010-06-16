@@ -7,8 +7,6 @@
 #ifndef LIBIPSET_DEBUG_H
 #define LIBIPSET_DEBUG_H
 
-#define IPSET_DEBUG
-
 #ifdef IPSET_DEBUG
 #include <stdio.h>
 #include <sys/socket.h>

@@ -13,7 +13,7 @@ AM_CPPFLAGS = $(kinclude_CFLAGS) $(all_includes) -I$(top_srcdir)/include \
 #	-Wunreachable-code	-> fails with ntoh*
 
 if DISABLE_EXTRA_FLAGS
-AM_CFLAGS =
+AM_CFLAGS = 
 else
 AM_CFLAGS = -std=gnu99 \
 	-Wall \
@@ -42,7 +42,12 @@ AM_CFLAGS = -std=gnu99 \
 	-g -ggdb -gdwarf-2 -g3
 endif
 
+if ENABLE_DEBUG
+AM_CFLAGS += -DIPSET_DEBUG
+endif
+
 if ! ENABLE_VERBOSE
+AM_LIBTOOL_SILENT = --silent
 AM_VERBOSE_CC     = @echo "  CC      " $@;
 AM_VERBOSE_CCLD   = @echo "  CCLD    " $@;
 endif

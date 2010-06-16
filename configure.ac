@@ -39,6 +39,18 @@ AC_ARG_ENABLE([verbose],
 	      
 AM_CONDITIONAL([ENABLE_VERBOSE], [test "x$enable_verbose" = xyes])
 
+dnl Enable debugging
+AC_ARG_ENABLE([debug],
+	      AS_HELP_STRING([--enable-debug],
+	                     [Enable compiling with debug support.]),
+	      [case "${enableval}" in
+	       yes)	enable_verbose=yes ;;
+	       no)	enable_verbose=no ;;
+	       *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+	       esac], [enable_debug=no])
+	      
+AM_CONDITIONAL([ENABLE_DEBUG], [test "x$enable_debug" = xyes])
+
 dnl Disable extra warn flags
 AC_ARG_ENABLE([extra-flags],
 	      AS_HELP_STRING([--disable-extra-flags],
