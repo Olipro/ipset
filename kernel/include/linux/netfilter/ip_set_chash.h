@@ -37,6 +37,9 @@ struct chash {
 #ifdef IP_SET_HASH_WITH_NETMASK
 	u8 netmask;		/* netmask value for subnets to store */
 #endif
+#ifdef IP_SET_HASH_WITH_PROTO
+	u8 proto;		/* default protocol for SET target */
+#endif
 #ifdef IP_SET_HASH_WITH_NETS
 	struct chash_nets nets[0]; /* book keeping of networks */
 #endif
@@ -205,8 +208,9 @@ jhash2((u32 *)(data), sizeof(struct type_pf_elem)/sizeof(u32), initval)	\
 
 /* Flavour without timeout */
 
-#define chash_data(n, i) \
-(struct type_pf_elem *)((char *)(n) + sizeof(struct slist) + (i)*sizeof(struct type_pf_elem))
+#define chash_data(n, i)					\
+(struct type_pf_elem *)((char *)(n) + sizeof(struct slist) 	\
+			+ (i)*sizeof(struct type_pf_elem))
 
 static int
 type_pf_chash_readd(struct chash *h, struct slist *t, u8 htable_bits,
@@ -506,6 +510,10 @@ type_pf_head(struct ip_set *set, struct sk_buff *skb)
 #ifdef IP_SET_HASH_WITH_NETMASK
 	if (h->netmask != HOST_MASK)
 		NLA_PUT_U8(skb, IPSET_ATTR_NETMASK, h->netmask);
+#endif
+#ifdef IP_SET_HASH_WITH_PROTO
+	if (h->proto != IPSET_IPPROTO_TCPUDP)
+		NLA_PUT_U8(skb, IPSET_ATTR_PROTO, h->proto);
 #endif
 	NLA_PUT_NET32(skb, IPSET_ATTR_REFERENCES,
 		      htonl(atomic_read(&set->ref) - 1));

@@ -102,6 +102,10 @@ static const struct ipset_errcode_table hash_errcode_table[] = {
 	  "Hash is full, cannot add more elements" },
 	{ IPSET_ERR_HASH_ELEM, 0,
 	  "Null-valued element, cannot be stored in a hash type of set" },
+	{ IPSET_ERR_INVALID_PROTO, 0,
+	  "Invalid protocol specified" },
+	{ IPSET_ERR_MISSING_PROTO, 0,
+	  "Protocol missing, but must be specified" },
 	{ },
 };
 
@@ -144,7 +148,7 @@ ipset_errcode(struct ipset_session *session, enum ipset_cmd cmd, int errcode)
 	if (errcode >= IPSET_ERR_TYPE_SPECIFIC) {
 		const struct ipset_type *type;
 		
-		type = ipset_session_data_get(session, IPSET_OPT_TYPE);
+		type = ipset_saved_type(session);
 		if (type) {
 			if (MATCH_TYPENAME(type->name, "bitmap:"))
 				table = bitmap_errcode_table;

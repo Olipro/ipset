@@ -112,12 +112,12 @@ If the set has got reference(s), nothing is done and no set destroyed.
 \fBlist\fP [ \fISETNAME\fP ]
 List the header data and the entries for the specified set, or for
 all sets if none is given. The
-\fB\-\-resolve\fP
+\fB\-resolve\fP
 option can be used to force name lookups (which may be slow). When the
-\fB\-\-sorted\fP
+\fB\-sorted\fP
 option is given, the entries are listed sorted (if the given set
 type supports the operation). The option
-\fB\-\-output\fR
+\fB\-output\fR
 can be used to control the format of the listing:
 \fBplain\fR, \fBsave\fR or \fBxml\fR.
 The default is
@@ -231,7 +231,7 @@ to 65536 entries.
 .PP 
 \fIDEL\-ENTRY\fR := { \fIipaddr\fR | \fIfromaddr\fR\-\fItoaddr\fR | \fIipaddr\fR/\fIcidr\fR }
 .PP 
-\fITEST\-ENTRY\fR := { \fIipaddr\fR }
+\fITEST\-ENTRY\fR := \fIipaddr\fR
 .PP 
 Mandatory \fBcreate\fR options:
 .TP 
@@ -262,13 +262,13 @@ The \fBbitmap:ip,mac\fR set type uses a memory range to store IPv4 and a MAC add
 .PP 
 \fICREATE\-OPTIONS\fR := \fBrange\fP \fIfrom\-ip\fP\-\fIto\-ip\fR|\fIip\fR/\fIcidr\fR [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIADD\-ENTRY\fR := { \fIipaddr\fR[,\fImac\-addr\fR] }
+\fIADD\-ENTRY\fR := \fIipaddr\fR[,\fImac\-addr\fR]
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := { \fIipaddr\fR[,\fImac\-addr\fR] }
+\fIDEL\-ENTRY\fR := \fIipaddr\fR[,\fImac\-addr\fR]
 .PP 
-\fITEST\-ENTRY\fR := { \fIipaddr\fR[,\fImac\-addr\fR] }
+\fITEST\-ENTRY\fR := \fIipaddr\fR[,\fImac\-addr\fR]
 .PP 
 Mandatory options to use when creating a \fBbitmap:ip,mac\fR type of set:
 .TP 
@@ -307,7 +307,7 @@ and such a set can store up to 65536 ports.
 .PP 
 \fIDEL\-ENTRY\fR := {\fIport\fR | \fIfrom\-port\fR\-\fIto\-port\fR }
 .PP 
-\fITEST\-ENTRY\fR := { \fIport\fR }
+\fITEST\-ENTRY\fR := \fIport\fR
 .PP 
 Mandatory options to use when creating a \fBbitmap:port\fR type of set:
 .TP 
@@ -328,13 +328,13 @@ if that is exhausted, the doubling of the hash is performed.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIADD\-ENTRY\fR := { \fIipaddr\fR }
+\fIADD\-ENTRY\fR := \fIipaddr\fR
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := { \fIipaddr\fR }
+\fIDEL\-ENTRY\fR := \fIipaddr\fR
 .PP 
-\fITEST\-ENTRY\fR := { \fIipaddr\fR }
+\fITEST\-ENTRY\fR := \fIipaddr\fR
 .PP 
 For the \fBinet\fR family one can add or delete multiple entries by specifying
 a range or a network:
@@ -378,13 +378,13 @@ if that is exhausted, the doubling of the hash is performed.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIADD\-ENTRY\fR := { \fIipaddr\fR[/\fIcidr\fR] }
+\fIADD\-ENTRY\fR := \fIipaddr\fR[/\fIcidr\fR]
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := { \fIipaddr\fR[/\fIcidr\fR] }
+\fIDEL\-ENTRY\fR := \fIipaddr\fR[/\fIcidr\fR]
 .PP 
-\fITEST\-ENTRY\fR := { \fIipaddr\fR[/\fIcidr\fR] }
+\fITEST\-ENTRY\fR := \fIipaddr\fR[/\fIcidr\fR]
 .PP 
 Optional \fBcreate\fR options:
 .TP 
@@ -427,21 +427,27 @@ The \fBhash:ip,port\fR set type uses a hash to store IP address and port pairs.
 In order to avoid clashes in the hash a limited number of chaining, and then
 if that is exhausted, the doubling of the hash is performed.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIADD\-ENTRY\fR := { \fIipaddr\fR,\fIport\fR }
+\fIADD\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := { \fIipaddr\fR,\fIport\fR }
+\fIDEL\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP 
-\fITEST\-ENTRY\fR := { \fIipaddr\fR,\fIport\fR }
+\fITEST\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP 
 Optional \fBcreate\fR options:
 .TP 
 \fBfamily\fR { \fBinet\fR|\fBinet6\fR }
 The protocol family of the IP addresses to be stored in the set. The default is
 \fBinet\fR, i.e IPv4.
+.TP 
+\fBproto\fR \fIvalue\fR
+The default protocol for the port to be stored in the set. If no protocol is specified,
+then TCP/UDP ports are assumed as backward compatibility. The default protocol
+also defines which kind of ports are to be added to the set when the \fBSET\fR
+target is used.
 .TP 
 \fBhashsize\fR \fIvalue\fR
 The initial hash size for the set, default is 1024. The hash size must be a power
@@ -451,14 +457,21 @@ correct value.
 \fBmaxelem\fR \fIvalue\fR
 The maximal number of elements which can be stored in the set, default 65536.
 .PP 
-The \fBhash:ip,port\fR type of sets require two \fBsrc\fR/\fBdst\fR parameters of
-the \fBset\fR match and \fBSET\fR target kernel modules.
+When adding, deleting, testing entries the port value is interpreted
+for TCP and UDP only, for other protocols the port value currently is ignored and
+zeroed out, but must be specified. The \fBhash:ip,port\fR type of sets require
+two \fBsrc\fR/\fBdst\fR parameters of the \fBset\fR match and \fBSET\fR
+target kernel modules.
 .PP 
 Examples:
 .IP 
-ipset create foo hash:ip,port
+ipset create foo hash:ip,port proto tcp
 .IP 
 ipset add foo 192.168.1.1,80
+.IP 
+ipset add foo 192.168.1.1,udp:53
+.IP 
+ipset add foo 192.168.1.1,ospf:0
 .IP 
 ipset test foo 192.168.1.1,80
 .SS hash:ip,port,ip
@@ -466,21 +479,27 @@ The \fBhash:ip,port,ip\fR set type uses a hash to store IP address, port and
 IP address triples. In order to avoid clashes in the hash a limited number of
 chaining, and then if that is exhausted, the doubling of the hash is performed.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIADD\-ENTRY\fR := { \fIipaddr\fR,\fIport\fR,\fIipaddr\fR }
+\fIADD\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fIipaddr\fR
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := { \fIipaddr\fR,\fIport\fR,\fIipaddr\fR }
+\fIDEL\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fIipaddr\fR
 .PP 
-\fITEST\-ENTRY\fR := { \fIipaddr\fR,\fIport\fR,\fIipaddr\fR }
+\fITEST\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fIipaddr\fR
 .PP 
 Optional \fBcreate\fR options:
 .TP 
 \fBfamily\fR { \fBinet\fR|\fBinet6\fR }
 The protocol family of the IP addresses to be stored in the set. The default is
 \fBinet\fR, i.e IPv4.
+.TP 
+\fBproto\fR \fIvalue\fR
+The default protocol for the port to be stored in the set. If no protocol is specified,
+then TCP/UDP ports are assumed as backward compatibility. The default protocol
+also defines which kind of ports are to be added to the set when the \fBSET\fR
+target is used.
 .TP 
 \fBhashsize\fR \fIvalue\fR
 The initial hash size for the set, default is 1024. The hash size must be a power
@@ -490,8 +509,11 @@ correct value.
 \fBmaxelem\fR \fIvalue\fR
 The maximal number of elements which can be stored in the set, default 65536.
 .PP 
-The \fBhash:ip,port,ip\fR type of sets require three \fBsrc\fR/\fBdst\fR parameters of
-the \fBset\fR match and \fBSET\fR target kernel modules.
+When adding, deleting, testing entries the port value is interpreted
+for TCP and UDP only, for other protocols the port value currently is ignored and
+zeroed out, but must be specified. The \fBhash:ip,port,ip\fR type of sets require
+three \fBsrc\fR/\fBdst\fR parameters of the \fBset\fR match and \fBSET\fR
+target kernel modules.
 .PP 
 Examples:
 .IP 
@@ -499,28 +521,34 @@ ipset create foo hash:ip,port,ip
 .IP 
 ipset add foo 192.168.1.1,80,10.0.0.1
 .IP 
-ipset test foo 192.168.1.1,80,10.0.0.1
+ipset test foo 192.168.1.1,udp:53,10.0.0.1
 .SS hash:ip,port,net
 The \fBhash:ip,port,net\fR set type uses a hash to store IP address, port and
 IP network triples.
 In order to avoid clashes in the hash a limited number of chaining, and then
 if that is exhausted, the doubling of the hash is performed.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIADD\-ENTRY\fR := { \fIipaddr\fR,\fIport\fR,\fIipaddr\fR[/\fIcidr\fR] }
+\fIADD\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fIipaddr\fR[/\fIcidr\fR]
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := { \fIipaddr\fR,\fIport\fR,\fIipaddr\fR[/\fIcidr\fR] }
+\fIDEL\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fIipaddr\fR[/\fIcidr\fR]
 .PP 
-\fITEST\-ENTRY\fR := { \fIipaddr\fR,\fIport\fR,\fIipaddr\fR[/\fIcidr\fR] }
+\fITEST\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fIipaddr\fR[/\fIcidr\fR]
 .PP 
 Optional \fBcreate\fR options:
 .TP 
 \fBfamily\fR { \fBinet\fR|\fBinet6\fR }
 The protocol family of the IP addresses to be stored in the set. The default is
 \fBinet\fR, i.e IPv4.
+.TP 
+\fBproto\fR \fIvalue\fR
+The default protocol for the port to be stored in the set. If no protocol is specified,
+then TCP/UDP ports are assumed as backward compatibility. The default protocol
+also defines which kind of ports are to be added to the set when the \fBSET\fR
+target is used.
 .TP 
 \fBhashsize\fR \fIvalue\fR
 The initial hash size for the set, default is 1024. The hash size must be a power
@@ -531,7 +559,9 @@ correct value.
 The maximal number of elements which can be stored in the set, default 65536.
 .PP 
 When adding/deleting/testing entries, if the cidr parameter is not specified,
-then the host cidr value is assumed.
+then the host cidr value is assumed. The port value is interpreted
+for TCP and UDP only, for other protocols the port value currently is ignored and
+zeroed out, but must be specified. 
 .PP 
 From the \fBset\fR netfilter match point of view a triple will be in a \fBhash:ip,port,net\fR type of set (when the first IP and the port match)
 if the second IP belongs to any of the netblocks added to the set.

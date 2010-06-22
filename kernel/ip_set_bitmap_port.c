@@ -72,9 +72,9 @@ bitmap_port_kadt(struct ip_set *set, const struct sk_buff *skb,
 		 enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
 {
 	struct bitmap_port *map = set->data;
-	u16 port;
+	u16 port = 0;
 
-	if (!get_port(pf, skb, flags & IPSET_DIM_ONE_SRC, &port))
+	if (!get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &port))
 		return -EINVAL;
 	
 	port = ntohs(port);
@@ -101,6 +101,7 @@ bitmap_port_adt_policy[IPSET_ATTR_ADT_MAX+1] __read_mostly = {
 	[IPSET_ATTR_PORT]	= { .type = NLA_U16 },
 	[IPSET_ATTR_PORT_TO]	= { .type = NLA_U16 },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+	[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
 };
 
 static int
@@ -109,7 +110,6 @@ bitmap_port_uadt(struct ip_set *set, struct nlattr *head, int len,
 {
 	struct bitmap_port *map = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
-	bool eexist = flags & IPSET_FLAG_EXIST;
 	u32 port;	/* wraparound */
 	u16 id, port_to;
 	int ret = 0;
@@ -117,6 +117,9 @@ bitmap_port_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
 		      bitmap_port_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_LINENO])
+		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	if (tb[IPSET_ATTR_PORT])
 		port = ip_set_get_h16(tb[IPSET_ATTR_PORT]);
@@ -150,11 +153,10 @@ bitmap_port_uadt(struct ip_set *set, struct nlattr *head, int len,
 		ret = adt == IPSET_ADD ? bitmap_port_add(map, id)
 				       : bitmap_port_del(map, id);
 
-		if (ret && !(ret == -IPSET_ERR_EXIST && eexist)) {
-			if (tb[IPSET_ATTR_LINENO])
-				*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
+		if (ret && !ip_set_eexist(ret, flags))
 			return ret;
-		}
+		else
+			ret = 0;
 	}
 	return ret;
 }
@@ -313,9 +315,9 @@ bitmap_port_timeout_kadt(struct ip_set *set, const struct sk_buff *skb,
 			 enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
 {
 	struct bitmap_port_timeout *map = set->data;
-	u16 port;
+	u16 port = 0;
 
-	if (!get_port(pf, skb, flags & IPSET_DIM_ONE_SRC, &port))
+	if (!get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &port))
 		return -EINVAL;
 
 	port = ntohs(port);
@@ -343,7 +345,6 @@ bitmap_port_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 {
 	const struct bitmap_port_timeout *map = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
-	bool eexist = flags & IPSET_FLAG_EXIST;
 	u16 id, port_to;
 	u32 port, timeout = map->timeout;	/* wraparound */
 	int ret = 0;
@@ -351,6 +352,9 @@ bitmap_port_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
 		      bitmap_port_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_LINENO])
+		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	if (tb[IPSET_ATTR_PORT])
 		port = ip_set_get_h16(tb[IPSET_ATTR_PORT]);
@@ -385,11 +389,10 @@ bitmap_port_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 			? bitmap_port_timeout_add(map, id, timeout)
 			: bitmap_port_timeout_del(map, id);
 		
-		if (ret && !(ret == -IPSET_ERR_EXIST && eexist)) {
-			if (tb[IPSET_ATTR_LINENO])
-				*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
+		if (ret && !ip_set_eexist(ret, flags))
 			return ret;
-		}
+		else
+			ret = 0;
 	}
 	return ret;
 }

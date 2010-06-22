@@ -37,6 +37,10 @@ static const struct ipset_arg hash_ipport_create_args[] = {
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
+	{ .name = { "proto", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROTO,
+	  .parse = ipset_parse_proto,		.print = ipset_print_proto,
+	},
 	/* Backward compatibility */
 	{ .name = { "probes", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROBES,
@@ -71,12 +75,12 @@ static const struct ipset_arg hash_ipport_add_args[] = {
 
 static const char hash_ipport_usage[] =
 "create SETNAME hash:ip,port\n"
-"		[family inet|inet6]\n"
+"		[family inet|inet6] [proto PROTO]\n"
 "               [hashsize VALUE] [maxelem VALUE]\n"
 "               [timeout VALUE]\n"
-"add    SETNAME IP,PORT [timeout VALUE]\n"
-"del    SETNAME IP,PORT\n"
-"test   SETNAME IP,PORT\n";
+"add    SETNAME IP,[PROTO:]PORT [timeout VALUE]\n"
+"del    SETNAME IP,[PROTO:]PORT\n"
+"test   SETNAME IP,[PROTO:]PORT\n";
 
 struct ipset_type ipset_hash_ipport0 = {
 	.name = "hash:ip,port",
@@ -91,8 +95,8 @@ struct ipset_type ipset_hash_ipport0 = {
 			.opt = IPSET_OPT_IP
 		},
 		[IPSET_DIM_TWO] = { 
-			.parse = ipset_parse_single_port,
-			.print = ipset_print_port,
+			.parse = ipset_parse_proto_port,
+			.print = ipset_print_proto_port,
 			.opt = IPSET_OPT_PORT
 		},
 	},
@@ -112,14 +116,18 @@ struct ipset_type ipset_hash_ipport0 = {
 	.full = {
 		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
 			| IPSET_FLAG(IPSET_OPT_MAXELEM)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
 		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
 		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_PORT),
+			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PROTO),
 		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_PORT),
+			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PROTO),
 	},
 
 	.usage = hash_ipport_usage,

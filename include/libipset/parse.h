@@ -14,6 +14,7 @@
 #define IPSET_RANGE_SEPARATOR	"-"
 #define IPSET_ELEM_SEPARATOR	","
 #define IPSET_NAME_SEPARATOR	","
+#define IPSET_PROTO_SEPARATOR	":"
 
 struct ipset_session;
 
@@ -26,6 +27,10 @@ extern int ipset_parse_single_port(struct ipset_session *session,
 				   enum ipset_opt opt, const char *str);
 extern int ipset_parse_port(struct ipset_session *session,
                             enum ipset_opt opt, const char *str);
+extern int ipset_parse_proto(struct ipset_session *session,
+                             enum ipset_opt opt, const char *str);
+extern int ipset_parse_proto_port(struct ipset_session *session,
+				  enum ipset_opt opt, const char *str);
 extern int ipset_parse_family(struct ipset_session *session,
                               enum ipset_opt opt, const char *str);
 extern int ipset_parse_ip(struct ipset_session *session,

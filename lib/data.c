@@ -66,6 +66,7 @@ struct ipset_data {
 		struct {
 			union nf_inet_addr ip2;
 			uint8_t cidr2;
+			uint8_t proto;
 			char ether[ETH_ALEN];
 			char name[IPSET_MAXNAMELEN];
 			char nameref[IPSET_MAXNAMELEN];
@@ -288,6 +289,9 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	case IPSET_OPT_CIDR2:
 		data->u.adt.cidr2 = *(const uint8_t *) value;
 		break;
+	case IPSET_OPT_PROTO:
+		data->u.adt.proto = *(const uint8_t *) value;
+		break;
 	/* Swap/rename */
 	case IPSET_OPT_SETNAME2:
 		ipset_strncpy(data->u.setname2, value, IPSET_MAXNAMELEN);
@@ -396,6 +400,8 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 		return &data->u.adt.ip2;
 	case IPSET_OPT_CIDR2:
 		return &data->u.adt.cidr2;
+	case IPSET_OPT_PROTO:
+		return &data->u.adt.proto;
 	/* Swap/rename */
 	case IPSET_OPT_SETNAME2:
 		return data->u.setname2;
@@ -450,6 +456,7 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 	case IPSET_OPT_NETMASK:
 	case IPSET_OPT_PROBES:
 	case IPSET_OPT_RESIZE:
+	case IPSET_OPT_PROTO:
 		return sizeof(uint8_t);
 	case IPSET_OPT_ETHER:
 		return ETH_ALEN;

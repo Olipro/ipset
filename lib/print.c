@@ -435,6 +435,79 @@ ipset_print_port(char *buf, unsigned int len,
 	return offset;
 }
 
+/**
+ * ipset_print_proto - print protocol name
+ * @buf: printing buffer
+ * @len: length of available buffer space
+ * @data: data blob
+ * @opt: the option kind
+ * @env: environment flags
+ *
+ * Print protocol name to output buffer.
+ *
+ * Return lenght of printed string or error size.
+ */
+int
+ipset_print_proto(char *buf, unsigned int len,
+		  const struct ipset_data *data, enum ipset_opt opt,
+		  uint8_t env UNUSED)
+{
+	struct protoent *protoent;
+	uint8_t proto;
+
+	assert(buf);
+	assert(len > 0);
+	assert(data);
+	assert(opt == IPSET_OPT_PROTO);
+
+	proto = *(uint8_t *) ipset_data_get(data, IPSET_OPT_PROTO);
+	assert(proto);
+	
+	if (proto == IPSET_IPPROTO_ANY)
+		return snprintf(buf, len, "any");
+	protoent = getprotobynumber(proto);
+	if (protoent)
+		return snprintf(buf, len, "%s", protoent->p_name);
+
+	/* Should not happen */	
+	return snprintf(buf, len, "%u", proto);
+}
+
+/**
+ * ipset_print_proto_port - print proto:port
+ * @buf: printing buffer
+ * @len: length of available buffer space
+ * @data: data blob
+ * @opt: the option kind
+ * @env: environment flags
+ *
+ * Print protocol and port to output buffer.
+ *
+ * Return lenght of printed string or error size.
+ */
+int
+ipset_print_proto_port(char *buf, unsigned int len,
+		       const struct ipset_data *data, enum ipset_opt opt,
+		       uint8_t env UNUSED)
+{
+	int size, offset = 0;
+
+	assert(buf);
+	assert(len > 0);
+	assert(data);
+	assert(opt == IPSET_OPT_PORT);
+
+	if (ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_PROTO))) {
+		size = ipset_print_proto(buf, len, data, IPSET_OPT_PROTO, env);
+		SNPRINTF_FAILURE(size, len, offset);
+		if (len < 2)
+			return -ENOSPC;
+		strcat(buf, ":");
+		SNPRINTF_FAILURE(1, len, offset);
+	}
+	return ipset_print_port(buf + offset, len, data, IPSET_OPT_PORT, env);
+}
+
 #define print_second(data)	\
 ipset_data_flags_test(data,	\
 	IPSET_FLAG(IPSET_OPT_PORT)|IPSET_FLAG(IPSET_OPT_ETHER)) 

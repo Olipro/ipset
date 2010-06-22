@@ -140,6 +140,7 @@ hash_ip4_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
 	[IPSET_ATTR_IP_TO]	= { .type = NLA_U32 },
 	[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+	[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
 };
 
 static int
@@ -148,7 +149,6 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 {
 	struct chash *h = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
-	bool eexist = flags & IPSET_FLAG_EXIST;
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	u32 ip, nip, ip_to, hosts, timeout = h->timeout;
 	int ret = 0;
@@ -156,6 +156,9 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
 		      hash_ip4_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_LINENO])
+		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	if (tb[IPSET_ATTR_IP])
 		ip = ip_set_get_n32(tb[IPSET_ATTR_IP]);
@@ -196,11 +199,10 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 		nip = htonl(ip);
 		ret = adtfn(set, &nip, GFP_KERNEL, timeout);
 
-		if (ret && !(ret == -IPSET_ERR_EXIST && eexist)) {
-			if (tb[IPSET_ATTR_LINENO])
-				*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
+		if (ret && !ip_set_eexist(ret, flags))
 			return ret;
-		}
+		else
+			ret = 0;
 	}
 	return ret;
 }
@@ -213,10 +215,10 @@ hash_ip_same_set(const struct ip_set *a, const struct ip_set *b)
 	
 	return x->maxelem == y->maxelem
 	       && x->timeout == y->timeout
+	       && x->netmask == y->netmask
 	       && x->htable_bits == y->htable_bits	/* resizing ? */
 	       && x->array_size == y->array_size
-	       && x->chain_limit == y->chain_limit
-	       && x->netmask == y->netmask;
+	       && x->chain_limit == y->chain_limit;
 }
 
 /* The type variant functions: IPv6 */
@@ -327,6 +329,7 @@ hash_ip6_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
 	[IPSET_ATTR_IP]		= { .type = NLA_BINARY,
 				    .len = sizeof(struct in6_addr) },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+	[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
 };
 
 static int
@@ -338,10 +341,14 @@ hash_ip6_uadt(struct ip_set *set, struct nlattr *head, int len,
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	union nf_inet_addr *ip;
 	u32 timeout = h->timeout;
+	int ret;
 
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
 		      hash_ip6_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_LINENO])
+		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	if (tb[IPSET_ATTR_IP])
 		ip = nla_data(tb[IPSET_ATTR_IP]);
@@ -358,7 +365,9 @@ hash_ip6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 	}
 
-	return adtfn(set, ip, GFP_KERNEL, timeout);
+	ret = adtfn(set, ip, GFP_KERNEL, timeout);
+
+	return ip_set_eexist(ret, flags) ? 0 : ret;
 }
 
 /* Create hash:ip type of sets */

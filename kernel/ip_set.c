@@ -474,7 +474,6 @@ ip_set_create_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
 				    .len = IPSET_MAXNAMELEN - 1},
 	[IPSET_ATTR_REVISION]	= { .type = NLA_U8 },
 	[IPSET_ATTR_FAMILY]	= { .type = NLA_U8 },
-	[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
 	[IPSET_ATTR_DATA]	= { .type = NLA_NESTED },
 };
 

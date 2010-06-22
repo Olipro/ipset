@@ -20,47 +20,47 @@
 /* Message types and commands */
 enum ipset_cmd {
 	IPSET_CMD_NONE,
-	IPSET_CMD_CREATE,	/* Create a new (empty) set */
-	IPSET_CMD_DESTROY,	/* Remove a (empty) set */
-	IPSET_CMD_FLUSH,	/* Remove all elements from a set */
-	IPSET_CMD_RENAME,	/* Rename a set */
-	IPSET_CMD_SWAP,		/* Swap two sets */
-	IPSET_CMD_LIST,		/* List sets */
-	IPSET_CMD_SAVE,		/* Save sets */
-	IPSET_CMD_ADD,		/* Add an element to a set */
-	IPSET_CMD_DEL,		/* Delete an element from a set */
-	IPSET_CMD_TEST,		/* Test an element in a set */
-	IPSET_CMD_HEADER,	/* Get set header data only */
-	IPSET_CMD_TYPE,		/* Get set type */
-	IPSET_CMD_PROTOCOL,	/* Return protocol version */
+	IPSET_CMD_CREATE,	/* 1: Create a new (empty) set */
+	IPSET_CMD_DESTROY,	/* 2: Remove a (empty) set */
+	IPSET_CMD_FLUSH,	/* 3: Remove all elements from a set */
+	IPSET_CMD_RENAME,	/* 4: Rename a set */
+	IPSET_CMD_SWAP,		/* 5: Swap two sets */
+	IPSET_CMD_LIST,		/* 6: List sets */
+	IPSET_CMD_SAVE,		/* 7: Save sets */
+	IPSET_CMD_ADD,		/* 8: Add an element to a set */
+	IPSET_CMD_DEL,		/* 9: Delete an element from a set */
+	IPSET_CMD_TEST,		/* 10: Test an element in a set */
+	IPSET_CMD_HEADER,	/* 11: Get set header data only */
+	IPSET_CMD_TYPE,		/* 12: Get set type */
+	IPSET_CMD_PROTOCOL,	/* 13: Return protocol version */
 	IPSET_MSG_MAX,		/* Netlink message commands */
 
 	/* Commands in userspace: */
-	IPSET_CMD_RESTORE = IPSET_MSG_MAX, /* Enter restore mode */	
-	IPSET_CMD_HELP,		/* Get help */
-	IPSET_CMD_VERSION,	/* Get program version */
-	IPSET_CMD_QUIT,		/* Quit from interactive mode */
+	IPSET_CMD_RESTORE = IPSET_MSG_MAX, /* 14: Enter restore mode */	
+	IPSET_CMD_HELP,		/* 15: Get help */
+	IPSET_CMD_VERSION,	/* 16: Get program version */
+	IPSET_CMD_QUIT,		/* 17: Quit from interactive mode */
 
 	IPSET_CMD_MAX,
 
-	IPSET_CMD_COMMIT = IPSET_CMD_MAX, /* Commit buffered commands */
+	IPSET_CMD_COMMIT = IPSET_CMD_MAX, /* 18: Commit buffered commands */
 };
 
 /* Attributes at command level */
 enum {
 	IPSET_ATTR_UNSPEC,
-	IPSET_ATTR_PROTOCOL,	/* Protocol version */
-	IPSET_ATTR_SETNAME,	/* Name of the set */
-	IPSET_ATTR_TYPENAME,	/* Typename */
+	IPSET_ATTR_PROTOCOL,	/* 1: Protocol version */
+	IPSET_ATTR_SETNAME,	/* 2: Name of the set */
+	IPSET_ATTR_TYPENAME,	/* 3: Typename */
 	IPSET_ATTR_SETNAME2 = IPSET_ATTR_TYPENAME, /* rename/swap */
-	IPSET_ATTR_REVISION,	/* Settype revision */
-	IPSET_ATTR_FAMILY,	/* Settype family */
-	IPSET_ATTR_FLAGS,	/* Flags at command level */
-	IPSET_ATTR_DATA,	/* Nested attributes */
-	IPSET_ATTR_ADT,		/* Multiple data containers */
-	IPSET_ATTR_LINENO,	/* Restore lineno */
-	IPSET_ATTR_PROTOCOL_MIN,/* Minimal supported version number */
-	IPSET_ATTR_REVISION_MIN = IPSET_ATTR_PROTOCOL_MIN, /* type rev min */
+	IPSET_ATTR_REVISION,	/* 4: Settype revision */
+	IPSET_ATTR_FAMILY,	/* 5: Settype family */
+	IPSET_ATTR_FLAGS,	/* 6: Flags at command level */
+	IPSET_ATTR_DATA,	/* 7: Nested attributes */
+	IPSET_ATTR_ADT,		/* 8: Multiple data containers */
+	IPSET_ATTR_LINENO,	/* 9: Restore lineno */
+	IPSET_ATTR_PROTOCOL_MIN, /* 10: Minimal supported version number */
+	IPSET_ATTR_REVISION_MIN	= IPSET_ATTR_PROTOCOL_MIN, /* type rev min */
 	__IPSET_ATTR_CMD_MAX,
 };
 #define IPSET_ATTR_CMD_MAX	(__IPSET_ATTR_CMD_MAX - 1)
@@ -69,13 +69,14 @@ enum {
 enum {
 	IPSET_ATTR_IP = IPSET_ATTR_UNSPEC + 1,
 	IPSET_ATTR_IP_FROM = IPSET_ATTR_IP,
-	IPSET_ATTR_IP_TO,
-	IPSET_ATTR_CIDR,
-	IPSET_ATTR_PORT,
+	IPSET_ATTR_IP_TO,	/* 2 */
+	IPSET_ATTR_CIDR,	/* 3 */
+	IPSET_ATTR_PORT,	/* 4 */
 	IPSET_ATTR_PORT_FROM = IPSET_ATTR_PORT,
-	IPSET_ATTR_PORT_TO,
-	IPSET_ATTR_TIMEOUT,
-	IPSET_ATTR_CADT_FLAGS,
+	IPSET_ATTR_PORT_TO,	/* 5 */
+	IPSET_ATTR_TIMEOUT,	/* 6 */
+	IPSET_ATTR_PROTO,	/* 7 */
+	IPSET_ATTR_CADT_FLAGS,	/* 8 */
 	IPSET_ATTR_CADT_LINENO = IPSET_ATTR_LINENO,
 	/* Reserve empty slots */
 	IPSET_ATTR_CADT_MAX = 16,
@@ -146,6 +147,9 @@ enum ipset_adt {
 	IPSET_CREATE = IPSET_ADT_MAX,
 	IPSET_CADT_MAX,
 };
+
+#define IPSET_IPPROTO_ANY	255
+#define IPSET_IPPROTO_TCPUDP	254
 
 #ifdef __KERNEL__
 #include <linux/ip.h>
@@ -341,6 +345,12 @@ ip_set_free(void *members, u8 flags)
 		kfree(members);
 	else
 		vfree(members);
+}
+
+static inline bool
+ip_set_eexist(int ret, u32 flags)
+{
+	return ret == -IPSET_ERR_EXIST && (flags & IPSET_FLAG_EXIST);
 }
 
 /* Useful converters */

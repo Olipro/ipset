@@ -202,7 +202,7 @@ restore(char *argv0)
 }
 
 static int
-call_parser(int argc, char *argv[], const struct ipset_arg *args)
+call_parser(int *argc, char *argv[], const struct ipset_arg *args)
 {
 	int i = 1, ret = 0;
 	const struct ipset_arg *arg;
@@ -212,8 +212,8 @@ call_parser(int argc, char *argv[], const struct ipset_arg *args)
 	if (!args)
 		goto done;
 	for (arg = args; arg->opt; arg++) {
-		for (i = 1; i < argc; ) {
-			D("argc: %u, i: %u: %s vs %s", argc, i, argv[i], arg->name[0]);
+		for (i = 1; i < *argc; ) {
+			D("argc: %u, i: %u: %s vs %s", *argc, i, argv[i], arg->name[0]);
 			if (!(ipset_match_option(argv[i], arg->name))) {
 				i++;
 				continue;
@@ -221,24 +221,24 @@ call_parser(int argc, char *argv[], const struct ipset_arg *args)
 			optstr = argv[i];
 			/* Shift off matched option */
 			D("match %s", arg->name[0]);
-			ipset_shift_argv(&argc, argv, i);
-			D("argc: %u, i: %u", argc, i);
+			ipset_shift_argv(argc, argv, i);
+			D("argc: %u, i: %u", *argc, i);
 			switch (arg->has_arg) {
 			case IPSET_MANDATORY_ARG:
-				if (i + 1 > argc)
+				if (i + 1 > *argc)
 					return exit_error(PARAMETER_PROBLEM,
 						"Missing mandatory argument of option `%s'",
 						arg->name[0]);
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
-				if (i + 1 <= argc) {
+				if (i + 1 <= *argc) {
 					ret = ipset_call_parser(session,
 							arg->parse,
 							optstr, arg->opt,
 							argv[i]);
 					if (ret < 0)
 						return ret;
-					ipset_shift_argv(&argc, argv, i);
+					ipset_shift_argv(argc, argv, i);
 					break;
 				}
 				/* Fall through */
@@ -253,7 +253,7 @@ call_parser(int argc, char *argv[], const struct ipset_arg *args)
 		}
 	}
 done:
-	if (i < argc)
+	if (i < *argc)
 		return exit_error(PARAMETER_PROBLEM,
 				  "Unknown argument: `%s'",
 				  argv[i]);
@@ -458,6 +458,9 @@ parse_commandline(int argc, char *argv[])
 			}
 			return exit_error(NO_PROBLEM, NULL);
 		}
+		if (argc > 1)
+			return exit_error(PARAMETER_PROBLEM,
+				"No command specified: unknown argument %s", argv[1]);
 		return exit_error(PARAMETER_PROBLEM, "No command specified.");
 	case IPSET_CMD_VERSION:
 		printf("%s v%s.\n", program_name, program_version);
@@ -522,7 +525,7 @@ parse_commandline(int argc, char *argv[])
 			return handle_error();
 
 		/* Parse create options */
-		ret = call_parser(argc, argv, type->args[IPSET_CREATE]);
+		ret = call_parser(&argc, argv, type->args[IPSET_CREATE]);
 		if (ret < 0)
 			return handle_error();
 		else if (ret)
@@ -557,6 +560,9 @@ parse_commandline(int argc, char *argv[])
 
 	case IPSET_CMD_RESTORE:
 		/* Restore mode */
+		if (argc > 1)
+			return exit_error(PARAMETER_PROBLEM,
+				"Unknown argument %s", argv[1]);
 		return restore(argv[0]);
 	case IPSET_CMD_ADD:
 	case IPSET_CMD_DEL:
@@ -576,7 +582,7 @@ parse_commandline(int argc, char *argv[])
 			return handle_error();
 		
 		/* Parse additional ADT options */
-		ret = call_parser(argc, argv, type->args[cmd2cmd(cmd)]);
+		ret = call_parser(&argc, argv, type->args[cmd2cmd(cmd)]);
 		if (ret < 0)
 			return handle_error();
 		else if (ret)
@@ -590,6 +596,9 @@ parse_commandline(int argc, char *argv[])
 		break;
 	}
 
+	if (argc > 1)
+		return exit_error(PARAMETER_PROBLEM,
+			"Unknown argument %s", argv[1]);
 	ret = ipset_cmd(session, cmd, restore_line);
 	D("ret %d", ret);
 	/* Special case for TEST and non-quiet mode */

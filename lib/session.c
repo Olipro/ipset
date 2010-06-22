@@ -35,6 +35,7 @@ struct ipset_session {
 	enum ipset_cmd cmd;			/* Current command */
 	uint32_t lineno;			/* Current lineno in restore mode */
 	char saved_setname[IPSET_MAXNAMELEN];	/* Saved setname */
+	const struct ipset_type *saved_type;	/* Saved type */
 	struct nlattr *nested[IPSET_NEST_MAX];	/* Pointer to nest levels */
 	uint8_t nestid;				/* Current nest level */
 	bool version_checked;			/* Version checked */
@@ -80,6 +81,20 @@ ipset_session_handle(const struct ipset_session *session)
 {
 	assert(session);
 	return session->handle;
+}
+
+/**
+ * ipset_saved_type - return pointer to the saved type
+ * @session: session structure
+ *
+ * Returns the pointer to the saved type from the last ipset_cmd
+ * It is required to decode type-specific error codes in restore mode.
+ */
+const struct ipset_type *
+ipset_saved_type(const struct ipset_session *session)
+{
+	assert(session);
+	return session->saved_type;
 }
 
 /*
@@ -327,6 +342,10 @@ const struct ipset_attr_policy create_attrs[] = {
 		.type = MNL_TYPE_U32,
 		.opt = IPSET_OPT_TIMEOUT,
 	},
+	[IPSET_ATTR_PROTO] = {
+		.type = MNL_TYPE_U8,
+		.opt = IPSET_OPT_PROTO,
+	},
 	[IPSET_ATTR_CADT_FLAGS] = {
 		.type = MNL_TYPE_U32,
 		.opt = IPSET_OPT_CADT_FLAGS,
@@ -393,6 +412,10 @@ const struct ipset_attr_policy adt_attrs[] = {
 	[IPSET_ATTR_PORT_TO] = {
 		.type = MNL_TYPE_U16,
 		.opt = IPSET_OPT_PORT_TO,
+	},
+	[IPSET_ATTR_PROTO] = {
+		.type = MNL_TYPE_U8,
+		.opt = IPSET_OPT_PROTO,
 	},
 	[IPSET_ATTR_TIMEOUT] = {
 		.type = MNL_TYPE_U32,
@@ -1714,6 +1737,8 @@ ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd, uint32_t lineno)
 		goto cleanup;
 	D("past: build_msg");
 
+	/* We have to save the type for error handling */
+	session->saved_type = ipset_data_get(data, IPSET_OPT_TYPE);
 	/* Save setname for the next possible aggregated restore line */
 	if (session->lineno != 0
 	    && (cmd == IPSET_CMD_ADD || cmd == IPSET_CMD_DEL)) {

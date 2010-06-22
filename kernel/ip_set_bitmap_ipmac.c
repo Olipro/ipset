@@ -368,6 +368,7 @@ bitmap_ipmac_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
 	[IPSET_ATTR_IP]		= { .type = NLA_U32 },
 	[IPSET_ATTR_ETHER]	= { .type = NLA_BINARY, .len  = ETH_ALEN },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+	[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
 };
 
 static int
@@ -377,7 +378,6 @@ bitmap_ipmac_uadt(struct ip_set *set, struct nlattr *head, int len,
 	struct bitmap_ipmac *map = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	bool eexist = flags & IPSET_FLAG_EXIST;
 	struct ipmac data;
 	u32 timeout = map->timeout;
 	int ret = 0;
@@ -385,6 +385,9 @@ bitmap_ipmac_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
 		      bitmap_ipmac_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_LINENO])
+		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	if (tb[IPSET_ATTR_IP])
 		data.id = ip_set_get_h32(tb[IPSET_ATTR_IP]);
@@ -409,11 +412,7 @@ bitmap_ipmac_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 	ret = adtfn(set, &data, GFP_KERNEL, timeout);
 
-	if (ret && !(ret == -IPSET_ERR_EXIST && eexist)) {
-		if (tb[IPSET_ATTR_LINENO])
-			*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
-	}
-	return ret;
+	return ip_set_eexist(ret, flags) ? 0 : ret;
 }
 
 static void

@@ -107,6 +107,7 @@ bitmap_ip_adt_policy[IPSET_ATTR_ADT_MAX+1] __read_mostly = {
 	[IPSET_ATTR_IP_TO]	= { .type = NLA_U32 },
 	[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+	[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
 };
 
 static int
@@ -115,13 +116,15 @@ bitmap_ip_uadt(struct ip_set *set, struct nlattr *head, int len,
 {
 	struct bitmap_ip *map = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
-	bool eexist = flags & IPSET_FLAG_EXIST;
 	u32 ip, ip_to, id;
 	int ret = 0;
 
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
 		      bitmap_ip_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_LINENO])
+		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	if (tb[IPSET_ATTR_IP])
 		ip = ip_set_get_h32(tb[IPSET_ATTR_IP]);
@@ -164,11 +167,10 @@ bitmap_ip_uadt(struct ip_set *set, struct nlattr *head, int len,
 		ret = adt == IPSET_ADD ? bitmap_ip_add(map, id)
 				       : bitmap_ip_del(map, id);
 
-		if (ret && !(ret == -IPSET_ERR_EXIST && eexist)) {
-			if (tb[IPSET_ATTR_LINENO])
-				*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
+		if (ret && !ip_set_eexist(ret, flags))
 			return ret;
-		}
+		else
+			ret = 0;
 	}
 	return ret;
 }
@@ -356,13 +358,15 @@ bitmap_ip_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 {
 	struct bitmap_ip_timeout *map = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
-	bool eexist = flags & IPSET_FLAG_EXIST;
 	u32 ip, ip_to, id, timeout = map->timeout;
 	int ret = 0;
 
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
 		      bitmap_ip_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_LINENO])
+		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	if (tb[IPSET_ATTR_IP])
 		ip = ip_set_get_h32(tb[IPSET_ATTR_IP]);
@@ -405,11 +409,10 @@ bitmap_ip_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 			? bitmap_ip_timeout_add(map, id, timeout)
 			: bitmap_ip_timeout_del(map, id);
 
-		if (ret && !(ret == -IPSET_ERR_EXIST && eexist)) {
-			if (tb[IPSET_ATTR_LINENO])
-				*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
+		if (ret && !ip_set_eexist(ret, flags))
 			return ret;
-		}
+		else
+			ret = 0;
 	}
 	return ret;
 }

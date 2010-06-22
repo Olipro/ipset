@@ -46,13 +46,17 @@ hash_net_same_set(const struct ip_set *a, const struct ip_set *b);
 /* Member elements without timeout */
 struct hash_net4_elem {
 	u32 ip;
-	u8 cidr;	/* Not hashed, zero for null value */
+	u16 padding0;
+	u8 padding1;
+	u8 cidr;
 };
 
 /* Member elements with timeout support */
 struct hash_net4_telem {
 	u32 ip;
-	u8 cidr;	/* Not hashed, zero for null value */
+	u16 padding0;
+	u8 padding1;
+	u8 cidr;
 	unsigned long timeout;
 };
 
@@ -60,10 +64,7 @@ static inline bool
 hash_net4_data_equal(const struct hash_net4_elem *ip1,
 		    const struct hash_net4_elem *ip2)
 {
-	/* We don't have to check the cidr equality
-	 * because overlapping nets cannot be added to the set
-	 */
-	return ip1->ip == ip2->ip;
+	return ip1->ip == ip2->ip && ip1->cidr == ip2->cidr;
 }
 
 static inline bool
@@ -168,7 +169,6 @@ hash_net4_uadt(struct ip_set *set, struct nlattr *head, int len,
 {
 	struct chash *h = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
-	bool eexist = flags & IPSET_FLAG_EXIST;
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_net4_elem data = { .cidr = HOST_MASK };
 	u32 timeout = h->timeout;
@@ -177,6 +177,9 @@ hash_net4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
 		      hash_net4_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_LINENO])
+		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	if (tb[IPSET_ATTR_IP])
 		data.ip = ip_set_get_n32(tb[IPSET_ATTR_IP]);
@@ -199,11 +202,7 @@ hash_net4_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 	ret = adtfn(set, &data, GFP_KERNEL, timeout);
 
-	if (ret && !(ret == -IPSET_ERR_EXIST && eexist)) {
-		if (tb[IPSET_ATTR_LINENO])
-			*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
-	}
-	return ret;
+	return ip_set_eexist(ret, flags) ? 0 : ret;
 }
 
 static bool
@@ -223,12 +222,16 @@ hash_net_same_set(const struct ip_set *a, const struct ip_set *b)
 
 struct hash_net6_elem {
 	union nf_inet_addr ip;
-	u8 cidr;	/* Not hashed */
+	u16 padding0;
+	u8 padding1;
+	u8 cidr;
 };
 
 struct hash_net6_telem {
 	union nf_inet_addr ip;
-	u8 cidr;	/* Not hashed */
+	u16 padding0;
+	u8 padding1;
+	u8 cidr;
 	unsigned long timeout;
 };
 
@@ -236,7 +239,8 @@ static inline bool
 hash_net6_data_equal(const struct hash_net6_elem *ip1,
 		     const struct hash_net6_elem *ip2)
 {
-	return ipv6_addr_cmp(&ip1->ip.in6, &ip2->ip.in6) == 0;
+	return ipv6_addr_cmp(&ip1->ip.in6, &ip2->ip.in6) == 0
+	       && ip1->cidr == ip2->cidr;
 }
 
 static inline bool
@@ -344,6 +348,7 @@ hash_net6_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
 				    .len = sizeof(struct in6_addr) },
 	[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+	[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
 };
 
 static int
@@ -355,10 +360,14 @@ hash_net6_uadt(struct ip_set *set, struct nlattr *head, int len,
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_net6_elem data = { .cidr = HOST_MASK };
 	u32 timeout = h->timeout;
+	int ret;
 
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
 		      hash_net6_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_LINENO])
+		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	if (tb[IPSET_ATTR_IP])
 		memcpy(&data.ip, nla_data(tb[IPSET_ATTR_IP]),
@@ -380,7 +389,9 @@ hash_net6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 	}
 
-	return adtfn(set, &data, GFP_KERNEL, timeout);
+	ret = adtfn(set, &data, GFP_KERNEL, timeout);
+	
+	return ip_set_eexist(ret, flags) ? 0 : ret;
 }
 
 /* Create hash:ip type of sets */

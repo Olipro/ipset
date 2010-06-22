@@ -1,3 +1,11 @@
+# Range: Check syntax error: missing range/from-to
+2 ipset -N test ipmap
+# Range: Check syntax error: missing --from
+2 ipset -N test ipmap --to 2.1.0.1
+# Range: Check syntax error: missing --to
+2 ipset -N test ipmap --from 2.1.0.1
+# Range: Catch invalid IPv4 address
+1 ipset -N test ipmap --from 2.0.0.256 --to 2.1.0.1
 # Range: Try to create from an invalid range
 1 ipset -N test ipmap --from 2.0.0.1 --to 2.1.0.1
 # Range: Create a set from a valid range
@@ -28,6 +36,16 @@
 0 ipset -D test 2.0.0.128
 # Range: Add a range of elements
 0 ipset -A test 2.0.0.128-2.0.0.131
+# Range: Save set
+0 ipset -S test > ipmap.t.restore
+# Range: Destroy set
+0 ipset -X test
+# Range: Restore set and catch error
+1 sed 's/2.0.0.131/222.0.0.131/' < ipmap.t.restore | ipset -R
+# Range: Destroy set
+0 ipset -X test
+# Range: Restore set
+0 ipset -R < ipmap.t.restore && rm ipmap.t.restore
 # Range: List set
 0 ipset -L test > .foo
 # Range: Check listing

@@ -31,6 +31,7 @@
 #define range_separator(str)	ipset_strchr(str, IPSET_RANGE_SEPARATOR)
 #define elem_separator(str)	ipset_strchr(str, IPSET_ELEM_SEPARATOR)
 #define name_separator(str)	ipset_strchr(str, IPSET_NAME_SEPARATOR)
+#define proto_separator(str)	ipset_strchr(str, IPSET_PROTO_SEPARATOR)
 
 #define syntax_err(fmt, args...) \
 	ipset_err(session, "Syntax error: " fmt , ## args)
@@ -272,6 +273,88 @@ ipset_parse_port(struct ipset_session *session,
 		err = ipset_parse_single_port(session, IPSET_OPT_PORT_TO, a);
 		if (err)
 			goto error;
+	}
+	err = ipset_parse_single_port(session, opt, tmp);
+
+error:
+	free(saved);
+	return err;
+}
+
+/**
+ * ipset_parse_proto - parse protocol name
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string as a protocol name. "any" is supported
+ * as a special protocol name for ipset itself.
+ * The parsed protocol are stored in the data blob of the session.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_parse_proto(struct ipset_session *session,
+		  enum ipset_opt opt, const char *str)
+{
+	uint8_t proto = 0;
+
+	assert(session);
+	assert(opt == IPSET_OPT_PROTO);
+	assert(str);
+	
+	if (STREQ(str, "any"))
+		proto = IPSET_IPPROTO_ANY;
+	else {
+		struct protoent *protoent = getprotobyname(str);
+		if (protoent == NULL)
+			return syntax_err("cannot parse '%s' as a protocol name", str);
+		proto = protoent->p_proto;
+	}
+	if (!proto || proto == IPSET_IPPROTO_TCPUDP)
+		return syntax_err("invalid protocol '%s'", str);
+	
+	return ipset_session_data_set(session, opt, &proto);
+}
+
+/**
+ * ipset_parse_proto_port - parse (optional) protocol and a single port
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string as a protocol and port, separated by a colon.
+ * The protocol part is optional.
+ * The parsed protocol and port numbers are stored in the data
+ * blob of the session.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_parse_proto_port(struct ipset_session *session,
+		       enum ipset_opt opt, const char *str)
+{
+	char *a, *saved, *tmp;
+	int err = 0;
+
+	assert(session);
+	assert(opt == IPSET_OPT_PORT);
+	assert(str);
+
+	saved = tmp = strdup(str);
+	if (tmp == NULL)
+		return ipset_err(session,
+				 "Cannot allocate memory to duplicate %s.",
+				 str);
+
+	a = proto_separator(tmp);
+	if (a != NULL) {
+		/* proto:port */
+		*a++ = '\0';
+		err = ipset_parse_proto(session, IPSET_OPT_PROTO, tmp);
+		if (err)
+			goto error;
+		tmp = a;
 	}
 	err = ipset_parse_single_port(session, opt, tmp);
 

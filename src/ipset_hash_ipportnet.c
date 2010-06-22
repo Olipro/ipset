@@ -37,6 +37,10 @@ static const struct ipset_arg hash_ipportnet_create_args[] = {
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
+	{ .name = { "proto", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROTO,
+	  .parse = ipset_parse_proto,		.print = ipset_print_proto,
+	},
 	/* Backward compatibility */
 	{ .name = { "probes", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROBES,
@@ -71,12 +75,12 @@ static const struct ipset_arg hash_ipportnet_add_args[] = {
 
 static const char hash_ipportnet_usage[] =
 "create SETNAME hash:ip,port,net\n"
-"		[family inet|inet6]\n"
+"		[family inet|inet6] [proto PROTO]\n"
 "               [hashsize VALUE] [maxelem VALUE]\n"
 "               [timeout VALUE]\n"
-"add    SETNAME IP,PORT,IP[/CIDR] [timeout VALUE]\n"
-"del    SETNAME IP,PORT,IP[/CIDR]\n"
-"test   SETNAME IP,PORT,IP[/CIDR]\n";
+"add    SETNAME IP,[PROTO:]PORT,IP[/CIDR] [timeout VALUE]\n"
+"del    SETNAME IP,[PROTO:]PORT,IP[/CIDR]\n"
+"test   SETNAME IP,[PROTO:]PORT,IP[/CIDR]\n";
 
 struct ipset_type ipset_hash_ipportnet0 = {
 	.name = "hash:ip,port,net",
@@ -91,8 +95,8 @@ struct ipset_type ipset_hash_ipportnet0 = {
 			.opt = IPSET_OPT_IP
 		},
 		[IPSET_DIM_TWO] = { 
-			.parse = ipset_parse_single_port,
-			.print = ipset_print_port,
+			.parse = ipset_parse_proto_port,
+			.print = ipset_print_proto_port,
 			.opt = IPSET_OPT_PORT
 		},
 		[IPSET_DIM_THREE] = { 
@@ -120,18 +124,22 @@ struct ipset_type ipset_hash_ipportnet0 = {
 	.full = {
 		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
 			| IPSET_FLAG(IPSET_OPT_MAXELEM)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
 		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_IP2)
 			| IPSET_FLAG(IPSET_OPT_CIDR2)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
 		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_IP2)
 			| IPSET_FLAG(IPSET_OPT_CIDR2),
 		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_IP2)
 			| IPSET_FLAG(IPSET_OPT_CIDR2),
 	},

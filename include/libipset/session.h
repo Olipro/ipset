@@ -23,6 +23,7 @@ struct ipset_handle;
 
 extern struct ipset_data * ipset_session_data(const struct ipset_session *session);
 extern struct ipset_handle * ipset_session_handle(const struct ipset_session *session);
+extern const struct ipset_type * ipset_saved_type(const struct ipset_session *session);
 
 enum ipset_err_type {
 	IPSET_ERROR,

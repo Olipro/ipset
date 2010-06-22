@@ -38,12 +38,11 @@ AM_CFLAGS = -std=gnu99 \
 	-Wundef \
 	-Wwrite-strings \
 	-Wno-missing-field-initializers \
-	-Werror \
-	-g -ggdb -gdwarf-2 -g3
+	-Werror
 endif
 
 if ENABLE_DEBUG
-AM_CFLAGS += -DIPSET_DEBUG
+AM_CFLAGS += -g -ggdb -gdwarf-2 -g3 -DIPSET_DEBUG
 endif
 
 if ! ENABLE_VERBOSE

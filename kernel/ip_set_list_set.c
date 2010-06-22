@@ -119,6 +119,7 @@ list_set_adt_policy[IPSET_ATTR_ADT_MAX+1] __read_mostly = {
 	[IPSET_ATTR_NAMEREF]	= { .type = NLA_STRING,
 				    .len = IPSET_MAXNAMELEN },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+	[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
 	[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
 };
 
@@ -210,8 +211,7 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 {
 	struct list_set *map = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
-	bool eexist = flags & IPSET_FLAG_EXIST,
-	     with_timeout = with_timeout(map->timeout);
+	bool with_timeout = with_timeout(map->timeout);
 	int before = 0;
 	u32 timeout = map->timeout;
 	ip_set_id_t id, refid = IPSET_INVALID_ID;
@@ -223,6 +223,9 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
 		      list_set_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
+
+	if (tb[IPSET_ATTR_LINENO])
+		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	if (tb[IPSET_ATTR_NAME]) {
 		id = ip_set_get_byname(nla_data(tb[IPSET_ATTR_NAME]), &s);
@@ -334,12 +337,7 @@ finish:
 	if (adt != IPSET_ADD || ret)
 		ip_set_put_byindex(id);
 
-	if (ret && !(ret == -IPSET_ERR_EXIST && eexist)) {
-		if (tb[IPSET_ATTR_LINENO])
-			*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
-		return ret;
-	}
-	return ret;
+	return ip_set_eexist(ret, flags) ? 0 : ret;
 }
 
 static void
@@ -565,7 +563,7 @@ list_set_create(struct ip_set *set, struct nlattr *head, int len,
 static struct ip_set_type list_set_type = {
 	.name		= "list:set",
 	.protocol	= IPSET_PROTOCOL,
-	.features	= IPSET_TYPE_NAME,
+	.features	= IPSET_TYPE_NAME | IPSET_DUMP_LAST,
 	.dimension	= IPSET_DIM_ONE,
 	.family		= AF_UNSPEC,
 	.revision	= 0,
