@@ -10,8 +10,40 @@ tests="$tests nethash hash:net hash:net6"
 tests="$tests setlist"
 tests="$tests iptree iptreemap"
 
+add_tests() {
+	# inet|inet6 network
+	if [ $1 = "inet" ]; then
+		cmd=iptables-save
+		add=match_target
+	else
+		cmd=ip6tables-save
+		add=match_target6
+	fi
+	modprobe ip_tables
+	if [ ! -e /var/log/kern.log -a -z "`grep 'kernel: ip_tables: ' /var/log/kern/log`" ]; then
+		echo "The destination for kernel log is not /var/log/kern.log, skipping $1 match and target tests"
+		return
+	fi
+	if [ `$cmd -t filter | wc -l` -eq 7 -a \
+	     `$cmd -t filter | grep ACCEPT | wc -l` -eq 3 ]; then
+	     	if [ -z "`which sendip`" ]; then
+	     		echo "sendip utility is missig: skipping $1 match and target tests"
+	     	elif [ -n "`netstat --protocol $1 -n | grep $2`" ]; then
+	     		echo "Our test network $2 in use: skipping $1 match and target tests"
+	     	else
+	     		tests="$tests $add"
+	     	fi
+	     	:
+	else
+		echo "You have got iptables rules: skipping $1 match and target tests"
+	fi
+}
+
 if [ "$1" ]; then
 	tests="init $@"
+else
+	add_tests inet 10.255.255
+	add_tests inet6 1002:1002:1002:1002::
 fi
 
 for types in $tests; do

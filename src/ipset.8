@@ -58,7 +58,7 @@ addresses, (TCP/UDP) port numbers, IP and MAC address pairs, IP address
 and port number pairs, etc. See the set type definitions below.
 .PP 
 \fBIptables\fR
-matches and targets referring to sets creates references, which
+matches and targets referring to sets create references, which
 protect the given sets in the kernel. A set cannot be destroyed
 while there is a single reference pointing to it.
 .SH "OPTIONS"
@@ -71,7 +71,7 @@ can be specified on the command line unless otherwise specified below.
 For all the long versions of the command names, you need to use only enough
 letters to ensure that
 \fBipset\fR
-can differentiate it from all other options. The
+can differentiate it from all other commands. The
 \fBipset\fR
 parser follows the order here when looking for the shortest match
 in the long command names.
@@ -164,7 +164,7 @@ The interactive mode can be finished by entering the pseudo\-command
 \fBquit\fR.
 .P
 .SS "OTHER OPTIONS"
-The following additional options can be specified. The long option names
+The following additional options can be specified. The option names
 cannot be abbreviated.
 .TP 
 \fB\-!\fP, \fB\-exist\fP
@@ -189,7 +189,7 @@ host names which requires
 DNS lookups.
 .TP 
 \fB\-s\fP, \fB\-sorted\fP
-Sorted output. When listing sets, entries are listed sorted.
+Sorted output. When listing sets entries are listed sorted. Not supported yet.
 .SH "SET TYPES"
 A set type comprises of the storage method by which the data is stored and
 the data type(s) which are stored in the set. Therefore the
@@ -198,16 +198,23 @@ parameter of the
 \fBcreate\fR 
 command follows the syntax
 
-\fITYPENAME\fR := \fImethod\fR\fB:\fR\fItype\fR[\fB,\fR\fItype\fR[\fB,\fR\fItype\fR]]
+\fITYPENAME\fR := \fImethod\fR\fB:\fR\fIdatatype\fR[\fB,\fR\fIdatatype\fR[\fB,\fR\fIdatatype\fR]]
 
 where the current list of the methods are
-\fBbitmap\fR, \fBhash\fR, \fBlist\fR and the possible data types are \fBip\fR,
-\fBmac\fR and \fBport\fR.
+\fBbitmap\fR, \fBhash\fR, and \fBlist\fR and the possible data types
+are \fBip\fR, \fBmac\fR and \fBport\fR. The dimension of the set type
+is equal to the number of datat types in its type name.
 
 When adding, deleting or testing entries in a set, the same comma separated
 data syntax must be used for the entry parameter of the commands, i.e
 
 ipset add foo ipaddr,portnum,ipaddr
+
+The \fBbitmap\fR and \fBlist\fR types use a fixed sized storage. The \fBhash\fR
+types use a hash to store the elements. In order to avoid clashes in the hash,
+a limited number of chaining, and if that is exhausted, the doubling of the hash
+is performed. The hash size is limited by the maximal number of elements parameter of
+the hash. 
 
 All set types support the optional
 
@@ -250,6 +257,9 @@ An IP address will be in the set if the network address, which is resulted by
 masking the address with the specified netmask calculated from the cidr value,
 can be found in the set.
 .PP 
+The \fBbitmap:ip\fR type supports adding or deleting multiple entries in one
+command.
+.PP 
 Examples:
 .IP 
 ipset create foo bitmap:ip range 192.168.0.0/16
@@ -280,7 +290,7 @@ of maximum 65536 entries.
 The \fBbitmap:ip,mac\fR type is exceptional in the sense that the MAC part can
 be left out when adding/deleting/testing entries in the set. If
 we add an entry without the MAC address specified, when the first time the entry is
-matched by the kernel, it will automatically fill out the missing part with the
+matched by the kernel, it will automatically fill out the missing MAC address with the
 source MAC address from the packet. If the entry was specified with a timeout value,
 the timer starts off when the IP and MAC address pair is complete.
 .PP 
@@ -322,9 +332,8 @@ ipset add foo 80
 .IP 
 ipset test foo 80
 .SS hash:ip
-The \fBhash:ip\fR set type uses a hash to store IP addresses.
-In order to avoid clashes in the hash a limited number of chaining, and then
-if that is exhausted, the doubling of the hash is performed.
+The \fBhash:ip\fR set type uses a hash to store IP host addresses (default) or
+network addresses.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -372,9 +381,7 @@ ipset add foo 192.168.1.1
 .IP 
 ipset test foo 192.168.1.2
 .SS hash:net
-The \fBhash:net\fR set type uses a hash to store different sized of IP networks.
-In order to avoid clashes in the hash a limited number of chaining, and then
-if that is exhausted, the doubling of the hash is performed.
+The \fBhash:net\fR set type uses a hash to store different sized IP network addresses.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -401,7 +408,8 @@ correct value.
 The maximal number of elements which can be stored in the set, default 65536.
 .PP 
 When adding/deleting/testing entries, if the cidr parameter is not specified,
-then the host cidr value is assumed.
+then the host cidr value is assumed. When adding/deleting entries, overlapping elements
+are not checked.
 .PP 
 From the \fBset\fR netfilter match point of view an IP address will be in a \fBhash:net\fR type of set if it belongs to any of the netblocks added to the set.
 The  matching  always  start  from  the smallest  size  of netblock (most specific
@@ -423,9 +431,7 @@ ipset add foo 10.1.0.0/16
 .IP 
 ipset test foo 192.168.0/24
 .SS hash:ip,port
-The \fBhash:ip,port\fR set type uses a hash to store IP address and port pairs.
-In order to avoid clashes in the hash a limited number of chaining, and then
-if that is exhausted, the doubling of the hash is performed.
+The \fBhash:ip,port\fR set type uses a hash to store IP address and port number pairs.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -445,9 +451,9 @@ The protocol family of the IP addresses to be stored in the set. The default is
 .TP 
 \fBproto\fR \fIvalue\fR
 The default protocol for the port to be stored in the set. If no protocol is specified,
-then TCP/UDP ports are assumed as backward compatibility. The default protocol
-also defines which kind of ports are to be added to the set when the \fBSET\fR
-target is used.
+then TCP/UDP ports are assumed as backward compatibility, in which case a port in
+the set matches with both TCP and UDP. The default protocol also defines which kind
+of ports are to be added to the set when the \fBSET\fR target is used.
 .TP 
 \fBhashsize\fR \fIvalue\fR
 The initial hash size for the set, default is 1024. The hash size must be a power
@@ -475,9 +481,8 @@ ipset add foo 192.168.1.1,ospf:0
 .IP 
 ipset test foo 192.168.1.1,80
 .SS hash:ip,port,ip
-The \fBhash:ip,port,ip\fR set type uses a hash to store IP address, port and
-IP address triples. In order to avoid clashes in the hash a limited number of
-chaining, and then if that is exhausted, the doubling of the hash is performed.
+The \fBhash:ip,port,ip\fR set type uses a hash to store IP address, port number
+and a second IP address triples.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -523,10 +528,8 @@ ipset add foo 192.168.1.1,80,10.0.0.1
 .IP 
 ipset test foo 192.168.1.1,udp:53,10.0.0.1
 .SS hash:ip,port,net
-The \fBhash:ip,port,net\fR set type uses a hash to store IP address, port and
-IP network triples.
-In order to avoid clashes in the hash a limited number of chaining, and then
-if that is exhausted, the doubling of the hash is performed.
+The \fBhash:ip,port,net\fR set type uses a hash to store IP address, port number
+and IP network address triples.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -588,7 +591,7 @@ ipset add foo 192.168.2,25,10.1.0.0/16
 ipset test foo 192.168.1,80.10.0.0/24
 .SS list:set
 The \fBlist:set\fR type uses a simple list in which you can store
-sets.
+set names.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBsize\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -612,8 +615,8 @@ By the \fBset\fR match or \fBSET\fR target of netfiler
 you can test, add or delete entries in the sets added to the \fBlist:set\fR
 type of set. The match will try to find a matching entry in the sets and 
 the target will try to add an entry to the first set to which it can be added.
-The number of src,dst options of the match and target are important: sets which
-eats more src,dst parameters than specified are skipped, while sets with equal
+The number of direction options of the match and target are important: sets which
+require more parameters than specified are skipped, while sets with equal
 or less parameters are checked, elements added. For example if \fIa\fR and
 \fIb\fR are \fBlist:set\fR type of sets then in the command
 .IP 
@@ -628,7 +631,8 @@ data storage set in \fIb\fR.
 You can imagine a setlist type of set as an ordered union of
 the set elements. 
 .SH "GENERAL RESTRICTIONS"
-Zero valued set entries cannot be used with hash methods.
+Zero valued set entries cannot be used with hash methods. Zero protocol value with ports
+cannot be used.
 .SH "COMMENTS"
 If you want to store same size subnets from a given network
 (say /24 blocks from a /8 network), use the \fBbitmap:ip\fR set type.

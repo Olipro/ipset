@@ -69,18 +69,18 @@ get_ip4_port(const struct sk_buff *skb, bool src, u16 *port, u8 *proto)
 static inline bool
 get_ip6_port(const struct sk_buff *skb, bool src, u16 *port, u8 *proto)
 {
-	unsigned int *protooff = 0;
+	unsigned int protooff = 0;
 	int protocol;
 	unsigned short fragoff;
 
-	protocol = ipv6_find_hdr(skb, protooff, -1, &fragoff);
+	protocol = ipv6_find_hdr(skb, &protooff, -1, &fragoff);
 	if (protocol < 0 || fragoff)
 		return false;
 
 	if (!(*proto >= IPSET_IPPROTO_TCPUDP || *proto == protocol))
 		return false;
 
-	return get_port(skb, protocol, *protooff, src, port, proto);
+	return get_port(skb, protocol, protooff, src, port, proto);
 }
 
 static inline bool
