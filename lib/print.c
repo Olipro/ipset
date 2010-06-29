@@ -220,7 +220,7 @@ ipset_print_ip(char *buf, unsigned int len,
 	family = ipset_data_family(data);
 	cidropt = opt == IPSET_OPT_IP ? IPSET_OPT_CIDR : IPSET_OPT_CIDR2;
 	if (ipset_data_test(data, cidropt)) {
-		cidr = *(uint8_t *) ipset_data_get(data, cidropt);
+		cidr = *(const uint8_t *) ipset_data_get(data, cidropt);
 		D("CIDR: %u", cidr);
 	} else
 		cidr = family == AF_INET6 ? 128 : 32;
@@ -287,7 +287,7 @@ ipset_print_ipaddr(char *buf, unsigned int len,
 	family = ipset_data_family(data);
 	cidropt = opt == IPSET_OPT_IP ? IPSET_OPT_CIDR : IPSET_OPT_CIDR2;
 	if (ipset_data_test(data, cidropt))
-		cidr = *(uint8_t *) ipset_data_get(data, cidropt);
+		cidr = *(const uint8_t *) ipset_data_get(data, cidropt);
 	else
 		cidr = family == AF_INET6 ? 128 : 32;
 	flags = env & (1 << IPSET_ENV_RESOLVE) ? 0 : NI_NUMERICHOST;
@@ -330,12 +330,12 @@ ipset_print_number(char *buf, unsigned int len,
 	maxsize = ipset_data_sizeof(opt, AF_INET);
 	D("opt: %u, maxsize %zu", opt, maxsize);
 	if (maxsize == sizeof(uint8_t))
-		return snprintf(buf, len, "%u", *(uint8_t *) number);
+		return snprintf(buf, len, "%u", *(const uint8_t *) number);
 	else if (maxsize == sizeof(uint16_t))
-		return snprintf(buf, len, "%u", *(uint16_t *) number);
+		return snprintf(buf, len, "%u", *(const uint16_t *) number);
 	else if (maxsize == sizeof(uint32_t))
 		return snprintf(buf, len, "%lu",
-				(long unsigned) *(uint32_t *) number);
+				(long unsigned) *(const uint32_t *) number);
 	else
 		assert(0);
 	return 0;
@@ -377,8 +377,8 @@ ipset_print_name(char *buf, unsigned int len,
 	if (ipset_data_test(data, IPSET_OPT_NAMEREF)) {
 		bool before = false;
 		if (ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_FLAGS))) {
-			uint32_t *flags =
-				(uint32_t *)ipset_data_get(data, IPSET_OPT_FLAGS);
+			const uint32_t *flags =
+				ipset_data_get(data, IPSET_OPT_FLAGS);
 			before = (*flags) & IPSET_FLAG_BEFORE;
 		}
 		size = snprintf(buf + offset, len,
@@ -460,7 +460,7 @@ ipset_print_proto(char *buf, unsigned int len,
 	assert(data);
 	assert(opt == IPSET_OPT_PROTO);
 
-	proto = *(uint8_t *) ipset_data_get(data, IPSET_OPT_PROTO);
+	proto = *(const uint8_t *) ipset_data_get(data, IPSET_OPT_PROTO);
 	assert(proto);
 	
 	if (proto == IPSET_IPPROTO_ANY)

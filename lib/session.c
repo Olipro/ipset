@@ -50,7 +50,7 @@ struct ipset_session {
 	uint8_t envopts;			/* Session env opts */
 	/* Kernel message buffer */
 	size_t bufsize;
-	char buffer[0];
+	void *buffer;
 };
 
 /*
@@ -494,7 +494,7 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 		case MNL_TYPE_U32: {
 			uint32_t value;
 		
-			value  = ntohl(*(uint32_t *)d);
+			value  = ntohl(*(const uint32_t *)d);
 
 			d = &value;
 			break;
@@ -502,7 +502,7 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 		case MNL_TYPE_U16: {
 			uint16_t value;
 		
-			value = ntohs(*(uint16_t *)d);
+			value = ntohs(*(const uint16_t *)d);
 
 			d = &value;
 			break;
@@ -513,13 +513,13 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 	}
 #ifdef IPSET_DEBUG
 	if (type == IPSET_ATTR_TYPENAME) 
-		D("nla typename %s", (char *) d);
+		D("nla typename %s", (const char *) d);
 #endif
 	ret = ipset_data_set(data, attr->opt, d);
 #ifdef IPSET_DEBUG
 	if (type == IPSET_ATTR_TYPENAME) 
 		D("nla typename %s",
-		  (char *) ipset_data_get(data, IPSET_OPT_TYPENAME));
+		  (const char *) ipset_data_get(data, IPSET_OPT_TYPENAME));
 #endif	
 	return ret;
 }
@@ -907,7 +907,7 @@ callback_list(struct ipset_session *session, struct nlattr *nla[],
 		ATTR2DATA(session, nla, IPSET_ATTR_REVISION, cmd_attrs);
 		D("head: family %u, typename %s",
 		  ipset_data_family(data),
-		  (char *) ipset_data_get(data, IPSET_OPT_TYPENAME));
+		  (const char *) ipset_data_get(data, IPSET_OPT_TYPENAME));
 		if (mnl_attr_parse_nested(nla[IPSET_ATTR_DATA],
 					  create_attr_cb, cattr) < 0)
 			FAILURE("Broken %s kernel message: "
@@ -1326,13 +1326,13 @@ rawdata2attr(struct nlmsghdr *nlh,
 
 	switch (attr->type) {
 	case MNL_TYPE_U32: {
-		uint32_t value = htonl(*(uint32_t *)d);
+		uint32_t value = htonl(*(const uint32_t *)d);
 		
 		d = &value;
 		break;
 	}
 	case MNL_TYPE_U16: {
-		uint16_t value = htons(*(uint16_t *)d);
+		uint16_t value = htons(*(const uint16_t *)d);
 		
 		d = &value;
 		break;
@@ -1415,7 +1415,7 @@ static int
 build_send_private_msg(struct ipset_session *session, enum ipset_cmd cmd)
 {
 	char buffer[PRIVATE_MSG_BUFLEN] __attribute__ ((aligned));
-	struct nlmsghdr *nlh = (struct nlmsghdr *) buffer;
+	struct nlmsghdr *nlh = (struct nlmsghdr *) (void *) buffer;
 	struct ipset_data *data = session->data;
 	int len = PRIVATE_MSG_BUFLEN, ret;
 	enum ipset_cmd saved = session->cmd;
@@ -1469,7 +1469,10 @@ may_aggregate_ad(struct ipset_session *session, struct ipset_data *data,
 	       && STREQ(ipset_data_setname(data), session->saved_setname);
 } 
 
-static int
+int
+build_msg(struct ipset_session *session, bool aggregate);
+
+int
 build_msg(struct ipset_session *session, bool aggregate)
 {
 	struct nlmsghdr *nlh = (struct nlmsghdr *) session->buffer;
@@ -1768,12 +1771,13 @@ ipset_session_init(ipset_outfn outfn)
 {
 	struct ipset_session *session;
 	size_t bufsize = getpagesize();
-	
+
 	/* Create session object */
 	session = calloc(1, sizeof(struct ipset_session) + bufsize);
 	if (session == NULL)
 		return NULL;
 	session->bufsize = bufsize;
+	session->buffer = session + 1;
 
 	/* The single transport method yet */
 	session->transport = &ipset_mnl_transport;

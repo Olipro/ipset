@@ -10,8 +10,10 @@
 
 #ifdef __KERNEL__
 
+#ifdef CONFIG_DEBUG_KERNEL
 /* Complete debug messages */
 #define pr_fmt(fmt) "%s %s[%i]: " fmt "\n", __FILE__, __func__, __LINE__
+#endif
 
 #include <linux/kernel.h>
 

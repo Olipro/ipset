@@ -425,7 +425,7 @@ EXPORT_SYMBOL(ip_set_nfnl_put);
  */
 
 static inline bool
-protocol_failed(const struct nlattr * const tb[])
+protocol_failed(NFNL_CB_CONST struct nlattr * NFNL_CB_CONST tb[])
 {
 	return !tb[IPSET_ATTR_PROTOCOL]
 	       || nla_get_u8(tb[IPSET_ATTR_PROTOCOL]) != IPSET_PROTOCOL;
@@ -530,8 +530,8 @@ load_type_module(const char *typename)
 
 static int
 ip_set_create(struct sock *ctnl, struct sk_buff *skb,
-	      const struct nlmsghdr *nlh,
-	      const struct nlattr * const attr[])
+	      NFNL_CB_CONST struct nlmsghdr *nlh,
+	      NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	struct ip_set *set, *clash;
 	ip_set_id_t index = IPSET_INVALID_ID;
@@ -669,8 +669,8 @@ ip_set_destroy_set(ip_set_id_t index)
 
 static int
 ip_set_destroy(struct sock *ctnl, struct sk_buff *skb,
-	       const struct nlmsghdr *nlh,
-	       const struct nlattr * const attr[])
+	       NFNL_CB_CONST struct nlmsghdr *nlh,
+	       NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	ip_set_id_t i;
 	
@@ -714,8 +714,8 @@ ip_set_flush_set(struct ip_set *set)
 
 static int
 ip_set_flush(struct sock *ctnl, struct sk_buff *skb,
-	     const struct nlmsghdr *nlh,
-	     const struct nlattr * const attr[])
+	     NFNL_CB_CONST struct nlmsghdr *nlh,
+	     NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	ip_set_id_t i;
 
@@ -750,8 +750,8 @@ ip_set_setname2_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
 
 static int
 ip_set_rename(struct sock *ctnl, struct sk_buff *skb,
-	      const struct nlmsghdr *nlh,
-	      const struct nlattr * const attr[])
+	      NFNL_CB_CONST struct nlmsghdr *nlh,
+	      NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	struct ip_set *set;
 	const char *name2;
@@ -790,8 +790,8 @@ ip_set_rename(struct sock *ctnl, struct sk_buff *skb,
 
 static int
 ip_set_swap(struct sock *ctnl, struct sk_buff *skb,
-	    const struct nlmsghdr *nlh,
-	    const struct nlattr * const attr[])
+	    NFNL_CB_CONST struct nlmsghdr *nlh,
+	    NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	struct ip_set *from, *to;
 	ip_set_id_t from_id, to_id;
@@ -968,8 +968,8 @@ out:
 
 static int
 ip_set_dump(struct sock *ctnl, struct sk_buff *skb,
-	    const struct nlmsghdr *nlh,
-	    const struct nlattr * const attr[])
+	    NFNL_CB_CONST struct nlmsghdr *nlh,
+	    NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	ip_set_id_t index;
 	
@@ -1009,7 +1009,7 @@ ip_set_adt_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
 
 static int
 call_ad(struct sock *ctnl, struct sk_buff *skb,
-	const struct nlattr * const attr[],
+	NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[],
 	struct ip_set *set, const struct nlattr *nla,
 	enum ipset_adt adt, u32 flags)
 {
@@ -1041,8 +1041,8 @@ call_ad(struct sock *ctnl, struct sk_buff *skb,
 
 static int
 ip_set_uadd(struct sock *ctnl, struct sk_buff *skb,
-	    const struct nlmsghdr *nlh,
-	    const struct nlattr * const attr[])
+	    NFNL_CB_CONST struct nlmsghdr *nlh,
+	    NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	struct ip_set *set;
 	const struct nlattr *nla;
@@ -1085,8 +1085,8 @@ ip_set_uadd(struct sock *ctnl, struct sk_buff *skb,
 
 static int
 ip_set_udel(struct sock *ctnl, struct sk_buff *skb,
-	    const struct nlmsghdr *nlh,
-	    const struct nlattr * const attr[])
+	    NFNL_CB_CONST struct nlmsghdr *nlh,
+	    NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	struct ip_set *set;
 	const struct nlattr *nla;
@@ -1129,8 +1129,8 @@ ip_set_udel(struct sock *ctnl, struct sk_buff *skb,
 
 static int
 ip_set_utest(struct sock *ctnl, struct sk_buff *skb,
-	     const struct nlmsghdr *nlh,
-	     const struct nlattr * const attr[])
+	     NFNL_CB_CONST struct nlmsghdr *nlh,
+	     NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	struct ip_set *set;
 	int ret = 0;
@@ -1162,8 +1162,8 @@ ip_set_utest(struct sock *ctnl, struct sk_buff *skb,
 
 static int
 ip_set_header(struct sock *ctnl, struct sk_buff *skb,
-	      const struct nlmsghdr *nlh,
-	      const struct nlattr * const attr[])
+	      NFNL_CB_CONST struct nlmsghdr *nlh,
+	      NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	struct ip_set *set;
 	struct sk_buff *skb2;
@@ -1220,8 +1220,8 @@ ip_set_type_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
 
 static int
 ip_set_type(struct sock *ctnl, struct sk_buff *skb,
-	    const struct nlmsghdr *nlh,
-	    const struct nlattr * const attr[])
+	    NFNL_CB_CONST struct nlmsghdr *nlh,
+	    NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	struct sk_buff *skb2;
 	struct nlmsghdr *nlh2;
@@ -1283,8 +1283,8 @@ ip_set_protocol_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
 
 static int
 ip_set_protocol(struct sock *ctnl, struct sk_buff *skb,
-	        const struct nlmsghdr *nlh,
-	        const struct nlattr * const attr[])
+	        NFNL_CB_CONST struct nlmsghdr *nlh,
+	        NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
 	struct sk_buff *skb2;
 	struct nlmsghdr *nlh2;
@@ -1525,7 +1525,7 @@ ip_set_init(void)
 		return ret;
 	}
 
-	pr_notice("ip_set with protocol version %u loaded", IPSET_PROTOCOL);	
+	pr_notice("ip_set: protocol %u", IPSET_PROTOCOL);	
 	return 0;
 }
 

@@ -21,7 +21,10 @@ endif
 SUBDIRS		= lib src
 
 modules:
-	cd kernel; make -C $(KBUILD_OUTPUT) M=`pwd` V=$V IP_SET_MAX=$(IP_SET_MAX) modules
+	cd kernel; make -C $(KBUILD_OUTPUT) M=`pwd` V=$V \
+			IP_SET_MAX=$(IP_SET_MAX) \
+			NETLINK_DUMP_CONST=$(NETLINK_DUMP_CONST) \
+			NFNL_CB_CONST=$(NFNL_CB_CONST) modules
 
 modules_install:
 	cd kernel; make -C $(KBUILD_OUTPUT) M=`pwd` modules_install

@@ -437,7 +437,7 @@ get_addrinfo##f(struct ipset_session *session,				\
 		struct in##n##_addr **inaddr)				\
 {									\
         struct addrinfo *i;						\
-	struct sockaddr_in##n *saddr;					\
+	struct sockaddr_in##n saddr;					\
         int found;							\
 									\
 	if ((*info = get_addrinfo(session, str, family)) == NULL) {	\
@@ -447,16 +447,18 @@ get_addrinfo##f(struct ipset_session *session,				\
 	}								\
 									\
 	for (i = *info, found = 0; i != NULL; i = i->ai_next) {		\
-		if (i->ai_family != family)				\
+		if (i->ai_family != family				\
+		    || i->ai_addrlen != sizeof(saddr))			\
 			continue;					\
 		if (found == 0) {					\
-			saddr = (struct sockaddr_in##n *)i->ai_addr;	\
-			*inaddr = &saddr->sin##n##_addr;		\
-		} else if (found == 1) {					\
+			/* Workaround: can't cast on Sparc */		\
+			memcpy(&saddr, i->ai_addr, sizeof(saddr));	\
+			*inaddr = &saddr.sin##n##_addr;			\
+		} else if (found == 1) {				\
 			ipset_warn(session,				\
 				   "%s resolves to multiple addresses: "  \
 				   "using only the first one returned by the resolver", \
-				   str);			\
+				   str);				\
 		}							\
 		found++;						\
 	}								\

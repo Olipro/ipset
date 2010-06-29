@@ -109,7 +109,7 @@ bitmap_port_uadt(struct ip_set *set, struct nlattr *head, int len,
 		 enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	struct bitmap_port *map = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	u32 port;	/* wraparound */
 	u16 id, port_to;
 	int ret = 0;
@@ -344,7 +344,7 @@ bitmap_port_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 			 enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	const struct bitmap_port_timeout *map = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	u16 id, port_to;
 	u32 port, timeout = map->timeout;	/* wraparound */
 	int ret = 0;
@@ -567,7 +567,7 @@ static int
 bitmap_port_create(struct ip_set *set, struct nlattr *head, int len,
 		 u32 flags)
 {
-	struct nlattr *tb[IPSET_ATTR_CREATE_MAX];
+	struct nlattr *tb[IPSET_ATTR_CREATE_MAX+1];
 	u16 first_port, last_port;
 
 	if (nla_parse(tb, IPSET_ATTR_CREATE_MAX, head, len,

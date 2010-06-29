@@ -13,6 +13,7 @@
 
 #include <linux/module.h>
 #include <linux/skbuff.h>
+#include <linux/version.h>
 
 #include <linux/netfilter/x_tables.h>
 #include <linux/netfilter/xt_set.h>
@@ -36,6 +37,16 @@ match_set(ip_set_id_t index, const struct sk_buff *skb,
 }
 
 /* Revision 0 interface: backward compatible with netfilter/iptables */
+
+/* Backward compatibility constrains:
+ *  2.6.24: [NETLINK]: Introduce nested and byteorder flag to netlink attribute
+ *  2.6.31: netfilter: passive OS fingerprint xtables match
+ */
+ 
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,31)
+#error "Linux kernel version too old: must be >= 2.6.31"
+#endif
 
 static bool
 set_match_v0(const struct sk_buff *skb, const struct xt_match_param *par)
@@ -92,7 +103,6 @@ static void
 set_match_v0_destroy(const struct xt_mtdtor_param *par)
 {
 	struct xt_set_info_match *info = par->matchinfo;
-
 
 	ip_set_nfnl_put(info->match_set.index);
 }
@@ -200,11 +210,8 @@ set_match_destroy(const struct xt_mtdtor_param *par)
 {
 	struct xt_set_info_match *info = par->matchinfo;
 
-
 	ip_set_nfnl_put(info->match_set.index);
 }
-
-/* Set target */
 
 static unsigned int
 set_target(struct sk_buff *skb, const struct xt_target_param *par)

@@ -15,9 +15,30 @@ dnl Kernel build directory or source tree
 AC_ARG_WITH([kernel],
 	    AS_HELP_STRING([--with-kernel=PATH],
 	    		   [Path to kernel source/build directory]),
-	    [KBUILDDOR="$withval";])
+	    [KBUILDDIR="$withval";])
 AM_CONDITIONAL(WITH_KBUILDDIR, test "$KBUILDDIR" != "")
 AC_SUBST(KBUILDDIR)
+
+dnl Sigh: check kernel version dependencies
+if test "$KBUILDDIR" != ""
+then
+	kbuilddir="$KBUILDDIR"
+else
+	kbuilddir="/lib/modules/`uname -r`/build"
+fi
+
+if test ! -e "$kbuilddir/include/linux/netfilter/nfnetlink.h"
+then
+	AC_MSG_ERROR([Invalid kernel build directory $kbuilddir])
+fi
+
+dnl Check kernel dependencies: nfnetlink.h
+NFNL_CB_CONST="`./check_const $kbuilddir/include/linux/netfilter/nfnetlink.h`"
+AC_SUBST(NFNL_CB_CONST)
+
+dnl Check kernel dependencies: netlink.h
+NETLINK_DUMP_CONST="`./check_const $kbuilddir/include/linux/netlink.h`"
+AC_SUBST(NETLINK_DUMP_CONST)
 
 dnl Maximal number of sets supported by the kernel, default 256
 AC_ARG_WITH([maxsets],

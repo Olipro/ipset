@@ -404,7 +404,7 @@ ipset_type_check(struct ipset_session *session)
 
 	typename = ipset_data_get(data, IPSET_OPT_TYPENAME);
 	family = ipset_data_family(data);
-	revision = *(uint8_t *) ipset_data_get(data, IPSET_OPT_REVISION);
+	revision = *(const uint8_t *) ipset_data_get(data, IPSET_OPT_REVISION);
 
 	/* Check registered types */
 	for (t = typelist; t != NULL && match == NULL; t = t->next) {

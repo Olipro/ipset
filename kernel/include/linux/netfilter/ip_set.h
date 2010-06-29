@@ -155,6 +155,7 @@ enum ipset_adt {
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/netlink.h>
+#include <linux/vmalloc.h>
 #include <net/netlink.h>
 
 /* Sets are identified by an index in kernel space. Tweak with ip_set_id_t

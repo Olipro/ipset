@@ -41,7 +41,7 @@
 # Range: List set
 0 ipset -L test > .foo
 # Range: Check listing
-0 diff .foo macipmap.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo macipmap.t.list0 && rm .foo
 # Range: Flush test set
 0 ipset -F test
 # Range: Delete test set
@@ -81,7 +81,7 @@
 # Network: List set
 0 ipset -L test > .foo
 # Network: Check listing
-0 diff .foo macipmap.t.list1 && rm .foo
+0 diff -I 'Size in memory.*' .foo macipmap.t.list1 && rm .foo
 # Network: Flush test set
 0 ipset -F test
 # Network: Delete test set
@@ -121,13 +121,13 @@
 # Range: List set
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo
 # Range: Check listing
-0 diff .foo macipmap.t.list3 && rm .foo
+0 diff -I 'Size in memory.*' .foo macipmap.t.list3 && rm .foo
 # Range: wait 10s so that elements can timeout
 0 sleep 10
 # Range: List set
 0 ipset -L test > .foo
 # Range: Check listing
-0 diff .foo macipmap.t.list2 && rm .foo
+0 diff -I 'Size in memory.*' .foo macipmap.t.list2 && rm .foo
 # Range: Flush test set
 0 ipset -F test
 # Range: Delete test set

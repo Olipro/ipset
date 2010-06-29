@@ -47,7 +47,7 @@
 # List set
 0 ipset -L test > .foo
 # Check listing
-0 diff .foo setlist.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo setlist.t.list0 && rm .foo
 # Flush all sets
 0 ipset -F
 # Delete all sets

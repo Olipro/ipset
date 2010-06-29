@@ -210,7 +210,7 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 	      enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	struct list_set *map = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	bool with_timeout = with_timeout(map->timeout);
 	int before = 0;
 	u32 timeout = map->timeout;
@@ -533,7 +533,7 @@ static int
 list_set_create(struct ip_set *set, struct nlattr *head, int len,
 		u32 flags)
 {
-	struct nlattr *tb[IPSET_ATTR_CREATE_MAX];
+	struct nlattr *tb[IPSET_ATTR_CREATE_MAX+1];
 	u32 size = IP_SET_LIST_DEFAULT_SIZE;
 
 	if (nla_parse(tb, IPSET_ATTR_CREATE_MAX, head, len,

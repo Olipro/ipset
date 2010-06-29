@@ -198,7 +198,7 @@ hash_ipportnet4_uadt(struct ip_set *set, struct nlattr *head, int len,
 		     enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	struct chash *h = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_ipportnet4_elem data = { .cidr = HOST_MASK,
 					     .proto = h->proto  };
@@ -442,7 +442,7 @@ hash_ipportnet6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		     enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	struct chash *h = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_ipportnet6_elem data = { .cidr = HOST_MASK,
 					     .proto = h->proto };
@@ -526,7 +526,7 @@ static int
 hash_ipportnet_create(struct ip_set *set, struct nlattr *head,
 		     int len, u32 flags)
 {
-	struct nlattr *tb[IPSET_ATTR_CREATE_MAX];
+	struct nlattr *tb[IPSET_ATTR_CREATE_MAX+1];
 	struct chash *h;
 	u32 hashsize = IPSET_DEFAULT_HASHSIZE, maxelem = IPSET_DEFAULT_MAXELEM;
 	u8 proto = IPSET_IPPROTO_TCPUDP;	/* Backward compatibility */

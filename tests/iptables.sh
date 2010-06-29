@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# set -x
 set -e
 
 # We play with the following networks:

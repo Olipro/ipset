@@ -148,7 +148,7 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	      enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	struct chash *h = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	u32 ip, nip, ip_to, hosts, timeout = h->timeout;
 	int ret = 0;
@@ -337,7 +337,7 @@ hash_ip6_uadt(struct ip_set *set, struct nlattr *head, int len,
 	      enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	struct chash *h = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	union nf_inet_addr *ip;
 	u32 timeout = h->timeout;
@@ -385,7 +385,7 @@ hash_ip_create_policy[IPSET_ATTR_CREATE_MAX+1] __read_mostly = {
 static int
 hash_ip_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 {
-	struct nlattr *tb[IPSET_ATTR_CREATE_MAX];
+	struct nlattr *tb[IPSET_ATTR_CREATE_MAX+1];
 	u32 hashsize = IPSET_DEFAULT_HASHSIZE, maxelem = IPSET_DEFAULT_MAXELEM;
 	u8 netmask;
 	struct chash *h;

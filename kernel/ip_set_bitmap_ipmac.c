@@ -61,13 +61,13 @@ struct ipmac {
 struct ipmac_elem {
 	unsigned char ether[ETH_ALEN];
 	unsigned char match;
-};
+} __attribute__ ((aligned));
 
 struct ipmac_telem {
 	unsigned char ether[ETH_ALEN];
 	unsigned char match;
 	unsigned long timeout;
-};
+} __attribute__ ((aligned));
 
 static inline void *
 bitmap_ipmac_elem(const struct bitmap_ipmac *map, u32 id)
@@ -376,7 +376,7 @@ bitmap_ipmac_uadt(struct ip_set *set, struct nlattr *head, int len,
 		  enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	struct bitmap_ipmac *map = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct ipmac data;
 	u32 timeout = map->timeout;
@@ -570,7 +570,7 @@ static int
 bitmap_ipmac_create(struct ip_set *set, struct nlattr *head, int len,
 		    u32 flags)
 {
-	struct nlattr *tb[IPSET_ATTR_CREATE_MAX];
+	struct nlattr *tb[IPSET_ATTR_CREATE_MAX+1];
 	u32 first_ip, last_ip, elements;
 	struct bitmap_ipmac *map;
 

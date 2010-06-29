@@ -1,20 +1,25 @@
 This is the ipset source tree. Follow these steps to install ipset:
 
-0. You need the source tree of your kernel (version >= 2.6.16)
-   and it have to be configured, modules compiled.
+0. You need the source tree of your kernel (version >= 2.6.31)
+   and it have to be configured, modules compiled. Please apply
+   the netlink.patch against your kernel tree (with kernel <= 2.6.31.1
+   please use the patch netlink.patch-2.6.31.1). Recompile and
+   install the patched kernel.
 
-1. Initialize the environment
+1. Initialize the compiling environment for ipset
 
    % ./autogen.sh
 
 2. Run `./configure` and then compile the ipset binary and the kernel
    modules.
 
+   The ipset source code depends on the libmnl library.
+
    Configure parameters can be used to to override the default path
    to the kernel source tree (/lib/modules/`uname -r`/build),
    the maximum number of sets (256), the default hash sizes (1024)
    or disable the extra compiler warning flags if your compiler
-   does not support all of them.
+   does not support all of them. See `./configure --help`.
 
    % ./configure
    % make
@@ -25,7 +30,15 @@ This is the ipset source tree. Follow these steps to install ipset:
    # make install
    # make modules_install
 
-   After installing the modules, you can run the testsuite as well:
+   After installing the modules, you can run the testsuite as well.
+   Please note, several assumptions must be met for the testsuite:
+
+	- no sets defined
+	- iptables/ip6tables rules are not set up
+	- the destination for kernel logs is /var/log/kern.log
+	- the networks 10.255.255.0/24 and 1002:1002:1002:1002::/64
+	  are not in use
+	- sendip utility is installed
 
    # make tests
 

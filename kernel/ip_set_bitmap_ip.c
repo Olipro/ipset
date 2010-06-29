@@ -115,7 +115,7 @@ bitmap_ip_uadt(struct ip_set *set, struct nlattr *head, int len,
 	       enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	struct bitmap_ip *map = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	u32 ip, ip_to, id;
 	int ret = 0;
 
@@ -357,7 +357,7 @@ bitmap_ip_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 		       enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	struct bitmap_ip_timeout *map = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX];
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	u32 ip, ip_to, id, timeout = map->timeout;
 	int ret = 0;
 
@@ -594,7 +594,7 @@ static int
 bitmap_ip_create(struct ip_set *set, struct nlattr *head, int len,
 		 u32 flags)
 {
-	struct nlattr *tb[IPSET_ATTR_CREATE_MAX];
+	struct nlattr *tb[IPSET_ATTR_CREATE_MAX+1];
 	u32 first_ip, last_ip, hosts, elements;
 	u8 netmask = 32;
 
