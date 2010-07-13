@@ -202,8 +202,8 @@ command follows the syntax
 
 where the current list of the methods are
 \fBbitmap\fR, \fBhash\fR, and \fBlist\fR and the possible data types
-are \fBip\fR, \fBmac\fR and \fBport\fR. The dimension of the set type
-is equal to the number of datat types in its type name.
+are \fBip\fR, \fBmac\fR and \fBport\fR. The dimension of a set
+is equal to the number of data types in its type name.
 
 When adding, deleting or testing entries in a set, the same comma separated
 data syntax must be used for the entry parameter of the commands, i.e
@@ -212,9 +212,9 @@ ipset add foo ipaddr,portnum,ipaddr
 
 The \fBbitmap\fR and \fBlist\fR types use a fixed sized storage. The \fBhash\fR
 types use a hash to store the elements. In order to avoid clashes in the hash,
-a limited number of chaining, and if that is exhausted, the doubling of the hash
-is performed. The hash size is limited by the maximal number of elements parameter of
-the hash. 
+a limited number of chaining, and if that is exhausted, the doubling of the hash size
+is performed. The hash size is indirectly limited by the maximal number of elements
+parameter of the hash. 
 
 All set types support the optional
 
@@ -288,8 +288,8 @@ IPv4 address range or network. The size of the range cannot exceed the limit
 of maximum 65536 entries.
 .PP 
 The \fBbitmap:ip,mac\fR type is exceptional in the sense that the MAC part can
-be left out when adding/deleting/testing entries in the set. If
-we add an entry without the MAC address specified, when the first time the entry is
+be left out when adding/deleting/testing entries in the set. If we add an entry
+without the MAC address specified, then when the first time the entry is
 matched by the kernel, it will automatically fill out the missing MAC address with the
 source MAC address from the packet. If the entry was specified with a timeout value,
 the timer starts off when the IP and MAC address pair is complete.
@@ -315,7 +315,7 @@ and such a set can store up to 65536 ports.
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := {\fIport\fR | \fIfrom\-port\fR\-\fIto\-port\fR }
+\fIDEL\-ENTRY\fR := { \fIport\fR | \fIfrom\-port\fR\-\fIto\-port\fR }
 .PP 
 \fITEST\-ENTRY\fR := \fIport\fR
 .PP 
@@ -335,7 +335,7 @@ ipset test foo 80
 The \fBhash:ip\fR set type uses a hash to store IP host addresses (default) or
 network addresses.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
 \fIADD\-ENTRY\fR := \fIipaddr\fR
 .PP 
@@ -354,7 +354,7 @@ a range or a network:
 .PP 
 Optional \fBcreate\fR options:
 .TP 
-\fBfamily\fR { \fBinet\fR|\fBinet6\fR }
+\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
 The protocol family of the IP addresses to be stored in the set. The default is
 \fBinet\fR, i.e IPv4.
 .TP 
@@ -383,7 +383,7 @@ ipset test foo 192.168.1.2
 .SS hash:net
 The \fBhash:net\fR set type uses a hash to store different sized IP network addresses.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
 \fIADD\-ENTRY\fR := \fIipaddr\fR[/\fIcidr\fR]
 .PP 
@@ -395,7 +395,7 @@ The \fBhash:net\fR set type uses a hash to store different sized IP network addr
 .PP 
 Optional \fBcreate\fR options:
 .TP 
-\fBfamily\fR { \fBinet\fR|\fBinet6\fR }
+\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
 The protocol family of the IP addresses to be stored in the set. The default is
 \fBinet\fR, i.e IPv4.
 .TP 
@@ -433,7 +433,7 @@ ipset test foo 192.168.0/24
 .SS hash:ip,port
 The \fBhash:ip,port\fR set type uses a hash to store IP address and port number pairs.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
 \fIADD\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP 
@@ -445,7 +445,7 @@ The \fBhash:ip,port\fR set type uses a hash to store IP address and port number 
 .PP 
 Optional \fBcreate\fR options:
 .TP 
-\fBfamily\fR { \fBinet\fR|\fBinet6\fR }
+\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
 The protocol family of the IP addresses to be stored in the set. The default is
 \fBinet\fR, i.e IPv4.
 .TP 
@@ -484,7 +484,7 @@ ipset test foo 192.168.1.1,80
 The \fBhash:ip,port,ip\fR set type uses a hash to store IP address, port number
 and a second IP address triples.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
 \fIADD\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fIipaddr\fR
 .PP 
@@ -496,7 +496,7 @@ and a second IP address triples.
 .PP 
 Optional \fBcreate\fR options:
 .TP 
-\fBfamily\fR { \fBinet\fR|\fBinet6\fR }
+\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
 The protocol family of the IP addresses to be stored in the set. The default is
 \fBinet\fR, i.e IPv4.
 .TP 
@@ -531,7 +531,7 @@ ipset test foo 192.168.1.1,udp:53,10.0.0.1
 The \fBhash:ip,port,net\fR set type uses a hash to store IP address, port number
 and IP network address triples.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR|\fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBproto\fR \fIvalue\fR ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
 \fIADD\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fIipaddr\fR[/\fIcidr\fR]
 .PP 
@@ -543,7 +543,7 @@ and IP network address triples.
 .PP 
 Optional \fBcreate\fR options:
 .TP 
-\fBfamily\fR { \fBinet\fR|\fBinet6\fR }
+\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
 The protocol family of the IP addresses to be stored in the set. The default is
 \fBinet\fR, i.e IPv4.
 .TP 
@@ -595,13 +595,13 @@ set names.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBsize\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIADD\-ENTRY\fR := \fIsetname\fR [ \fBbefore\fR|\fBafter\fR \fIsetname\fR ]
+\fIADD\-ENTRY\fR := \fIsetname\fR [ { \fBbefore\fR | \fBafter\fR } \fIsetname\fR ]
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := \fIsetname\fR [ \fBbefore\fR|\fBafter\fR \fIsetname\fR ]
+\fIDEL\-ENTRY\fR := \fIsetname\fR [ { \fBbefore\fR | \fBafter\fR } \fIsetname\fR ]
 .PP 
-\fITEST\-ENTRY\fR := \fIsetname\fR [ \fBbefore\fR|\fBafter\fR \fIsetname\fR ]
+\fITEST\-ENTRY\fR := \fIsetname\fR [ { \fBbefore\fR | \fBafter\fR } \fIsetname\fR ]
 .PP 
 Optional \fBcreate\fR options:
 .TP 
@@ -617,16 +617,16 @@ type of set. The match will try to find a matching entry in the sets and
 the target will try to add an entry to the first set to which it can be added.
 The number of direction options of the match and target are important: sets which
 require more parameters than specified are skipped, while sets with equal
-or less parameters are checked, elements added. For example if \fIa\fR and
+or less parameters are checked, elements added/deleted. For example if \fIa\fR and
 \fIb\fR are \fBlist:set\fR type of sets then in the command
 .IP 
 iptables \-m set \-\-match\-set a src,dst \-j SET \-\-add\-set b src,dst
 .PP 
 the match and target will skip any set in \fIa\fR and \fIb\fR
-which stores data triples, but will check all sets with single or double
-data storage in \fIa\fR
-set and add src to the first single or src,dst to the first double 
-data storage set in \fIb\fR.
+which stores data triples, but will match all sets with single or double
+data storage in \fIa\fR set and stop matching at the first successful set,
+and add src to the first single or src,dst to the first double data storage set
+in \fIb\fR to which the entry can be added.
 .PP 
 You can imagine a setlist type of set as an ordered union of
 the set elements. 

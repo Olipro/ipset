@@ -9,7 +9,6 @@
 #include <net/ethernet.h>			/* ETH_ALEN */
 #include <netinet/in.h>				/* struct in6_addr */
 #include <sys/socket.h>				/* AF_ */
-#include <stddef.h>				/* NULL */
 #include <stdlib.h>				/* malloc, free */
 #include <stdio.h>				/* FIXME: debug */
 

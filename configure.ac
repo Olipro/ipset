@@ -32,6 +32,18 @@ then
 	AC_MSG_ERROR([Invalid kernel build directory $kbuilddir])
 fi
 
+if test ! -e "$kbuilddir/.config"
+then
+	AC_MSG_ERROR([The kernel build directory $kbuilddir is not configured])
+fi
+
+AC_PROG_GREP
+
+if test "X`$GREP '^CONFIG_IP6_NF_IPTABLES=' $kbuilddir/.config`" = "X"
+then
+	AC_MSG_ERROR([The kernel build directory $kbuilddir is not configured with IP6_NF_IPTABLES support (ip6tables)])
+fi
+
 dnl Check kernel dependencies: nfnetlink.h
 NFNL_CB_CONST="`./check_const $kbuilddir/include/linux/netfilter/nfnetlink.h`"
 AC_SUBST(NFNL_CB_CONST)

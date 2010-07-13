@@ -7,6 +7,7 @@
 #ifndef LIBIPSET_TYPES_H
 #define LIBIPSET_TYPES_H
 
+#include <stddef.h>				/* NULL */
 #include <stdint.h>				/* uintxx_t */
 
 #include <libipset/data.h>			/* enum ipset_opt */

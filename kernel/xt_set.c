@@ -48,8 +48,13 @@ match_set(ip_set_id_t index, const struct sk_buff *skb,
 #error "Linux kernel version too old: must be >= 2.6.31"
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static bool
 set_match_v0(const struct sk_buff *skb, const struct xt_match_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static bool
+set_match_v0(const struct sk_buff *skb, struct xt_action_param *par)
+#endif
 {
 	const struct xt_set_info_match_v0 *info = par->matchinfo;
 		
@@ -75,8 +80,13 @@ compat_flags(struct xt_set_info_v0 *info)
 	}
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static bool
 set_match_v0_checkentry(const struct xt_mtchk_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static int
+set_match_v0_checkentry(const struct xt_mtchk_param *par)
+#endif
 {
 	struct xt_set_info_match_v0 *info = par->matchinfo;
 	ip_set_id_t index;
@@ -107,8 +117,13 @@ set_match_v0_destroy(const struct xt_mtdtor_param *par)
 	ip_set_nfnl_put(info->match_set.index);
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static unsigned int
 set_target_v0(struct sk_buff *skb, const struct xt_target_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static unsigned int
+set_target_v0(struct sk_buff *skb, const struct xt_action_param *par)
+#endif
 {
 	const struct xt_set_info_target_v0 *info = par->targinfo;
 	
@@ -124,8 +139,13 @@ set_target_v0(struct sk_buff *skb, const struct xt_target_param *par)
 	return XT_CONTINUE;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static bool
 set_target_v0_checkentry(const struct xt_tgchk_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static int
+set_target_v0_checkentry(const struct xt_tgchk_param *par)
+#endif
 {
 	struct xt_set_info_target_v0 *info = par->targinfo;
 	ip_set_id_t index;
@@ -173,8 +193,13 @@ set_target_v0_destroy(const struct xt_tgdtor_param *par)
 
 /* Revision 1: current interface to netfilter/iptables */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static bool
 set_match(const struct sk_buff *skb, const struct xt_match_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static bool
+set_match(const struct sk_buff *skb, struct xt_action_param *par)
+#endif
 {
 	const struct xt_set_info_match *info = par->matchinfo;
 		
@@ -184,8 +209,13 @@ set_match(const struct sk_buff *skb, const struct xt_match_param *par)
 			 info->match_set.flags & IPSET_INV_MATCH);
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static bool
 set_match_checkentry(const struct xt_mtchk_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static int
+set_match_checkentry(const struct xt_mtchk_param *par)
+#endif
 {
 	struct xt_set_info_match *info = par->matchinfo;
 	ip_set_id_t index;
@@ -213,8 +243,13 @@ set_match_destroy(const struct xt_mtdtor_param *par)
 	ip_set_nfnl_put(info->match_set.index);
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static unsigned int
 set_target(struct sk_buff *skb, const struct xt_target_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static unsigned int
+set_target(struct sk_buff *skb, const struct xt_action_param *par)
+#endif
 {
 	const struct xt_set_info_target *info = par->targinfo;
 	
@@ -232,8 +267,13 @@ set_target(struct sk_buff *skb, const struct xt_target_param *par)
 	return XT_CONTINUE;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static bool
 set_target_checkentry(const struct xt_tgchk_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static int
+set_target_checkentry(const struct xt_tgchk_param *par)
+#endif
 {
 	const struct xt_set_info_target *info = par->targinfo;
 	ip_set_id_t index;

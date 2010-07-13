@@ -1,19 +1,22 @@
-This is the ipset source tree. Follow these steps to install ipset:
+This is the ipset source tree. Follow the next steps to install ipset:
 
 0. You need the source tree of your kernel (version >= 2.6.31)
-   and it have to be configured, modules compiled. Please apply
-   the netlink.patch against your kernel tree (with kernel <= 2.6.31.1
-   please use the patch netlink.patch-2.6.31.1). Recompile and
-   install the patched kernel.
+   and it have to be configured (with ip6tables support), modules compiled.
+   Please apply the netlink.patch against your kernel tree
+   (with kernel <= 2.6.31.1 please use the patch netlink.patch-2.6.31.1).
 
-1. Initialize the compiling environment for ipset
+   Recompile and install the patched kernel and its modules.
+
+   The ipset source code depends on the libmnl library so the library
+   must be installed.
+
+1. Initialize the compiling environment for ipset. The packages automake,
+   autoconf and libtool are required.
 
    % ./autogen.sh
 
 2. Run `./configure` and then compile the ipset binary and the kernel
    modules.
-
-   The ipset source code depends on the libmnl library.
 
    Configure parameters can be used to to override the default path
    to the kernel source tree (/lib/modules/`uname -r`/build),
@@ -25,7 +28,7 @@ This is the ipset source tree. Follow these steps to install ipset:
    % make
    % make modules
 
-3. Install the binary and the modules
+3. Install the binary and the kernel modules
 
    # make install
    # make modules_install
@@ -49,5 +52,5 @@ This is the ipset source tree. Follow these steps to install ipset:
 
 That's it! 
 
-Read the ipset(8) and iptables(8) manpages on how to use ipset 
-and its match and target from iptables.
+Read the ipset(8) and iptables(8), ip6tables(8) manpages on how to use
+ipset and its match and target from iptables.

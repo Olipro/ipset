@@ -21,7 +21,6 @@ AM_CFLAGS = -std=gnu99 \
 	-Wcast-qual \
 	-Wextra \
 	-Wfloat-equal \
-	-Wformat-nonliteral \
 	-Wformat=2 \
 	-Winit-self \
 	-Winline \
@@ -31,6 +30,7 @@ AM_CFLAGS = -std=gnu99 \
 	-Wnested-externs \
 	-Wno-missing-field-initializers \
 	-Wold-style-definition \
+	-Woverlength-strings \
 	-Wpacked \
 	-Wpointer-arith \
 	-Wredundant-decls \
