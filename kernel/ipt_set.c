@@ -83,10 +83,14 @@ match(const struct sk_buff *skb,
       int offset, 
       unsigned int protoff, 
       bool *hotdrop)
-#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28) */
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static bool
 match(const struct sk_buff *skb,
       const struct xt_match_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static bool
+match(const struct sk_buff *skb,
+      struct xt_action_param *par)
 #endif
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
@@ -99,6 +103,14 @@ match(const struct sk_buff *skb,
 			 skb,
 			 info->match_set.flags[0] & IPSET_MATCH_INV);
 }
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
+#define CHECK_OK	1
+#define CHECK_FAIL	0
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+#define CHECK_OK	0
+#define CHECK_FAIL	-EINVAL
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 static int
@@ -136,8 +148,11 @@ checkentry(const char *tablename,
 	   const struct xt_match *match,
 	   void *matchinfo,
 	   unsigned int hook_mask)
-#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28) */
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static bool
+checkentry(const struct xt_mtchk_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static int
 checkentry(const struct xt_mtchk_param *par)
 #endif
 {
@@ -151,7 +166,7 @@ checkentry(const struct xt_mtchk_param *par)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)
 	if (matchsize != IPT_ALIGN(sizeof(struct ipt_set_info_match))) {
 		ip_set_printk("invalid matchsize %d", matchsize);
-		return 0;
+		return CHECK_FAIL;
 	}
 #endif
 
@@ -160,14 +175,14 @@ checkentry(const struct xt_mtchk_param *par)
 	if (index == IP_SET_INVALID_ID) {
 		ip_set_printk("Cannot find set indentified by id %u to match",
 			      info->match_set.index);
-		return 0;	/* error */
+		return CHECK_FAIL;	/* error */
 	}
 	if (info->match_set.flags[IP_SET_MAX_BINDINGS] != 0) {
 		ip_set_printk("That's nasty!");
-		return 0;	/* error */
+		return CHECK_FAIL;	/* error */
 	}
 
-	return 1;
+	return CHECK_OK;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)

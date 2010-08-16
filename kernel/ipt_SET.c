@@ -64,9 +64,12 @@ target(struct sk_buff *skb,
        unsigned int hooknum,
        const struct xt_target *target,
        const void *targinfo)
-#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28) */
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 target(struct sk_buff *skb,
        const struct xt_target_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+target(struct sk_buff *skb,
+       const struct xt_action_param *par)
 #endif
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
@@ -90,6 +93,14 @@ target(struct sk_buff *skb,
 
 	return XT_CONTINUE;
 }
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
+#define CHECK_OK	1
+#define CHECK_FAIL	0
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+#define CHECK_OK	0
+#define CHECK_FAIL	-EINVAL
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 static int
@@ -127,8 +138,11 @@ checkentry(const char *tablename,
 	   const struct xt_target *target,
 	   void *targinfo,
 	   unsigned int hook_mask)
-#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28) */
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static bool
+checkentry(const struct xt_tgchk_param *par)
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+static int
 checkentry(const struct xt_tgchk_param *par)
 #endif
 {
@@ -142,7 +156,7 @@ checkentry(const struct xt_tgchk_param *par)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)
 	if (targinfosize != IPT_ALIGN(sizeof(*info))) {
 		DP("bad target info size %u", targinfosize);
-		return 0;
+		return CHECK_FAIL;
 	}
 #endif
 
@@ -151,7 +165,7 @@ checkentry(const struct xt_tgchk_param *par)
 		if (index == IP_SET_INVALID_ID) {
 			ip_set_printk("cannot find add_set index %u as target",
 				      info->add_set.index);
-			return 0;	/* error */
+			return CHECK_FAIL;	/* error */
 		}
 	}
 
@@ -160,16 +174,16 @@ checkentry(const struct xt_tgchk_param *par)
 		if (index == IP_SET_INVALID_ID) {
 			ip_set_printk("cannot find del_set index %u as target",
 				      info->del_set.index);
-			return 0;	/* error */
+			return CHECK_FAIL;	/* error */
 		}
 	}
 	if (info->add_set.flags[IP_SET_MAX_BINDINGS] != 0
 	    || info->del_set.flags[IP_SET_MAX_BINDINGS] != 0) {
 		ip_set_printk("That's nasty!");
-		return 0;	/* error */
+		return CHECK_FAIL;	/* error */
 	}
 
-	return 1;
+	return CHECK_OK;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)

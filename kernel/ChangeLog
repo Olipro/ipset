@@ -1,3 +1,6 @@
+4.3
+  - Kernel 2.6.35 support added
+
 4.2
   - nethash and ipportnethash types counted every entry twice
     which could produce bogus entries when listing/saving these types
