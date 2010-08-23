@@ -423,7 +423,7 @@ bitmap_ipmac_destroy(struct ip_set *set)
 	if (with_timeout(map->timeout))
 		del_timer_sync(&map->gc);
 	
-	ip_set_free(map->members, set->flags);
+	ip_set_free(map->members);
 	kfree(map);
 	
 	set->data = NULL;
@@ -553,7 +553,7 @@ init_map_ipmac(struct ip_set *set, struct bitmap_ipmac *map,
 	       u32 first_ip, u32 last_ip)
 {
 	map->members = ip_set_alloc((last_ip - first_ip + 1) * map->dsize,
-				    GFP_KERNEL, &set->flags);
+				    GFP_KERNEL);
 	if (!map->members)
 		return false;
 	map->first_ip = first_ip;

@@ -245,13 +245,6 @@ struct ip_set_type_variant {
 	bool (*same_set)(const struct ip_set *a, const struct ip_set *b);
 };
 
-/* Flags for the set type variants */
-enum ip_set_type_flags {
-	/* Set members created by kmalloc */
-	IP_SET_FLAG_KMALLOC_BIT = 0,
-	IP_SET_FLAG_KMALLOC = (1 << IP_SET_FLAG_KMALLOC_BIT),
-};
-
 /* The core set type structure */
 struct ip_set_type {
 	struct list_head list;
@@ -294,8 +287,6 @@ struct ip_set {
 	const struct ip_set_type_variant *variant;
 	/* The actual INET family */
 	u8 family;
-	/* Set type flags, filled/modified by create/resize */
-	u8 flags;
 	/* The type specific data */
 	void *data;
 };
@@ -318,12 +309,14 @@ extern int ip_set_test(ip_set_id_t id, const struct sk_buff *skb,
 
 /* Allocate members */
 static inline void *
-ip_set_alloc(size_t size, gfp_t gfp_mask, u8 *flags)
+ip_set_alloc(size_t size, gfp_t gfp_mask)
 {
-	void *members = kzalloc(size, gfp_mask | __GFP_NOWARN);
+	void *members = NULL;
+	
+	if (size < KMALLOC_MAX_SIZE)
+		members = kzalloc(size, gfp_mask | __GFP_NOWARN);
 	
 	if (members) {
-		*flags |= IP_SET_FLAG_KMALLOC;
 		pr_debug("%p: allocated with kmalloc", members);
 		return members;
 	}
@@ -331,21 +324,20 @@ ip_set_alloc(size_t size, gfp_t gfp_mask, u8 *flags)
 	members = __vmalloc(size, gfp_mask | __GFP_ZERO, PAGE_KERNEL);
 	if (!members)
 		return NULL;
-	*flags &= ~IP_SET_FLAG_KMALLOC;
 	pr_debug("%p: allocated with vmalloc", members);
 	
 	return members;
 }
 
 static inline void
-ip_set_free(void *members, u8 flags)
+ip_set_free(void *members)
 {
 	pr_debug("%p: free with %s", members,
-		 flags & IP_SET_FLAG_KMALLOC ? "kmalloc" : "vmalloc");
-	if (flags & IP_SET_FLAG_KMALLOC)
-		kfree(members);
-	else
+		 is_vmalloc_addr(members) ? "vfree" : "kfree");
+	if (is_vmalloc_addr(members))
 		vfree(members);
+	else
+		kfree(members);
 }
 
 static inline bool

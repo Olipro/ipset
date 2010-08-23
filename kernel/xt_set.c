@@ -49,6 +49,14 @@ match_set(ip_set_id_t index, const struct sk_buff *skb,
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
+#define CHECK_OK	1
+#define CHECK_FAIL	0
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+#define	CHECK_OK	0
+#define CHECK_FAIL	-EINVAL
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
 static bool
 set_match_v0(const struct sk_buff *skb, const struct xt_match_param *par)
 #else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
@@ -96,17 +104,17 @@ set_match_v0_checkentry(const struct xt_mtchk_param *par)
 	if (index == IPSET_INVALID_ID) {
 		pr_warning("Cannot find set indentified by id %u to match",
 			   info->match_set.index);
-		return 0;	/* error */
+		return CHECK_FAIL;	/* error */
 	}
 	if (info->match_set.u.flags[IPSET_DIM_MAX-1] != 0) {
 		pr_warning("That's nasty!");
-		return 0;	/* error */
+		return CHECK_FAIL;	/* error */
 	}
 
 	/* Fill out compatibility data */
 	compat_flags(&info->match_set);
 
-	return 1;
+	return CHECK_OK;
 }
 
 static void
@@ -155,7 +163,7 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("cannot find add_set index %u as target",
 				   info->add_set.index);
-			return 0;	/* error */
+			return CHECK_FAIL;	/* error */
 		}
 	}
 
@@ -164,20 +172,20 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("cannot find del_set index %u as target",
 				   info->del_set.index);
-			return 0;	/* error */
+			return CHECK_FAIL;	/* error */
 		}
 	}
 	if (info->add_set.u.flags[IPSET_DIM_MAX-1] != 0
 	    || info->del_set.u.flags[IPSET_DIM_MAX-1] != 0) {
 		pr_warning("That's nasty!");
-		return 0;	/* error */
+		return CHECK_FAIL;	/* error */
 	}
 
 	/* Fill out compatibility data */
 	compat_flags(&info->add_set);
 	compat_flags(&info->del_set);
 
-	return 1;
+	return CHECK_OK;
 }
 
 static void
@@ -225,14 +233,14 @@ set_match_checkentry(const struct xt_mtchk_param *par)
 	if (index == IPSET_INVALID_ID) {
 		pr_warning("Cannot find set indentified by id %u to match",
 			   info->match_set.index);
-		return 0;	/* error */
+		return CHECK_FAIL;	/* error */
 	}
 	if (info->match_set.dim > IPSET_DIM_MAX) {
 		pr_warning("That's nasty!");
-		return 0;	/* error */
+		return CHECK_FAIL;	/* error */
 	}
 
-	return 1;
+	return CHECK_OK;
 }
 
 static void
@@ -283,7 +291,7 @@ set_target_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("cannot find add_set index %u as target",
 				   info->add_set.index);
-			return 0;	/* error */
+			return CHECK_FAIL;	/* error */
 		}
 	}
 
@@ -292,16 +300,16 @@ set_target_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("cannot find del_set index %u as target",
 				   info->del_set.index);
-			return 0;	/* error */
+			return CHECK_FAIL;	/* error */
 		}
 	}
 	if (info->add_set.dim > IPSET_DIM_MAX
 	    || info->del_set.flags > IPSET_DIM_MAX) {
 		pr_warning("That's nasty!");
-		return 0;	/* error */
+		return CHECK_FAIL;	/* error */
 	}
 
-	return 1;
+	return CHECK_OK;
 }
 
 static void

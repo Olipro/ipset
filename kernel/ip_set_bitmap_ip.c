@@ -180,7 +180,7 @@ bitmap_ip_destroy(struct ip_set *set)
 {
 	struct bitmap_ip *map = set->data;
 	
-	ip_set_free(map->members, set->flags);
+	ip_set_free(map->members);
 	kfree(map);
 	
 	set->data = NULL;
@@ -423,7 +423,7 @@ bitmap_ip_timeout_destroy(struct ip_set *set)
 	struct bitmap_ip_timeout *map = set->data;
 	
 	del_timer_sync(&map->gc);
-	ip_set_free(map->members, set->flags);
+	ip_set_free(map->members);
 	kfree(map);
 	
 	set->data = NULL;
@@ -575,7 +575,7 @@ init_map_ip(struct ip_set *set, struct bitmap_ip *map,
 	    u32 first_ip, u32 last_ip,
 	    u32 elements, u32 hosts, u8 netmask)
 {
-	map->members = ip_set_alloc(map->memsize, GFP_KERNEL, &set->flags);
+	map->members = ip_set_alloc(map->memsize, GFP_KERNEL);
 	if (!map->members)
 		return false;
 	map->first_ip = first_ip;

@@ -166,7 +166,7 @@ bitmap_port_destroy(struct ip_set *set)
 {
 	struct bitmap_port *map = set->data;
 	
-	ip_set_free(map->members, set->flags);
+	ip_set_free(map->members);
 	kfree(map);
 	
 	set->data = NULL;
@@ -403,7 +403,7 @@ bitmap_port_timeout_destroy(struct ip_set *set)
 	struct bitmap_port_timeout *map = set->data;
 
 	del_timer_sync(&map->gc);
-	ip_set_free(map->members, set->flags);
+	ip_set_free(map->members);
 	kfree(map);
 	
 	set->data = NULL;
@@ -551,7 +551,7 @@ static bool
 init_map_port(struct ip_set *set, struct bitmap_port *map,
 	      u16 first_port, u16 last_port)
 {
-	map->members = ip_set_alloc(map->memsize, GFP_KERNEL, &set->flags);
+	map->members = ip_set_alloc(map->memsize, GFP_KERNEL);
 	if (!map->members)
 		return false;
 	map->first_port = first_port;

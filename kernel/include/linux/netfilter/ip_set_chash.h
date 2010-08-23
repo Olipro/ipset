@@ -86,7 +86,7 @@ del_cidr(struct chash_nets *nets, u8 host_mask, u8 cidr)
 }
 
 static void
-chash_destroy(struct slist *t, u8 htable_bits, u8 flags)
+chash_destroy(struct slist *t, u8 htable_bits)
 {
 	struct slist *n, *tmp;
 	u32 i;
@@ -96,7 +96,7 @@ chash_destroy(struct slist *t, u8 htable_bits, u8 flags)
 			/* FIXME: slab cache */
 			kfree(n);
 
-	ip_set_free(t, flags);
+	ip_set_free(t);
 }
 
 static size_t
@@ -146,7 +146,7 @@ ip_set_hash_destroy(struct ip_set *set)
 	if (with_timeout(h->timeout))
 		del_timer_sync(&h->gc);
 
-	chash_destroy(h->htable, h->htable_bits, set->flags);
+	chash_destroy(h->htable, h->htable_bits);
 	kfree(h);
 	
 	set->data = NULL;
@@ -296,7 +296,6 @@ type_pf_resize(struct ip_set *set, gfp_t gfp_flags, bool retried)
 	struct slist *t, *n;
 	const struct type_pf_elem *data;
 	u32 i, j;
-	u8 oflags, flags;
 	int ret;
 
 retry:
@@ -306,12 +305,11 @@ retry:
 		/* In case we have plenty of memory :-) */
 		return -IPSET_ERR_HASH_FULL;
 	t = ip_set_alloc(jhash_size(htable_bits) * sizeof(struct slist),
-			 gfp_flags, &flags);
+			 gfp_flags);
 	if (!t)
 		return -ENOMEM;
 
 	write_lock_bh(&set->lock);
-	flags = oflags = set->flags;
 	for (i = 0; i < jhash_size(h->htable_bits); i++) {
 next_slot:
 		slist_for_each(n, &h->htable[i]) {
@@ -325,7 +323,7 @@ next_slot:
 							  data, gfp_flags);
 				if (ret < 0) {
 					write_unlock_bh(&set->lock);
-					chash_destroy(t, htable_bits, flags);
+					chash_destroy(t, htable_bits);
 					if (ret == -EAGAIN)
 						goto retry;
 					return ret;
@@ -339,10 +337,9 @@ next_slot:
 	
 	h->htable = t;
 	h->htable_bits = htable_bits;
-	set->flags = flags;
 	write_unlock_bh(&set->lock);
 
-	chash_destroy(n, i, oflags);
+	chash_destroy(n, i);
 	
 	return 0;
 }
@@ -750,7 +747,6 @@ type_pf_tresize(struct ip_set *set, gfp_t gfp_flags, bool retried)
 	struct slist *t, *n;
 	const struct type_pf_elem *data;
 	u32 i, j;
-	u8 oflags, flags;
 	int ret;
 
 	/* Try to cleanup once */
@@ -770,12 +766,11 @@ retry:
 		/* In case we have plenty of memory :-) */
 		return -IPSET_ERR_HASH_FULL;
 	t = ip_set_alloc(jhash_size(htable_bits) * sizeof(struct slist),
-			 gfp_flags, &flags);
+			 gfp_flags);
 	if (!t)
 		return -ENOMEM;
 
 	write_lock_bh(&set->lock);
-	flags = oflags = set->flags;
 	for (i = 0; i < jhash_size(h->htable_bits); i++) {
 next_slot:
 		slist_for_each(n, &h->htable[i]) {
@@ -790,7 +785,7 @@ next_slot:
 							   type_pf_data_timeout(data));
 				if (ret < 0) {
 					write_unlock_bh(&set->lock);
-					chash_destroy(t, htable_bits, flags);
+					chash_destroy(t, htable_bits);
 					if (ret == -EAGAIN)
 						goto retry;
 					return ret;
@@ -804,10 +799,9 @@ next_slot:
 	
 	h->htable = t;
 	h->htable_bits = htable_bits;
-	set->flags = flags;
 	write_unlock_bh(&set->lock);
 
-	chash_destroy(n, i, oflags);
+	chash_destroy(n, i);
 	
 	return 0;
 }

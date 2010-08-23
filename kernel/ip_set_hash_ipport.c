@@ -229,10 +229,10 @@ hash_ipport_same_set(const struct ip_set *a, const struct ip_set *b)
 	struct chash *x = a->data;
 	struct chash *y = b->data;
 	
+	/* Resizing changes htable_bits, so we ignore it */
 	return x->maxelem == y->maxelem
 	       && x->timeout == y->timeout
 	       && x->proto == y->proto
-	       && x->htable_bits == y->htable_bits	/* resizing ? */
 	       && x->array_size == y->array_size
 	       && x->chain_limit == y->chain_limit;
 }
@@ -473,7 +473,7 @@ hash_ipport_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 	h->timeout = IPSET_NO_TIMEOUT;
 
 	h->htable = ip_set_alloc(jhash_size(h->htable_bits) * sizeof(struct slist),
-				 GFP_KERNEL, &set->flags);
+				 GFP_KERNEL);
 	if (!h->htable) {
 		kfree(h);
 		return -ENOMEM;

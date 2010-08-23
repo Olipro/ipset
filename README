@@ -54,3 +54,14 @@ That's it!
 
 Read the ipset(8) and iptables(8), ip6tables(8) manpages on how to use
 ipset and its match and target from iptables.
+
+Compatibilities:
+
+- The ipset 5.x userspace utility contains a backward compatibility
+  interface to support the syntax of ipset 4.x.
+- The ipset 5.x userspace utility can't talk to the kernel part of ipset 4.x.
+- The ipset 5.x kernel part can't talk to the userspace utility from
+  ipset 4.x.
+- The ipset 5.x kernel part can work together with the set match and SET
+  target from iptables 1.4.7 and below, however if you need the IPv6 support
+  from ipset 5.x, then you have to use iptables 1.4.8 or above.
