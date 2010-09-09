@@ -1,3 +1,7 @@
+4.4
+  - Manpage fix to make it clear how ipset works on setlist type
+    of sets (John Brendler, bugzilla id 640)
+ 
 4.2
   - Checking null entries when listing/saving hash types of sets
     deleted because it's unnecessary and can mask possible errors.
