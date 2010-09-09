@@ -502,14 +502,13 @@ data storage in
 set and add src to the first single or src,dst to the first double 
 data storage set in
 \fIb\fP.
+You can imagine a setlist type of set as an ordered union of
+the set elements. 
 .P
 Please note: by the ipset command you can add, delete and
 .B test
 the setnames in a setlist type of set, and not the presence of 
 a set's member (such as an IP address).
-.P
-You can imagine a setlist type of set as an ordered union of
-the set elements. 
 .SH GENERAL RESTRICTIONS
 Setnames starting with colon (:) cannot be defined. Zero valued set 
 entries cannot be used with hash type of sets.
