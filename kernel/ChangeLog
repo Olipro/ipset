@@ -1,3 +1,7 @@
+4.4
+  - Errorneous semaphore handling in error path fixed
+    (reported by Jan Engelhardt, bugzilla id 668)
+
 4.3
   - Kernel 2.6.35 support added
 

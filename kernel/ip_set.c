@@ -929,11 +929,11 @@ ip_set_sockfn_set(struct sock *sk, int optval, void *user, unsigned int len)
 	}
 	if (copy_from_user(data, user, len) != 0) {
 		res = -EFAULT;
-		goto done;
+		goto cleanup;
 	}
 	if (down_interruptible(&ip_set_app_mutex)) {
 		res = -EINTR;
-		goto done;
+		goto cleanup;
 	}
 
 	op = (unsigned *)data;
@@ -1109,6 +1109,7 @@ ip_set_sockfn_set(struct sock *sk, int optval, void *user, unsigned int len)
 
     done:
 	up(&ip_set_app_mutex);
+    cleanup:
 	vfree(data);
 	if (res > 0)
 		res = 0;
@@ -1142,11 +1143,11 @@ ip_set_sockfn_get(struct sock *sk, int optval, void *user, int *len)
 	}
 	if (copy_from_user(data, user, *len) != 0) {
 		res = -EFAULT;
-		goto done;
+		goto cleanup;
 	}
 	if (down_interruptible(&ip_set_app_mutex)) {
 		res = -EINTR;
-		goto done;
+		goto cleanup;
 	}
 
 	op = (unsigned *) data;
@@ -1439,6 +1440,7 @@ ip_set_sockfn_get(struct sock *sk, int optval, void *user, int *len)
     	
     done:
 	up(&ip_set_app_mutex);
+    cleanup:
 	vfree(data);
 	if (res > 0)
 		res = 0;
