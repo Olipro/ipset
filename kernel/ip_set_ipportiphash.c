@@ -72,8 +72,8 @@ ipportiphash_test(struct ip_set *set,
 	if (flags[2] == 0)					\
 		return 0;					\
 								\
-	port = get_port(skb, flags++);				\
-	ip1 = ipaddr(skb, flags++);				\
+	port = get_port(skb, ++flags);				\
+	ip1 = ipaddr(skb, ++flags);				\
 								\
 	if (port == INVALID_PORT)				\
 		return 0;

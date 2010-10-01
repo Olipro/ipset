@@ -1,4 +1,7 @@
 4.4
+  - The ipporthash, ipportiphash and ipportnethash set types did not
+    work with mixed "src" and "dst" destination parameters of the
+    "set" and "SET" iptables match and target (reported by Dash Four)
   - Errorneous semaphore handling in error path fixed
     (reported by Jan Engelhardt, bugzilla id 668)
 

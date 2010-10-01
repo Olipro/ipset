@@ -68,7 +68,7 @@ ipporthash_test(struct ip_set *set, ip_set_ip_t ip, ip_set_ip_t port)
 	if (flags[1] == 0)					\
 		return 0;					\
 								\
-	port = get_port(skb, flags++);				\
+	port = get_port(skb, ++flags);				\
 								\
 	if (port == INVALID_PORT)				\
 		return 0;
