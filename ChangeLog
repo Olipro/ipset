@@ -1,3 +1,6 @@
+  - Take into account the compile time setting of the default hash size
+    (reported by Dash Four)
+
 4.4
   - Manpage fix to make it clear how ipset works on setlist type
     of sets (John Brendler, bugzilla id 640)

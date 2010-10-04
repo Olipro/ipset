@@ -38,7 +38,7 @@ nethash_create_init(void *data)
 	DP("create INIT");
 
 	/* Default create parameters */	
-	mydata->hashsize = 1024;
+	mydata->hashsize = IP_NF_SET_HASHSIZE;
 	mydata->probes = 4;
 	mydata->resize = 50;
 }
