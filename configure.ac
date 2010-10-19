@@ -1,6 +1,6 @@
 dnl Boilerplate
 AC_INIT([ipset], [5.0], [kadlec@blackhole.kfki.hu])
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
@@ -105,7 +105,7 @@ AM_CONDITIONAL([DISABLE_EXTRA_FLAGS], [test "x$extra_flags" = xno])
 dnl Checks for programs
 AC_PROG_CC
 AM_PROG_CC_C_O
-AC_PROG_LIBTOOL
+LT_INIT
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
