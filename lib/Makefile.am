@@ -1,6 +1,6 @@
 include $(top_srcdir)/Make_global.am
 
-AM_CFLAGS += -fPIC ${libmnl_CFLAGS}
+AM_CFLAGS += ${libmnl_CFLAGS}
 
 lib_LTLIBRARIES = libipset.la
 
