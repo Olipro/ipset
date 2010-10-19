@@ -109,10 +109,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 
 dnl Checks for libraries
-AC_CHECK_LIB([mnl], [mnl_socket_open])
-if test x"${ac_cv_lib_mnl_mnl_socket_open}" = xno; then
-  AC_MSG_ERROR(libmnl not found)
-fi
+PKG_CHECK_MODULES([libmnl], [libmnl >= 1])
 
 dnl Checks for header files
 

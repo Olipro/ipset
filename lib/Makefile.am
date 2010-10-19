@@ -1,11 +1,11 @@
 include $(top_srcdir)/Make_global.am
 
-AM_CFLAGS += -fPIC
-LIBS =
+AM_CFLAGS += -fPIC ${libmnl_CFLAGS}
 
 lib_LTLIBRARIES = libipset.la
 
 libipset_la_LDFLAGS = -version-info $(LIBVERSION)
+libipset_la_LIBADD  = ${libmnl_LIBS}
 libipset_la_SOURCES = \
 	data.c \
 	mnl.c \
