@@ -13,10 +13,14 @@ esac
 
 dnl Additional arguments
 dnl Kernel build directory or source tree
-AC_ARG_WITH([kernel],
-	    AS_HELP_STRING([--with-kernel=PATH],
-	    		   [Path to kernel source/build directory]),
-	    [KBUILDDIR="$withval";])
+AC_ARG_WITH([kbuild],
+            AS_HELP_STRING([--with-kbuild=PATH],
+                           [Path to kernel build directory]),
+            [KBUILDDIR="$withval";])
+AC_ARG_WITH([ksource],
+            AS_HELP_STRING([--with-ksource=PATH],
+                           [Path to kernel source directory]),
+            [KSOURCEDIR="$withval";])
 AM_CONDITIONAL(WITH_KBUILDDIR, test "$KBUILDDIR" != "")
 AC_SUBST(KBUILDDIR)
 
@@ -28,9 +32,10 @@ else
 	kbuilddir="/lib/modules/`uname -r`/build"
 fi
 
-if test ! -e "$kbuilddir/include/linux/netfilter/nfnetlink.h"
-then
-	AC_MSG_ERROR([Invalid kernel build directory $kbuilddir])
+if test -n "$KSOURCEDIR"; then
+	ksourcedir="$KSOURCEDIR"
+else
+	ksourcedir="/lib/modules/$(uname -r)/source"
 fi
 
 if test ! -e "$kbuilddir/.config"
@@ -46,11 +51,11 @@ then
 fi
 
 dnl Check kernel dependencies: nfnetlink.h
-NFNL_CB_CONST="`./check_const $kbuilddir/include/linux/netfilter/nfnetlink.h`"
+NFNL_CB_CONST="`./check_const $ksourcedir/include/linux/netfilter/nfnetlink.h`"
 AC_SUBST(NFNL_CB_CONST)
 
 dnl Check kernel dependencies: netlink.h
-NETLINK_DUMP_CONST="`./check_const $kbuilddir/include/linux/netlink.h`"
+NETLINK_DUMP_CONST="`./check_const $ksourcedir/include/linux/netlink.h`"
 AC_SUBST(NETLINK_DUMP_CONST)
 
 dnl Maximal number of sets supported by the kernel, default 256
