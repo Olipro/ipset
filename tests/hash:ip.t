@@ -44,6 +44,8 @@
 0 ipset -F test
 # IP: Delete test set
 0 ipset -X test
+# IP: Stress test resizing
+0 ./resize.sh
 # Network: Create a set with timeout
 0 ipset -N test iphash --hashsize 128 --netmask 24 timeout 6
 # Network: Add zero valued element

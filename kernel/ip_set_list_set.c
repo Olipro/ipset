@@ -250,7 +250,8 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 	}
 
 	if (tb[IPSET_ATTR_NAMEREF]) {
-		refid = ip_set_get_byname(nla_data(tb[IPSET_ATTR_NAMEREF]), &s);
+		refid = ip_set_get_byname(nla_data(tb[IPSET_ATTR_NAMEREF]),
+					  &s);
 		if (refid == IPSET_INVALID_ID) {
 			ret = -IPSET_ERR_NAMEREF;
 			goto finish;
@@ -320,7 +321,8 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 				continue;
 			else if (elem->id == id
 			         && (before == 0
-			             || (before > 0 && next_id_eq(map, i, refid))))
+			             || (before > 0
+			             	 && next_id_eq(map, i, refid))))
 				ret = list_set_del(map, id, i);
 			else if (before < 0 && elem->id == refid
 			         && next_id_eq(map, i, id))

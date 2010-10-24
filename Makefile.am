@@ -1,5 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
+ACLOCAL_AMFLAGS = -I m4
+
 include $(top_srcdir)/Make_global.am
 
 if ! WITH_KBUILDDIR
@@ -46,8 +48,8 @@ cleanup_dirs := . include/libipset lib src tests
 tidy: distclean modules_clean
 	rm -rf .deps $(foreach dir,$(cleanup_dirs),$(wildcard $(dir)/*~))
 	rm -rf aclocal.m4 autom4te.cache 
-	rm -rf config.* configure depcomp install-sh libtool ltmain.sh
+	rm -rf config.* configure compile depcomp install-sh libtool ltmain.sh
 	rm -rf Makefile Makefile.in lib/Makefile lib/Makefile.in src/Makefile src/Makefile.in
-	rm -rf missing stamp-h1
+	rm -rf missing stamp-h1 m4/*
 
 .PHONY: modules modules_instal modules_clean update_includes tests

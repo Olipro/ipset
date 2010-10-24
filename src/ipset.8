@@ -13,7 +13,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-.TH "IPSET" "8" "Jun 11, 2010" "Jozsef Kadlecsik" ""
+.TH "IPSET" "8" "Oct 15, 2010" "Jozsef Kadlecsik" ""
 .SH "NAME"
 ipset \(em administration tool for IP sets
 .SH "SYNOPSIS"
@@ -82,7 +82,7 @@ type specific options. If the
 \fB\-exist\fR
 option is specified,
 \fBipset\fR
-ignores the error otherwise raised when the the same set (setname and create parameters
+ignores the error otherwise raised when the same set (setname and create parameters
 are identical) already exists.
 .TP 
 \fBadd\fP \fISETNAME\fP \fIADD\-ENTRY\fP [ \fIADD\-OPTIONS\fP ]
@@ -97,7 +97,7 @@ Delete an entry from a set. If the
 \fB\-exist\fR
 option is specified,
 \fBipset\fR
-ignores if the entry does not added (expired) to the set.
+ignores if the entry does not added to (already expired from) the set.
 .TP 
 \fBtest\fP \fISETNAME\fP \fITEST\-ENTRY\fP [ \fITEST\-OPTIONS\fP ]
 Test wether an entry is in a set or not. Exit status number is zero
@@ -230,19 +230,19 @@ The \fBbitmap:ip\fR set type uses a memory range to store either IPv4 host
 (default) or IPv4 network addresses. A \fBbitmap:ip\fR type of set can store up
 to 65536 entries.
 .PP 
-\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfrom\-ip\fP\-\fIto\-ip\fR|\fIip\fR/\fIcidr\fR [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfromip\fP\-\fItoip\fR|\fIip\fR/\fIcidr\fR [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIADD\-ENTRY\fR := { \fIipaddr\fR | \fIfromaddr\fR\-\fItoaddr\fR | \fIipaddr\fR/\fIcidr\fR }
+\fIADD\-ENTRY\fR := { \fIipaddr\fR | \fIfromip\fR\-\fItoip\fR | \fIipaddr\fR/\fIcidr\fR }
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := { \fIipaddr\fR | \fIfromaddr\fR\-\fItoaddr\fR | \fIipaddr\fR/\fIcidr\fR }
+\fIDEL\-ENTRY\fR := { \fIipaddr\fR | \fIfromip\fR\-\fItoip\fR | \fIipaddr\fR/\fIcidr\fR }
 .PP 
 \fITEST\-ENTRY\fR := \fIipaddr\fR
 .PP 
 Mandatory \fBcreate\fR options:
 .TP 
-\fBrange\fP \fIfrom\-ip\fP\-\fIto\-ip\fR|\fIip\fR/\fIcidr\fR
+\fBrange\fP \fIfromip\fP\-\fItoip\fR|\fIip\fR/\fIcidr\fR
 Create the set from the specified inclusive address range expressed in an
 IPv4 address range or network. The size of the range (in entries) cannot exceed
 the limit of maximum 65536 elements.
@@ -251,10 +251,10 @@ Optional \fBcreate\fR options:
 .TP 
 \fBnetmask\fP \fIcidr\fP
 When the optional \fBnetmask\fP parameter specified, network addresses will be 
-stored in the set instead of IP host addresses. The \fIcidr\fR value must be
+stored in the set instead of IP host addresses. The \fIcidr\fR prefix value must be
 between 1\-32.
 An IP address will be in the set if the network address, which is resulted by
-masking the address with the specified netmask calculated from the cidr value,
+masking the address with the specified netmask calculated from the prefix,
 can be found in the set.
 .PP 
 The \fBbitmap:ip\fR type supports adding or deleting multiple entries in one
@@ -270,19 +270,19 @@ ipset test foo 192.168.1.1
 .SS bitmap:ip,mac
 The \fBbitmap:ip,mac\fR set type uses a memory range to store IPv4 and a MAC address pairs. A \fBbitmap:ip,mac\fR type of set can store up to 65536 entries.
 .PP 
-\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfrom\-ip\fP\-\fIto\-ip\fR|\fIip\fR/\fIcidr\fR [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfromip\fP\-\fItoip\fR|\fIip\fR/\fIcidr\fR [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIADD\-ENTRY\fR := \fIipaddr\fR[,\fImac\-addr\fR]
+\fIADD\-ENTRY\fR := \fIipaddr\fR[,\fImacaddr\fR]
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := \fIipaddr\fR[,\fImac\-addr\fR]
+\fIDEL\-ENTRY\fR := \fIipaddr\fR[,\fImacaddr\fR]
 .PP 
-\fITEST\-ENTRY\fR := \fIipaddr\fR[,\fImac\-addr\fR]
+\fITEST\-ENTRY\fR := \fIipaddr\fR[,\fImacaddr\fR]
 .PP 
 Mandatory options to use when creating a \fBbitmap:ip,mac\fR type of set:
 .TP 
-\fBrange\fP \fIfrom\-ip\fP\-\fIto\-ip\fR|\fIip\fR/\fIcidr\fR
+\fBrange\fP \fIfromip\fP\-\fItoip\fR|\fIip\fR/\fIcidr\fR
 Create the set from the specified inclusive address range expressed in an
 IPv4 address range or network. The size of the range cannot exceed the limit
 of maximum 65536 entries.
@@ -309,19 +309,19 @@ ipset test foo 192.168.1.1
 The \fBbitmap:port\fR set type uses a memory range to store port numbers
 and such a set can store up to 65536 ports.
 .PP 
-\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfrom\-port\fP\-\fIto\-port [ \fBtimeout\fR \fIvalue\fR ]
+\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfromport\fP\-\fItoport [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIADD\-ENTRY\fR := { \fIport\fR | \fIfrom\-port\fR\-\fIto\-port\fR }
+\fIADD\-ENTRY\fR := { \fIport\fR | \fIfromport\fR\-\fItoport\fR }
 .PP 
 \fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
-\fIDEL\-ENTRY\fR := { \fIport\fR | \fIfrom\-port\fR\-\fIto\-port\fR }
+\fIDEL\-ENTRY\fR := { \fIport\fR | \fIfromport\fR\-\fItoport\fR }
 .PP 
 \fITEST\-ENTRY\fR := \fIport\fR
 .PP 
 Mandatory options to use when creating a \fBbitmap:port\fR type of set:
 .TP 
-\fBrange\fP \fIfrom\-port\fP\-\fIto\-port\fR
+\fBrange\fP \fIfromport\fP\-\fItoport\fR
 Create the set from the specified inclusive port range.
 .PP 
 Examples:
@@ -368,10 +368,10 @@ The maximal number of elements which can be stored in the set, default 65536.
 .TP 
 \fBnetmask\fP \fIcidr\fP
 When the optional \fBnetmask\fP parameter specified, network addresses will be 
-stored in the set instead of IP host addresses. The \fIcidr\fP value must be
+stored in the set instead of IP host addresses. The \fIcidr\fP prefix value must be
 between 1\-32 for IPv4 and between 1\-128 for IPv6. An IP address will be in the set
 if the network address, which is resulted by masking the address with the netmask
-calculated from the cidr, can be found in the set.
+calculated from the prefix, can be found in the set.
 .PP 
 Examples:
 .IP 
@@ -407,18 +407,18 @@ correct value.
 \fBmaxelem\fR \fIvalue\fR
 The maximal number of elements which can be stored in the set, default 65536.
 .PP 
-When adding/deleting/testing entries, if the cidr parameter is not specified,
-then the host cidr value is assumed. When adding/deleting entries, overlapping elements
-are not checked.
+When adding/deleting/testing entries, if the cidr prefix parameter is not specified,
+then the host prefix value is assumed. When adding/deleting entries, overlapping
+elements are not checked.
 .PP 
 From the \fBset\fR netfilter match point of view an IP address will be in a \fBhash:net\fR type of set if it belongs to any of the netblocks added to the set.
 The  matching  always  start  from  the smallest  size  of netblock (most specific
-cidr) to the largest ones (least specific cidr).  When  adding/deleting IP
+prefix) to the largest ones (least specific prefix).  When  adding/deleting IP
 addresses  to the set by the \fBSET\fR netfilter target, it  will  be
-added/deleted by the most specific cidr which can be found in  the
-set, or by the host cidr value if the set is empty.
+added/deleted by the most specific prefix which can be found in  the
+set, or by the host prefix value if the set is empty.
 .PP 
-The lookup time grows linearly with the number of the different \fIcidr\fR
+The lookup time grows linearly with the number of the different prefix
 values added to the set. 
 .PP 
 Examples:
@@ -626,10 +626,12 @@ the match and target will skip any set in \fIa\fR and \fIb\fR
 which stores data triples, but will match all sets with single or double
 data storage in \fIa\fR set and stop matching at the first successful set,
 and add src to the first single or src,dst to the first double data storage set
-in \fIb\fR to which the entry can be added.
+in \fIb\fR to which the entry can be added. You can imagine a \fBlist:set\fR
+type of set as an ordered union of the set elements. 
 .PP 
-You can imagine a setlist type of set as an ordered union of
-the set elements. 
+Please note: by the \fBipset\fR commad you can add, delete and \fBtest\fR
+the setnames in a \fBlist:set\fR type of set, and \fBnot\fR the presence of
+a set's member (such as an IP address).
 .SH "GENERAL RESTRICTIONS"
 Zero valued set entries cannot be used with hash methods. Zero protocol value with ports
 cannot be used.

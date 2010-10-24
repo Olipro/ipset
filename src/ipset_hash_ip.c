@@ -72,7 +72,10 @@ static const char hash_ip_usage[] =
 "               [netmask CIDR] [timeout VALUE]\n"
 "add    SETNAME IP|IP/CIDR|FROM-TO [timeout VALUE]\n"
 "del    SETNAME IP|IP/CIDR|FROM-TO\n"
-"test   SETNAME IP\n";
+"test   SETNAME IP\n\n"
+"where depending on the INET family\n"
+"      IP, FROM and TO are IPv4 or IPv6 addresses (or hostnames),\n"
+"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n";
 
 struct ipset_type ipset_hash_ip0 = {
 	.name = "hash:ip",

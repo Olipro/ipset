@@ -265,7 +265,7 @@ const struct ip_set_type_variant bitmap_port __read_mostly = {
 /* Timeout variant */
 
 struct bitmap_port_timeout {
-	void *members;		/* the set members */
+	unsigned long *members;	/* the set members */
 	u16 first_port;		/* host byte order, included in range */
 	u16 last_port;		/* host byte order, included in range */
 	size_t memsize;		/* members size */
@@ -277,21 +277,17 @@ struct bitmap_port_timeout {
 static inline bool
 bitmap_port_timeout_test(const struct bitmap_port_timeout *map, u16 id)
 {
-	unsigned long *timeout = map->members;
-
-	return ip_set_timeout_test(timeout[id]);
+	return ip_set_timeout_test(map->members[id]);
 }
 
 static int
 bitmap_port_timeout_add(const struct bitmap_port_timeout *map,
 			u16 id, u32 timeout)
 {
-	unsigned long *table = map->members;
-
 	if (bitmap_port_timeout_test(map, id))
 		return -IPSET_ERR_EXIST;
 
-	table[id] = ip_set_timeout_set(timeout);
+	map->members[id] = ip_set_timeout_set(timeout);
 
 	return 0;
 }
@@ -300,13 +296,12 @@ static int
 bitmap_port_timeout_del(const struct bitmap_port_timeout *map,
 			u16 id)
 {
-	unsigned long *table = map->members;
 	int ret = -IPSET_ERR_EXIST;
 
 	if (bitmap_port_timeout_test(map, id))
 		ret = 0;
 	
-	table[id] = IPSET_ELEM_UNSET;
+	map->members[id] = IPSET_ELEM_UNSET;
 	return ret;
 }
 

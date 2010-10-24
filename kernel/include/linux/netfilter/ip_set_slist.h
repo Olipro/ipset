@@ -25,7 +25,8 @@ struct slist {
 	     pos = pos->next)
 
 #define slist_for_each_prev(prev, pos, head) \
-	for (prev = head, pos = (head)->next; pos && ({ prefetch(pos->next); 1; }); \
+	for (prev = head, pos = (head)->next; \
+	     pos && ({ prefetch(pos->next); 1; }); \
 	     prev = pos, pos = pos->next)
 
 #define slist_for_each_safe(pos, n, head) \
@@ -46,7 +47,8 @@ struct slist {
 	     pos = pos->next)
 
 /**
- * slist_for_each_entry_continue - iterate over a hlist continuing after current point
+ * slist_for_each_entry_continue - iterate over a hlist continuing
+ *				   after current point
  * @tpos:	the type * to use as a loop cursor.
  * @pos:	the &struct slist to use as a loop cursor.
  * @member:	the name of the slist within the struct.
@@ -58,7 +60,8 @@ struct slist {
 	     pos = pos->next)
 
 /**
- * slist_for_each_entry_from - iterate over a hlist continuing from current point
+ * slist_for_each_entry_from - iterate over a hlist continuing
+ *			       from current point
  * @tpos:	the type * to use as a loop cursor.
  * @pos:	the &struct slist to use as a loop cursor.
  * @member:	the name of the slist within the struct.

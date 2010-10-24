@@ -77,22 +77,23 @@ struct ipset_elem {
  * but for the readability the full list is supported.
   */
 struct ipset_type {
-	char name[IPSET_MAXNAMELEN];			/* type name */
-	uint8_t revision;				/* revision number */
-	uint8_t family;					/* supported family */
-	uint8_t dimension;				/* elem dimension */
-	int8_t kernel_check;				/* kernel check */
-	bool last_elem_optional;			/* last element optional */
-	struct ipset_elem elem[IPSET_DIM_MAX];		/* parse elem */
-	ipset_parsefn compat_parse_elem;		/* compatibility parser */
-	const struct ipset_arg *args[IPSET_CADT_MAX];	/* create/ADT args except elem */
-	uint64_t mandatory[IPSET_CADT_MAX];		/* create/ADT mandatory flags */
-	uint64_t full[IPSET_CADT_MAX];			/* full args flags */
-	size_t maxsize[IPSET_MAXSIZE_MAX];		/* max sizes */
-	const char *usage;				/* terse usage */
+	char name[IPSET_MAXNAMELEN];		/* type name */
+	uint8_t revision;			/* revision number */
+	uint8_t family;				/* supported family */
+	uint8_t dimension;			/* elem dimension */
+	int8_t kernel_check;			/* kernel check */
+	bool last_elem_optional;		/* last element optional */
+	struct ipset_elem elem[IPSET_DIM_MAX];	/* parse elem */
+	ipset_parsefn compat_parse_elem;	/* compatibility parser */
+	const struct ipset_arg *args[IPSET_CADT_MAX]; /* create/ADT args besides elem */
+	uint64_t mandatory[IPSET_CADT_MAX];	/* create/ADT mandatory flags */
+	uint64_t full[IPSET_CADT_MAX];		/* full args flags */
+	size_t maxsize[IPSET_MAXSIZE_MAX];	/* max sizes */
+	const char *usage;			/* terse usage */
+	void (*usagefn)(void);			/* additional usage */
 
 	struct ipset_type *next;
-	const char *alias[];					/* name alias(es) */
+	const char *alias[];			/* name alias(es) */
 };
 
 extern int ipset_cache_add(const char *name, const struct ipset_type *type,

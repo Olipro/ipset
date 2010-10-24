@@ -52,7 +52,9 @@ static const char bitmap_ip_usage[] =
 "               [netmask CIDR] [timeout VALUE]\n"
 "add    SETNAME IP|IP/CIDR|FROM-TO [timeout VALUE]\n"
 "del    SETNAME IP|IP/CIDR|FROM-TO\n"
-"test   SETNAME IP\n";
+"test   SETNAME IP\n\n"
+"where IP, FROM and TO are IPv4 addresses (or hostnames),\n"
+"      CIDR is a valid IPv4 CIDR prefix.\n";
 
 struct ipset_type ipset_bitmap_ip0 = {
 	.name = "bitmap:ip",

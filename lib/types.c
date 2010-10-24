@@ -11,6 +11,7 @@
 #include <sys/socket.h>				/* AF_ */
 #include <stdlib.h>				/* malloc, free */
 #include <stdio.h>				/* FIXME: debug */
+#include <libmnl/libmnl.h>			/* MNL_ALIGN */
 
 #include <libipset/debug.h>			/* D() */
 #include <libipset/data.h>			/* ipset_data_* */
@@ -438,14 +439,25 @@ type_max_size(struct ipset_type *type, uint8_t family)
 			continue;
 		if (!(IPSET_FLAG(opt) & type->full[IPSET_ADD]))
 			continue;
-		max += ipset_data_sizeof(opt, family);
+		max += MNL_ALIGN(ipset_data_sizeof(opt, family))
+			+ MNL_ATTR_HDRLEN;
+		switch (opt) {
+		case IPSET_OPT_IP:
+		case IPSET_OPT_IP_TO:
+		case IPSET_OPT_IP2:
+			/* Nested attributes */
+			max += MNL_ATTR_HDRLEN;
+			break;
+		default:
+			break;
+		}
 	}
 	type->maxsize[sizeid] = max;
 }
 
 /**
  * ipset_type_add - add (register) a userspace set type
- * @type: set type structure
+ * @type: pointer to the set type structure
  *
  * Add the given set type to the type list. The types
  * are added sorted, in descending revision number.

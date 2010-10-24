@@ -91,8 +91,9 @@ find_set_type_rcu(const char *name, u8 family, u8 revision)
 	return type;
 }
 
-/* Find a given set type by name and family together
- * with the supported minimal and maximum revisions.
+/* Find a given set type by name and family.
+ * If we succeeded, the supported minimal and maximum revisions are 
+ * filled out.
  */
 static bool
 find_set_type_minmax(const char *name, u8 family,
@@ -224,7 +225,7 @@ ip_set_test(ip_set_id_t index, const struct sk_buff *skb,
 	read_unlock_bh(&set->lock);
 
 	if (ret == -EAGAIN) {
-		/* Type requests element to be re-added */
+		/* Type requests element to be completed */
 		pr_debug("element must be competed, ADD is triggered");
 		write_lock_bh(&set->lock);
 		set->variant->kadt(set, skb, IPSET_ADD, family, dim, flags);
@@ -842,9 +843,10 @@ ip_set_swap(struct sock *ctnl, struct sk_buff *skb,
 
 /* List/save set data */
 
-#define DUMP_ALL	0L
-#define DUMP_ONE	1L
-#define DUMP_LAST	2L
+#define DUMP_INIT	0L
+#define DUMP_ALL	1L
+#define DUMP_ONE	2L
+#define DUMP_LAST	3L
 
 static int
 ip_set_dump_done(struct netlink_callback *cb)
@@ -868,6 +870,38 @@ dump_attrs(struct nlmsghdr *nlh)
 	}
 }
 
+static inline int
+dump_init(struct netlink_callback *cb)
+{
+	struct nlmsghdr *nlh = nlmsg_hdr(cb->skb);
+	int min_len = NLMSG_SPACE(sizeof(struct nfgenmsg));
+	struct nlattr *cda[IPSET_ATTR_CMD_MAX+1];
+	struct nlattr *attr = (void *)nlh + min_len;
+	ip_set_id_t index;
+	
+	/* Second pass, so parser can't fail */
+	nla_parse(cda, IPSET_ATTR_CMD_MAX,
+		  attr, nlh->nlmsg_len - min_len, ip_set_setname_policy);
+
+	/* cb->args[0] : dump single set/all sets
+	 * 	   [1] : set index
+	 *         [..]: type specific
+	 */
+
+	if (!cda[IPSET_ATTR_SETNAME]) {
+		cb->args[0] = DUMP_ALL;
+		return 0;
+	}
+
+	index = find_set_id(nla_data(cda[IPSET_ATTR_SETNAME]));
+	if (index == IPSET_INVALID_ID)
+		return -EEXIST;
+	
+	cb->args[0] = DUMP_ONE;
+	cb->args[1] = index;
+	return 0;
+}
+
 static int
 ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
 {
@@ -876,6 +910,16 @@ ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
 	struct nlmsghdr *nlh = NULL;
 	unsigned int flags = NETLINK_CB(cb->skb).pid ? NLM_F_MULTI : 0;
 	int ret = 0;
+
+	if (cb->args[0] == DUMP_INIT) {
+		ret = dump_init(cb);
+		if (ret < 0) {
+			/* We have to create and send the error message
+			 * manually :-( */
+			netlink_ack(cb->skb, nlmsg_hdr(cb->skb), ret);
+			return ret;
+		}
+	}
 
 	if (cb->args[1] >= ip_set_max)
 		goto out;
@@ -971,28 +1015,12 @@ ip_set_dump(struct sock *ctnl, struct sk_buff *skb,
 	    NFNL_CB_CONST struct nlmsghdr *nlh,
 	    NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
-	ip_set_id_t index;
-	
 	if (unlikely(protocol_failed(attr)))
 		return -IPSET_ERR_PROTOCOL;
 
-	if (!attr[IPSET_ATTR_SETNAME])
-		return netlink_dump_start(ctnl, skb, nlh,
-					  ip_set_dump_start,
-					  ip_set_dump_done);
-
-	index = find_set_id(nla_data(attr[IPSET_ATTR_SETNAME]));
-	if (index == IPSET_INVALID_ID)
-		return -EEXIST;
-
-	/* cb->args[0] : dump single set/all sets
-	 * 	   [1] : set index
-	 *         [..]: type specific
-	 */
-	return netlink_dump_init(ctnl, skb, nlh,
-				 ip_set_dump_start,
-				 ip_set_dump_done,
-				 2, DUMP_ONE, index);
+	return netlink_dump_start(ctnl, skb, nlh,
+				  ip_set_dump_start,
+				  ip_set_dump_done);
 }
 
 /* Add, del and test */
@@ -1025,7 +1053,8 @@ call_ad(struct sock *ctnl, struct sk_buff *skb,
 		write_unlock_bh(&set->lock);
 	} while (ret == -EAGAIN
 		 && set->variant->resize
-		 && (ret = set->variant->resize(set, GFP_KERNEL, retried++)) == 0);
+		 && (ret = set->variant->resize(set, GFP_ATOMIC,
+		 				retried++)) == 0);
 
 	if (!ret || (ret == -IPSET_ERR_EXIST && eexist))
 		return 0;
@@ -1240,7 +1269,8 @@ ip_set_type(struct sock *ctnl, struct sk_buff *skb,
 		/* Try to load in the type module */
 		load_type_module(typename);
 		if (!find_set_type_minmax(typename, family, &min, &max)) {
-			pr_debug("can't find: %s, family: %u", typename, family);
+			pr_debug("can't find: %s, family: %u",
+				 typename, family);
 			return -EEXIST;
 		}
 	}
@@ -1503,7 +1533,8 @@ ip_set_init(void)
 	if (ip_set_max >= IPSET_INVALID_ID)
 		ip_set_max = IPSET_INVALID_ID - 1;
 
-	ip_set_list = kzalloc(sizeof(struct ip_set *) * ip_set_max, GFP_KERNEL);
+	ip_set_list = kzalloc(sizeof(struct ip_set *) * ip_set_max,
+			      GFP_KERNEL);
 	if (!ip_set_list) {
 		pr_err("ip_set: Unable to create ip_set_list");
 		return -ENOMEM;

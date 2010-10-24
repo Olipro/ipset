@@ -21,12 +21,13 @@
 #define NFNL_SUBSYS_IPSET	6
 #endif
 
+/* Internal data structure for the kernel-userspace communication parameters */
 struct ipset_handle {
-	struct mnl_socket *h;
-	unsigned int seq;
-	unsigned int portid;
-	mnl_cb_t *cb_ctl;
-	void *data;
+	struct mnl_socket *h;		/* the mnl socket */
+	unsigned int seq;		/* netlink message sequence number */
+	unsigned int portid;		/* the socket port identifier */
+	mnl_cb_t *cb_ctl;		/* control block callbacks */
+	void *data;			/* data pointer */
 };
 
 /* Netlink flags of the commands */
@@ -46,6 +47,12 @@ static uint16_t cmdflags[] = {
 	[IPSET_CMD_PROTOCOL-1]	= NLM_F_REQUEST,
 };
 
+/**
+ * ipset_get_nlmsg_type - get ipset netlink message type
+ * @nlh: pointer to the netlink message header
+ *
+ * Returns the ipset netlink message type, i.e. the ipset command.
+ */
 int
 ipset_get_nlmsg_type(const struct nlmsghdr *nlh)
 {

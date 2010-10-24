@@ -319,11 +319,11 @@ const struct ipset_attr_policy cmd_attrs[] = {
 
 const struct ipset_attr_policy create_attrs[] = {
 	[IPSET_ATTR_IP]	= {
-		.type = MNL_TYPE_BINARY,
+		.type = MNL_TYPE_NESTED,
 		.opt = IPSET_OPT_IP,
 	},
 	[IPSET_ATTR_IP_TO] = {
-		.type = MNL_TYPE_BINARY,
+		.type = MNL_TYPE_NESTED,
 		.opt = IPSET_OPT_IP_TO,
 	},
 	[IPSET_ATTR_CIDR] = {
@@ -394,11 +394,11 @@ const struct ipset_attr_policy create_attrs[] = {
 
 const struct ipset_attr_policy adt_attrs[] = {
 	[IPSET_ATTR_IP]	= {
-		.type = MNL_TYPE_BINARY,
+		.type = MNL_TYPE_NESTED,
 		.opt = IPSET_OPT_IP,
 	},
 	[IPSET_ATTR_IP_TO] = {
-		.type = MNL_TYPE_BINARY,
+		.type = MNL_TYPE_NESTED,
 		.opt = IPSET_OPT_IP_TO,
 	},
 	[IPSET_ATTR_CIDR] = {
@@ -445,7 +445,7 @@ const struct ipset_attr_policy adt_attrs[] = {
 		.len  = IPSET_MAXNAMELEN,
 	},
 	[IPSET_ATTR_IP2] = {
-		.type = MNL_TYPE_BINARY,
+		.type = MNL_TYPE_NESTED,
 		.opt = IPSET_OPT_IP2,
 	},
 	[IPSET_ATTR_CIDR2] = {
@@ -453,6 +453,61 @@ const struct ipset_attr_policy adt_attrs[] = {
 		.opt = IPSET_OPT_CIDR2,
 	},
 };
+
+const struct ipset_attr_policy ipaddr_attrs[] = {
+	[IPSET_ATTR_IPADDR_IPV4] = {
+		.type = MNL_TYPE_U32,
+	},
+	[IPSET_ATTR_IPADDR_IPV6] = {
+		.type = MNL_TYPE_BINARY,
+		.len = sizeof(union nf_inet_addr),
+	},
+};
+
+static int
+generic_data_attr_cb(const struct nlattr *attr, void *data,
+		     int attr_max, const struct ipset_attr_policy *policy)
+{
+	const struct nlattr **tb = (const struct nlattr **)data;
+	int type = mnl_attr_get_type(attr);
+	
+	D("attr type: %u, len %u", type, attr->nla_len);
+	if (mnl_attr_type_valid(attr, attr_max) < 0) {
+		D("attr type: %u INVALID", type);
+		return MNL_CB_ERROR;
+	}
+	if (mnl_attr_validate(attr, policy[type].type) < 0) {
+		D("attr type: %u POLICY, attrlen %u", type,
+		  mnl_attr_get_payload_len(attr));
+		return MNL_CB_ERROR;
+	}
+	if (policy[type].type == MNL_TYPE_NUL_STRING
+	    && mnl_attr_get_payload_len(attr) > IPSET_MAXNAMELEN)
+	    	return MNL_CB_ERROR;
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
+static int
+create_attr_cb(const struct nlattr *attr, void *data)
+{
+	return generic_data_attr_cb(attr, data,
+				    IPSET_ATTR_CREATE_MAX, create_attrs);
+}
+
+static int
+adt_attr_cb(const struct nlattr *attr, void *data)
+{
+	return generic_data_attr_cb(attr, data,
+				    IPSET_ATTR_ADT_MAX, adt_attrs);
+}
+
+static int
+ipaddr_attr_cb(const struct nlattr *attr, void *data)
+{
+	return generic_data_attr_cb(attr, data,
+				    IPSET_ATTR_IPADDR_MAX, ipaddr_attrs);
+}
 
 #define FAILURE(format, args...) \
 	{ ipset_err(session, format  , ## args); return MNL_CB_ERROR; }
@@ -469,26 +524,45 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 	attr = &attrs[type];
 	d = mnl_attr_get_payload(nla[type]);
 
-	if (attr->type == MNL_TYPE_BINARY && !attr->len) {
+	if (attr->type == MNL_TYPE_NESTED && attr->opt) {
+		/* IP addresses */
+		struct nlattr *ipattr[IPSET_ATTR_IPADDR_MAX+1] = {};
 		uint8_t family = ipset_data_family(data);
+		int atype;
+		D("attr type %u", type);
+		if (mnl_attr_parse_nested(nla[type],
+					  ipaddr_attr_cb, ipattr) < 0)
+			FAILURE("Broken kernel message, cannot validate "
+				"IP address attribute!");
 
 		/* Validate by hand */
 		switch (family) {
 		case AF_INET:
-			if (nla[type]->nla_len < sizeof(uint32_t))
+			atype = IPSET_ATTR_IPADDR_IPV4;
+			if (!ipattr[atype])
+				FAILURE("Broken kernel message: IPv4 address "
+					"expected but not received!");
+			if (ipattr[atype]->nla_len < sizeof(uint32_t))
 				FAILURE("Broken kernel message: "
-					"cannot validate IPv4 address attribute!");
+					"cannot validate IPv4 "
+					"address attribute!");
 			break;
 		case AF_INET6:
-			if (nla[type]->nla_len < sizeof(struct in6_addr))
+			atype = IPSET_ATTR_IPADDR_IPV6;
+			if (!ipattr[atype])
+				FAILURE("Broken kernel message: IPv6 address "
+					"expected but not received!");
+			if (ipattr[atype]->nla_len < sizeof(struct in6_addr))
 				FAILURE("Broken kernel message: "
-					"cannot validate IPv6 address attribute!");
+					"cannot validate IPv6 "
+					"address attribute!");
 			break;
 		default:
 			FAILURE("Broken kernel message: "
 				"IP address attribute but "
 				"family is unspecified!");
 		}
+		d = mnl_attr_get_payload(ipattr[atype]);
 	} else if (nla[type]->nla_type & NLA_F_NET_BYTEORDER) {
 		switch (attr->type) {
 		case MNL_TYPE_U32: {
@@ -744,7 +818,8 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 	for (arg = type->args[IPSET_CREATE]; arg != NULL && arg->opt; arg++) {
 		if (!arg->print
 		    || !ipset_data_test(data, arg->opt)
-		    || (arg->opt == IPSET_OPT_FAMILY && family == type->family))
+		    || (arg->opt == IPSET_OPT_FAMILY
+		        && family == type->family))
 			continue;
 		switch (session->mode) {
 		case IPSET_LIST_SAVE:
@@ -817,44 +892,6 @@ print_set_done(struct ipset_session *session)
 		break;
 	}
 	return call_outfn(session) ? MNL_CB_ERROR : MNL_CB_STOP;
-}
-
-static int
-generic_data_attr_cb(const struct nlattr *attr, void *data,
-		     int attr_max, const struct ipset_attr_policy *policy)
-{
-	const struct nlattr **tb = (const struct nlattr **)data;
-	int type = mnl_attr_get_type(attr);
-	
-	D("attr type: %u, len %u", type, attr->nla_len);
-	if (mnl_attr_type_valid(attr, attr_max) < 0) {
-		D("attr type: %u INVALID", type);
-		return MNL_CB_ERROR;
-	}
-	if (mnl_attr_validate(attr, policy[type].type) < 0) {
-		D("attr type: %u POLICY, attrlen %u", type,
-		  mnl_attr_get_payload_len(attr));
-		return MNL_CB_ERROR;
-	}
-	if (policy[type].type == MNL_TYPE_NUL_STRING
-	    && mnl_attr_get_payload_len(attr) > IPSET_MAXNAMELEN)
-	    	return MNL_CB_ERROR;
-	tb[type] = attr;
-	return MNL_CB_OK;
-}
-
-static int
-create_attr_cb(const struct nlattr *attr, void *data)
-{
-	return generic_data_attr_cb(attr, data,
-				    IPSET_ATTR_CREATE_MAX, create_attrs);
-}
-
-static int
-adt_attr_cb(const struct nlattr *attr, void *data)
-{
-	return generic_data_attr_cb(attr, data,
-				    IPSET_ATTR_ADT_MAX, adt_attrs);
 }
 
 static int
@@ -1291,7 +1328,7 @@ static size_t
 attr_len(const struct ipset_attr_policy *attr, uint8_t family, uint16_t *flags)
 {
 	switch (attr->type) {
-	case MNL_TYPE_BINARY:
+	case MNL_TYPE_NESTED:
 		if (attr->len)
 			return attr->len;
 
@@ -1325,6 +1362,19 @@ rawdata2attr(struct nlmsghdr *nlh,
 	alen = attr_len(attr, family, &flags);
 
 	switch (attr->type) {
+	case MNL_TYPE_NESTED: {
+		/* IP addresses */
+		struct nlattr *nested = mnl_attr_nest_start(nlh, type);
+		int atype = family == AF_INET ? IPSET_ATTR_IPADDR_IPV4
+					      : IPSET_ATTR_IPADDR_IPV6;
+
+		D("family: %s", family == AF_INET ? "INET" :
+				family == AF_INET6 ? "INET6" : "UNSPEC");
+		mnl_attr_put(nlh, atype | flags, alen, d);
+		mnl_attr_nest_end(nlh, nested);
+		
+		return 0;
+	}
 	case MNL_TYPE_U32: {
 		uint32_t value = htonl(*(const uint32_t *)d);
 		
@@ -1510,7 +1560,8 @@ build_msg(struct ipset_session *session, bool aggregate)
 		ADDATTR(nlh, data, IPSET_ATTR_TYPENAME, AF_INET, cmd_attrs);
 		ADDATTR_RAW(nlh, &type->revision,
 			    IPSET_ATTR_REVISION, cmd_attrs);
-		D("family: %u", ipset_data_family(data));
+		D("family: %u, type family %u",
+		  ipset_data_family(data), type->family);
 		ADDATTR(nlh, data, IPSET_ATTR_FAMILY, AF_INET, cmd_attrs);
 
 		/* Type-specific create attributes */
@@ -1568,8 +1619,10 @@ build_msg(struct ipset_session *session, bool aggregate)
 			}
 		}
 		type = ipset_data_get(data, IPSET_OPT_TYPE);
+		D("family: %u, type family %u",
+		  ipset_data_family(data), type->family);
 		open_nested(session, nlh, IPSET_ATTR_DATA);
-		addattr_adt(nlh, data, type->family);
+		addattr_adt(nlh, data, ipset_data_family(data));
 		ADDATTR_RAW(nlh, &session->lineno,
 			    IPSET_ATTR_LINENO, cmd_attrs);
 		close_nested(session, nlh);
@@ -1590,9 +1643,11 @@ build_msg(struct ipset_session *session, bool aggregate)
 				"Invalid test command: missing settype");
 		
 		type = ipset_data_get(data, IPSET_OPT_TYPE);
+		D("family: %u, type family %u",
+		  ipset_data_family(data), type->family);
 		ADDATTR_SETNAME(nlh, data);
 		open_nested(session, nlh, IPSET_ATTR_DATA);
-		addattr_adt(nlh, data, type->family);
+		addattr_adt(nlh, data, ipset_data_family(data));
 		close_nested(session, nlh);
 		break;
 	}

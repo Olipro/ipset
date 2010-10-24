@@ -23,12 +23,19 @@ typedef int (*ipset_parsefn)(struct ipset_session *s,
 
 extern int ipset_parse_ether(struct ipset_session *session,
                              enum ipset_opt opt, const char *str);
-extern int ipset_parse_single_port(struct ipset_session *session,
-				   enum ipset_opt opt, const char *str);
 extern int ipset_parse_port(struct ipset_session *session,
-                            enum ipset_opt opt, const char *str);
+			    enum ipset_opt opt, const char *str,
+			    const char *proto);
+extern int ipset_parse_tcp_port(struct ipset_session *session,
+				enum ipset_opt opt, const char *str);
+extern int ipset_parse_single_tcp_port(struct ipset_session *session,
+				       enum ipset_opt opt, const char *str);
 extern int ipset_parse_proto(struct ipset_session *session,
                              enum ipset_opt opt, const char *str);
+extern int ipset_parse_icmp(struct ipset_session *session,
+                            enum ipset_opt opt, const char *str);
+extern int ipset_parse_icmpv6(struct ipset_session *session,
+                              enum ipset_opt opt, const char *str);
 extern int ipset_parse_proto_port(struct ipset_session *session,
 				  enum ipset_opt opt, const char *str);
 extern int ipset_parse_family(struct ipset_session *session,

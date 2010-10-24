@@ -10,7 +10,7 @@
 #include <stdint.h>				/* uint32_t */
 #include <netinet/in.h>				/* struct in[6]_addr */
 
-/* The same structure to hold IP addresses as in linux/netfilter.h */
+/* The structure to hold IP addresses, same as in linux/netfilter.h */
 union nf_inet_addr {
 	uint32_t	all[4];
 	uint32_t	ip;

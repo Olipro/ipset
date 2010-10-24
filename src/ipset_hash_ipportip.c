@@ -7,6 +7,7 @@
 #include <libipset/data.h>			/* IPSET_OPT_* */
 #include <libipset/parse.h>			/* parser functions */
 #include <libipset/print.h>			/* printing functions */
+#include <libipset/ui.h>			/* ipset_port_usage */
 #include <libipset/types.h>			/* prototypes */
 
 /* Parse commandline arguments */
@@ -36,10 +37,6 @@ static const struct ipset_arg hash_ipportip_create_args[] = {
 	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "proto", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROTO,
-	  .parse = ipset_parse_proto,		.print = ipset_print_proto,
 	},
 	/* Backward compatibility */
 	{ .name = { "probes", NULL },
@@ -75,12 +72,14 @@ static const struct ipset_arg hash_ipportip_add_args[] = {
 
 static const char hash_ipportip_usage[] =
 "create SETNAME hash:ip,port,ip\n"
-"		[family inet|inet6] [proto PROTO]\n"
+"		[family inet|inet6]\n"
 "               [hashsize VALUE] [maxelem VALUE]\n"
 "               [timeout VALUE]\n"
-"add    SETNAME IP,[PROTO:]PORT,IP [timeout VALUE]\n"
-"del    SETNAME IP,[PROTO:]PORT,IP\n"
-"test   SETNAME IP,[PROTO:]PORT,IP\n";
+"add    SETNAME IP,PROTO:PORT,IP [timeout VALUE]\n"
+"del    SETNAME IP,PROTO:PORT,IP\n"
+"test   SETNAME IP,PROTO:PORT,IP\n\n"
+"where depending on the INET family\n"
+"      IP are valid IPv4 or IPv6 addresses (or hostnames),\n";
 
 struct ipset_type ipset_hash_ipportip0 = {
 	.name = "hash:ip,port,ip",
@@ -113,18 +112,20 @@ struct ipset_type ipset_hash_ipportip0 = {
 		[IPSET_CREATE] = 0,
 		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_IP2),
 		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_IP2),
 		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_IP2),
 	},
 	.full = {
 		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
 			| IPSET_FLAG(IPSET_OPT_MAXELEM)
-			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
 		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
@@ -142,4 +143,5 @@ struct ipset_type ipset_hash_ipportip0 = {
 	},
 
 	.usage = hash_ipportip_usage,
+	.usagefn = ipset_port_usage,
 };

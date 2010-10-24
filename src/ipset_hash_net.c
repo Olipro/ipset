@@ -64,7 +64,10 @@ static const char hash_net_usage[] =
 "               [timeout VALUE]\n"
 "add    SETNAME IP[/CIDR] [timeout VALUE]\n"
 "del    SETNAME IP[/CIDR]\n"
-"test   SETNAME IP[/CIDR]\n";
+"test   SETNAME IP[/CIDR]\n\n"
+"where depending on the INET family\n"
+"      IP is an IPv4 or IPv6 address (or hostname),\n"
+"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n";
 
 struct ipset_type ipset_hash_net0 = {
 	.name = "hash:net",

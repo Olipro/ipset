@@ -24,6 +24,10 @@
 
 #define UNUSED			__attribute__ ((unused))
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x)		(sizeof(x) / sizeof(*(x)))
+#endif
+
 static inline void
 in4cpy(struct in_addr *dest, const struct in_addr *src)
 {

@@ -48,7 +48,10 @@ static const char bitmap_ipmac_usage[] =
 "               [matchunset] [timeout VALUE]\n"
 "add    SETNAME IP[,MAC] [timeout VALUE]\n"
 "del    SETNAME IP[,MAC]\n"
-"test   SETNAME IP[,MAC]\n";
+"test   SETNAME IP[,MAC]\n\n"
+"where IP, FROM and TO are IPv4 addresses (or hostnames),\n"
+"      CIDR is a valid IPv4 CIDR prefix,\n"
+"      MAC is a valid MAC address.\n";
 
 struct ipset_type ipset_bitmap_ipmac0 = {
 	.name = "bitmap:ip,mac",

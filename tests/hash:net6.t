@@ -8,7 +8,7 @@
 1 ipset del test ::/0
 # Try to add /0
 1 ipset add test 1:1:1::1/0
-# Try to add /32
+# Try to add /128
 0 ipset add test 1:1:1::1/128
 # Add almost zero valued element
 0 ipset add test 0:0:0::0/1

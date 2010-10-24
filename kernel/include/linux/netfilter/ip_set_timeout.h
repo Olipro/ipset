@@ -17,7 +17,7 @@
 #define IPSET_GC_PERIOD(timeout) \
 	((timeout/3) ? min_t(u32, (timeout)/3, IPSET_GC_TIME) : 1)
 
-/* Set is defined without timeout support */
+/* Set is defined without timeout support: timeout value may be 0 */
 #define IPSET_NO_TIMEOUT	UINT_MAX
 
 #define with_timeout(timeout)	((timeout) != IPSET_NO_TIMEOUT)
@@ -27,10 +27,13 @@ ip_set_timeout_uget(struct nlattr *tb)
 {
 	unsigned int timeout = ip_set_get_h32(tb);
 
+	/* Userspace supplied TIMEOUT parameter: adjust crazy size */
 	return timeout == IPSET_NO_TIMEOUT ? IPSET_NO_TIMEOUT - 1 : timeout;
 }
 
 #ifdef IP_SET_BITMAP_TIMEOUT
+
+/* Bitmap specific timeout constants and macros for the entries */
 
 /* Bitmap entry is unset */
 #define IPSET_ELEM_UNSET	0
@@ -63,6 +66,7 @@ ip_set_timeout_set(u32 timeout)
 	
 	t = timeout * HZ + jiffies;
 	if (t == IPSET_ELEM_UNSET || t == IPSET_ELEM_PERMANENT)
+		/* Bingo! */
 		t++;
 	
 	return t;
@@ -76,19 +80,23 @@ ip_set_timeout_get(unsigned long timeout)
 
 #else
 
+/* Hash specific timeout constants and macros for the entries */
+
 /* Hash entry is set with no timeout value */
-#define IPSET_ELEM_UNSET	0
+#define IPSET_ELEM_PERMANENT	0
 
 static inline bool
 ip_set_timeout_test(unsigned long timeout)
 {
-	return timeout == IPSET_ELEM_UNSET || time_after(timeout, jiffies);
+	return timeout == IPSET_ELEM_PERMANENT
+	       || time_after(timeout, jiffies);
 }
 
 static inline bool
 ip_set_timeout_expired(unsigned long timeout)
 {
-	return timeout != IPSET_ELEM_UNSET && time_before(timeout, jiffies);
+	return timeout != IPSET_ELEM_PERMANENT
+	       && time_before(timeout, jiffies);
 }
 
 static inline unsigned long
@@ -97,10 +105,11 @@ ip_set_timeout_set(u32 timeout)
 	unsigned long t;
 	
 	if (!timeout)
-		return IPSET_ELEM_UNSET;
+		return IPSET_ELEM_PERMANENT;
 	
 	t = timeout * HZ + jiffies;
-	if (t == IPSET_ELEM_UNSET)
+	if (t == IPSET_ELEM_PERMANENT)
+		/* Bingo! :-) */
 		t++;
 	
 	return t;
@@ -109,10 +118,10 @@ ip_set_timeout_set(u32 timeout)
 static inline u32
 ip_set_timeout_get(unsigned long timeout)
 {
-	return timeout == IPSET_ELEM_UNSET ? 0 : (timeout - jiffies)/HZ;
+	return timeout == IPSET_ELEM_PERMANENT ? 0 : (timeout - jiffies)/HZ;
 }
-#endif /* IP_SET_BITMAP_TIMEOUT */
+#endif /* ! IP_SET_BITMAP_TIMEOUT */
 
 #endif	/* __KERNEL__ */
 
-#endif /*_IP_SET_TIMEOUT_H */
+#endif /* _IP_SET_TIMEOUT_H */

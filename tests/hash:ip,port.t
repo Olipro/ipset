@@ -40,8 +40,8 @@
 0 ipset flush test
 # Delete test set
 0 ipset destroy test
-# Create a set with default TCP protocol
-0 ipset create test hash:ip,port proto tcp
+# Create a set
+0 ipset create test hash:ip,port
 # Add element without specifying protocol
 0 ipset add test 2.0.0.1,80
 # Add "same" element but with UDP protocol

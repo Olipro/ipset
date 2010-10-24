@@ -12,9 +12,12 @@
 #include <sys/types.h>				/* getaddrinfo */
 #include <sys/socket.h>				/* getaddrinfo, AF_ */
 #include <net/ethernet.h>			/* ETH_ALEN */
+#include <netinet/in.h>				/* IPPROTO_ */
 
 #include <libipset/debug.h>			/* D() */
 #include <libipset/data.h>			/* IPSET_OPT_* */
+#include <libipset/icmp.h>			/* name_to_icmp */
+#include <libipset/icmpv6.h>			/* name_to_icmpv6 */
 #include <libipset/pfxlen.h>			/* prefixlen_netmask_map */
 #include <libipset/session.h>			/* ipset_err */
 #include <libipset/types.h>			/* ipset_type_get */
@@ -192,32 +195,35 @@ error:
  * Parse TCP service names or port numbers
  */
 static int
-parse_portname(struct ipset_session *session, const char *str, uint16_t *port)
+parse_portname(struct ipset_session *session, const char *str,
+	       uint16_t *port, const char *proto)
 {
 	struct servent *service;
 
-	if ((service = getservbyname(str, "tcp")) != NULL) {
+	if ((service = getservbyname(str, proto)) != NULL) {
 		*port = ntohs((uint16_t) service->s_port);
 		return 0;
 	}
 	
-	return syntax_err("cannot parse '%s' as a (TCP) port", str);
+	return syntax_err("cannot parse '%s' as a %s port", str, proto);
 }
 
 /**
- * ipset_parse_single_port - parse a single (TCP) port number or name
+ * ipset_parse_single_port - parse a single port number or name
  * @session: session structure
  * @opt: option kind of the data
  * @str: string to parse
+ * @proto: protocol
  *
- * Parse string as a single (TCP) port number or name. The parsed port
+ * Parse string as a single port number or name. The parsed port
  * number is stored in the data blob of the session.
  *
  * Returns 0 on success or a negative error code.
  */
 int
-ipset_parse_single_port(struct ipset_session *session,
-			enum ipset_opt opt, const char *str)
+ipset_parse_port(struct ipset_session *session,
+		 enum ipset_opt opt, const char *str,
+		 const char *proto)
 {
 	uint16_t port;
 	int err;
@@ -227,31 +233,31 @@ ipset_parse_single_port(struct ipset_session *session,
 	assert(str);
 
 	if ((err = string_to_u16(session, str, &port)) == 0
-	    || (err = parse_portname(session, str, &port)) == 0)
+	    || (err = parse_portname(session, str, &port, proto)) == 0)
 		err = ipset_session_data_set(session, opt, &port);
 
 	if (!err)
-		/* No error, so reset session messages! */
+		/* No error, so reset false error messages! */
 		ipset_session_report_reset(session);
 
 	return err;
 }
 
 /**
- * ipset_parse_port - parse (TCP) port name, number, or range of them
+ * ipset_parse_tcp_port - parse TCP port name, number, or range of them
  * @session: session structure
  * @opt: option kind of the data
  * @str: string to parse
  *
- * Parse string as a TCP port name or number or range of them.
+ * Parse string as a TCP port name or number or range of them
  * separated by a dash. The parsed port numbers are stored
  * in the data blob of the session.
  *
  * Returns 0 on success or a negative error code.
  */
 int
-ipset_parse_port(struct ipset_session *session,
-		 enum ipset_opt opt, const char *str)
+ipset_parse_tcp_port(struct ipset_session *session,
+		     enum ipset_opt opt, const char *str)
 {
 	char *a, *saved, *tmp;
 	int err = 0;
@@ -270,15 +276,38 @@ ipset_parse_port(struct ipset_session *session,
 	if (a != NULL) {
 		/* port-port */
 		*a++ = '\0';
-		err = ipset_parse_single_port(session, IPSET_OPT_PORT_TO, a);
+		err = ipset_parse_port(session, IPSET_OPT_PORT_TO, a, "TCP");
 		if (err)
 			goto error;
 	}
-	err = ipset_parse_single_port(session, opt, tmp);
+	err = ipset_parse_port(session, opt, tmp, "TCP");
 
 error:
 	free(saved);
 	return err;
+}
+
+/**
+ * ipset_parse_single_tcp_port - parse TCP port name or number
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string as a single TCP port name or number.
+ * The parsed port number is stored
+ * in the data blob of the session.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_parse_single_tcp_port(struct ipset_session *session,
+		     enum ipset_opt opt, const char *str)
+{
+	assert(session);
+	assert(opt == IPSET_OPT_PORT || opt == IPSET_OPT_PORT_TO);
+	assert(str);
+
+	return ipset_parse_port(session, opt, str, "TCP");
 }
 
 /**
@@ -287,9 +316,8 @@ error:
  * @opt: option kind of the data
  * @str: string to parse
  *
- * Parse string as a protocol name. "any" is supported
- * as a special protocol name for ipset itself.
- * The parsed protocol are stored in the data blob of the session.
+ * Parse string as a protocol name.
+ * The parsed protocol is stored in the data blob of the session.
  *
  * Returns 0 on success or a negative error code.
  */
@@ -297,24 +325,112 @@ int
 ipset_parse_proto(struct ipset_session *session,
 		  enum ipset_opt opt, const char *str)
 {
+	struct protoent *protoent;
 	uint8_t proto = 0;
 
 	assert(session);
 	assert(opt == IPSET_OPT_PROTO);
 	assert(str);
 	
-	if (STREQ(str, "any"))
-		proto = IPSET_IPPROTO_ANY;
-	else {
-		struct protoent *protoent = getprotobyname(str);
-		if (protoent == NULL)
-			return syntax_err("cannot parse '%s' as a protocol name", str);
-		proto = protoent->p_proto;
-	}
-	if (!proto || proto == IPSET_IPPROTO_TCPUDP)
-		return syntax_err("invalid protocol '%s'", str);
+	protoent = getprotobyname(strcasecmp(str, "icmpv6") == 0
+				  ? "ipv6-icmp" : str);
+	if (protoent == NULL)
+		return syntax_err("cannot parse '%s' "
+				  "as a protocol name", str);
+	proto = protoent->p_proto;
+	if (!proto)
+		return syntax_err("Unsupported protocol '%s'", str);
 	
 	return ipset_session_data_set(session, opt, &proto);
+}
+
+/* Parse ICMP and ICMPv6 type/code */
+static int
+parse_icmp_typecode(struct ipset_session *session,
+		    enum ipset_opt opt, const char *str,
+		    const char *family)
+{
+	uint16_t typecode;
+	uint8_t type, code;
+	char *a, *saved, *tmp;
+	int err;
+		
+	saved = tmp = strdup(str);
+	if (tmp == NULL)
+		return ipset_err(session,
+				 "Cannot allocate memory to duplicate %s.",
+				 str);
+	a = cidr_separator(tmp);
+	if (a == NULL) {
+		free(saved);
+		return ipset_err(session,
+				 "Cannot parse %s as an %s type/code.", str, family);
+	}
+	*a++ = '\0';
+	if ((err = string_to_u8(session, a, &type)) != 0
+	    || (err = string_to_u8(session, tmp, &code)) != 0)
+	    	goto error;
+		
+	typecode = (type << 8) | code;
+	err = ipset_session_data_set(session, opt, &typecode);
+
+error:
+	free(saved);
+	return err;
+}
+
+/**
+ * ipset_parse_icmp - parse an ICMP name or type/code
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string as an ICMP name or type/code numbers.
+ * The parsed ICMP type/code is stored in the data blob of the session.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_parse_icmp(struct ipset_session *session,
+		 enum ipset_opt opt, const char *str)
+{
+	uint16_t typecode;
+
+	assert(session);
+	assert(opt == IPSET_OPT_PORT);
+	assert(str);
+
+	if (name_to_icmp(str, &typecode) < 0)
+		return parse_icmp_typecode(session, opt, str, "ICMP");
+
+	return ipset_session_data_set(session, opt, &typecode);
+}
+
+/**
+ * ipset_parse_icmpv6 - parse an ICMPv6 name or type/code
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string as an ICMPv6 name or type/code numbers.
+ * The parsed ICMPv6 type/code is stored in the data blob of the session.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_parse_icmpv6(struct ipset_session *session,
+		   enum ipset_opt opt, const char *str)
+{
+	uint16_t typecode;
+
+	assert(session);
+	assert(opt == IPSET_OPT_PORT);
+	assert(str);
+
+	if (name_to_icmpv6(str, &typecode) < 0)
+		return parse_icmp_typecode(session, opt, str, "ICMPv6");
+
+	return ipset_session_data_set(session, opt, &typecode);
 }
 
 /**
@@ -334,13 +450,17 @@ int
 ipset_parse_proto_port(struct ipset_session *session,
 		       enum ipset_opt opt, const char *str)
 {
+	struct ipset_data *data;
 	char *a, *saved, *tmp;
+	const char *proto;
+	uint8_t p = IPPROTO_TCP;
 	int err = 0;
 
 	assert(session);
 	assert(opt == IPSET_OPT_PORT);
 	assert(str);
 
+	data = ipset_session_data(session);
 	saved = tmp = strdup(str);
 	if (tmp == NULL)
 		return ipset_err(session,
@@ -349,14 +469,54 @@ ipset_parse_proto_port(struct ipset_session *session,
 
 	a = proto_separator(tmp);
 	if (a != NULL) {
+		uint8_t family = ipset_data_family(data);
+
 		/* proto:port */
 		*a++ = '\0';
 		err = ipset_parse_proto(session, IPSET_OPT_PROTO, tmp);
 		if (err)
 			goto error;
-		tmp = a;
+		
+		p = *(const uint8_t *) ipset_data_get(data, IPSET_OPT_PROTO);
+		switch (p) {
+		case IPPROTO_TCP:
+			proto = tmp;
+			tmp = a;
+			goto parse_port;
+		case IPPROTO_UDP:
+			proto = tmp;
+			tmp = a;
+			goto parse_port;
+		case IPPROTO_ICMP:
+			if (family != AF_INET) {
+				syntax_err("Protocol ICMP can be used with family INET only");
+				goto error;
+			}
+			err = ipset_parse_icmp(session, opt, a);
+			break;
+		case IPPROTO_ICMPV6:
+			if (family != AF_INET6) {
+				syntax_err("Protocol ICMPv6 can be used with family INET6 only");
+				goto error;
+			}
+			err = ipset_parse_icmpv6(session, opt, a);
+			break;
+		default:
+			if (!STREQ(a, "0")) {
+				syntax_err("Protocol %s can be used with pseudo port value 0 only.");
+				goto error;
+			}
+			ipset_data_flags_set(data, IPSET_FLAG(opt));
+		}
+		goto error;
+	} else {
+		proto = "TCP";	
+		err = ipset_data_set(data, IPSET_OPT_PROTO, &p);
+		if (err)
+			goto error;
 	}
-	err = ipset_parse_single_port(session, opt, tmp);
+parse_port:
+	err = ipset_parse_port(session, opt, tmp, proto);
 
 error:
 	free(saved);
@@ -387,7 +547,8 @@ ipset_parse_family(struct ipset_session *session,
 
 	data = ipset_session_data(session);
 	if (ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_FAMILY)))
-		syntax_err("protocol family may not be specified multiple times");
+		syntax_err("protocol family may not be specified "
+			   "multiple times");
 
 	if (STREQ(str, "inet") || STREQ(str, "ipv4") || STREQ(str, "-4"))
 		family = AF_INET;
@@ -402,12 +563,13 @@ ipset_parse_family(struct ipset_session *session,
 }
 
 /*
- * Parse IPv4/IPv6 addresses, networks and ranges
+ * Parse IPv4/IPv6 addresses, networks and ranges.
  * We resolve hostnames but just the first IP address is used.
  */
  
 static struct addrinfo *
-get_addrinfo(struct ipset_session *session, const char *str, uint8_t family)
+call_getaddrinfo(struct ipset_session *session, const char *str,
+		 uint8_t family)
 {
 	struct addrinfo hints;
         struct addrinfo *res;
@@ -429,101 +591,96 @@ get_addrinfo(struct ipset_session *session, const char *str, uint8_t family)
 		return res;
 }
 
-#define GET_ADDRINFO(family, IP, f, n)					\
-static int								\
-get_addrinfo##f(struct ipset_session *session,				\
-		const char *str,					\
-        	struct addrinfo **info,					\
-		struct in##n##_addr **inaddr)				\
-{									\
-        struct addrinfo *i;						\
-	struct sockaddr_in##n saddr;					\
-        int found;							\
-									\
-	if ((*info = get_addrinfo(session, str, family)) == NULL) {	\
-		syntax_err("cannot parse %s: " IP " resolving failed",	\
-			   str);					\
-		return EINVAL;						\
-	}								\
-									\
-	for (i = *info, found = 0; i != NULL; i = i->ai_next) {		\
-		if (i->ai_family != family				\
-		    || i->ai_addrlen != sizeof(saddr))			\
-			continue;					\
-		if (found == 0) {					\
-			/* Workaround: can't cast on Sparc */		\
-			memcpy(&saddr, i->ai_addr, sizeof(saddr));	\
-			*inaddr = &saddr.sin##n##_addr;			\
-		} else if (found == 1) {				\
-			ipset_warn(session,				\
-				   "%s resolves to multiple addresses: "  \
-				   "using only the first one returned by the resolver", \
-				   str);				\
-		}							\
-		found++;						\
-	}								\
-	if (found == 0)							\
-		return syntax_err("cannot parse %s: "			\
-				  IP "address could not be resolved",	\
-				  str);					\
-	return 0;							\
+static int
+get_addrinfo(struct ipset_session *session,
+	     enum ipset_opt opt,
+	     const char *str,
+	     struct addrinfo **info,
+	     uint8_t family)
+{
+        struct addrinfo *i;
+	size_t addrlen = family == AF_INET ? sizeof(struct sockaddr_in)
+					   : sizeof(struct sockaddr_in6);
+        int found, err = 0;
+
+	if ((*info = call_getaddrinfo(session, str, family)) == NULL) {
+		syntax_err("cannot parse %s: resolving to %s address failed",
+			   str, family == AF_INET ? "IPv4" : "IPv6");
+		return EINVAL;
+	}
+
+	for (i = *info, found = 0; i != NULL; i = i->ai_next) {
+		if (i->ai_family != family || i->ai_addrlen != addrlen)
+			continue;
+		if (found == 0) {
+			if (family == AF_INET) {
+				err = ipset_session_data_set(session, opt,
+					&((const struct sockaddr_in *)i->ai_addr)->sin_addr);
+			} else {
+				err = ipset_session_data_set(session, opt, 
+					&((const struct sockaddr_in6 *)i->ai_addr)->sin6_addr);
+			}
+		} else if (found == 1) {
+			ipset_warn(session,
+				   "%s resolves to multiple addresses: "
+				   "using only the first one returned "
+				   "by the resolver",
+				   str);
+		}
+		found++;
+	}
+	if (found == 0)
+		return syntax_err("cannot parse %s: "
+				  "%s address could not be resolved",
+				  str, family == AF_INET ? "IPv4" : "IPv6");
+	return err;
 }
 
-#define PARSE_IP(mask, f, n)						\
-static int								\
-parse_ipv##f(struct ipset_session *session,				\
-	     enum ipset_opt opt, const char *str) 			\
-{									\
-        uint8_t m = mask;						\
-        int aerr = EINVAL, err = 0, range = 0;				\
-        char *saved = strdup(str);					\
-        char *a, *tmp = saved;						\
-        struct addrinfo *info;						\
-        struct in##n##_addr *inaddr;					\
-        struct ipset_data *data = ipset_session_data(session);		\
-        enum ipset_opt copt = opt == IPSET_OPT_IP ? IPSET_OPT_CIDR	\
-        			: IPSET_OPT_CIDR2;			\
-									\
-	if (tmp == NULL)						\
-		return ipset_err(session,				\
-				 "Cannot allocate memory to duplicate %s.",\
-				 str);					\
-	if ((a = cidr_separator(tmp)) != NULL) {			\
-		/* IP/mask */						\
-		*a++ = '\0';						\
-									\
-		if ((err = string_to_cidr(session, a, 0, m, &m)) != 0	\
-		    || (err = ipset_data_set(data, copt, &m)) != 0)	\
-			goto out;					\
-	} else if ((a = range_separator(tmp)) != NULL) {		\
-		/* IP-IP */						\
-		*a++ = '\0';						\
-		D("range %s", a);					\
-		range++;						\
-	}								\
-	if ((aerr = get_addrinfo##f(session, tmp, &info, &inaddr)) != 0	\
-	    || (err = ipset_data_set(data, opt, inaddr)) != 0		\
-	    || !range)							\
-		goto out;						\
-	freeaddrinfo(info);						\
-	if ((aerr = get_addrinfo##f(session, a, &info, &inaddr)) == 0)	\
-		err = ipset_data_set(data, IPSET_OPT_IP_TO, inaddr);	\
-									\
-out:									\
-	if (aerr != EINVAL)						\
-		/* getaddrinfo not failed */				\
-		freeaddrinfo(info);					\
-	else if (aerr)							\
-		err = -1;						\
-	free(saved);							\
-	return err;							\
+static int
+parse_ipaddr(struct ipset_session *session,
+	     enum ipset_opt opt, const char *str,
+	     uint8_t family)
+{
+        uint8_t m = family == AF_INET ? 32 : 128;
+        int aerr = EINVAL, err = 0, range = 0;
+        char *saved = strdup(str);
+        char *a, *tmp = saved;
+        struct addrinfo *info;
+        enum ipset_opt copt = opt == IPSET_OPT_IP ? IPSET_OPT_CIDR
+        			: IPSET_OPT_CIDR2;
+
+	if (tmp == NULL)
+		return ipset_err(session,
+				 "Cannot allocate memory to duplicate %s.",
+				 str);
+	if ((a = cidr_separator(tmp)) != NULL) {
+		/* IP/mask */
+		*a++ = '\0';
+
+		if ((err = string_to_cidr(session, a, 0, m, &m)) != 0
+		    || (err = ipset_session_data_set(session, copt, &m)) != 0)
+			goto out;
+	} else if ((a = range_separator(tmp)) != NULL) {
+		/* IP-IP */
+		*a++ = '\0';
+		D("range %s", a);
+		range++;
+	}
+	if ((aerr = get_addrinfo(session, opt, tmp, &info, family)) != 0
+	    || !range)
+		goto out;
+	freeaddrinfo(info);
+	aerr = get_addrinfo(session, IPSET_OPT_IP_TO, a, &info, family);
+
+out:
+	if (aerr != EINVAL)
+		/* getaddrinfo not failed */
+		freeaddrinfo(info);
+	else if (aerr)
+		err = -1;
+	free(saved);
+	return err;
 } 
-
-GET_ADDRINFO(AF_INET, "IPv4", 4, )
-PARSE_IP(32, 4, )
-
-GET_ADDRINFO(AF_INET6, "IPv6", 6, 6)
-PARSE_IP(128, 6, 6)
 
 enum ipaddr_type {
 	IPADDR_ANY,
@@ -536,7 +693,6 @@ static int
 parse_ip(struct ipset_session *session,
 	 enum ipset_opt opt, const char *str, enum ipaddr_type addrtype)
 {
-	int err = 0;
 	struct ipset_data *data = ipset_session_data(session);
 	uint8_t family = ipset_data_family(data);
 
@@ -566,12 +722,7 @@ parse_ip(struct ipset_session *session,
 		break;
 	}
 
-	if (family == AF_INET)
-		err = parse_ipv4(session, opt, str);
-	else
-		err = parse_ipv6(session, opt, str);
-
-	return err;
+	return parse_ipaddr(session, opt, str, family);
 }
 
 /**

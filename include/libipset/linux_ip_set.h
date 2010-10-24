@@ -52,7 +52,7 @@ enum {
 	IPSET_ATTR_PROTOCOL,	/* 1: Protocol version */
 	IPSET_ATTR_SETNAME,	/* 2: Name of the set */
 	IPSET_ATTR_TYPENAME,	/* 3: Typename */
-	IPSET_ATTR_SETNAME2 = IPSET_ATTR_TYPENAME, /* rename/swap */
+	IPSET_ATTR_SETNAME2 = IPSET_ATTR_TYPENAME, /* Setname at rename/swap */
 	IPSET_ATTR_REVISION,	/* 4: Settype revision */
 	IPSET_ATTR_FAMILY,	/* 5: Settype family */
 	IPSET_ATTR_FLAGS,	/* 6: Flags at command level */
@@ -77,7 +77,7 @@ enum {
 	IPSET_ATTR_TIMEOUT,	/* 6 */
 	IPSET_ATTR_PROTO,	/* 7 */
 	IPSET_ATTR_CADT_FLAGS,	/* 8 */
-	IPSET_ATTR_CADT_LINENO = IPSET_ATTR_LINENO,
+	IPSET_ATTR_CADT_LINENO = IPSET_ATTR_LINENO,	/* 9 */
 	/* Reserve empty slots */
 	IPSET_ATTR_CADT_MAX = 16,
 	/* Create-only specific attributes */
@@ -108,6 +108,14 @@ enum {
 };
 #define IPSET_ATTR_ADT_MAX	(__IPSET_ATTR_ADT_MAX - 1)
 
+/* IP specific attributes */
+enum {
+	IPSET_ATTR_IPADDR_IPV4 = IPSET_ATTR_UNSPEC + 1,
+	IPSET_ATTR_IPADDR_IPV6,
+	__IPSET_ATTR_IPADDR_MAX,
+};
+#define IPSET_ATTR_IPADDR_MAX	(__IPSET_ATTR_IPADDR_MAX - 1)
+
 /* Error codes */
 enum ipset_errno {
 	IPSET_ERR_PRIVATE = 128,
@@ -123,16 +131,20 @@ enum ipset_errno {
 	IPSET_ERR_INVALID_FAMILY,
 	IPSET_ERR_TIMEOUT,
 	IPSET_ERR_REFERENCED,
+	IPSET_ERR_IPADDR_IPV4,
+	IPSET_ERR_IPADDR_IPV6,
 
 	/* Type specific error codes */
 	IPSET_ERR_TYPE_SPECIFIC = 160,
 };
 
+/* Flags at command level */
 enum ipset_cmd_flags {
 	IPSET_FLAG_BIT_EXIST	= 0,
 	IPSET_FLAG_EXIST	= (1 << IPSET_FLAG_BIT_EXIST),
 };
 
+/* Flags at CADT attribute level */
 enum ipset_cadt_flags {
 	IPSET_FLAG_BIT_BEFORE	= 0,
 	IPSET_FLAG_BEFORE	= (1 << IPSET_FLAG_BIT_BEFORE),
@@ -147,8 +159,5 @@ enum ipset_adt {
 	IPSET_CREATE = IPSET_ADT_MAX,
 	IPSET_CADT_MAX,
 };
-
-#define IPSET_IPPROTO_ANY	255
-#define IPSET_IPPROTO_TCPUDP	254
 
 #endif /* __IP_SET_H */

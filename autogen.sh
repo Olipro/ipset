@@ -1,18 +1,5 @@
 #!/bin/sh
 
-run ()
-{
-    echo "running: $*"
-    eval $*
-
-    if test $? != 0 ; then
-	echo "error: while running '$*'"
-	exit 1
-    fi
-}
-
-run aclocal
-run autoheader
-run libtoolize -f
-run automake -a
-run autoconf
+mkdir -p m4
+autoreconf -fi
+rm -rf autom4te.cache

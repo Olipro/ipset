@@ -11,10 +11,11 @@
 
 struct ipset_session;
 
+/* Kernel error code to message table */
 struct ipset_errcode_table {
-	int errcode;
-	enum ipset_cmd cmd;
-	const char *message;
+	int errcode;				/* error code returned by the kernel */
+	enum ipset_cmd cmd;			/* issued command */
+	const char *message;			/* error message the code translated to */
 };
 
 extern int ipset_errcode(struct ipset_session *session, enum ipset_cmd cmd,

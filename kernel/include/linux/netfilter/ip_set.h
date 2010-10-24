@@ -52,7 +52,7 @@ enum {
 	IPSET_ATTR_PROTOCOL,	/* 1: Protocol version */
 	IPSET_ATTR_SETNAME,	/* 2: Name of the set */
 	IPSET_ATTR_TYPENAME,	/* 3: Typename */
-	IPSET_ATTR_SETNAME2 = IPSET_ATTR_TYPENAME, /* rename/swap */
+	IPSET_ATTR_SETNAME2 = IPSET_ATTR_TYPENAME, /* Setname at rename/swap */
 	IPSET_ATTR_REVISION,	/* 4: Settype revision */
 	IPSET_ATTR_FAMILY,	/* 5: Settype family */
 	IPSET_ATTR_FLAGS,	/* 6: Flags at command level */
@@ -77,7 +77,7 @@ enum {
 	IPSET_ATTR_TIMEOUT,	/* 6 */
 	IPSET_ATTR_PROTO,	/* 7 */
 	IPSET_ATTR_CADT_FLAGS,	/* 8 */
-	IPSET_ATTR_CADT_LINENO = IPSET_ATTR_LINENO,
+	IPSET_ATTR_CADT_LINENO = IPSET_ATTR_LINENO,	/* 9 */
 	/* Reserve empty slots */
 	IPSET_ATTR_CADT_MAX = 16,
 	/* Create-only specific attributes */
@@ -108,6 +108,14 @@ enum {
 };
 #define IPSET_ATTR_ADT_MAX	(__IPSET_ATTR_ADT_MAX - 1)
 
+/* IP specific attributes */
+enum {
+	IPSET_ATTR_IPADDR_IPV4 = IPSET_ATTR_UNSPEC + 1,
+	IPSET_ATTR_IPADDR_IPV6,
+	__IPSET_ATTR_IPADDR_MAX,
+};
+#define IPSET_ATTR_IPADDR_MAX	(__IPSET_ATTR_IPADDR_MAX - 1)
+
 /* Error codes */
 enum ipset_errno {
 	IPSET_ERR_PRIVATE = 128,
@@ -123,16 +131,20 @@ enum ipset_errno {
 	IPSET_ERR_INVALID_FAMILY,
 	IPSET_ERR_TIMEOUT,
 	IPSET_ERR_REFERENCED,
+	IPSET_ERR_IPADDR_IPV4,
+	IPSET_ERR_IPADDR_IPV6,
 
 	/* Type specific error codes */
 	IPSET_ERR_TYPE_SPECIFIC = 160,
 };
 
+/* Flags at command level */
 enum ipset_cmd_flags {
 	IPSET_FLAG_BIT_EXIST	= 0,
 	IPSET_FLAG_EXIST	= (1 << IPSET_FLAG_BIT_EXIST),
 };
 
+/* Flags at CADT attribute level */
 enum ipset_cadt_flags {
 	IPSET_FLAG_BIT_BEFORE	= 0,
 	IPSET_FLAG_BEFORE	= (1 << IPSET_FLAG_BIT_BEFORE),
@@ -147,9 +159,6 @@ enum ipset_adt {
 	IPSET_CREATE = IPSET_ADT_MAX,
 	IPSET_CADT_MAX,
 };
-
-#define IPSET_IPPROTO_ANY	255
-#define IPSET_IPPROTO_TCPUDP	254
 
 #ifdef __KERNEL__
 #include <linux/ip.h>
@@ -196,7 +205,8 @@ enum ip_set_feature {
 	IPSET_TYPE_IP2 = (1 << IPSET_TYPE_IP2_FLAG),
 	IPSET_TYPE_NAME_FLAG = 4,
 	IPSET_TYPE_NAME = (1 << IPSET_TYPE_NAME_FLAG),
-	/* Actually just a flag for dumping */
+	/* Strictly speaking not a feature, but a flag for dumping:
+	 * this settype must be dumped last */
 	IPSET_DUMP_LAST_FLAG = 7,
 	IPSET_DUMP_LAST = (1 << IPSET_DUMP_LAST_FLAG),
 };
@@ -223,7 +233,7 @@ struct ip_set_type_variant {
 	int (*uadt)(struct ip_set *set, struct nlattr *head, int len,
 		    enum ipset_adt adt, u32 *lineno, u32 flags);
 
-	/* Low level add/del/test entries */
+	/* Low level add/del/test functions */
 	ipset_adtfn adt[IPSET_ADT_MAX];
 
 	/* When adding entries and set is full, try to resize the set */
@@ -241,7 +251,7 @@ struct ip_set_type_variant {
 		    struct netlink_callback *cb);
 
 	/* Return true if "b" set is the same as "a"
-	 * according to the set parameters */
+	 * according to the create set parameters */
 	bool (*same_set)(const struct ip_set *a, const struct ip_set *b);
 };
 
@@ -285,7 +295,7 @@ struct ip_set {
 	const struct ip_set_type *type;
 	/* The type variant doing the real job */
 	const struct ip_set_type_variant *variant;
-	/* The actual INET family */
+	/* The actual INET family of the set */
 	u8 family;
 	/* The type specific data */
 	void *data;
@@ -340,6 +350,7 @@ ip_set_free(void *members)
 		kfree(members);
 }
 
+/* Ignore IPSET_ERR_EXIST errors if asked to do so? */
 static inline bool
 ip_set_eexist(int ret, u32 flags)
 {
@@ -379,6 +390,52 @@ ip_set_get_n16(const struct nlattr *attr)
 	return attr->nla_type & NLA_F_NET_BYTEORDER ? value : htons(value);
 }
 
+static const struct nla_policy
+ipaddr_policy[IPSET_ATTR_IPADDR_MAX + 1] __read_mostly = {
+	[IPSET_ATTR_IPADDR_IPV4]	= { .type = NLA_U32 },
+	[IPSET_ATTR_IPADDR_IPV6]	= { .type = NLA_BINARY,
+					    .len = sizeof(struct in6_addr) },
+};
+
+static inline int
+ip_set_get_ipaddr4(struct nlattr *attr[], int type, u32 *ipaddr)
+{
+	struct nlattr *tb[IPSET_ATTR_IPADDR_MAX+1] = {};
+
+	if (!attr[type])
+		return -IPSET_ERR_PROTOCOL;
+
+	if (nla_parse(tb, IPSET_ATTR_IPADDR_MAX,
+		      nla_data(attr[type]), nla_len(attr[type]),
+		      ipaddr_policy))
+		return -IPSET_ERR_PROTOCOL;
+	if (!tb[IPSET_ATTR_IPADDR_IPV4])
+		return -IPSET_ERR_IPADDR_IPV4;
+	
+	*ipaddr = ip_set_get_n32(tb[IPSET_ATTR_IPADDR_IPV4]);
+	return 0;
+}
+
+static inline int
+ip_set_get_ipaddr6(struct nlattr *attr[], int type, union nf_inet_addr *ipaddr)
+{
+	struct nlattr *tb[IPSET_ATTR_IPADDR_MAX+1] = {};
+
+	if (!attr[type])
+		return -IPSET_ERR_PROTOCOL;
+
+	if (nla_parse(tb, IPSET_ATTR_IPADDR_MAX,
+		      nla_data(attr[type]), nla_len(attr[type]),
+		      ipaddr_policy))
+		return -IPSET_ERR_PROTOCOL;
+	if (!tb[IPSET_ATTR_IPADDR_IPV6])
+		return -IPSET_ERR_IPADDR_IPV6;
+
+	memcpy(ipaddr, nla_data(tb[IPSET_ATTR_IPADDR_IPV6]),
+		sizeof(struct in6_addr));
+	return 0;
+}
+
 #define ipset_nest_start(skb, attr) nla_nest_start(skb, attr | NLA_F_NESTED)
 #define ipset_nest_end(skb, start)  nla_nest_end(skb, start)	
 
@@ -387,6 +444,27 @@ ip_set_get_n16(const struct nlattr *attr)
 
 #define NLA_PUT_NET16(skb, type, value)	\
 	NLA_PUT_BE16(skb, type | NLA_F_NET_BYTEORDER, value)
+
+#define NLA_PUT_IPADDR4(skb, type, ipaddr)			\
+do {								\
+	struct nlattr *__nested = ipset_nest_start(skb, type);	\
+								\
+	if (!__nested)						\
+		goto nla_put_failure;				\
+	NLA_PUT_NET32(skb, IPSET_ATTR_IPADDR_IPV4, ipaddr);	\
+	ipset_nest_end(skb, __nested);				\
+} while (0)
+
+#define NLA_PUT_IPADDR6(skb, type, ipaddrptr)			\
+do {								\
+	struct nlattr *__nested = ipset_nest_start(skb, type);	\
+								\
+	if (!__nested)						\
+		goto nla_put_failure;				\
+	NLA_PUT(skb, IPSET_ATTR_IPADDR_IPV6,			\
+		sizeof(struct in6_addr), ipaddrptr);		\
+	ipset_nest_end(skb, __nested);				\
+} while (0)
 
 /* Get address from skbuff */
 static inline u32

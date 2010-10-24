@@ -41,7 +41,7 @@ start)
 	../src/ipset a ip1 $IP1 2>/dev/null
 	../src/ipset n ip2 hash:ip $family 2>/dev/null
 	../src/ipset a ip2 $IP2 2>/dev/null
-	../src/ipset n ipport hash:ip,port $family proto any 2>/dev/null
+	../src/ipset n ipport hash:ip,port $family 2>/dev/null
 	../src/ipset n list list:set 2>/dev/null
 	../src/ipset a list ipport 2>/dev/null
 	../src/ipset a list ip1 2>/dev/null

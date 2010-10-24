@@ -31,6 +31,7 @@ struct ipset_data {
 	uint64_t ignored;
 	/* Setname  */
 	char setname[IPSET_MAXNAMELEN];
+	/* Set type */
 	const struct ipset_type *type;
 	/* Common CADT options */
 	uint8_t cidr;
@@ -161,7 +162,7 @@ do {						\
 /**
  * ipset_data_ignored - test and set ignored bits in the data blob
  * @data: data blob
- * @flags: the option flags which is ignored
+ * @flags: the option flag to be ignored
  *
  * Returns true if the option was not already ignored.
  */
@@ -205,6 +206,7 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		break;
 	case IPSET_OPT_FAMILY:
 		data->family = *(const uint8_t *) value;
+		D("family set to %u", data->family);
 		break;
 	/* CADT options */
 	case IPSET_OPT_IP:
@@ -263,7 +265,8 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		break;
 	/* Create-specific options, type */
 	case IPSET_OPT_TYPENAME:
-		ipset_strncpy(data->u.create.typename, value, IPSET_MAXNAMELEN);
+		ipset_strncpy(data->u.create.typename, value,
+			      IPSET_MAXNAMELEN);
 		break;
 	case IPSET_OPT_REVISION:
 		data->u.create.revision = *(const uint8_t *) value;
@@ -332,7 +335,7 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 	assert(data);
 	assert(opt != IPSET_OPT_NONE);
 	
-	if (opt != IPSET_OPT_TYPENAME && !ipset_data_test(data, opt))
+	if (!(opt == IPSET_OPT_TYPENAME || ipset_data_test(data, opt)))
 		return NULL;
 
 	switch (opt) {
@@ -418,11 +421,11 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 }
 
 /**
- * ipset_data_sizeof - calculates the size for the type of data
+ * ipset_data_sizeof - calculates the size of the data type
  * @opt: option kind of the data
  * @family: INET family
  *
- * Returns the size required to store the given option kind.
+ * Returns the size required to store the given data type.
  */
 size_t
 ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
@@ -502,7 +505,7 @@ ipset_data_family(const struct ipset_data *data)
  * @data: data blob
  *
  * Return the value of IPSET_OPT_CIDR stored in the data blob.
- * If it is not set, the the returned value corresponds to
+ * If it is not set, then the returned value corresponds to
  * the default one according to the family type or zero.
  */
 uint8_t

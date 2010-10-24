@@ -32,7 +32,8 @@ static const struct ipset_errcode_table core_errcode_table[] = {
 	{ IPSET_ERR_FIND_TYPE, 0,
 	  "Kernel error received: set type does not supported" },
 	{ IPSET_ERR_MAX_SETS, 0,
-	  "Kernel error received: maximal number of sets reached, cannot create more." },
+	  "Kernel error received: maximal number of sets reached, "
+	  "cannot create more." },
 	{ IPSET_ERR_INVALID_NETMASK, 0,
 	  "The value of the netmask parameter is invalid" },
 	{ IPSET_ERR_INVALID_FAMILY, 0,
@@ -63,6 +64,10 @@ static const struct ipset_errcode_table core_errcode_table[] = {
 	  "The value of the CIDR parameter of the IP address is invalid" },
 	{ IPSET_ERR_TIMEOUT, 0,
 	  "Timeout cannot be used: set was created without timeout support" },
+	{ IPSET_ERR_IPADDR_IPV4, 0,
+	  "An IPv4 address is expected, but not received" },
+	{ IPSET_ERR_IPADDR_IPV6, 0,
+	  "An IPv6 address is expected, but not received" },
 	  
 	/* ADD specific error codes */
 	{ IPSET_ERR_EXIST, IPSET_CMD_ADD,
@@ -119,23 +124,25 @@ static const struct ipset_errcode_table list_errcode_table[] = {
 	{ IPSET_ERR_BEFORE, 0,
 	  "No reference set specified." },
 	{ IPSET_ERR_NAMEREF, 0,
-	  "The set to which you referred with 'before' or 'after' does not exist." },
+	  "The set to which you referred with 'before' or 'after' "
+	  "does not exist." },
 	{ IPSET_ERR_LIST_FULL, 0,
 	  "The set is full, more elements cannot be added." },
 	{ IPSET_ERR_REF_EXIST, 0,
-	  "The set to which you referred with 'before' or 'after' is not added to the set." },
+	  "The set to which you referred with 'before' or 'after' "
+	  "is not added to the set." },
 	{ },
 };
 
 #define MATCH_TYPENAME(a, b)	STRNEQ(a, b, strlen(b))
 
 /**
- * ipset_errcode - interpret an error code
+ * ipset_errcode - interpret a kernel error code
  * @session: session structure
  * @errcode: errcode
  *
  * Find the error code and print the appropriate
- * error message.
+ * error message into the error buffer.
  *
  * Returns -1.
  */
@@ -182,5 +189,6 @@ retry:
 				 strerror(errcode));
 	else
 		return ipset_err(session,
-				 "Undecoded error %u received from kernel", errcode);
+				 "Undecoded error %u received from kernel",
+				 errcode);
 }

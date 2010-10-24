@@ -1,12 +1,14 @@
 #!/bin/bash
 
+# set -x
+
 tests="init"
 tests="$tests ipmap bitmap:ip"
 tests="$tests macipmap portmap"
 tests="$tests iphash hash:ip hash:ip6"
 tests="$tests ipporthash hash:ip,port hash:ip6,port"
 tests="$tests ipportiphash hash:ip,port,ip hash:ip6,port,ip6"
-tests="$tests nethash hash:net hash:net6"
+tests="$tests nethash hash:net hash:net6 hash:net,port hash:net6,port"
 tests="$tests setlist"
 tests="$tests iptree iptreemap"
 
@@ -20,7 +22,7 @@ add_tests() {
 		add=match_target6
 	fi
 	line="`dmesg | tail -1 | cut -d " " -f 2-`"
-	if [ ! -e /var/log/kern.log -o -z "`grep \"$line\" /var/log/kern.log`" ]; then
+	if [ ! -e /var/log/kern.log -o -z "`grep -F \"$line\" /var/log/kern.log`" ]; then
 		echo "The destination for kernel log is not /var/log/kern.log, skipping $1 match and target tests"
 		return
 	fi

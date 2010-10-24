@@ -7,6 +7,8 @@
 #ifndef LIBIPSET_UI_H
 #define LIBIPSET_UI_H
 
+#include <libipset/linux_ip_set.h>		/* enum ipset_cmd */
+
 /* Commands in userspace */
 struct ipset_commands {
 	enum ipset_cmd cmd;
@@ -37,5 +39,6 @@ extern bool ipset_match_cmd(const char *arg, const char * const name[]);
 extern bool ipset_match_option(const char *arg, const char * const name[]);
 extern bool ipset_match_envopt(const char *arg, const char * const name[]);
 extern void ipset_shift_argv(int *argc, char *argv[], int from);
+extern void ipset_port_usage(void);
 
 #endif /* LIBIPSET_UI_H */

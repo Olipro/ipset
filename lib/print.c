@@ -15,6 +15,8 @@
 
 #include <libipset/debug.h>			/* D() */
 #include <libipset/data.h>			/* ipset_data_* */
+#include <libipset/icmp.h>			/* icmp_to_name */
+#include <libipset/icmpv6.h>			/* icmpv6_to_name */
 #include <libipset/parse.h>			/* IPSET_*_SEPARATOR */
 #include <libipset/types.h>			/* ipset set types */
 #include <libipset/session.h>			/* IPSET_FLAG_ */
@@ -463,14 +465,78 @@ ipset_print_proto(char *buf, unsigned int len,
 	proto = *(const uint8_t *) ipset_data_get(data, IPSET_OPT_PROTO);
 	assert(proto);
 	
-	if (proto == IPSET_IPPROTO_ANY)
-		return snprintf(buf, len, "any");
 	protoent = getprotobynumber(proto);
 	if (protoent)
 		return snprintf(buf, len, "%s", protoent->p_name);
 
 	/* Should not happen */	
 	return snprintf(buf, len, "%u", proto);
+}
+
+/**
+ * ipset_print_icmp - print ICMP code name or type/code
+ * @buf: printing buffer
+ * @len: length of available buffer space
+ * @data: data blob
+ * @opt: the option kind
+ * @env: environment flags
+ *
+ * Print ICMP code name or type/code name to output buffer.
+ *
+ * Return lenght of printed string or error size.
+ */
+int
+ipset_print_icmp(char *buf, unsigned int len,
+		 const struct ipset_data *data, enum ipset_opt opt,
+		 uint8_t env UNUSED)
+{
+	const char *name;
+	uint16_t typecode;
+
+	assert(buf);
+	assert(len > 0);
+	assert(data);
+	assert(opt == IPSET_OPT_PORT);
+
+	typecode = *(const uint16_t *) ipset_data_get(data, IPSET_OPT_PORT);
+	name = icmp_to_name(typecode >> 8, typecode & 0xFF);
+	if (name != NULL)
+		return snprintf(buf, len, "%s", name);
+	else
+		return snprintf(buf, len, "%u/%u", typecode >> 8, typecode & 0xFF);
+}
+
+/**
+ * ipset_print_icmpv6 - print ICMPv6 code name or type/code
+ * @buf: printing buffer
+ * @len: length of available buffer space
+ * @data: data blob
+ * @opt: the option kind
+ * @env: environment flags
+ *
+ * Print ICMPv6 code name or type/code name to output buffer.
+ *
+ * Return lenght of printed string or error size.
+ */
+int
+ipset_print_icmpv6(char *buf, unsigned int len,
+		   const struct ipset_data *data, enum ipset_opt opt,
+		   uint8_t env UNUSED)
+{
+	const char *name;
+	uint16_t typecode;
+
+	assert(buf);
+	assert(len > 0);
+	assert(data);
+	assert(opt == IPSET_OPT_PORT);
+
+	typecode = *(const uint16_t *) ipset_data_get(data, IPSET_OPT_PORT);
+	name = icmpv6_to_name(typecode >> 8, typecode & 0xFF);
+	if (name != NULL)
+		return snprintf(buf, len, "%s", name);
+	else
+		return snprintf(buf, len, "%u/%u", typecode >> 8, typecode & 0xFF);
 }
 
 /**
@@ -498,14 +564,33 @@ ipset_print_proto_port(char *buf, unsigned int len,
 	assert(opt == IPSET_OPT_PORT);
 
 	if (ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_PROTO))) {
+		uint8_t proto = *(const uint8_t *) ipset_data_get(data, 
+								  IPSET_OPT_PROTO);
 		size = ipset_print_proto(buf, len, data, IPSET_OPT_PROTO, env);
 		SNPRINTF_FAILURE(size, len, offset);
 		if (len < 2)
 			return -ENOSPC;
-		strcat(buf, ":");
-		SNPRINTF_FAILURE(1, len, offset);
+		size = snprintf(buf + offset, len, IPSET_PROTO_SEPARATOR);
+		SNPRINTF_FAILURE(size, len, offset);
+
+		switch (proto) {
+		case IPPROTO_TCP:
+		case IPPROTO_UDP:
+			break;
+		case IPPROTO_ICMP:
+			return ipset_print_icmp(buf + offset, len, data,
+						IPSET_OPT_PORT, env);
+		case IPPROTO_ICMPV6:
+			return ipset_print_icmpv6(buf + offset, len, data,
+						  IPSET_OPT_PORT, env);
+		default:
+			break;
+		}
 	}
-	return ipset_print_port(buf + offset, len, data, IPSET_OPT_PORT, env);
+	size = ipset_print_port(buf + offset, len, data, IPSET_OPT_PORT, env);
+	SNPRINTF_FAILURE(size, len, offset);
+	
+	return offset;
 }
 
 #define print_second(data)	\

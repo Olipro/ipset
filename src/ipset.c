@@ -38,10 +38,10 @@ extern struct ipset_type ipset_bitmap_ipmac0;
 extern struct ipset_type ipset_bitmap_port0;
 extern struct ipset_type ipset_hash_ip0;
 extern struct ipset_type ipset_hash_net0;
+extern struct ipset_type ipset_hash_netport0;
 extern struct ipset_type ipset_hash_ipport0;
 extern struct ipset_type ipset_hash_ipportip0;
 extern struct ipset_type ipset_hash_ipportnet0;
-extern struct ipset_type ipset_tree_ip0;
 extern struct ipset_type ipset_list_set0;
 
 enum exittype {
@@ -213,7 +213,8 @@ call_parser(int *argc, char *argv[], const struct ipset_arg *args)
 		goto done;
 	for (arg = args; arg->opt; arg++) {
 		for (i = 1; i < *argc; ) {
-			D("argc: %u, i: %u: %s vs %s", *argc, i, argv[i], arg->name[0]);
+			D("argc: %u, i: %u: %s vs %s",
+			  *argc, i, argv[i], arg->name[0]);
 			if (!(ipset_match_option(argv[i], arg->name))) {
 				i++;
 				continue;
@@ -227,7 +228,8 @@ call_parser(int *argc, char *argv[], const struct ipset_arg *args)
 			case IPSET_MANDATORY_ARG:
 				if (i + 1 > *argc)
 					return exit_error(PARAMETER_PROBLEM,
-						"Missing mandatory argument of option `%s'",
+						"Missing mandatory argument "
+						"of option `%s'",
 						arg->name[0]);
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
@@ -276,7 +278,8 @@ check_mandatory(const struct ipset_type *type, int cmd)
 		return;
 	if (!arg) {
 		exit_error(OTHER_PROBLEM,
-			"There are missing mandatory flags but can't check them. "
+			"There are missing mandatory flags "
+			"but can't check them. "
 			"It's a bug, please report the problem.");
 		return;
 	}
@@ -354,7 +357,8 @@ parse_commandline(int argc, char *argv[])
 			case IPSET_MANDATORY_ARG:
 				if (i + 1 > argc)
 					return exit_error(PARAMETER_PROBLEM,
-						"Missing mandatory argument to option %s",
+						"Missing mandatory argument "
+						"to option %s",
 						opt->name[0]);
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
@@ -392,10 +396,13 @@ parse_commandline(int argc, char *argv[])
 			    	|| command->cmd == IPSET_CMD_VERSION
 			    	|| command->cmd == IPSET_CMD_HELP))
 				return exit_error(PARAMETER_PROBLEM,
-					"Command `%s' is invalid in restore mode.",
+					"Command `%s' is invalid "
+					"in restore mode.",
 					command->name[0]);
-				if (interactive && command->cmd == IPSET_CMD_RESTORE) {
-					printf("Restore command ignored in interactive mode\n");
+				if (interactive
+				    && command->cmd == IPSET_CMD_RESTORE) {
+					printf("Restore command ignored "
+					       "in interactive mode\n");
 				return 0;
 			}
 
@@ -407,7 +414,8 @@ parse_commandline(int argc, char *argv[])
 			case IPSET_MANDATORY_ARG2:
 				if (i + 1 > argc)
 					return exit_error(PARAMETER_PROBLEM,
-						"Missing mandatory argument to command %s",
+						"Missing mandatory argument "
+						"to command %s",
 						command->name[0]);
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
@@ -422,7 +430,8 @@ parse_commandline(int argc, char *argv[])
 			if (command->has_arg == IPSET_MANDATORY_ARG2) {
 				if (i + 1 > argc)
 					return exit_error(PARAMETER_PROBLEM,
-						"Missing second mandatory argument to command %s",
+						"Missing second mandatory "
+						"argument to command %s",
 						command->name[0]);
 				arg1 = argv[i];
 				/* Shift off second arg */
@@ -460,7 +469,8 @@ parse_commandline(int argc, char *argv[])
 		}
 		if (argc > 1)
 			return exit_error(PARAMETER_PROBLEM,
-				"No command specified: unknown argument %s", argv[1]);
+				"No command specified: unknown argument %s",
+				argv[1]);
 		return exit_error(PARAMETER_PROBLEM, "No command specified.");
 	case IPSET_CMD_VERSION:
 		printf("%s v%s.\n", program_name, program_version);
@@ -480,16 +490,21 @@ parse_commandline(int argc, char *argv[])
 						"Unknown settype: `%s'", arg0);
 				printf("\n%s type specific options:\n\n%s",
 				       type->name, type->usage);
+				if (type->usagefn)
+					type->usagefn();
 				if (type->family == AF_UNSPEC)
 					printf("\nType %s is family neutral.\n",
 					       type->name);
 				else if (type->family == AF_INET46)
-					printf("\nType %s supports INET and INET6.\n",
+					printf("\nType %s supports INET "
+					       "and INET6.\n",
 					       type->name);
 				else
-					printf("\nType %s supports family %s only.\n",
+					printf("\nType %s supports family "
+					       "%s only.\n",
 					       type->name,
-					       type->family == AF_INET ? "INET" : "INET6");
+					       type->family == AF_INET
+						? "INET" : "INET6");
 			} else {
 				printf("\nSupported set types:\n");
 				type = ipset_types();
@@ -541,7 +556,8 @@ parse_commandline(int argc, char *argv[])
 	case IPSET_CMD_SAVE:
 		/* Args: [setname] */
 		if (arg0) {
-			ret = ipset_parse_setname(session, IPSET_SETNAME, arg0);
+			ret = ipset_parse_setname(session,
+						  IPSET_SETNAME, arg0);
 			if (ret < 0)
 				return handle_error();
 		}
@@ -622,6 +638,7 @@ main(int argc, char *argv[])
 	ipset_type_add(&ipset_bitmap_port0);
 	ipset_type_add(&ipset_hash_ip0);
 	ipset_type_add(&ipset_hash_net0);
+	ipset_type_add(&ipset_hash_netport0);
 	ipset_type_add(&ipset_hash_ipport0);
 	ipset_type_add(&ipset_hash_ipportip0);
 	ipset_type_add(&ipset_hash_ipportnet0);
