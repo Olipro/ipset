@@ -19,7 +19,7 @@ AC_ARG_WITH([kbuild],
             [KBUILDDIR="$withval";])
 AC_ARG_WITH([ksource],
             AS_HELP_STRING([--with-ksource=PATH],
-                           [Path to kernel source directory]),
+                           [Path to kernel source directory, if not the same as the kernel build directory]),
             [KSOURCEDIR="$withval";])
 AM_CONDITIONAL(WITH_KBUILDDIR, test "$KBUILDDIR" != "")
 AC_SUBST(KBUILDDIR)
@@ -34,8 +34,14 @@ fi
 
 if test -n "$KSOURCEDIR"; then
 	ksourcedir="$KSOURCEDIR"
+elif test -e "$kbuilddir/include/linux/netfilter/nfnetlink.h"; then
+	ksourcedir="$kbuilddir"
 else
 	ksourcedir="/lib/modules/$(uname -r)/source"
+fi
+if test ! -e "$ksourcedir/include/linux/netfilter/nfnetlink.h"
+then
+	AC_MSG_ERROR([Invalid kernel source directory $ksourcedir])
 fi
 
 if test ! -e "$kbuilddir/.config"
