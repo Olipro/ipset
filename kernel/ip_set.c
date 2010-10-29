@@ -243,7 +243,7 @@ ip_set_add(ip_set_id_t index, const struct sk_buff *skb,
 	   u8 family, u8 dim, u8 flags)
 {
 	struct ip_set *set = ip_set_list[index];
-	int ret = 0, retried = 0;
+	int ret;
 
 	BUG_ON(set == NULL || atomic_read(&set->ref) == 0);
 	pr_debug("set %s, index %u", set->name, index);
@@ -252,17 +252,10 @@ ip_set_add(ip_set_id_t index, const struct sk_buff *skb,
 	    || !(family == set->family || set->family == AF_UNSPEC))
 	    	return 0;
 
-retry:
 	write_lock_bh(&set->lock);
 	ret = set->variant->kadt(set, skb, IPSET_ADD, family, dim, flags);
 	write_unlock_bh(&set->lock);
 
-	/* Resize function must be called without holding any lock */
-	if (ret == -EAGAIN
-	    && set->variant->resize
-	    && (ret = set->variant->resize(set, GFP_ATOMIC, retried++)) == 0)
-	    	goto retry;
-	
 	return ret;
 }
 EXPORT_SYMBOL(ip_set_add);
