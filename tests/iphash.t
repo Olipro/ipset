@@ -44,6 +44,14 @@
 0 ipset -F test
 # IP: Delete test set
 0 ipset -X test
+# IP: Restore, which requires multiple messages
+0 ipset restore < iphash.t.large
+# IP: Save the restored set
+0 ipset save test | sort > .foo.1
+# IP: Compare save and restore
+0 (sort iphash.t.large > .foo.2) && (cmp .foo.1 .foo.2) && rm .foo.*
+# IP: Delete test set
+0 ipset x test
 # Network: Create a set 
 0 ipset -N test iphash --hashsize 128 --netmask 24
 # Network: Add zero valued element
