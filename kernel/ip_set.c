@@ -257,7 +257,7 @@ retry:
 	ret = set->variant->kadt(set, skb, IPSET_ADD, family, dim, flags);
 	write_unlock_bh(&set->lock);
 
-	/* Retry function must be called without holding any lock */
+	/* Resize function must be called without holding any lock */
 	if (ret == -EAGAIN
 	    && set->variant->resize
 	    && (ret = set->variant->resize(set, GFP_ATOMIC, retried++)) == 0)

@@ -338,7 +338,7 @@ retry:
 		/* In case we have plenty of memory :-) */
 		return -IPSET_ERR_HASH_FULL;
 	t = ip_set_alloc(jhash_size(htable_bits) * sizeof(struct slist),
-			 gfp_flags);
+			 GFP_KERNEL);
 	if (!t)
 		return -ENOMEM;
 
@@ -809,7 +809,7 @@ retry:
 		/* In case we have plenty of memory :-) */
 		return -IPSET_ERR_HASH_FULL;
 	t = ip_set_alloc(jhash_size(htable_bits) * sizeof(struct slist),
-			 gfp_flags);
+			 GFP_KERNEL);
 	if (!t)
 		return -ENOMEM;
 
