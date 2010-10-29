@@ -567,6 +567,8 @@ type_pf_list(struct ip_set *set,
 	struct slist *n;
 	const struct type_pf_elem *data;
 	u32 first = cb->args[2];
+	/* We assume that one hash bucket fills into one page */
+	void *incomplete;
 	int i;
 
 	atd = ipset_nest_start(skb, IPSET_ATTR_ADT);
@@ -574,6 +576,7 @@ type_pf_list(struct ip_set *set,
 		return -EFAULT;
 	pr_debug("list hash set %s", set->name);
 	for (; cb->args[2] < jhash_size(h->htable_bits); cb->args[2]++) {
+		incomplete = skb_tail_pointer(skb);
 		slist_for_each(n, &h->htable[cb->args[2]]) {
 			for (i = 0; i < h->array_size; i++) {
 				data = chash_data(n, i);
@@ -602,8 +605,13 @@ type_pf_list(struct ip_set *set,
 	return 0;
 
 nla_put_failure:
-	nla_nest_cancel(skb, nested);
+	nlmsg_trim(skb, incomplete);
 	ipset_nest_end(skb, atd);
+	if (unlikely(first == cb->args[2])) {
+		pr_warn("Can't list set %s: one bucket does not fit into "
+			"a message. Please report it!\n", set->name);
+		cb->args[2] = 0;
+	}
 	return 0;
 }
 
@@ -993,12 +1001,15 @@ type_pf_tlist(struct ip_set *set,
 	struct slist *n;
 	const struct type_pf_elem *data;
 	u32 first = cb->args[2];
+	/* We assume that one hash bucket fills into one page */
+	void *incomplete;
 	int i;
 
 	atd = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!atd)
 		return -EFAULT;
 	for (; cb->args[2] < jhash_size(h->htable_bits); cb->args[2]++) {
+		incomplete = skb_tail_pointer(skb);
 		slist_for_each(n, &h->htable[cb->args[2]]) {
 			for (i = 0; i < h->array_size; i++) {
 				data = chash_tdata(n, i);
@@ -1029,8 +1040,13 @@ type_pf_tlist(struct ip_set *set,
 	return 0;
 
 nla_put_failure:
-	nla_nest_cancel(skb, nested);
+	nlmsg_trim(skb, incomplete);
 	ipset_nest_end(skb, atd);
+	if (unlikely(first == cb->args[2])) {
+		pr_warn("Can't list set %s: one bucket does not fit into "
+			"a message. Please report it!\n", set->name);
+		cb->args[2] = 0;
+	}
 	return 0;
 }
 
