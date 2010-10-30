@@ -85,7 +85,7 @@ struct ipset_type ipset_hash_ip0 = {
 	.dimension = IPSET_DIM_ONE,
 	.elem = { 
 		[IPSET_DIM_ONE] = { 
-			.parse = ipset_parse_ip,
+			.parse = ipset_parse_ip4_single6,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP
 		},
