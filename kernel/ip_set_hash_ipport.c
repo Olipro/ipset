@@ -416,6 +416,7 @@ hash_ipport_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 	struct nlattr *tb[IPSET_ATTR_CREATE_MAX+1];
 	struct chash *h;
 	u32 hashsize = IPSET_DEFAULT_HASHSIZE, maxelem = IPSET_DEFAULT_MAXELEM;
+	u8 hbits;
 
 	if (!(set->family == AF_INET || set->family == AF_INET6))
 		return -IPSET_ERR_INVALID_FAMILY;
@@ -438,19 +439,21 @@ hash_ipport_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 		return -ENOMEM;
 
 	h->maxelem = maxelem;
-	h->htable_bits = htable_bits(hashsize);
 	h->array_size = CHASH_DEFAULT_ARRAY_SIZE;
 	h->chain_limit = CHASH_DEFAULT_CHAIN_LIMIT;
 	get_random_bytes(&h->initval, sizeof(h->initval));
 	h->timeout = IPSET_NO_TIMEOUT;
 
-	h->htable = ip_set_alloc(
-			jhash_size(h->htable_bits) * sizeof(struct slist),
+	hbits = htable_bits(hashsize);
+	h->table = ip_set_alloc(
+			sizeof(struct htable)
+			+ jhash_size(hbits) * sizeof(struct slist),
 			GFP_KERNEL);
-	if (!h->htable) {
+	if (!h->table) {
 		kfree(h);
 		return -ENOMEM;
 	}
+	h->table->htable_bits = hbits;
 
 	set->data = h;
 
@@ -470,8 +473,8 @@ hash_ipport_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 	}
 	
 	pr_debug("create %s hashsize %u (%u) maxelem %u: %p(%p)",
-		 set->name, jhash_size(h->htable_bits),
-		 h->htable_bits, h->maxelem, set->data, h->htable);
+		 set->name, jhash_size(h->table->htable_bits),
+		 h->table->htable_bits, h->maxelem, set->data, h->table);
 	   
 	return 0;
 }
