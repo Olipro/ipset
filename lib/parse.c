@@ -904,6 +904,46 @@ ipset_parse_ipnet(struct ipset_session *session,
 }
 
 /**
+ * ipset_parse_ip4_single6 - parse IPv4 address, range or netblock or IPv6 address
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string as an IPv4 address or address range
+ * or netblock or and IPv6 address. Hostnames are resolved. If family
+ * is not set yet in the data blob, INET is assumed.
+ * The values are stored in the data blob of the session.
+ *
+ * FIXME: if the hostname resolves to multiple addresses,
+ * the first one is used only.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_parse_ip4_single6(struct ipset_session *session,
+			enum ipset_opt opt, const char *str)
+{
+	struct ipset_data *data;
+	uint8_t family;
+
+	assert(session);
+	assert(opt == IPSET_OPT_IP || opt == IPSET_OPT_IP2);
+	assert(str);
+	
+	data = ipset_session_data(session);
+	family = ipset_data_family(data);
+	
+	if (family == AF_UNSPEC) {
+		family = AF_INET;
+		ipset_data_set(data, IPSET_OPT_FAMILY, &family);
+	}
+	
+	return family == AF_INET ? ipset_parse_ip(session, opt, str)
+				 : ipset_parse_single_ip(session, opt, str);
+
+}
+
+/**
  * ipset_parse_iptimeout - parse IPv4|IPv6 address and timeout
  * @session: session structure
  * @opt: option kind of the data
