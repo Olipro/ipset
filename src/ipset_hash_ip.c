@@ -75,7 +75,8 @@ static const char hash_ip_usage[] =
 "test   SETNAME IP\n\n"
 "where depending on the INET family\n"
 "      IP, FROM and TO are IPv4 or IPv6 addresses (or hostnames),\n"
-"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n";
+"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
+"      Adding/deleting multiple elements is supported for IPv4 only.\n";
 
 struct ipset_type ipset_hash_ip0 = {
 	.name = "hash:ip",
