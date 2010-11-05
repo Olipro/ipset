@@ -20,30 +20,31 @@
 /* Message types and commands */
 enum ipset_cmd {
 	IPSET_CMD_NONE,
-	IPSET_CMD_CREATE,	/* 1: Create a new (empty) set */
-	IPSET_CMD_DESTROY,	/* 2: Remove a (empty) set */
-	IPSET_CMD_FLUSH,	/* 3: Remove all elements from a set */
-	IPSET_CMD_RENAME,	/* 4: Rename a set */
-	IPSET_CMD_SWAP,		/* 5: Swap two sets */
-	IPSET_CMD_LIST,		/* 6: List sets */
-	IPSET_CMD_SAVE,		/* 7: Save sets */
-	IPSET_CMD_ADD,		/* 8: Add an element to a set */
-	IPSET_CMD_DEL,		/* 9: Delete an element from a set */
-	IPSET_CMD_TEST,		/* 10: Test an element in a set */
-	IPSET_CMD_HEADER,	/* 11: Get set header data only */
-	IPSET_CMD_TYPE,		/* 12: Get set type */
-	IPSET_CMD_PROTOCOL,	/* 13: Return protocol version */
+	IPSET_CMD_PROTOCOL,	/* 1: Return protocol version */
+	IPSET_CMD_CREATE,	/* 2: Create a new (empty) set */
+	IPSET_CMD_MODIFY,	/* 3: Modify an existing set */
+	IPSET_CMD_DESTROY,	/* 4: Destroy a (empty) set */
+	IPSET_CMD_FLUSH,	/* 5: Remove all elements from a set */
+	IPSET_CMD_RENAME,	/* 6: Rename a set */
+	IPSET_CMD_SWAP,		/* 7: Swap two sets */
+	IPSET_CMD_LIST,		/* 8: List sets */
+	IPSET_CMD_SAVE,		/* 9: Save sets */
+	IPSET_CMD_ADD,		/* 10: Add an element to a set */
+	IPSET_CMD_DEL,		/* 11: Delete an element from a set */
+	IPSET_CMD_TEST,		/* 12: Test an element in a set */
+	IPSET_CMD_HEADER,	/* 13: Get set header data only */
+	IPSET_CMD_TYPE,		/* 14: Get set type */
 	IPSET_MSG_MAX,		/* Netlink message commands */
 
 	/* Commands in userspace: */
-	IPSET_CMD_RESTORE = IPSET_MSG_MAX, /* 14: Enter restore mode */	
-	IPSET_CMD_HELP,		/* 15: Get help */
-	IPSET_CMD_VERSION,	/* 16: Get program version */
-	IPSET_CMD_QUIT,		/* 17: Quit from interactive mode */
+	IPSET_CMD_RESTORE = IPSET_MSG_MAX, /* 15: Enter restore mode */	
+	IPSET_CMD_HELP,		/* 16: Get help */
+	IPSET_CMD_VERSION,	/* 17: Get program version */
+	IPSET_CMD_QUIT,		/* 18: Quit from interactive mode */
 
 	IPSET_CMD_MAX,
 
-	IPSET_CMD_COMMIT = IPSET_CMD_MAX, /* 18: Commit buffered commands */
+	IPSET_CMD_COMMIT = IPSET_CMD_MAX, /* 19: Commit buffered commands */
 };
 
 /* Attributes at command level */
