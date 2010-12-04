@@ -1,3 +1,7 @@
+4.5
+  - The iptreemap type used wrong gfp flags when deleting entries
+    (bug reported by Dash Four)
+
 4.4
   - The ipporthash, ipportiphash and ipportnethash set types did not
     work with mixed "src" and "dst" destination parameters of the

@@ -102,13 +102,13 @@ static struct ip_set_iptreemap_b *fullbitmap_b;
 		} \
 	}
 
-#define DELIP_WALK(map, elem, branch, cachep, full, flags) \
+#define DELIP_WALK(map, elem, branch, cachep, full) \
 	do { \
 		branch = (map)->tree[elem]; \
 		if (!branch) { \
 			return -EEXIST; \
 		} else if (branch == full) { \
-			branch = kmem_cache_alloc(cachep, flags); \
+			branch = kmem_cache_alloc(cachep, GFP_ATOMIC); \
 			if (!branch) \
 				return -ENOMEM; \
 			memcpy(branch, full, sizeof(*full)); \
@@ -116,7 +116,7 @@ static struct ip_set_iptreemap_b *fullbitmap_b;
 		} \
 	} while (0)
 
-#define DELIP_RANGE_LOOP(map, a, a1, a2, hint, branch, full, cachep, free, flags) \
+#define DELIP_RANGE_LOOP(map, a, a1, a2, hint, branch, full, cachep, free) \
 	for (a = a1; a <= a2; a++) { \
 		branch = (map)->tree[a]; \
 		if (branch) { \
@@ -126,7 +126,7 @@ static struct ip_set_iptreemap_b *fullbitmap_b;
 				(map)->tree[a] = NULL; \
 				continue; \
 			} else if (branch == full) { \
-				branch = kmem_cache_alloc(cachep, flags); \
+				branch = kmem_cache_alloc(cachep, GFP_ATOMIC); \
 				if (!branch) \
 					return -ENOMEM; \
 				memcpy(branch, full, sizeof(*branch)); \
@@ -331,7 +331,7 @@ UADT0(iptreemap, add, min(req->ip, req->end), max(req->ip, req->end))
 KADT(iptreemap, add, ipaddr, ip)
 
 static inline int
-__delip_single(struct ip_set *set, ip_set_ip_t ip, gfp_t flags)
+__delip_single(struct ip_set *set, ip_set_ip_t ip)
 {
 	struct ip_set_iptreemap *map = set->data;
 	struct ip_set_iptreemap_b *btree;
@@ -341,9 +341,9 @@ __delip_single(struct ip_set *set, ip_set_ip_t ip, gfp_t flags)
 
 	ABCD(a, b, c, d, &ip);
 
-	DELIP_WALK(map, a, btree, cachep_b, fullbitmap_b, flags);
-	DELIP_WALK(btree, b, ctree, cachep_c, fullbitmap_c, flags);
-	DELIP_WALK(ctree, c, dtree, cachep_d, fullbitmap_d, flags);
+	DELIP_WALK(map, a, btree, cachep_b, fullbitmap_b);
+	DELIP_WALK(btree, b, ctree, cachep_c, fullbitmap_c);
+	DELIP_WALK(ctree, c, dtree, cachep_d, fullbitmap_d);
 
 	if (!__test_and_clear_bit(d, (void *) dtree->bitmap))
 		return -EEXIST;
@@ -354,8 +354,7 @@ __delip_single(struct ip_set *set, ip_set_ip_t ip, gfp_t flags)
 }
 
 static inline int
-iptreemap_del(struct ip_set *set,
-	      ip_set_ip_t start, ip_set_ip_t end, gfp_t flags)
+iptreemap_del(struct ip_set *set, ip_set_ip_t start, ip_set_ip_t end)
 {
 	struct ip_set_iptreemap *map = set->data;
 	struct ip_set_iptreemap_b *btree;
@@ -366,15 +365,15 @@ iptreemap_del(struct ip_set *set,
 	unsigned char a2, b2, c2, d2;
 
 	if (start == end)
-		return __delip_single(set, start, flags);
+		return __delip_single(set, start);
 
 	ABCD(a1, b1, c1, d1, &start);
 	ABCD(a2, b2, c2, d2, &end);
 
 	/* This is sooo ugly... */
-	DELIP_RANGE_LOOP(map, a, a1, a2, CHECK1(a, a1, a2, b1, b2, c1, c2, d1, d2), btree, fullbitmap_b, cachep_b, free_b, flags) {
-		DELIP_RANGE_LOOP(btree, b, GETVALUE1(a, a1, b1, 0), GETVALUE1(a, a2, b2, 255), CHECK2(a, b, a1, a2, b1, b2, c1, c2, d1, d2), ctree, fullbitmap_c, cachep_c, free_c, flags) {
-			DELIP_RANGE_LOOP(ctree, c, GETVALUE2(a, b, a1, b1, c1, 0), GETVALUE2(a, b, a2, b2, c2, 255), CHECK3(a, b, c, a1, a2, b1, b2, c1, c2, d1, d2), dtree, fullbitmap_d, cachep_d, free_d, flags) {
+	DELIP_RANGE_LOOP(map, a, a1, a2, CHECK1(a, a1, a2, b1, b2, c1, c2, d1, d2), btree, fullbitmap_b, cachep_b, free_b) {
+		DELIP_RANGE_LOOP(btree, b, GETVALUE1(a, a1, b1, 0), GETVALUE1(a, a2, b2, 255), CHECK2(a, b, a1, a2, b1, b2, c1, c2, d1, d2), ctree, fullbitmap_c, cachep_c, free_c) {
+			DELIP_RANGE_LOOP(ctree, c, GETVALUE2(a, b, a1, b1, c1, 0), GETVALUE2(a, b, a2, b2, c2, 255), CHECK3(a, b, c, a1, a2, b1, b2, c1, c2, d1, d2), dtree, fullbitmap_d, cachep_d, free_d) {
 				for (d = GETVALUE3(a, b, c, a1, b1, c1, d1, 0); d <= GETVALUE3(a, b, c, a2, b2, c2, d2, 255); d++)
 					__clear_bit(d, (void *) dtree->bitmap);
 				__set_bit(b, (void *) btree->dirty);
@@ -385,8 +384,8 @@ iptreemap_del(struct ip_set *set,
 	return 0;
 }
 
-UADT0(iptreemap, del, min(req->ip, req->end), max(req->ip, req->end), GFP_KERNEL)
-KADT(iptreemap, del, ipaddr, ip, GFP_ATOMIC)
+UADT0(iptreemap, del, min(req->ip, req->end), max(req->ip, req->end))
+KADT(iptreemap, del, ipaddr, ip)
 
 /* Check the status of the bitmap
  * -1 == all bits cleared
