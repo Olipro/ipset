@@ -8,7 +8,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.  
+ * published by the Free Software Foundation.
  */
 
 /* The protocol version */
@@ -37,7 +37,7 @@ enum ipset_cmd {
 	IPSET_MSG_MAX,		/* Netlink message commands */
 
 	/* Commands in userspace: */
-	IPSET_CMD_RESTORE = IPSET_MSG_MAX, /* 15: Enter restore mode */	
+	IPSET_CMD_RESTORE = IPSET_MSG_MAX, /* 15: Enter restore mode */
 	IPSET_CMD_HELP,		/* 16: Get help */
 	IPSET_CMD_VERSION,	/* 17: Get program version */
 	IPSET_CMD_QUIT,		/* 18: Quit from interactive mode */
@@ -93,7 +93,7 @@ enum {
 	IPSET_ATTR_ELEMENTS,
 	IPSET_ATTR_REFERENCES,
 	IPSET_ATTR_MEMSIZE,
-	
+
 	__IPSET_ATTR_CREATE_MAX,
 };
 #define IPSET_ATTR_CREATE_MAX	(__IPSET_ATTR_CREATE_MAX - 1)
@@ -323,20 +323,20 @@ static inline void *
 ip_set_alloc(size_t size, gfp_t gfp_mask)
 {
 	void *members = NULL;
-	
+
 	if (size < KMALLOC_MAX_SIZE)
 		members = kzalloc(size, gfp_mask | __GFP_NOWARN);
-	
+
 	if (members) {
 		pr_debug("%p: allocated with kmalloc", members);
 		return members;
 	}
-	
+
 	members = __vmalloc(size, gfp_mask | __GFP_ZERO, PAGE_KERNEL);
 	if (!members)
 		return NULL;
 	pr_debug("%p: allocated with vmalloc", members);
-	
+
 	return members;
 }
 
@@ -363,7 +363,7 @@ static inline u32
 ip_set_get_h32(const struct nlattr *attr)
 {
 	u32 value = nla_get_u32(attr);
-	
+
 	return attr->nla_type & NLA_F_NET_BYTEORDER ? ntohl(value) : value;
 }
 
@@ -371,7 +371,7 @@ static inline u16
 ip_set_get_h16(const struct nlattr *attr)
 {
 	u16 value = nla_get_u16(attr);
-	
+
 	return attr->nla_type & NLA_F_NET_BYTEORDER ? ntohs(value) : value;
 }
 
@@ -379,7 +379,7 @@ static inline u32
 ip_set_get_n32(const struct nlattr *attr)
 {
 	u32 value = nla_get_u32(attr);
-	
+
 	return attr->nla_type & NLA_F_NET_BYTEORDER ? value : htonl(value);
 }
 
@@ -387,7 +387,7 @@ static inline u16
 ip_set_get_n16(const struct nlattr *attr)
 {
 	u16 value = nla_get_u16(attr);
-	
+
 	return attr->nla_type & NLA_F_NET_BYTEORDER ? value : htons(value);
 }
 
@@ -412,7 +412,7 @@ ip_set_get_ipaddr4(struct nlattr *attr[], int type, u32 *ipaddr)
 		return -IPSET_ERR_PROTOCOL;
 	if (!tb[IPSET_ATTR_IPADDR_IPV4])
 		return -IPSET_ERR_IPADDR_IPV4;
-	
+
 	*ipaddr = ip_set_get_n32(tb[IPSET_ATTR_IPADDR_IPV4]);
 	return 0;
 }
@@ -438,7 +438,7 @@ ip_set_get_ipaddr6(struct nlattr *attr[], int type, union nf_inet_addr *ipaddr)
 }
 
 #define ipset_nest_start(skb, attr) nla_nest_start(skb, attr | NLA_F_NESTED)
-#define ipset_nest_end(skb, start)  nla_nest_end(skb, start)	
+#define ipset_nest_end(skb, start)  nla_nest_end(skb, start)
 
 #define NLA_PUT_NET32(skb, type, value)	\
 	NLA_PUT_BE32(skb, type | NLA_F_NET_BYTEORDER, value)
@@ -489,7 +489,7 @@ ip6addrptr(const struct sk_buff *skb, bool src, struct in6_addr *addr)
 
 /* Interface to iptables/ip6tables */
 
-#define SO_IP_SET 		83
+#define SO_IP_SET		83
 
 union ip_set_name_index {
 	char name[IPSET_MAXNAMELEN];

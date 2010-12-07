@@ -11,7 +11,7 @@
  * the timeout field must be the last one in the data structure - that field
  * is ignored when computing the hash key.
  */
-   
+
 /* Number of elements to store in an array block */
 #define CHASH_DEFAULT_ARRAY_SIZE        4
 /* Number of arrays: max ARRAY_SIZE * CHAIN_LIMIT "long" chains */
@@ -75,7 +75,7 @@ add_cidr(struct chash *h, u8 cidr, u8 host_mask)
 
 	if (h->nets[cidr-1].nets > 1)
 		return;
-		
+
 	/* New cidr size */
 	for (i = 0; i < host_mask && h->nets[i].cidr; i++) {
 		/* Add in increasing prefix order, so larger cidr first */
@@ -113,7 +113,7 @@ chash_destroy(struct htable *ht)
 {
 	struct slist *n, *tmp;
 	u32 i;
-	
+
 	for (i = 0; i < jhash_size(ht->htable_bits); i++)
 		slist_for_each_safe(n, tmp, &ht->htable[i])
 			/* FIXME: use slab cache */
@@ -134,12 +134,12 @@ chash_memsize(const struct chash *h, size_t dsize, u8 host_mask)
 			 + sizeof(struct chash_nets) * host_mask
 #endif
 			 + jhash_size(ht->htable_bits) * sizeof(struct slist);
-	
+
 	for (i = 0; i < jhash_size(ht->htable_bits); i++)
 		slist_for_each(n, &ht->htable[i])
 			memsize += sizeof(struct slist)
 				+ h->array_size * dsize;
-	
+
 	return memsize;
 }
 
@@ -151,7 +151,7 @@ ip_set_hash_flush(struct ip_set *set)
 	struct htable *ht = h->table;
 	struct slist *n, *tmp;
 	u32 i;
-	
+
 	for (i = 0; i < jhash_size(ht->htable_bits); i++) {
 		slist_for_each_safe(n, tmp, &ht->htable[i])
 			/* FIXME: slab cache */
@@ -176,7 +176,7 @@ ip_set_hash_destroy(struct ip_set *set)
 
 	chash_destroy(h->table);
 	kfree(h);
-	
+
 	set->data = NULL;
 }
 
@@ -241,7 +241,7 @@ ip_set_hash_destroy(struct ip_set *set)
 
 /* Get the ith element from the array block n */
 #define chash_data(n, i)					\
-(struct type_pf_elem *)((char *)(n) + sizeof(struct slist) 	\
+(struct type_pf_elem *)((char *)(n) + sizeof(struct slist)	\
 			+ (i)*sizeof(struct type_pf_elem))
 
 /* Add an element to the hash table when resizing the set:
@@ -298,7 +298,7 @@ type_pf_chash_del_elem(struct chash *h, struct slist *prev,
 		for (prev = n, tmp = n->next;
 		     tmp->next != NULL;
 		     prev = tmp, tmp = tmp->next)
-		     	/* Find last array */;
+			/* Find last array */;
 		j = 0;
 	} else {
 		/* Already at last array */
@@ -310,9 +310,9 @@ type_pf_chash_del_elem(struct chash *h, struct slist *prev,
 		if (type_pf_data_isnull(chash_data(tmp, j + 1)))
 			break;
 
-	if (!(tmp == n && i == j)) {
+	if (!(tmp == n && i == j))
 		type_pf_data_swap(data, chash_data(tmp, j));
-	}
+
 #ifdef IP_SET_HASH_WITH_NETS
 	del_cidr(h, data->cidr, HOST_MASK);
 #endif
@@ -377,12 +377,12 @@ next_slot:
 
 	h->table = ht;
 	read_unlock_bh(&set->lock);
-	
+
 	/* Give time to other users of the set */
 	synchronize_net();
 
 	chash_destroy(orig);
-	
+
 	return 0;
 }
 
@@ -540,7 +540,7 @@ type_pf_head(struct ip_set *set, struct sk_buff *skb)
 	const struct chash *h = set->data;
 	struct nlattr *nested;
 	size_t memsize;
-	
+
 	read_lock_bh(&set->lock);
 	memsize = chash_memsize(h, with_timeout(h->timeout)
 					? sizeof(struct type_pf_telem)
@@ -564,7 +564,7 @@ type_pf_head(struct ip_set *set, struct sk_buff *skb)
 	if (with_timeout(h->timeout))
 		NLA_PUT_NET32(skb, IPSET_ATTR_TIMEOUT, htonl(h->timeout));
 	ipset_nest_end(skb, nested);
-	
+
 	return 0;
 nla_put_failure:
 	return -EFAULT;
@@ -615,7 +615,7 @@ type_pf_list(struct ip_set *set,
 	ipset_nest_end(skb, atd);
 	/* Set listing finished */
 	cb->args[2] = 0;
-	
+
 	return 0;
 
 nla_put_failure:
@@ -709,8 +709,8 @@ type_pf_chash_treadd(struct chash *h, struct htable *ht,
 		for (i = 0; i < h->array_size; i++) {
 			data = chash_tdata(n, i);
 			if (type_pf_data_isnull(data)) {
-			    	tmp = n;
-			    	goto found;
+				tmp = n;
+				goto found;
 			}
 		}
 		j++;
@@ -734,7 +734,7 @@ found:
 
 static void
 type_pf_chash_del_telem(struct chash *h, struct slist *prev,
-		        struct slist *n, int i)
+			struct slist *n, int i)
 {
 	struct type_pf_elem *d, *data = chash_tdata(n, i);
 	struct slist *tmp;
@@ -745,7 +745,7 @@ type_pf_chash_del_telem(struct chash *h, struct slist *prev,
 		for (prev = n, tmp = n->next;
 		     tmp->next != NULL;
 		     prev = tmp, tmp = tmp->next)
-		     	/* Find last array */;
+			/* Find last array */;
 		j = 0;
 	} else {
 		/* Already at last array */
@@ -783,7 +783,7 @@ type_pf_chash_expire(struct chash *h)
 	struct type_pf_elem *data;
 	u32 i;
 	int j;
-	
+
 	for (i = 0; i < jhash_size(ht->htable_bits); i++)
 		slist_for_each_prev(prev, n, &ht->htable[i])
 			for (j = 0; j < h->array_size; j++) {
@@ -862,14 +862,14 @@ next_slot:
 	synchronize_net();
 
 	chash_destroy(orig);
-	
+
 	return 0;
 }
 
 static int
 type_pf_chash_tadd(struct ip_set *set, void *value,
 		   gfp_t gfp_flags, u32 timeout)
-{	
+{
 	struct chash *h = set->data;
 	const struct type_pf_elem *d = value;
 	struct slist *n, *prev;
@@ -891,8 +891,8 @@ type_pf_chash_tadd(struct ip_set *set, void *value,
 			data = chash_tdata(n, i);
 			if (type_pf_data_isnull(data)
 			    || type_pf_data_expired(data)) {
-			    	tmp = n;
-			    	goto found;
+				tmp = n;
+				goto found;
 			}
 			if (type_pf_data_equal(data, d))
 				return -IPSET_ERR_EXIST;
@@ -912,7 +912,7 @@ type_pf_chash_tadd(struct ip_set *set, void *value,
 	}
 found:
 	if (type_pf_data_isnull(data))
-	      	h->elements++;
+		h->elements++;
 #ifdef IP_SET_HASH_WITH_NETS
 	else
 		del_cidr(h, data->cidr, HOST_MASK);
@@ -943,7 +943,7 @@ type_pf_chash_tdel(struct ip_set *set, void *value,
 				return -IPSET_ERR_EXIST;
 			if (type_pf_data_equal(data, d)) {
 				if (type_pf_data_expired(data))
-				    	ret = -IPSET_ERR_EXIST;
+					ret = -IPSET_ERR_EXIST;
 				type_pf_chash_del_telem(h, prev, n, i);
 				return ret;
 			}
@@ -1058,7 +1058,7 @@ type_pf_tlist(struct ip_set *set,
 	ipset_nest_end(skb, atd);
 	/* Set listing finished */
 	cb->args[2] = 0;
-	
+
 	return 0;
 
 nla_put_failure:
@@ -1107,7 +1107,7 @@ static inline void
 type_pf_gc_init(struct ip_set *set)
 {
 	struct chash *h = set->data;
-	
+
 	init_timer(&h->gc);
 	h->gc.data = (unsigned long) set;
 	h->gc.function = type_pf_gc;

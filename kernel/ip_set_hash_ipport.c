@@ -13,8 +13,8 @@
 #include <linux/ip.h>
 #include <linux/skbuff.h>
 #include <linux/errno.h>
-#include <asm/uaccess.h>
-#include <asm/bitops.h>
+#include <linux/uaccess.h>
+#include <linux/bitops.h>
 #include <linux/spinlock.h>
 #include <linux/random.h>
 #include <net/ip.h>
@@ -191,7 +191,7 @@ hash_ipport4_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 	if (tb[IPSET_ATTR_PROTO]) {
 		data.proto = nla_get_u8(tb[IPSET_ATTR_PROTO]);
-		
+
 		if (data.proto == 0)
 			return -IPSET_ERR_INVALID_PROTO;
 	} else
@@ -223,7 +223,7 @@ hash_ipport_same_set(const struct ip_set *a, const struct ip_set *b)
 {
 	struct chash *x = a->data;
 	struct chash *y = b->data;
-	
+
 	/* Resizing changes htable_bits, so we ignore it */
 	return x->maxelem == y->maxelem
 	       && x->timeout == y->timeout
@@ -304,9 +304,9 @@ static inline bool
 hash_ipport6_data_tlist(struct sk_buff *skb,
 			const struct hash_ipport6_elem *data)
 {
-	const struct hash_ipport6_telem *e = 
+	const struct hash_ipport6_telem *e =
 		(const struct hash_ipport6_telem *)data;
-	
+
 	NLA_PUT_IPADDR6(skb, IPSET_ATTR_IP, &e->ip);
 	NLA_PUT_NET16(skb, IPSET_ATTR_PORT, data->port);
 	NLA_PUT_U8(skb, IPSET_ATTR_PROTO, data->proto);
@@ -394,7 +394,7 @@ hash_ipport6_uadt(struct ip_set *set, struct nlattr *head, int len,
 	}
 
 	ret = adtfn(set, &data, GFP_ATOMIC, timeout);
-	
+
 	return ip_set_eexist(ret, flags) ? 0 : ret;
 }
 
@@ -459,7 +459,7 @@ hash_ipport_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 
 	if (tb[IPSET_ATTR_TIMEOUT]) {
 		h->timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
-		
+
 		set->variant = set->family == AF_INET
 			? &hash_ipport4_tvariant : &hash_ipport6_tvariant;
 
@@ -471,11 +471,11 @@ hash_ipport_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 		set->variant = set->family == AF_INET
 			? &hash_ipport4_variant : &hash_ipport6_variant;
 	}
-	
+
 	pr_debug("create %s hashsize %u (%u) maxelem %u: %p(%p)",
 		 set->name, jhash_size(h->table->htable_bits),
 		 h->table->htable_bits, h->maxelem, set->data, h->table);
-	   
+
 	return 0;
 }
 

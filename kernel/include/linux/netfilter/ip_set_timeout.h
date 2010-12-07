@@ -5,7 +5,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.  
+ * published by the Free Software Foundation.
  */
 
 #ifdef __KERNEL__
@@ -38,14 +38,14 @@ ip_set_timeout_uget(struct nlattr *tb)
 /* Bitmap entry is unset */
 #define IPSET_ELEM_UNSET	0
 /* Bitmap entry is set with no timeout value */
-#define IPSET_ELEM_PERMANENT	UINT_MAX/2
+#define IPSET_ELEM_PERMANENT	(UINT_MAX/2)
 
 static inline bool
 ip_set_timeout_test(unsigned long timeout)
 {
 	return timeout != IPSET_ELEM_UNSET
-	       && (timeout == IPSET_ELEM_PERMANENT
-	           || time_after(timeout, jiffies));
+		&& (timeout == IPSET_ELEM_PERMANENT
+		    || time_after(timeout, jiffies));
 }
 
 static inline bool
@@ -60,15 +60,15 @@ static inline unsigned long
 ip_set_timeout_set(u32 timeout)
 {
 	unsigned long t;
-	
+
 	if (!timeout)
 		return IPSET_ELEM_PERMANENT;
-	
+
 	t = timeout * HZ + jiffies;
 	if (t == IPSET_ELEM_UNSET || t == IPSET_ELEM_PERMANENT)
 		/* Bingo! */
 		t++;
-	
+
 	return t;
 }
 
@@ -103,15 +103,15 @@ static inline unsigned long
 ip_set_timeout_set(u32 timeout)
 {
 	unsigned long t;
-	
+
 	if (!timeout)
 		return IPSET_ELEM_PERMANENT;
-	
+
 	t = timeout * HZ + jiffies;
 	if (t == IPSET_ELEM_PERMANENT)
 		/* Bingo! :-) */
 		t++;
-	
+
 	return t;
 }
 

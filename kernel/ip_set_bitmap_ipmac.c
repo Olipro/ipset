@@ -16,8 +16,8 @@
 #include <linux/etherdevice.h>
 #include <linux/skbuff.h>
 #include <linux/errno.h>
-#include <asm/uaccess.h>
-#include <asm/bitops.h>
+#include <linux/uaccess.h>
+#include <linux/bitops.h>
 #include <linux/spinlock.h>
 #include <linux/if_ether.h>
 #include <linux/netlink.h>
@@ -96,8 +96,8 @@ static inline int
 bitmap_ipmac_exist(const struct ipmac_telem *elem)
 {
 	return elem->match == MAC_UNSET
-	       || (elem->match == MAC_FILLED
-	           && !ip_set_timeout_expired(elem->timeout));
+		|| (elem->match == MAC_FILLED
+		    && !ip_set_timeout_expired(elem->timeout));
 }
 
 /* Base variant */
@@ -203,7 +203,7 @@ bitmap_ipmac_list(struct ip_set *set,
 	ipset_nest_end(skb, atd);
 	/* Set listing finished */
 	cb->args[2] = 0;
-	
+
 	return 0;
 
 nla_put_failure:
@@ -309,7 +309,7 @@ bitmap_ipmac_tlist(struct ip_set *set,
 	for (; cb->args[2] <= last; cb->args[2]++) {
 		id = cb->args[2];
 		elem = bitmap_ipmac_elem(map, id);
-		if (!bitmap_ipmac_exist(elem)) 
+		if (!bitmap_ipmac_exist(elem))
 			continue;
 		nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 		if (!nested) {
@@ -332,7 +332,7 @@ bitmap_ipmac_tlist(struct ip_set *set,
 	ipset_nest_end(skb, atd);
 	/* Set listing finished */
 	cb->args[2] = 0;
-	
+
 	return 0;
 
 nla_put_failure:
@@ -356,7 +356,7 @@ bitmap_ipmac_kadt(struct ip_set *set, const struct sk_buff *skb,
 	/* Backward compatibility: we don't check the second flag */
 	if (skb_mac_header(skb) < skb->head
 	    || (skb_mac_header(skb) + ETH_HLEN) > skb->data)
-	    	return -EINVAL;
+		return -EINVAL;
 
 	data.id -= map->first_ip;
 	data.ether = eth_hdr(skb)->h_source;
@@ -423,10 +423,10 @@ bitmap_ipmac_destroy(struct ip_set *set)
 
 	if (with_timeout(map->timeout))
 		del_timer_sync(&map->gc);
-	
+
 	ip_set_free(map->members);
 	kfree(map);
-	
+
 	set->data = NULL;
 }
 
@@ -434,7 +434,7 @@ static void
 bitmap_ipmac_flush(struct ip_set *set)
 {
 	struct bitmap_ipmac *map = set->data;
-	
+
 	memset(map->members, 0,
 	       (map->last_ip - map->first_ip + 1) * map->dsize);
 }
@@ -454,11 +454,11 @@ bitmap_ipmac_head(struct ip_set *set, struct sk_buff *skb)
 		      htonl(atomic_read(&set->ref) - 1));
 	NLA_PUT_NET32(skb, IPSET_ATTR_MEMSIZE,
 		      htonl(sizeof(*map)
-		           + (map->last_ip - map->first_ip + 1) * map->dsize));
+			    + (map->last_ip - map->first_ip + 1) * map->dsize));
 	if (with_timeout(map->timeout))
 		NLA_PUT_NET32(skb, IPSET_ATTR_TIMEOUT, htonl(map->timeout));
 	ipset_nest_end(skb, nested);
-	
+
 	return 0;
 nla_put_failure:
 	return -EFAULT;
@@ -469,7 +469,7 @@ bitmap_ipmac_same_set(const struct ip_set *a, const struct ip_set *b)
 {
 	struct bitmap_ipmac *x = a->data;
 	struct bitmap_ipmac *y = b->data;
-	
+
 	return x->first_ip == y->first_ip
 	       && x->last_ip == y->last_ip
 	       && x->timeout == y->timeout;
@@ -512,7 +512,7 @@ bitmap_ipmac_gc(unsigned long ul_set)
 	struct bitmap_ipmac *map = set->data;
 	struct ipmac_telem *elem;
 	u32 id, last = map->last_ip - map->first_ip;
-	
+
 	/* We run parallel with other readers (test element)
 	 * but adding/deleting new entries is locked out */
 	read_lock_bh(&set->lock);
@@ -520,7 +520,7 @@ bitmap_ipmac_gc(unsigned long ul_set)
 		elem = bitmap_ipmac_elem(map, id);
 		if (elem->match == MAC_FILLED
 		    && ip_set_timeout_expired(elem->timeout))
-		    	elem->match = MAC_EMPTY;
+			elem->match = MAC_EMPTY;
 	}
 	read_unlock_bh(&set->lock);
 
@@ -563,7 +563,7 @@ init_map_ipmac(struct ip_set *set, struct bitmap_ipmac *map,
 
 	set->data = map;
 	set->family = AF_INET;
-	
+
 	return true;
 }
 
@@ -579,7 +579,7 @@ bitmap_ipmac_create(struct ip_set *set, struct nlattr *head, int len,
 	if (nla_parse(tb, IPSET_ATTR_CREATE_MAX, head, len,
 		      bitmap_ipmac_create_policy))
 		return -IPSET_ERR_PROTOCOL;
-	
+
 	ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP, &first_ip);
 	if (ret)
 		return ret;
@@ -592,13 +592,13 @@ bitmap_ipmac_create(struct ip_set *set, struct nlattr *head, int len,
 		last_ip = ntohl(last_ip);
 		if (first_ip > last_ip) {
 			u32 tmp = first_ip;
-			
+
 			first_ip = last_ip;
 			last_ip = tmp;
 		}
 	} else if (tb[IPSET_ATTR_CIDR]) {
 		u8 cidr = nla_get_u8(tb[IPSET_ATTR_CIDR]);
-		
+
 		if (cidr >= 32)
 			return -IPSET_ERR_INVALID_CIDR;
 		last_ip = first_ip | ~HOSTMASK(cidr);
@@ -616,18 +616,18 @@ bitmap_ipmac_create(struct ip_set *set, struct nlattr *head, int len,
 
 	if (tb[IPSET_ATTR_TIMEOUT]) {
 		map->dsize = sizeof(struct ipmac_telem);
-			       
+
 		if (!init_map_ipmac(set, map, first_ip, last_ip)) {
 			kfree(map);
 			return -ENOMEM;
 		}
 
 		map->timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
-		
-		set->variant = &bitmap_tipmac;		
+
+		set->variant = &bitmap_tipmac;
 
 		bitmap_ipmac_gc_init(set);
-	} else {		
+	} else {
 		map->dsize = sizeof(struct ipmac_elem);
 
 		if (!init_map_ipmac(set, map, first_ip, last_ip)) {
@@ -635,7 +635,7 @@ bitmap_ipmac_create(struct ip_set *set, struct nlattr *head, int len,
 			return -ENOMEM;
 		}
 		set->variant = &bitmap_ipmac;
-		
+
 	}
 	return 0;
 }

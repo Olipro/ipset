@@ -23,5 +23,5 @@ enum {
 #define IP_SET_LIST_MIN_SIZE		4
 
 #endif /* __KERNEL__ */
-	
+
 #endif /* __IP_SET_LIST_H */

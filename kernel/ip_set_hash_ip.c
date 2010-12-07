@@ -13,8 +13,8 @@
 #include <linux/ip.h>
 #include <linux/skbuff.h>
 #include <linux/errno.h>
-#include <asm/uaccess.h>
-#include <asm/bitops.h>
+#include <linux/uaccess.h>
+#include <linux/bitops.h>
 #include <linux/spinlock.h>
 #include <linux/random.h>
 #include <net/ip.h>
@@ -125,7 +125,7 @@ hash_ip4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	struct chash *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	u32 ip;
-	
+
 	ip4addrptr(skb, flags & IPSET_DIM_ONE_SRC, &ip);
 	ip &= NETMASK(h->netmask);
 	if (ip == 0)
@@ -187,7 +187,7 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 			swap(ip, ip_to);
 	} else if (tb[IPSET_ATTR_CIDR]) {
 		u8 cidr = nla_get_u8(tb[IPSET_ATTR_CIDR]);
-		
+
 		if (cidr > 32)
 			return -IPSET_ERR_INVALID_CIDR;
 		ip &= HOSTMASK(cidr);
@@ -257,7 +257,7 @@ static inline void
 hash_ip6_data_swap(struct hash_ip6_elem *dst, struct hash_ip6_elem *src)
 {
 	struct in6_addr tmp;
-	
+
 	ipv6_addr_copy(&tmp, &dst->ip.in6);
 	ipv6_addr_copy(&dst->ip.in6, &src->ip.in6);
 	ipv6_addr_copy(&src->ip.in6, &tmp);
@@ -291,9 +291,9 @@ nla_put_failure:
 static inline bool
 hash_ip6_data_tlist(struct sk_buff *skb, const struct hash_ip6_elem *data)
 {
-	const struct hash_ip6_telem *e = 
+	const struct hash_ip6_telem *e =
 		(const struct hash_ip6_telem *)data;
-	
+
 	NLA_PUT_IPADDR6(skb, IPSET_ATTR_IP, &e->ip);
 	NLA_PUT_NET32(skb, IPSET_ATTR_TIMEOUT,
 		      htonl(ip_set_timeout_get(e->timeout)));
@@ -411,7 +411,7 @@ hash_ip_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 
 	if (tb[IPSET_ATTR_NETMASK]) {
 		netmask = nla_get_u8(tb[IPSET_ATTR_NETMASK]);
-		
+
 		if ((set->family == AF_INET && netmask > 32)
 		    || (set->family == AF_INET6 && netmask > 128)
 		    || netmask == 0)
@@ -444,7 +444,7 @@ hash_ip_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 
 	if (tb[IPSET_ATTR_TIMEOUT]) {
 		h->timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
-		
+
 		set->variant = set->family == AF_INET
 			? &hash_ip4_tvariant : &hash_ip6_tvariant;
 
@@ -456,11 +456,11 @@ hash_ip_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 		set->variant = set->family == AF_INET
 			? &hash_ip4_variant : &hash_ip6_variant;
 	}
-	
+
 	pr_debug("create %s hashsize %u (%u) maxelem %u: %p(%p)",
 		 set->name, jhash_size(h->table->htable_bits),
 		 h->table->htable_bits, h->maxelem, set->data, h->table);
-	   
+
 	return 0;
 }
 

@@ -7,7 +7,7 @@
 
 /*
  * Single linked lists with a single pointer.
- * Mostly useful for hash tables where the two pointer list head 
+ * Mostly useful for hash tables where the two pointer list head
  * and list node is too wasteful.
  */
 
@@ -18,7 +18,7 @@ struct slist {
 #define SLIST(name) struct slist name = {  .next = NULL }
 #define INIT_SLIST(ptr) ((ptr)->next = NULL)
 
-#define slist_entry(ptr, type, member) container_of(ptr,type,member)
+#define slist_entry(ptr, type, member) container_of(ptr, type, member)
 
 #define slist_for_each(pos, head) \
 	for (pos = (head)->next; pos && ({ prefetch(pos->next); 1; }); \
@@ -42,8 +42,8 @@ struct slist {
  */
 #define slist_for_each_entry(tpos, pos, head, member)			 \
 	for (pos = (head)->next;					 \
-	     pos && ({ prefetch(pos->next); 1;}) &&			 \
-		({ tpos = slist_entry(pos, typeof(*tpos), member); 1;}); \
+	     pos && ({ prefetch(pos->next); 1; }) &&			 \
+		({ tpos = slist_entry(pos, typeof(*tpos), member); 1; });\
 	     pos = pos->next)
 
 /**
@@ -55,8 +55,8 @@ struct slist {
  */
 #define slist_for_each_entry_continue(tpos, pos, member)		 \
 	for (pos = (pos)->next;						 \
-	     pos && ({ prefetch(pos->next); 1;}) &&			 \
-		({ tpos = slist_entry(pos, typeof(*tpos), member); 1;}); \
+	     pos && ({ prefetch(pos->next); 1; }) &&			 \
+		({ tpos = slist_entry(pos, typeof(*tpos), member); 1; });\
 	     pos = pos->next)
 
 /**
@@ -67,8 +67,8 @@ struct slist {
  * @member:	the name of the slist within the struct.
  */
 #define slist_for_each_entry_from(tpos, pos, member)			 \
-	for (; pos && ({ prefetch(pos->next); 1;}) &&			 \
-		({ tpos = slist_entry(pos, typeof(*tpos), member); 1;}); \
+	for (; pos && ({ prefetch(pos->next); 1; }) &&			 \
+		({ tpos = slist_entry(pos, typeof(*tpos), member); 1; });\
 	     pos = pos->next)
 
 /**
@@ -80,10 +80,10 @@ struct slist {
  * @head:	the head for your list.
  * @member:	the name of the slist within the struct.
  */
-#define slist_for_each_entry_safe(tpos, pos, n, head, member) 		 \
-	for (pos = (head)->next;					 \
-	     pos && ({ n = pos->next; 1; }) && 				 \
-		({ tpos = slist_entry(pos, typeof(*tpos), member); 1;}); \
+#define slist_for_each_entry_safe(tpos, pos, n, head, member)		\
+	for (pos = (head)->next;					\
+	     pos && ({ n = pos->next; 1; }) &&				\
+		({ tpos = slist_entry(pos, typeof(*tpos), member); 1; });\
 	     pos = n)
 
 #endif /* _IP_SET_SLIST_H */

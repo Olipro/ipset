@@ -14,8 +14,8 @@
 #include <linux/udp.h>
 #include <linux/skbuff.h>
 #include <linux/errno.h>
-#include <asm/uaccess.h>
-#include <asm/bitops.h>
+#include <linux/uaccess.h>
+#include <linux/bitops.h>
 #include <linux/spinlock.h>
 #include <linux/netlink.h>
 #include <linux/jiffies.h>
@@ -76,12 +76,12 @@ bitmap_port_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	if (!get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &port))
 		return -EINVAL;
-	
+
 	port = ntohs(port);
 
 	if (port < map->first_port || port > map->last_port)
 		return -IPSET_ERR_BITMAP_RANGE;
-	
+
 	port -= map->first_port;
 
 	switch (adt) {
@@ -125,7 +125,7 @@ bitmap_port_uadt(struct ip_set *set, struct nlattr *head, int len,
 		port = ip_set_get_h16(tb[IPSET_ATTR_PORT]);
 	else
 		return -IPSET_ERR_PROTOCOL;
-	
+
 	if (port < map->first_port || port > map->last_port)
 		return -IPSET_ERR_BITMAP_RANGE;
 
@@ -165,10 +165,10 @@ static void
 bitmap_port_destroy(struct ip_set *set)
 {
 	struct bitmap_port *map = set->data;
-	
+
 	ip_set_free(map->members);
 	kfree(map);
-	
+
 	set->data = NULL;
 }
 
@@ -176,7 +176,7 @@ static void
 bitmap_port_flush(struct ip_set *set)
 {
 	struct bitmap_port *map = set->data;
-	
+
 	memset(map->members, 0, map->memsize);
 }
 
@@ -196,7 +196,7 @@ bitmap_port_head(struct ip_set *set, struct sk_buff *skb)
 	NLA_PUT_NET32(skb, IPSET_ATTR_MEMSIZE,
 		      htonl(sizeof(*map) + map->memsize));
 	ipset_nest_end(skb, nested);
-	
+
 	return 0;
 nla_put_failure:
 	return -EFAULT;
@@ -216,7 +216,7 @@ bitmap_port_list(struct ip_set *set,
 		return -EFAULT;
 	for (; cb->args[2] <= last; cb->args[2]++) {
 		id = cb->args[2];
-		if (!test_bit(id, map->members)) 
+		if (!test_bit(id, map->members))
 			continue;
 		nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 		if (!nested) {
@@ -233,7 +233,7 @@ bitmap_port_list(struct ip_set *set,
 	ipset_nest_end(skb, atd);
 	/* Set listing finished */
 	cb->args[2] = 0;
-	
+
 	return 0;
 
 nla_put_failure:
@@ -247,7 +247,7 @@ bitmap_port_same_set(const struct ip_set *a, const struct ip_set *b)
 {
 	struct bitmap_port *x = a->data;
 	struct bitmap_port *y = b->data;
-	
+
 	return x->first_port == y->first_port
 	       && x->last_port == y->last_port;
 }
@@ -300,7 +300,7 @@ bitmap_port_timeout_del(const struct bitmap_port_timeout *map,
 
 	if (bitmap_port_timeout_test(map, id))
 		ret = 0;
-	
+
 	map->members[id] = IPSET_ELEM_UNSET;
 	return ret;
 }
@@ -371,19 +371,19 @@ bitmap_port_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 		}
 	} else
 		port_to = port;
-	
+
 	if (port_to > map->last_port)
 		return -IPSET_ERR_BITMAP_RANGE;
 
 	if (tb[IPSET_ATTR_TIMEOUT])
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
-	
+
 	for (; port <= port_to; port++) {
 		id = port - map->first_port;
 		ret = adt == IPSET_ADD
 			? bitmap_port_timeout_add(map, id, timeout)
 			: bitmap_port_timeout_del(map, id);
-		
+
 		if (ret && !ip_set_eexist(ret, flags))
 			return ret;
 		else
@@ -400,7 +400,7 @@ bitmap_port_timeout_destroy(struct ip_set *set)
 	del_timer_sync(&map->gc);
 	ip_set_free(map->members);
 	kfree(map);
-	
+
 	set->data = NULL;
 }
 
@@ -408,7 +408,7 @@ static void
 bitmap_port_timeout_flush(struct ip_set *set)
 {
 	struct bitmap_port_timeout *map = set->data;
-	
+
 	memset(map->members, 0, map->memsize);
 }
 
@@ -429,7 +429,7 @@ bitmap_port_timeout_head(struct ip_set *set, struct sk_buff *skb)
 	NLA_PUT_NET32(skb, IPSET_ATTR_MEMSIZE,
 		      htonl(sizeof(*map) + map->memsize));
 	ipset_nest_end(skb, nested);
-	
+
 	return 0;
 nla_put_failure:
 	return -EFAULT;
@@ -444,7 +444,7 @@ bitmap_port_timeout_list(struct ip_set *set,
 	u16 id, first = cb->args[2];
 	u16 last = map->last_port - map->first_port;
 	unsigned long *table = map->members;
-	
+
 	adt = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!adt)
 		return -EFAULT;
@@ -470,7 +470,7 @@ bitmap_port_timeout_list(struct ip_set *set,
 
 	/* Set listing finished */
 	cb->args[2] = 0;
-	
+
 	return 0;
 
 nla_put_failure:
@@ -484,7 +484,7 @@ bitmap_port_timeout_same_set(const struct ip_set *a, const struct ip_set *b)
 {
 	struct bitmap_port_timeout *x = a->data;
 	struct bitmap_port_timeout *y = b->data;
-	
+
 	return x->first_port == y->first_port
 	       && x->last_port == y->last_port
 	       && x->timeout == y->timeout;
@@ -508,13 +508,13 @@ bitmap_port_gc(unsigned long ul_set)
 	unsigned long *table = map->members;
 	u32 id;	/* wraparound */
 	u16 last = map->last_port - map->first_port;
-	
+
 	/* We run parallel with other readers (test element)
 	 * but adding/deleting new entries is locked out */
 	read_lock_bh(&set->lock);
 	for (id = 0; id <= last; id++)
 		if (ip_set_timeout_expired(table[id]))
-		    	table[id] = IPSET_ELEM_UNSET;
+			table[id] = IPSET_ELEM_UNSET;
 	read_unlock_bh(&set->lock);
 
 	map->gc.expires = jiffies + IPSET_GC_PERIOD(map->timeout) * HZ;
@@ -554,7 +554,7 @@ init_map_port(struct ip_set *set, struct bitmap_port *map,
 
 	set->data = map;
 	set->family = AF_UNSPEC;
-	
+
 	return true;
 }
 
@@ -568,7 +568,7 @@ bitmap_port_create(struct ip_set *set, struct nlattr *head, int len,
 	if (nla_parse(tb, IPSET_ATTR_CREATE_MAX, head, len,
 		      bitmap_port_create_policy))
 		return -IPSET_ERR_PROTOCOL;
-	
+
 	if (tb[IPSET_ATTR_PORT])
 		first_port = ip_set_get_h16(tb[IPSET_ATTR_PORT]);
 	else
@@ -578,7 +578,7 @@ bitmap_port_create(struct ip_set *set, struct nlattr *head, int len,
 		last_port = ip_set_get_h16(tb[IPSET_ATTR_PORT_TO]);
 		if (first_port > last_port) {
 			u16 tmp = first_port;
-			
+
 			first_port = last_port;
 			last_port = tmp;
 		}
@@ -587,14 +587,14 @@ bitmap_port_create(struct ip_set *set, struct nlattr *head, int len,
 
 	if (tb[IPSET_ATTR_TIMEOUT]) {
 		struct bitmap_port_timeout *map;
-		
+
 		map = kzalloc(sizeof(*map), GFP_KERNEL);
 		if (!map)
 			return -ENOMEM;
-		
+
 		map->memsize = (last_port - first_port + 1)
 			       * sizeof(unsigned long);
-			       
+
 		if (!init_map_port(set, (struct bitmap_port *) map,
 				   first_port, last_port)) {
 			kfree(map);
@@ -603,11 +603,11 @@ bitmap_port_create(struct ip_set *set, struct nlattr *head, int len,
 
 		map->timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 		set->variant = &bitmap_port_timeout;
-		
+
 		bitmap_port_gc_init(set);
 	} else {
 		struct bitmap_port *map;
-		
+
 		map = kzalloc(sizeof(*map), GFP_KERNEL);
 		if (!map)
 			return -ENOMEM;

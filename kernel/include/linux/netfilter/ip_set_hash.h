@@ -22,5 +22,5 @@ enum {
 #define IPSET_DEFAULT_RESIZE		100
 
 #endif /* __KERNEL__ */
-	
+
 #endif /* __IP_SET_HASH_H */

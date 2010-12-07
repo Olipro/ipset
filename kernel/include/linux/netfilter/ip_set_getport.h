@@ -18,14 +18,14 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 	case IPPROTO_TCP: {
 		struct tcphdr _tcph;
 		const struct tcphdr *th;
-		
+
 		th = skb_header_pointer(skb, protooff, sizeof(_tcph), &_tcph);
 		if (th == NULL)
 			/* No choice either */
 			return false;
-	     	
-	     	*port = src ? th->source : th->dest;
-	     	break;
+
+		*port = src ? th->source : th->dest;
+		break;
 	}
 	case IPPROTO_UDP: {
 		struct udphdr _udph;
@@ -35,29 +35,29 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 		if (uh == NULL)
 			/* No choice either */
 			return false;
-	     	
-	     	*port = src ? uh->source : uh->dest;
-	     	break;
+
+		*port = src ? uh->source : uh->dest;
+		break;
 	}
 	case IPPROTO_ICMP: {
 		struct icmphdr _icmph;
 		const struct icmphdr *ic;
-		
+
 		ic = skb_header_pointer(skb, protooff, sizeof(_icmph), &_icmph);
 		if (ic == NULL)
 			return false;
-		
+
 		*port = (ic->type << 8) & ic->code;
 		break;
 	}
 	case IPPROTO_ICMPV6: {
 		struct icmp6hdr _icmph;
 		const struct icmp6hdr *ic;
-		
+
 		ic = skb_header_pointer(skb, protooff, sizeof(_icmph), &_icmph);
 		if (ic == NULL)
 			return false;
-		
+
 		*port = (ic->icmp6_type << 8) & ic->icmp6_code;
 		break;
 	}
