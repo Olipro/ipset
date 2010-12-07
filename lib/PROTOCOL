@@ -4,7 +4,7 @@ req:	msg:	IPSET_CMD_PROTOCOL
 resp:	attr:	IPSET_ATTR_PROTOCOL	(protocol max)
 		IPSET_ATTR_PROTOCOL_MIN	(protocol min, optional)
 
-req:	msg:	IPSET_CMD_CREATE|MODIFY
+req:	msg:	IPSET_CMD_CREATE
 	attr:	IPSET_ATTR_PROTOCOL
 		IPSET_ATTR_SETNAME
 		IPSET_ATTR_TYPENAME
