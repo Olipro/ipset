@@ -20,7 +20,6 @@
 #include <net/ip.h>
 #include <net/ipv6.h>
 #include <net/netlink.h>
-#include <net/pfxlen.h>
 
 #include <linux/netfilter.h>
 #include <linux/netfilter/ip_set.h>

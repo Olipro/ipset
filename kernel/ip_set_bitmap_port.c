@@ -21,7 +21,6 @@
 #include <linux/jiffies.h>
 #include <linux/timer.h>
 #include <net/netlink.h>
-#include <net/pfxlen.h>
 
 #include <linux/netfilter/ip_set.h>
 #include <linux/netfilter/ip_set_bitmap.h>

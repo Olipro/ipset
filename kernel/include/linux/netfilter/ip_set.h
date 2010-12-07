@@ -164,6 +164,7 @@ enum ipset_adt {
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/netlink.h>
+#include <linux/netfilter.h>
 #include <linux/vmalloc.h>
 #include <net/netlink.h>
 
@@ -210,13 +211,6 @@ enum ip_set_feature {
 	IPSET_DUMP_LAST_FLAG = 7,
 	IPSET_DUMP_LAST = (1 << IPSET_DUMP_LAST_FLAG),
 };
-
-/* Calculate the bytes required to store the inclusive range of a-b */
-static inline int
-bitmap_bytes(u32 a, u32 b)
-{
-	return 4 * ((((b - a + 8) / 8) + 3) / 4);
-}
 
 struct ip_set;
 
@@ -485,6 +479,22 @@ ip6addrptr(const struct sk_buff *skb, bool src, struct in6_addr *addr)
 	memcpy(addr, src ? &ipv6_hdr(skb)->saddr : &ipv6_hdr(skb)->daddr,
 	       sizeof(*addr));
 }
+
+/* Calculate the bytes required to store the inclusive range of a-b */
+static inline int
+bitmap_bytes(u32 a, u32 b)
+{
+	return 4 * ((((b - a + 8) / 8) + 3) / 4);
+}
+
+/* Prefixlen maps */
+extern const union nf_inet_addr prefixlen_netmask_map[];
+extern const union nf_inet_addr prefixlen_hostmask_map[];
+
+#define NETMASK(n)	prefixlen_netmask_map[n].ip
+#define NETMASK6(n)	prefixlen_netmask_map[n].ip6
+#define HOSTMASK(n)	prefixlen_hostmask_map[n].ip
+#define HOSTMASK6(n)	prefixlen_hostmask_map[n].ip6
 
 /* Interface to iptables/ip6tables */
 
