@@ -52,14 +52,6 @@ config IP_SET_HASH_IP
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
-config IP_SET_HASH_NET
-	tristate "hash:net set support"
-	depends on IP_SET
-	help
-	  This option adds the hash:net set type support.
-
-	  To compile it as a module, choose M here.  If unsure, say N.
-
 config IP_SET_HASH_IPPORT
 	tristate "hash:ip,port set support"
 	depends on IP_SET
@@ -81,6 +73,22 @@ config IP_SET_HASH_IPPORTNET
 	depends on IP_SET
 	help
 	  This option adds the hash:ip,port,net set type support.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+config IP_SET_HASH_NET
+	tristate "hash:net set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:net set type support.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+config IP_SET_HASH_NETPORT
+	tristate "hash:net,port set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:net,port set type support.
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
