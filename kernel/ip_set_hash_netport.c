@@ -7,8 +7,8 @@
 
 /* Kernel module implementing an IP set type: the hash:net,port type */
 
-#include <linux/netfilter/ip_set_kernel.h>
-#include <linux/netfilter/ip_set_jhash.h>
+#include <linux/netfilter/ipset/ip_set_kernel.h>
+#include <linux/netfilter/ipset/ip_set_jhash.h>
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
@@ -22,10 +22,10 @@
 #include <net/netlink.h>
 
 #include <linux/netfilter.h>
-#include <linux/netfilter/ip_set.h>
-#include <linux/netfilter/ip_set_timeout.h>
-#include <linux/netfilter/ip_set_getport.h>
-#include <linux/netfilter/ip_set_hash.h>
+#include <linux/netfilter/ipset/ip_set.h>
+#include <linux/netfilter/ipset/ip_set_timeout.h>
+#include <linux/netfilter/ipset/ip_set_getport.h>
+#include <linux/netfilter/ipset/ip_set_hash.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
@@ -148,7 +148,7 @@ nla_put_failure:
 
 #define PF		4
 #define HOST_MASK	32
-#include <linux/netfilter/ip_set_chash.h>
+#include <linux/netfilter/ipset/ip_set_chash.h>
 
 static int
 hash_netport4_kadt(struct ip_set *set, const struct sk_buff *skb,
@@ -370,7 +370,7 @@ nla_put_failure:
 
 #define PF		6
 #define HOST_MASK	128
-#include <linux/netfilter/ip_set_chash.h>
+#include <linux/netfilter/ipset/ip_set_chash.h>
 
 static int
 hash_netport6_kadt(struct ip_set *set, const struct sk_buff *skb,

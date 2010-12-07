@@ -9,7 +9,7 @@
 
 /* Kernel module for IP set management */
 
-#include <linux/netfilter/ip_set_kernel.h>
+#include <linux/netfilter/ipset/ip_set_kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -22,7 +22,7 @@
 
 #include <linux/netfilter.h>
 #include <linux/netfilter/nfnetlink.h>
-#include <linux/netfilter/ip_set.h>
+#include <linux/netfilter/ipset/ip_set.h>
 
 static struct list_head ip_set_type_list;	/* all registered set types */
 static DEFINE_MUTEX(ip_set_type_mutex);		/* protects ip_set_type_list */

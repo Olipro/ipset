@@ -1,7 +1,7 @@
 #ifndef _XT_SET_H
 #define _XT_SET_H
 
-#include <linux/netfilter/ip_set.h>
+#include <linux/netfilter/ipset/ip_set.h>
 
 /* Revision 0 interface: backward compatible with netfilter/iptables */
 

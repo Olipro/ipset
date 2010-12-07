@@ -7,15 +7,15 @@
 
 /* Kernel module implementing an IP set type: the list:set type */
 
-#include <linux/netfilter/ip_set_kernel.h>
+#include <linux/netfilter/ipset/ip_set_kernel.h>
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
 #include <linux/errno.h>
 
-#include <linux/netfilter/ip_set.h>
-#include <linux/netfilter/ip_set_timeout.h>
-#include <linux/netfilter/ip_set_list.h>
+#include <linux/netfilter/ipset/ip_set.h>
+#include <linux/netfilter/ipset/ip_set_timeout.h>
+#include <linux/netfilter/ipset/ip_set_list.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");

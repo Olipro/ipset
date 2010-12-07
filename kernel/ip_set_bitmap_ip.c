@@ -9,7 +9,7 @@
 
 /* Kernel module implementing an IP set type: the bitmap:ip type */
 
-#include <linux/netfilter/ip_set_kernel.h>
+#include <linux/netfilter/ipset/ip_set_kernel.h>
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
@@ -23,10 +23,10 @@
 #include <net/netlink.h>
 #include <net/tcp.h>
 
-#include <linux/netfilter/ip_set.h>
-#include <linux/netfilter/ip_set_bitmap.h>
+#include <linux/netfilter/ipset/ip_set.h>
+#include <linux/netfilter/ipset/ip_set_bitmap.h>
 #define IP_SET_BITMAP_TIMEOUT
-#include <linux/netfilter/ip_set_timeout.h>
+#include <linux/netfilter/ipset/ip_set_timeout.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");

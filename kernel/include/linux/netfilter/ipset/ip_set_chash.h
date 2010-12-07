@@ -1,9 +1,9 @@
 #ifndef _IP_SET_CHASH_H
 #define _IP_SET_CHASH_H
 
-#include <linux/netfilter/ip_set_jhash.h>
-#include <linux/netfilter/ip_set_slist.h>
-#include <linux/netfilter/ip_set_timeout.h>
+#include <linux/netfilter/ipset/ip_set_jhash.h>
+#include <linux/netfilter/ipset/ip_set_slist.h>
+#include <linux/netfilter/ipset/ip_set_timeout.h>
 
 /* Cacheline friendly hash with resizing when linear searching becomes too
  * long. Internally jhash is used with the assumption that the size of the
