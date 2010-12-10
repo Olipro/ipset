@@ -46,6 +46,7 @@ extern struct ipset_type ipset_list_set0;
 
 enum exittype {
 	NO_PROBLEM = 0,
+	SESSION_PROBLEM,
 	OTHER_PROBLEM,
 	PARAMETER_PROBLEM,
 	VERSION_PROBLEM,
@@ -65,7 +66,7 @@ exit_error(int status, const char *msg, ...)
 		va_start(args, msg);
 		vfprintf(stderr, msg, args);
 		va_end(args);
-		if (msg[strlen(msg) - 1] != '\n')
+		if (status != SESSION_PROBLEM)
 			fprintf(stderr, "\n");
 
 		if (status == PARAMETER_PROBLEM)
@@ -97,7 +98,7 @@ handle_error(void)
 		fprintf(stderr, "Warning: %s\n",
 			ipset_session_warning(session));
 	if (ipset_session_error(session))
-		return exit_error(OTHER_PROBLEM, "%s",
+		return exit_error(SESSION_PROBLEM, "%s",
 				  ipset_session_error(session));
 
 	if (!interactive) {
@@ -620,7 +621,7 @@ parse_commandline(int argc, char *argv[])
 	/* Special case for TEST and non-quiet mode */
 	if (cmd == IPSET_CMD_TEST && ipset_session_warning(session)) {
 		if (!ipset_envopt_test(session, IPSET_ENV_QUIET))
-			fprintf(stderr, "%s\n", ipset_session_warning(session));
+			fprintf(stderr, "%s", ipset_session_warning(session));
 		ipset_session_report_reset(session);
 	}
 	if (ret < 0)
