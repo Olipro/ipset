@@ -1,6 +1,7 @@
 #ifndef _IP_SET_AHASH_H
 #define _IP_SET_AHASH_H
 
+#include <linux/rcupdate.h>
 #include <linux/netfilter/ipset/jhash.h>
 #include <linux/netfilter/ipset/slist.h>
 #include <linux/netfilter/ipset/ip_set_timeout.h>
@@ -11,6 +12,13 @@
  * stored data is a multiple of sizeof(u32). If storage supports timeout,
  * the timeout field must be the last one in the data structure - that field
  * is ignored when computing the hash key.
+ *
+ * Readers and resizing
+ *
+ * Resizing can be triggered by userspace command only, and those
+ * are serialized by the nfnl mutex. During resizing the set is
+ * read-locked, so the only possible concurrent operations are
+ * the kernel side readers. Those must be protected by proper RCU locking.
  */
 
 /* Number of elements to store in an initial array block */
@@ -326,11 +334,11 @@ retry:
 		}
 	}
 
-	h->table = t;
+	rcu_assign_pointer(h->table, t);
 	read_unlock_bh(&set->lock);
 
-	/* Give time to other users of the set */
-	synchronize_net();
+	/* Give time to other readers of the set */
+	synchronize_rcu_bh();
 
 	ahash_destroy(orig);
 
@@ -343,30 +351,36 @@ static int
 type_pf_add(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
-	struct htable *t = h->table;
+	struct htable *t;
 	const struct type_pf_elem *d = value;
 	struct hbucket *n;
-	int i, ret;
+	int i, ret = 0;
 	u32 key;
 
 	if (h->elements >= h->maxelem)
 		return -IPSET_ERR_HASH_FULL;
 
+	rcu_read_lock_bh();
+	t = rcu_dereference_bh(h->table);
 	key = HKEY(value, h->initval, t->htable_bits);
 	n = hbucket(t, key);
 	for (i = 0; i < n->pos; i++)
-		if (type_pf_data_equal(ahash_data(n, i), d))
-			return -IPSET_ERR_EXIST;
+		if (type_pf_data_equal(ahash_data(n, i), d)) {
+			ret = -IPSET_ERR_EXIST;
+			goto out;
+		}
 
 	ret = type_pf_elem_add(n, value, gfp_flags);
 	if (ret != 0)
-		return ret;
+		goto out;
 
 #ifdef IP_SET_HASH_WITH_NETS
 	add_cidr(h, d->cidr, HOST_MASK);
 #endif
 	h->elements++;
-	return 0;
+out:
+	rcu_read_unlock_bh();
+	return ret;
 }
 
 /* Delete an element from the hash: swap it with the last element
@@ -753,11 +767,11 @@ retry:
 		}
 	}
 
-	h->table = t;
+	rcu_assign_pointer(h->table, t);
 	read_unlock_bh(&set->lock);
 
-	/* Give time to other users of the set */
-	synchronize_net();
+	/* Give time to other readers of the set */
+	synchronize_rcu_bh();
 
 	ahash_destroy(orig);
 
@@ -772,7 +786,7 @@ type_pf_tadd(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 	const struct type_pf_elem *d = value;
 	struct hbucket *n;
 	struct type_pf_elem *data;
-	int ret, i, j = AHASH_MAX_SIZE + 1;
+	int ret = 0, i, j = AHASH_MAX_SIZE + 1;
 	u32 key;
 
 	if (h->elements >= h->maxelem)
@@ -781,6 +795,8 @@ type_pf_tadd(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 	if (h->elements >= h->maxelem)
 		return -IPSET_ERR_HASH_FULL;
 
+	rcu_read_lock_bh();
+	t = rcu_dereference_bh(h->table);
 	key = HKEY(d, h->initval, t->htable_bits);
 	n = hbucket(t, key);
 	for (i = 0; i < n->pos; i++) {
@@ -788,8 +804,10 @@ type_pf_tadd(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 		if (type_pf_data_equal(data, d)) {
 			if (type_pf_data_expired(data))
 				j = i;
-			else
-				return -IPSET_ERR_EXIST;
+			else {
+				ret = -IPSET_ERR_EXIST;
+				goto out;
+			}
 		} else if (j == AHASH_MAX_SIZE + 1 
 			 && type_pf_data_expired(data))
 			j = i;
@@ -802,17 +820,19 @@ type_pf_tadd(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 #endif
 		type_pf_data_copy(data, d);
 		type_pf_data_timeout_set(data, timeout);
-		return 0;
+		goto out;
 	}
 	ret = type_pf_elem_tadd(n, d, gfp_flags, timeout);
 	if (ret != 0)
-		return ret;
+		goto out;
 
 #ifdef IP_SET_HASH_WITH_NETS
 	add_cidr(h, d->cidr, HOST_MASK);
 #endif
 	h->elements++;
-	return 0;
+out:
+	rcu_read_unlock_bh();
+	return ret;
 }
 
 static int
