@@ -115,13 +115,13 @@ nla_put_failure:
 #define IP_SET_HASH_WITH_NETMASK
 #define PF		4
 #define HOST_MASK	32
-#include <linux/netfilter/ipset/ip_set_chash.h>
+#include <linux/netfilter/ipset/ip_set_ahash.h>
 
 static int
 hash_ip4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	      enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
 {
-	struct chash *h = set->data;
+	struct ip_set_hash *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	u32 ip;
 
@@ -146,7 +146,7 @@ static int
 hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	      enum ipset_adt adt, u32 *lineno, u32 flags)
 {
-	struct chash *h = set->data;
+	struct ip_set_hash *h = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	u32 ip, nip, ip_to, hosts, timeout = h->timeout;
@@ -211,15 +211,13 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 static bool
 hash_ip_same_set(const struct ip_set *a, const struct ip_set *b)
 {
-	struct chash *x = a->data;
-	struct chash *y = b->data;
+	struct ip_set_hash *x = a->data;
+	struct ip_set_hash *y = b->data;
 
 	/* Resizing changes htable_bits, so we ignore it */
 	return x->maxelem == y->maxelem
 	       && x->timeout == y->timeout
-	       && x->netmask == y->netmask
-	       && x->array_size == y->array_size
-	       && x->chain_limit == y->chain_limit;
+	       && x->netmask == y->netmask;
 }
 
 /* The type variant functions: IPv6 */
@@ -307,13 +305,13 @@ nla_put_failure:
 
 #define PF		6
 #define HOST_MASK	128
-#include <linux/netfilter/ipset/ip_set_chash.h>
+#include <linux/netfilter/ipset/ip_set_ahash.h>
 
 static int
 hash_ip6_kadt(struct ip_set *set, const struct sk_buff *skb,
 	      enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
 {
-	struct chash *h = set->data;
+	struct ip_set_hash *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	union nf_inet_addr ip;
 
@@ -336,7 +334,7 @@ static int
 hash_ip6_uadt(struct ip_set *set, struct nlattr *head, int len,
 	      enum ipset_adt adt, u32 *lineno, u32 flags)
 {
-	struct chash *h = set->data;
+	struct ip_set_hash *h = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	union nf_inet_addr ip;
@@ -387,7 +385,7 @@ hash_ip_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 	struct nlattr *tb[IPSET_ATTR_CREATE_MAX+1];
 	u32 hashsize = IPSET_DEFAULT_HASHSIZE, maxelem = IPSET_DEFAULT_MAXELEM;
 	u8 netmask, hbits;
-	struct chash *h;
+	struct ip_set_hash *h;
 
 	if (!(set->family == AF_INET || set->family == AF_INET6))
 		return -IPSET_ERR_INVALID_FAMILY;
@@ -423,15 +421,13 @@ hash_ip_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 
 	h->maxelem = maxelem;
 	h->netmask = netmask;
-	h->array_size = CHASH_DEFAULT_ARRAY_SIZE;
-	h->chain_limit = CHASH_DEFAULT_CHAIN_LIMIT;
 	get_random_bytes(&h->initval, sizeof(h->initval));
 	h->timeout = IPSET_NO_TIMEOUT;
 
 	hbits = htable_bits(hashsize);
 	h->table = ip_set_alloc(
 			sizeof(struct htable)
-			+ jhash_size(hbits) * sizeof(struct slist),
+			+ jhash_size(hbits) * sizeof(struct hbucket),
 			GFP_KERNEL);
 	if (!h->table) {
 		kfree(h);
