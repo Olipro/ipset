@@ -13,6 +13,8 @@
 /* String equality tests */
 #define STREQ(a,b)		(strcmp(a,b) == 0)
 #define STRNEQ(a,b,n)		(strncmp(a,b,n) == 0)
+#define STRCASEQ(a,b)		(strcasecmp(a,b) == 0)
+#define STRNCASEQ(a,b,n)	(strncasecmp(a,b,n) == 0)
 
 /* Stringify tokens */
 #define _STR(c)			#c

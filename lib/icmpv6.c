@@ -57,7 +57,7 @@ int name_to_icmpv6(const char *str, uint16_t *typecode)
 	unsigned int i;
 
 	for (i = 0; i < ARRAY_SIZE(icmpv6_typecodes); i++)
-		if (STRNEQ(icmpv6_typecodes[i].name, str, strlen(str))) {
+		if (STRNCASEQ(icmpv6_typecodes[i].name, str, strlen(str))) {
 			*typecode = (icmpv6_typecodes[i].type << 8) | icmpv6_typecodes[i].code;
 			return 0;
 		}

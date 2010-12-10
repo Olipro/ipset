@@ -70,7 +70,7 @@ int name_to_icmp(const char *str, uint16_t *typecode)
 	unsigned int i;
 
 	for (i = 0; i < ARRAY_SIZE(icmp_typecodes); i++)
-		if (STRNEQ(icmp_typecodes[i].name, str, strlen(str))) {
+		if (STRNCASEQ(icmp_typecodes[i].name, str, strlen(str))) {
 			*typecode = (icmp_typecodes[i].type << 8) | icmp_typecodes[i].code;
 			return 0;
 		}
