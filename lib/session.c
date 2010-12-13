@@ -1311,10 +1311,13 @@ callback_noop(const struct nlmsghdr *nlh UNUSED, void *data UNUSED)
  * Build and send messages
  */
 
-static inline void
+static inline int
 open_nested(struct ipset_session *session, struct nlmsghdr *nlh, int attr)
 {
+	if (nlh->nlmsg_len + MNL_ATTR_HDRLEN > session->bufsize)
+		return 1;
 	session->nested[session->nestid++] = mnl_attr_nest_start(nlh, attr);
+	return 0;
 }
 
 static inline void
@@ -1348,8 +1351,11 @@ attr_len(const struct ipset_attr_policy *attr, uint8_t family, uint16_t *flags)
 	}
 }
 
+#define BUFFER_FULL(bufsize, nlmsg_len, nestlen, attrlen)	\
+(nlmsg_len + nestlen + MNL_ATTR_HDRLEN + MNL_ALIGN(alen) + MNL_ALIGN(sizeof(struct nlmsgerr)) > bufsize)
+
 static int
-rawdata2attr(struct nlmsghdr *nlh,
+rawdata2attr(struct ipset_session *session, struct nlmsghdr *nlh,
 	     const void *d, int type, uint8_t family,
 	     const struct ipset_attr_policy attrs[])
 {
@@ -1359,15 +1365,16 @@ rawdata2attr(struct nlmsghdr *nlh,
 
 
 	attr = &attrs[type];
-	alen = attr_len(attr, family, &flags);
-
-	switch (attr->type) {
-	case MNL_TYPE_NESTED: {
+	if (attr->type == MNL_TYPE_NESTED) {
 		/* IP addresses */
-		struct nlattr *nested = mnl_attr_nest_start(nlh, type);
+		struct nlattr *nested;
 		int atype = family == AF_INET ? IPSET_ATTR_IPADDR_IPV4
 					      : IPSET_ATTR_IPADDR_IPV6;
 
+		alen = attr_len(attr, family, &flags);
+		if (BUFFER_FULL(session->bufsize, nlh->nlmsg_len, MNL_ATTR_HDRLEN, alen))
+			return 1;
+		nested = mnl_attr_nest_start(nlh, type);
 		D("family: %s", family == AF_INET ? "INET" :
 				family == AF_INET6 ? "INET6" : "UNSPEC");
 		mnl_attr_put(nlh, atype | flags, alen, d);
@@ -1375,6 +1382,12 @@ rawdata2attr(struct nlmsghdr *nlh,
 		
 		return 0;
 	}
+
+	alen = attr_len(attr, family, &flags);
+	if (BUFFER_FULL(session->bufsize, nlh->nlmsg_len, 0, alen))
+		return 1;
+
+	switch (attr->type) {
 	case MNL_TYPE_U32: {
 		uint32_t value = htonl(*(const uint32_t *)d);
 		
@@ -1397,66 +1410,52 @@ rawdata2attr(struct nlmsghdr *nlh,
 }
 
 static int
-data2attr(struct nlmsghdr *nlh,
+data2attr(struct ipset_session *session, struct nlmsghdr *nlh,
 	  struct ipset_data *data, int type, uint8_t family,
 	  const struct ipset_attr_policy attrs[])
 {
 	const struct ipset_attr_policy *attr = &attrs[type];
 
-	return rawdata2attr(nlh, ipset_data_get(data, attr->opt),
+	return rawdata2attr(session, nlh, ipset_data_get(data, attr->opt),
 			    type, family, attrs);
 }
 
 #define ADDATTR_PROTOCOL(nlh)						\
 	mnl_attr_put_u8(nlh, IPSET_ATTR_PROTOCOL, IPSET_PROTOCOL)
 
-#define ADDATTR(nlh, data, type, family, attrs)				\
-	data2attr(nlh, data, type, family, attrs)
+#define ADDATTR(session, nlh, data, type, family, attrs)		\
+	data2attr(session, nlh, data, type, family, attrs)
 
-#define ADDATTR_SETNAME(nlh, data)					\
-	data2attr(nlh, data, IPSET_ATTR_SETNAME, AF_INET, cmd_attrs)
+#define ADDATTR_SETNAME(session, nlh, data)				\
+	data2attr(session, nlh, data, IPSET_ATTR_SETNAME, AF_INET, cmd_attrs)
 
-#define ADDATTR_IF(nlh, data, type, family, attrs)			\
-	if (ipset_data_test(data, attrs[type].opt)) {			\
-		D("addattr if: %u", attrs[type].opt);			\
-		data2attr(nlh, data, type, family, attrs); }
+#define ADDATTR_IF(session, nlh, data, type, family, attrs)		\
+	ipset_data_test(data, attrs[type].opt) ? 			\
+		data2attr(session, nlh, data, type, family, attrs) : 0
 
-#define ADDATTR_RAW(nlh, data, type, attrs)				\
-	rawdata2attr(nlh, data, type, AF_INET, attrs)
+#define ADDATTR_RAW(session, nlh, data, type, attrs)			\
+	rawdata2attr(session, nlh, data, type, AF_INET, attrs)
 
 static void
-addattr_create(struct nlmsghdr *nlh, struct ipset_data *data, uint8_t family)
+addattr_create(struct ipset_session *session,
+	       struct nlmsghdr *nlh, struct ipset_data *data, uint8_t family)
 {
 	int i;
 
 	for (i = IPSET_ATTR_UNSPEC + 1; i <= IPSET_ATTR_CREATE_MAX; i++)
-		ADDATTR_IF(nlh, data, i, family, create_attrs);
+		ADDATTR_IF(session, nlh, data, i, family, create_attrs);
 }
 
-static void
-addattr_adt(struct nlmsghdr *nlh, struct ipset_data *data, uint8_t family)
+static int
+addattr_adt(struct ipset_session *session,
+	    struct nlmsghdr *nlh, struct ipset_data *data, uint8_t family)
 {
 	int i;
 	
 	for (i = IPSET_ATTR_UNSPEC + 1; i <= IPSET_ATTR_ADT_MAX; i++)
-		ADDATTR_IF(nlh, data, i, family, adt_attrs);
-}
-
-static inline bool
-buffer_full(struct ipset_session *session)
-{
-	struct nlmsghdr *nlh;
-	const struct ipset_type *type;
-	int sizeid;
-
-	nlh = (struct nlmsghdr *) session->buffer;
-	type = ipset_data_get(session->data, IPSET_OPT_TYPE);
-	sizeid = !!(ipset_data_family(session->data) != AF_INET);
-
-	/* Current size + ADD/DEL max size + nlsmgerr must fit into buffer */
-	return session->bufsize < nlh->nlmsg_len
-				  + type->maxsize[sizeid]
-				  + MNL_ALIGN(sizeof(struct nlmsgerr));
+		if (ADDATTR_IF(session, nlh, data, i, family, adt_attrs))
+			return 1;
+	return 0;
 }
 
 #define PRIVATE_MSG_BUFLEN	256
@@ -1483,16 +1482,16 @@ build_send_private_msg(struct ipset_session *session, enum ipset_cmd cmd)
 			return ipset_err(session,
 				"Invalid internal HEADER command: "
 				"missing setname");
-		ADDATTR_SETNAME(nlh, data);
+		ADDATTR_SETNAME(session, nlh, data);
 		break;
 	case IPSET_CMD_TYPE:
 		if (!ipset_data_test(data, IPSET_OPT_TYPENAME))
 			return ipset_err(session,
 				"Invalid internal TYPE command: "
 				"missing settype");
-		ADDATTR(nlh, data, IPSET_ATTR_TYPENAME, AF_INET, cmd_attrs);
+		ADDATTR(session, nlh, data, IPSET_ATTR_TYPENAME, AF_INET, cmd_attrs);
 		if (ipset_data_test(data, IPSET_OPT_FAMILY))
-			ADDATTR(nlh, data, IPSET_ATTR_FAMILY, AF_INET, cmd_attrs);
+			ADDATTR(session, nlh, data, IPSET_ATTR_FAMILY, AF_INET, cmd_attrs);
 		else
 			/* bitmap:port and list:set types */
 			mnl_attr_put_u8(nlh, IPSET_ATTR_FAMILY, AF_UNSPEC);
@@ -1517,12 +1516,9 @@ may_aggregate_ad(struct ipset_session *session, struct ipset_data *data,
 	return (cmd == IPSET_CMD_ADD || cmd == IPSET_CMD_DEL)
 	       && cmd == session->cmd
 	       && STREQ(ipset_data_setname(data), session->saved_setname);
-} 
+}
 
-int
-build_msg(struct ipset_session *session, bool aggregate);
-
-int
+static int
 build_msg(struct ipset_session *session, bool aggregate)
 {
 	struct nlmsghdr *nlh = (struct nlmsghdr *) session->buffer;
@@ -1556,18 +1552,18 @@ build_msg(struct ipset_session *session, bool aggregate)
 		type = ipset_data_get(data, IPSET_OPT_TYPE);
 		/* Core attributes:
 		 * setname, typename, revision, family, flags (optional) */
-		ADDATTR_SETNAME(nlh, data);
-		ADDATTR(nlh, data, IPSET_ATTR_TYPENAME, AF_INET, cmd_attrs);
-		ADDATTR_RAW(nlh, &type->revision,
+		ADDATTR_SETNAME(session, nlh, data);
+		ADDATTR(session, nlh, data, IPSET_ATTR_TYPENAME, AF_INET, cmd_attrs);
+		ADDATTR_RAW(session, nlh, &type->revision,
 			    IPSET_ATTR_REVISION, cmd_attrs);
 		D("family: %u, type family %u",
 		  ipset_data_family(data), type->family);
-		ADDATTR(nlh, data, IPSET_ATTR_FAMILY, AF_INET, cmd_attrs);
+		ADDATTR(session, nlh, data, IPSET_ATTR_FAMILY, AF_INET, cmd_attrs);
 
 		/* Type-specific create attributes */
 		D("call open_nested");
 		open_nested(session, nlh, IPSET_ATTR_DATA);
-		addattr_create(nlh, data, type->family);
+		addattr_create(session, nlh, data, type->family);
 		D("call close_nested");
 		close_nested(session, nlh);
 		break;
@@ -1577,7 +1573,7 @@ build_msg(struct ipset_session *session, bool aggregate)
 	case IPSET_CMD_LIST:
 	case IPSET_CMD_SAVE:
 		if (ipset_data_test(data, IPSET_SETNAME))
-			ADDATTR_SETNAME(nlh, data);
+			ADDATTR_SETNAME(session, nlh, data);
 		break;
 	case IPSET_CMD_RENAME:
 	case IPSET_CMD_SWAP:
@@ -1589,8 +1585,8 @@ build_msg(struct ipset_session *session, bool aggregate)
 			return ipset_err(session,
 				"Invalid %s command: missing to-setname",
 				session->cmd == IPSET_CMD_SWAP ? "swap" : "rename");
-		ADDATTR_SETNAME(nlh, data);
-		ADDATTR_RAW(nlh, ipset_data_get(data, IPSET_OPT_SETNAME2),
+		ADDATTR_SETNAME(session, nlh, data);
+		ADDATTR_RAW(session, nlh, ipset_data_get(data, IPSET_OPT_SETNAME2),
 			    IPSET_ATTR_SETNAME2, cmd_attrs);
 		break;
 	case IPSET_CMD_ADD:
@@ -1610,10 +1606,10 @@ build_msg(struct ipset_session *session, bool aggregate)
 					session->cmd == IPSET_CMD_ADD ? "add" : "del");
 
 			/* Core options: setname */
-			ADDATTR_SETNAME(nlh, data);
+			ADDATTR_SETNAME(session, nlh, data);
 			if (session->lineno != 0) {
 				/* Restore mode */
-				ADDATTR_RAW(nlh, &session->lineno,
+				ADDATTR_RAW(session, nlh, &session->lineno,
 					    IPSET_ATTR_LINENO, cmd_attrs);
 				open_nested(session, nlh, IPSET_ATTR_ADT);
 			}
@@ -1621,10 +1617,18 @@ build_msg(struct ipset_session *session, bool aggregate)
 		type = ipset_data_get(data, IPSET_OPT_TYPE);
 		D("family: %u, type family %u",
 		  ipset_data_family(data), type->family);
-		open_nested(session, nlh, IPSET_ATTR_DATA);
-		addattr_adt(nlh, data, ipset_data_family(data));
-		ADDATTR_RAW(nlh, &session->lineno,
-			    IPSET_ATTR_LINENO, cmd_attrs);
+		if (open_nested(session, nlh, IPSET_ATTR_DATA)) {
+			D("open_nested failed");
+			return 1;
+		}
+		if (addattr_adt(session, nlh, data, ipset_data_family(data))
+		    || ADDATTR_RAW(session, nlh, &session->lineno,
+				   IPSET_ATTR_LINENO, cmd_attrs)) {
+			/* Cancel last, unfinished nested attribute */
+			mnl_attr_nest_cancel(nlh, session->nested[session->nestid-1]);
+			session->nested[--session->nestid] = NULL;
+			return 1;
+		}
 		close_nested(session, nlh);
 		break;
 	}
@@ -1645,9 +1649,9 @@ build_msg(struct ipset_session *session, bool aggregate)
 		type = ipset_data_get(data, IPSET_OPT_TYPE);
 		D("family: %u, type family %u",
 		  ipset_data_family(data), type->family);
-		ADDATTR_SETNAME(nlh, data);
+		ADDATTR_SETNAME(session, nlh, data);
 		open_nested(session, nlh, IPSET_ATTR_DATA);
-		addattr_adt(nlh, data, ipset_data_family(data));
+		addattr_adt(session, nlh, data, ipset_data_family(data));
 		close_nested(session, nlh);
 		break;
 	}
@@ -1766,15 +1770,9 @@ ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd, uint32_t lineno)
 	if (cmd == IPSET_CMD_TYPE || cmd == IPSET_CMD_HEADER) 
 		return build_send_private_msg(session, cmd);
 	
-	/* Check buffer and aggregatable commands */
-	if (session->lineno != 0) {
-		if (may_aggregate_ad(session, data, cmd))
-			aggregate = true;
-		if (!aggregate || buffer_full(session)) {
-		    	 if (ipset_commit(session) < 0)
-				goto cleanup;
-		}
-	}
+	/* Check aggregatable commands */
+	if (session->lineno != 0)
+		aggregate = may_aggregate_ad(session, data, cmd);
 
 	/* Real command: update lineno too */
 	session->cmd = cmd;
@@ -1791,7 +1789,16 @@ ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd, uint32_t lineno)
 
 	D("next: build_msg");
 	/* Build new message or append buffered commands */
-	if (build_msg(session, aggregate) < 0)
+	ret = build_msg(session, aggregate);
+	D("build_msg returned %u", ret);
+	if (ret > 0) {
+		/* Buffer is full, send buffered commands */
+		if (ipset_commit(session) < 0)
+			goto cleanup;
+		ret = build_msg(session, false);
+		D("build_msg 2 returned %u", ret);
+	}
+	if (ret < 0)
 		goto cleanup;
 	D("past: build_msg");
 

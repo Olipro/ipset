@@ -58,13 +58,6 @@ enum {
 	IPSET_KERNEL_OK,
 };
 
-/* Max sizes for aggregated ADD (and DEL) commands */
-enum {
-	IPSET_MAXSIZE_INET,
-	IPSET_MAXSIZE_INET6,
-	IPSET_MAXSIZE_MAX,
-};
-
 /* How element parts are parsed */
 struct ipset_elem {
 	ipset_parsefn parse;			/* elem parser function */
@@ -88,7 +81,6 @@ struct ipset_type {
 	const struct ipset_arg *args[IPSET_CADT_MAX]; /* create/ADT args besides elem */
 	uint64_t mandatory[IPSET_CADT_MAX];	/* create/ADT mandatory flags */
 	uint64_t full[IPSET_CADT_MAX];		/* full args flags */
-	size_t maxsize[IPSET_MAXSIZE_MAX];	/* max sizes */
 	const char *usage;			/* terse usage */
 	void (*usagefn)(void);			/* additional usage */
 

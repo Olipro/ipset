@@ -426,35 +426,6 @@ ipset_type_check(struct ipset_session *session)
 	return match;
 }
 
-static void
-type_max_size(struct ipset_type *type, uint8_t family)
-{
-	int sizeid;
-	enum ipset_opt opt;
-	size_t max = 0;
-
-	sizeid = family == AF_INET ? IPSET_MAXSIZE_INET : IPSET_MAXSIZE_INET6;
-	for (opt = IPSET_OPT_NONE + 1; opt < IPSET_OPT_MAX; opt++) {
-		if (!(IPSET_FLAG(opt) & IPSET_ADT_FLAGS))
-			continue;
-		if (!(IPSET_FLAG(opt) & type->full[IPSET_ADD]))
-			continue;
-		max += MNL_ALIGN(ipset_data_sizeof(opt, family))
-			+ MNL_ATTR_HDRLEN;
-		switch (opt) {
-		case IPSET_OPT_IP:
-		case IPSET_OPT_IP_TO:
-		case IPSET_OPT_IP2:
-			/* Nested attributes */
-			max += MNL_ATTR_HDRLEN;
-			break;
-		default:
-			break;
-		}
-	}
-	type->maxsize[sizeid] = max;
-}
-
 /**
  * ipset_type_add - add (register) a userspace set type
  * @type: pointer to the set type structure
@@ -470,23 +441,6 @@ ipset_type_add(struct ipset_type *type)
 	struct ipset_type *t, *prev;
 
 	assert(type);
-
-	/* Fill out max sizes */
-	switch (type->family) {
-	case AF_UNSPEC:
-	case AF_INET:
-		type_max_size(type, AF_INET);
-		break;
-	case AF_INET6:
-		type_max_size(type, AF_INET6);
-		break;
-	case AF_INET46:
-		type_max_size(type, AF_INET);
-		type_max_size(type, AF_INET6);
-		break;
-	default:
-		return -1;
-	}
 
 	/* Add to the list: higher revision numbers first */
 	for (t = typelist, prev = NULL; t != NULL; t = t->next) {
