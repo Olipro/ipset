@@ -3,7 +3,7 @@
 # Range: Create a set from a valid range with timeout
 0 ipset create test bitmap:ip range 2.0.0.1-2.1.0.0 timeout 5
 # Range: Add lower boundary
-0 ipset add test 2.0.0.1 timeout 10
+0 ipset add test 2.0.0.1 timeout 4
 # Range: Add upper boundary
 0 ipset add test 2.1.0.0 timeout 0
 # Range: Test lower boundary
@@ -33,13 +33,13 @@
 # Range: Delete the same element
 0 ipset -D test 2.0.0.128
 # Range: Add a range of elements
-0 ipset -A test 2.0.0.128-2.0.0.131 timeout 6
+0 ipset -A test 2.0.0.128-2.0.0.131 timeout 4
 # Range: List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo
 # Range: Check listing
 0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list4 && rm .foo
-# Sleep 10s so that entries can time out
-0 sleep 10s
+# Sleep 5s so that entries can time out
+0 sleep 5s
 # Range: List set after timeout
 0 ipset list test > .foo
 # Range: Check listing
@@ -49,13 +49,13 @@
 # Range: Delete test set
 0 ipset destroy test
 # Network: Try to create a set from an invalid network with timeout
-1 ipset create test bitmap:ip range 2.0.0.0/15
+1 ipset create test bitmap:ip range 2.0.0.0/15 timeout 5
 # Network: Create a set from a valid network with timeout
 0 ipset create test bitmap:ip range 2.0.0.0/16 timeout 5
 # Network: Add lower boundary
 0 ipset add test 2.0.0.0 timeout 0
 # Network: Add upper boundary
-0 ipset add test 2.0.255.255 timeout 10
+0 ipset add test 2.0.255.255 timeout 4
 # Network: Test lower boundary
 0 ipset test test 2.0.0.0
 # Network: Test upper boundary
@@ -73,15 +73,15 @@
 # Network: Delete element not added to the set
 1 ipset -D test 2.0.0.2
 # Network: Add element in the middle
-0 ipset -A test 2.0.0.128 timeout 20
+0 ipset -A test 2.0.0.128 timeout 4
 # Network: Delete the same element
 0 ipset -D test 2.0.0.128
 # Network: List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo
 # Network: Check listing
 0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list5 && rm .foo
-# Sleep 10s so that entries can time out
-0 sleep 10s
+# Sleep 5s so that entries can time out
+0 sleep 5s
 # Network: List set
 0 ipset list test > .foo
 # Network: Check listing
@@ -93,7 +93,7 @@
 # Subnets: Create a set to store networks with timeout
 0 ipset create test bitmap:ip range 10.0.0.0/8 netmask 24 timeout 5
 # Subnets: Add lower boundary
-0 ipset add test 10.0.0.0 timeout 10
+0 ipset add test 10.0.0.0 timeout 4
 # Subnets: Add upper boundary
 0 ipset add test 10.255.255.255 timeout 0
 # Subnets: Test lower boundary
@@ -117,13 +117,13 @@
 # Subnets: Delete the same element from the set                                 
 0 ipset -D test 10.2.0.0
 # Subnets: Add a subnet of subnets
-0 ipset -A test 10.8.0.0/16 timeout 8
+0 ipset -A test 10.8.0.0/16 timeout 4
 # Subnets: List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo
 # Subnets: Check listing
 0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list6 && rm .foo
-# Sleep 10s so that entries can time out
-0 sleep 10s
+# Sleep 5s so that entries can time out
+0 sleep 5s
 # Subnets: List set
 0 ipset list test > .foo
 # Subnets: Check listing

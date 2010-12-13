@@ -24,8 +24,8 @@
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # IP: Check listing
 0 diff -I 'Size in memory.*' .foo hash:ip6.t.list2 && rm .foo
-# Sleep 6s so that element can time out
-0 sleep 6
+# Sleep 5s so that element can time out
+0 sleep 5
 # IP: List set
 0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
 # IP: Check listing
@@ -35,7 +35,7 @@
 # IP: Delete test set
 0 ipset -X test
 # Network: Create a set with timeout
-0 ipset -N test iphash -6 --hashsize 128 --netmask 64 timeout 6
+0 ipset -N test iphash -6 --hashsize 128 --netmask 64 timeout 5
 # Network: Add zero valued element
 1 ipset -A test ::
 # Network: Test zero valued element
@@ -64,8 +64,8 @@
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Network: Check listing
 0 diff -I 'Size in memory.*' .foo hash:ip6.t.list3 && rm .foo
-# Sleep 6s so that elements can time out
-0 sleep 6
+# Sleep 5s so that elements can time out
+0 sleep 5
 # Network: List set
 0 ipset -L test > .foo
 # Network: Check listing

@@ -1,5 +1,5 @@
 # Create a set with timeout
-0 ipset create test hash:net,port hashsize 128 timeout 6
+0 ipset create test hash:net,port hashsize 128 timeout 5
 # Add zero valued element
 1 ipset add test 0.0.0.0/0,0
 # Test zero valued element
@@ -38,8 +38,8 @@
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Check listing
 0 diff -I 'Size in memory.*' .foo hash:net,port.t.list0
-# Sleep 6s so that element can time out
-0 sleep 6
+# Sleep 5s so that element can time out
+0 sleep 5
 # IP: List set
 0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
 # IP: Check listing

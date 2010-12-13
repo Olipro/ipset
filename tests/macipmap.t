@@ -87,11 +87,11 @@
 # Network: Delete test set
 0 ipset -X test
 # Range: Create a set from a valid range with timeout
-0 ipset -N test macipmap --from 2.0.0.1 --to 2.1.0.0 timeout 10
+0 ipset -N test macipmap --from 2.0.0.1 --to 2.1.0.0 timeout 5
 # Range: Add lower boundary
-0 ipset -A test 2.0.0.1 timeout 8
+0 ipset -A test 2.0.0.1 timeout 4
 # Range: Add upper boundary
-0 ipset -A test 2.1.0.0 timeout 5
+0 ipset -A test 2.1.0.0 timeout 3
 # Range: Test lower boundary
 0 ipset -T test 2.0.0.1
 # Range: Test upper boundary
@@ -107,7 +107,7 @@
 # Range: Try to add value after upper boundary
 1 ipset -A test 2.1.0.1
 # Range: Try to add value with MAC
-0 ipset -A test 2.0.0.2,00:11:22:33:44:55 timeout 8
+0 ipset -A test 2.0.0.2,00:11:22:33:44:55 timeout 4
 # Range: Test value with invalid MAC
 1 ipset -T test 2.0.0.2,00:11:22:33:44:56
 # Range: Test value with valid MAC
@@ -122,10 +122,10 @@
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo
 # Range: Check listing
 0 diff -I 'Size in memory.*' .foo macipmap.t.list3 && rm .foo
-# Range: wait 10s so that elements can timeout
-0 sleep 10
+# Range: sleep 5s so that elements can timeout
+0 sleep 5
 # Range: List set
-0 ipset -L test > .foo
+0 ipset -L test | sed 's/timeout ./timeout x/' > .foo
 # Range: Check listing
 0 diff -I 'Size in memory.*' .foo macipmap.t.list2 && rm .foo
 # Range: Flush test set

@@ -30,8 +30,8 @@
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Check listing
 0 diff -I 'Size in memory.*' .foo hash:ip6,port.t.list0 && rm .foo
-# Sleep 6s so that elements can time out
-0 sleep 6
+# Sleep 5s so that elements can time out
+0 sleep 5
 # List set
 0 ipset list test > .foo0 && ./sort.sh .foo0
 # Check listing

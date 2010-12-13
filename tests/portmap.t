@@ -53,7 +53,7 @@
 # Full: Delete test set
 0 ipset -X test
 # Full: Create a full set of ports and timeout
-0 ipset -N test portmap --from 0 --to 65535 timeout 8
+0 ipset -N test portmap --from 0 --to 65535 timeout 5
 # Full: Add lower boundary
 0 ipset -A test 0 timeout 5
 # Full: Add upper boundary
@@ -72,8 +72,8 @@
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo
 # Full: Check listing
 0 diff -I 'Size in memory.*' .foo portmap.t.list3 && rm .foo
-# Full: sleep 10s so that elements can timeout
-0 sleep 10
+# Full: sleep 5s so that elements can timeout
+0 sleep 5
 # Full: List set
 0 ipset -L test > .foo
 # Full: Check listing
