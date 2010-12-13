@@ -548,13 +548,11 @@ type_pf_list(struct ip_set *set,
 	for (; cb->args[2] < jhash_size(t->htable_bits); cb->args[2]++) {
 		incomplete = skb_tail_pointer(skb);
 		n = hbucket(t, cb->args[2]);
-		printk("cb->args[2]: %lu, t %p n %p\n", cb->args[2], t, n); 
+		pr_debug("cb->args[2]: %lu, t %p n %p\n", cb->args[2], t, n); 
 		for (i = 0; i < n->pos; i++) {
 			data = ahash_data(n, i);
-			printk("list hash %lu hbucket %p i %u, data %p",
+			pr_debug("list hash %lu hbucket %p i %u, data %p",
 				 cb->args[2], n, i, data);
-			pr_debug("list hash %lu hbucket %p i %u",
-				 cb->args[2], n, i);
 			nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 			if (!nested) {
 				if (cb->args[2] == first) {
