@@ -3,7 +3,6 @@
 
 #include <linux/rcupdate.h>
 #include <linux/netfilter/ipset/jhash.h>
-#include <linux/netfilter/ipset/slist.h>
 #include <linux/netfilter/ipset/ip_set_timeout.h>
 
 /* Hashing which uses arrays to resolve clashing. The hash table is resized
@@ -552,9 +551,9 @@ type_pf_list(struct ip_set *set,
 		printk("cb->args[2]: %lu, t %p n %p\n", cb->args[2], t, n); 
 		for (i = 0; i < n->pos; i++) {
 			data = ahash_data(n, i);
-			printk("list hash %lu slist %p i %u, data %p",
+			printk("list hash %lu hbucket %p i %u, data %p",
 				 cb->args[2], n, i, data);
-			pr_debug("list hash %lu slist %p i %u",
+			pr_debug("list hash %lu hbucket %p i %u",
 				 cb->args[2], n, i);
 			nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 			if (!nested) {
