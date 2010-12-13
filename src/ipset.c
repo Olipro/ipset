@@ -46,10 +46,10 @@ extern struct ipset_type ipset_list_set0;
 
 enum exittype {
 	NO_PROBLEM = 0,
-	SESSION_PROBLEM,
 	OTHER_PROBLEM,
 	PARAMETER_PROBLEM,
 	VERSION_PROBLEM,
+	SESSION_PROBLEM,
 };
 
 static int __attribute__((format(printf,2,3)))
@@ -85,7 +85,7 @@ exit_error(int status, const char *msg, ...)
 		ipset_session_fini(session);
 
 	D("status: %u", status);
-	exit(status);
+	exit(status > VERSION_PROBLEM ? OTHER_PROBLEM : status);
 	/* Unreached */
 	return -1;
 }
