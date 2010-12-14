@@ -16,13 +16,13 @@
 0 ipset -T test 2.0.0.1,0,0.0.0.1
 # Delete almost zero valued element
 0 ipset -D test 2.0.0.1,0,0.0.0.1
-# Add lower boundary
+# Add first random value
 0 ipset -A test 2.0.0.1,5,1.1.1.1
-# Add upper boundary
+# Add second random value
 0 ipset -A test 2.1.0.0,128,2.2.2.2
-# Test lower boundary
+# Test first random value
 0 ipset -T test 2.0.0.1,5,1.1.1.1
-# Test upper boundary
+# Test second random value
 0 ipset -T test 2.1.0.0,128,2.2.2.2
 # Test value not added to the set
 1 ipset -T test 2.0.0.1,5,1.1.1.2
@@ -30,13 +30,13 @@
 1 ipset -T test 2.0.0.1,6,1.1.1.1
 # Test value not added to the set
 1 ipset -T test 2.0.0.2,6,1.1.1.1
-# Test value before lower boundary
+# Test value before first random value
 1 ipset -T test 2.0.0.0,5,1.1.1.1
-# Test value after upper boundary
+# Test value after second random value
 1 ipset -T test 2.1.0.1,128,2.2.2.2
-# Try to add value before lower boundary
+# Try to add value before first random value
 0 ipset -A test 2.0.0.0,5,1.1.1.1
-# Try to add value after upper boundary
+# Try to add value after second random value
 0 ipset -A test 2.1.0.1,128,2.2.2.2
 # List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
@@ -48,27 +48,27 @@
 0 ipset -X test
 # Create a set from a valid network (network ignored)
 0 ipset -N test ipportiphash --network 2.0.0.0/16
-# Add lower boundary
+# Add first random value
 0 ipset -A test 2.0.0.0,5,1.1.1.1
-# Add upper boundary
+# Add second random value
 0 ipset -A test 2.0.255.255,128,2.2.2.2
-# Test lower boundary
+# Test first random value
 0 ipset -T test 2.0.0.0,5,1.1.1.1
-# Test upper boundary
+# Test second random value
 0 ipset -T test 2.0.255.255,128,2.2.2.2
 # Test value not added to the set
 1 ipset -T test 2.0.0.0,5,1.1.1.2
 # Test value not added to the set
 1 ipset -T test 2.0.0.0,6,1.1.1.1
-# Test value before lower boundary
+# Test value before first random value
 1 ipset -T test 1.255.255.255,5,1.1.1.1
-# Test value after upper boundary
+# Test value after second random value
 1 ipset -T test 2.1.0.0,128,2.2.2.2
-# Try to add value before lower boundary
+# Try to add value before first random value
 0 ipset -A test 1.255.255.255,5,1.1.1.1
-# Try to test value before lower boundary
+# Try to test value before first random value
 0 ipset -T test 1.255.255.255,5,1.1.1.1
-# Try to del value before lower boundary
+# Try to del value before first random value
 0 ipset -D test 1.255.255.255,5,1.1.1.1
 # List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0

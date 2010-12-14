@@ -6,25 +6,25 @@
 0 ipset test test 2.0.0.1,0
 # Delete partly zero valued element
 0 ipset del test 2.0.0.1,0
-# Add lower boundary
+# Add first random value
 0 ipset add test 2.0.0.1,5
-# Add upper boundary
+# Add second random value
 0 ipset add test 2.1.0.0,128
-# Test lower boundary
+# Test first random value
 0 ipset test test 2.0.0.1,5
-# Test upper boundary
+# Test second random value
 0 ipset test test 2.1.0.0,128
 # Test value not added to the set
 1 ipset test test 2.0.0.1,4
 # Delete value not added to the set
 1 ipset del test 2.0.0.1,6
-# Test value before lower boundary
+# Test value before first random value
 1 ipset test test 2.0.0.0,5
-# Test value after upper boundary
+# Test value after second random value
 1 ipset test test 2.1.0.1,128
-# Try to add value before lower boundary
+# Try to add value before first random value
 0 ipset add test 2.0.0.0,5
-# Try to add value after upper boundary
+# Try to add value after second random value
 0 ipset add test 2.1.0.1,128
 # List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0

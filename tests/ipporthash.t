@@ -10,25 +10,25 @@
 0 ipset -T test 2.0.0.1,0
 # Delete partly zero valued element
 0 ipset -D test 2.0.0.1,0
-# Add lower boundary
+# Add first random value
 0 ipset -A test 2.0.0.1,5
-# Add upper boundary
+# Add second random value
 0 ipset -A test 2.1.0.0,128
-# Test lower boundary
+# Test first random value
 0 ipset -T test 2.0.0.1,5
-# Test upper boundary
+# Test second random value
 0 ipset -T test 2.1.0.0,128
 # Test value not added to the set
 1 ipset -T test 2.0.0.1,4
 # Delete value not added to the set
 1 ipset -D test 2.0.0.1,6
-# Test value before lower boundary
+# Test value before first random value
 1 ipset -T test 2.0.0.0,5
-# Test value after upper boundary
+# Test value after second random value
 1 ipset -T test 2.1.0.1,128
-# Try to add value before lower boundary
+# Try to add value before first random value
 0 ipset -A test 2.0.0.0,5
-# Try to add value after upper boundary
+# Try to add value after second random value
 0 ipset -A test 2.1.0.1,128
 # List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
@@ -40,25 +40,25 @@
 0 ipset -X test
 # Create a set from a network (network ignored)
 0 ipset -N test ipporthash --network 2.0.0.0/16
-# Add lower boundary
+# Add first random value
 0 ipset -A test 2.0.0.0,5
-# Add upper boundary
+# Add second random value
 0 ipset -A test 2.0.255.255,128
-# Test lower boundary
+# Test first random value
 0 ipset -T test 2.0.0.0,5
-# Test upper boundary
+# Test second random value
 0 ipset -T test 2.0.255.255,128
 # Test value not added to the set
 1 ipset -T test 2.0.0.0,4
 # Delete value not added to the set
 1 ipset -D test 2.0.0.0,6
-# Test value before lower boundary
+# Test value before first random value
 1 ipset -T test 1.255.255.255,5
-# Test value after upper boundary
+# Test value after second random value
 1 ipset -T test 2.1.0.0,128
-# Try to add value before lower boundary
+# Try to add value before first random value
 0 ipset -A test 1.255.255.255,5
-# Try to add value after upper boundary
+# Try to add value after second random value
 0 ipset -A test 2.1.0.0,128
 # List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
