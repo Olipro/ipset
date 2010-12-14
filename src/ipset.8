@@ -339,7 +339,8 @@ ipset add foo 80
 ipset test foo 80
 .SS hash:ip
 The \fBhash:ip\fR set type uses a hash to store IP host addresses (default) or
-network addresses.
+network addresses. Zero valued IP address cannot be stored in a \fBhash:ip\fR
+type of set.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -388,6 +389,7 @@ ipset add foo 192.168.1.1
 ipset test foo 192.168.1.2
 .SS hash:net
 The \fBhash:net\fR set type uses a hash to store different sized IP network addresses.
+Network address with zero prefix size cannot be stored in this type of sets.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -438,6 +440,8 @@ ipset add foo 10.1.0.0/16
 ipset test foo 192.168.0/24
 .SS hash:ip,port
 The \fBhash:ip,port\fR set type uses a hash to store IP address and port number pairs.
+The port number is interpreted together with a protocol (default TCP) and zero
+protocol number cannot be used.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -505,7 +509,9 @@ ipset add foo 192.168.1.1,ospf:0
 ipset test foo 192.168.1.1,80
 .SS hash:net,port
 The \fBhash:net,port\fR set type uses a hash to store different sized IP network
-address and port pairs.
+address and port pairs. The port number is interpreted together with a protocol
+(default TCP) and zero protocol number cannot be used. Network
+address with zero prefix size cannot be stored either.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -562,7 +568,8 @@ ipset add foo 10.1.0.0/16,80
 ipset test foo 192.168.0/24,25
 .SS hash:ip,port,ip
 The \fBhash:ip,port,ip\fR set type uses a hash to store IP address, port number
-and a second IP address triples.
+and a second IP address triples. The port number is interpreted together with a
+protocol (default TCP) and zero protocol number cannot be used.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -606,7 +613,9 @@ ipset add foo 192.168.1.1,80,10.0.0.1
 ipset test foo 192.168.1.1,udp:53,10.0.0.1
 .SS hash:ip,port,net
 The \fBhash:ip,port,net\fR set type uses a hash to store IP address, port number
-and IP network address triples.
+and IP network address triples. The port number is interpreted together with a
+protocol (default TCP) and zero protocol number cannot be used. Network
+address with zero prefix size cannot be stored either.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 

@@ -77,7 +77,7 @@ get_ip4_port(const struct sk_buff *skb, bool src, u16 *port, u8 *proto)
 	int protocol = iph->protocol;
 
 	/* See comments at tcp_match in ip_tables.c */
-	if (ntohs(iph->frag_off) & IP_OFFSET)
+	if (protocol <= 0 || (ntohs(iph->frag_off) & IP_OFFSET))
 		return false;
 
 	return get_port(skb, protocol, protooff, src, port, proto);
@@ -91,7 +91,7 @@ get_ip6_port(const struct sk_buff *skb, bool src, u16 *port, u8 *proto)
 	unsigned short fragoff;
 
 	protocol = ipv6_find_hdr(skb, &protooff, -1, &fragoff);
-	if (protocol < 0 || fragoff)
+	if (protocol <= 0 || fragoff)
 		return false;
 
 	return get_port(skb, protocol, protooff, src, port, proto);
