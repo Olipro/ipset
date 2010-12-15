@@ -164,7 +164,7 @@ The interactive mode can be finished by entering the pseudo\-command
 \fBquit\fR.
 .P
 .SS "OTHER OPTIONS"
-The following additional options can be specified. The option names
+The following additional options can be specified. The long option names
 cannot be abbreviated.
 .TP 
 \fB\-!\fP, \fB\-exist\fP
@@ -213,9 +213,9 @@ ipset add foo ipaddr,portnum,ipaddr
 The \fBbitmap\fR and \fBlist\fR types use a fixed sized storage. The \fBhash\fR
 types use a hash to store the elements. In order to avoid clashes in the hash,
 a limited number of chaining, and if that is exhausted, the doubling of the hash size
-is performed when adding entries by
-\fBipset\fR.
-When entries added by the
+is performed when adding entries by the
+\fBipset\fR
+command. When entries added by the
 \fBSET\fR
 target of
 \fBiptables/ip6tables\fR,
@@ -419,11 +419,11 @@ When adding/deleting/testing entries, if the cidr prefix parameter is not specif
 then the host prefix value is assumed. When adding/deleting entries, overlapping
 elements are not checked.
 .PP 
-From the \fBset\fR netfilter match point of view an IP address will be in a \fBhash:net\fR type of set if it belongs to any of the netblocks added to the set.
-The  matching  always  start  from  the smallest  size  of netblock (most specific
-prefix) to the largest ones (least specific prefix).  When  adding/deleting IP
-addresses  to the set by the \fBSET\fR netfilter target, it  will  be
-added/deleted by the most specific prefix which can be found in  the
+From the \fBset\fR netfilter match point of view the searching for a match
+always  starts  from  the smallest  size  of netblock (most specific
+prefix) to the largest one (least specific prefix) added to the set.
+When  adding/deleting IP addresses  to the set by the \fBSET\fR netfilter target,
+it  will  be added/deleted by the most specific prefix which can be found in  the
 set, or by the host prefix value if the set is empty.
 .PP 
 The lookup time grows linearly with the number of the different prefix
@@ -511,7 +511,7 @@ ipset test foo 192.168.1.1,80
 The \fBhash:net,port\fR set type uses a hash to store different sized IP network
 address and port pairs. The port number is interpreted together with a protocol
 (default TCP) and zero protocol number cannot be used. Network
-address with zero prefix size cannot be stored either.
+address with zero prefix size is not accepted either.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 
@@ -546,10 +546,10 @@ When adding/deleting/testing entries, if the cidr prefix parameter is not specif
 then the host prefix value is assumed. When adding/deleting entries, overlapping
 elements are not checked.
 .PP 
-From the \fBset\fR netfilter match point of view an IP address will be in a \fBhash:net,port\fR type of set if it belongs to any of the netblocks added to
-the set and the proto/port part also matches.
-The  matching  always  start  from  the smallest  size  of netblock (most specific
-prefix) to the largest ones (least specific prefix).  When  adding/deleting IP
+From the \fBset\fR netfilter match point of view the searching for a  match
+always  starts  from  the smallest  size  of netblock (most specific
+prefix) to the largest one (least specific prefix) added to the set.
+When  adding/deleting IP
 addresses  to the set by the \fBSET\fR netfilter target, it  will  be
 added/deleted by the most specific prefix which can be found in  the
 set, or by the host prefix value if the set is empty.
@@ -646,10 +646,10 @@ For the
 part of the elements see the description at the
 \fBhash:ip,port\fR set type.
 .PP 
-From the \fBset\fR netfilter match point of view a triple will be in a \fBhash:ip,port,net\fR type of set when the first IP and the proto/port match,
-if the second IP belongs to any of the netblocks added to the set.
-The  matching  always  start  from  the smallest  size  of netblock (most specific
-cidr) to the largest ones (least specific cidr).  When  adding/deleting triples
+From the \fBset\fR netfilter match point of view the searching for a match
+always  starts  from  the smallest  size  of netblock (most specific
+cidr) to the largest one (least specific cidr) added to the set.
+When  adding/deleting triples
 to the set by the \fBSET\fR netfilter target, it  will  be
 added/deleted by the most specific cidr which can be found in  the
 set, or by the host cidr value if the set is empty.
@@ -688,10 +688,10 @@ Optional \fBcreate\fR options:
 \fBsize\fR \fIvalue\fR
 The size of the list, the default is 8.
 .PP 
-By the \fBipset\fR commad you  can add, delete and test sets in a
+By the \fBipset\fR commad you  can add, delete and test set names in a
 \fBlist:set\fR type of set.
 .PP 
-By the \fBset\fR match or \fBSET\fR target of netfiler
+By the \fBset\fR match or \fBSET\fR target of netfilter
 you can test, add or delete entries in the sets added to the \fBlist:set\fR
 type of set. The match will try to find a matching entry in the sets and 
 the target will try to add an entry to the first set to which it can be added.

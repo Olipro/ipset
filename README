@@ -1,7 +1,7 @@
 This is the ipset source tree. Follow the next steps to install ipset:
 
 0. You need the source tree of your kernel (version >= 2.6.31)
-   and it have to be configured (with ip6tables support enabled),
+   and it have to be configured with ip6tables support enabled,
    modules compiled. Please apply the netlink.patch against your kernel
    tree, which adds the new subsystem identifier for ipset.
 
