@@ -38,7 +38,7 @@ struct htable {
 	struct hbucket bucket[0]; /* hashtable buckets */
 };
 
-#define hbucket(h, i)		&((t)->bucket[i])
+#define hbucket(h, i)		&((h)->bucket[i])
 
 /* Book-keeping of the prefixes added to the set */
 struct ip_set_hash_nets {
@@ -306,6 +306,8 @@ type_pf_resize(struct ip_set *set, gfp_t gfp_flags, bool retried)
 retry:
 	ret = 0;
 	htable_bits++;
+	pr_debug("attempt to resize set %s from %u to %u, t %p\n",
+		 set->name, orig->htable_bits, htable_bits, orig);
 	if (!htable_bits)
 		/* In case we have plenty of memory :-) */
 		return -IPSET_ERR_HASH_FULL;
@@ -339,6 +341,8 @@ retry:
 	/* Give time to other readers of the set */
 	synchronize_rcu_bh();
 
+	pr_debug("set %s resized from %u (%p) to %u (%p)", set->name,
+		 orig->htable_bits, orig, t->htable_bits, t);
 	ahash_destroy(orig);
 
 	return 0;
@@ -548,7 +552,7 @@ type_pf_list(struct ip_set *set,
 	for (; cb->args[2] < jhash_size(t->htable_bits); cb->args[2]++) {
 		incomplete = skb_tail_pointer(skb);
 		n = hbucket(t, cb->args[2]);
-		pr_debug("cb->args[2]: %lu, t %p n %p\n", cb->args[2], t, n); 
+		pr_debug("cb->args[2]: %lu, t %p n %p", cb->args[2], t, n); 
 		for (i = 0; i < n->pos; i++) {
 			data = ahash_data(n, i);
 			pr_debug("list hash %lu hbucket %p i %u, data %p",
