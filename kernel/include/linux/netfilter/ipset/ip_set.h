@@ -214,8 +214,7 @@ enum ip_set_feature {
 
 struct ip_set;
 
-typedef int (*ipset_adtfn)(struct ip_set *set, void *value,
-			   gfp_t gfp_flags, u32 timeout);
+typedef int (*ipset_adtfn)(struct ip_set *set, void *value, u32 timeout);
 
 /* Set type, variant-specific part */
 struct ip_set_type_variant {
@@ -231,7 +230,7 @@ struct ip_set_type_variant {
 	ipset_adtfn adt[IPSET_ADT_MAX];
 
 	/* When adding entries and set is full, try to resize the set */
-	int (*resize)(struct ip_set *set, gfp_t gfp_flags, bool retried);
+	int (*resize)(struct ip_set *set, bool retried);
 	/* Destroy the set */
 	void (*destroy)(struct ip_set *set);
 	/* Flush the elements */

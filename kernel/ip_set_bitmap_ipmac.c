@@ -102,8 +102,7 @@ bitmap_ipmac_exist(const struct ipmac_telem *elem)
 /* Base variant */
 
 static int
-bitmap_ipmac_test(struct ip_set *set, void *value,
-		  gfp_t gfp_flags, u32 timeout)
+bitmap_ipmac_test(struct ip_set *set, void *value, u32 timeout)
 {
 	const struct bitmap_ipmac *map = set->data;
 	const struct ipmac *data = value;
@@ -121,8 +120,7 @@ bitmap_ipmac_test(struct ip_set *set, void *value,
 }
 
 static int
-bitmap_ipmac_add(struct ip_set *set, void *value,
-		 gfp_t gfp_flags, u32 timeout)
+bitmap_ipmac_add(struct ip_set *set, void *value, u32 timeout)
 {
 	struct bitmap_ipmac *map = set->data;
 	const struct ipmac *data = value;
@@ -151,8 +149,7 @@ bitmap_ipmac_add(struct ip_set *set, void *value,
 }
 
 static int
-bitmap_ipmac_del(struct ip_set *set, void *value,
-		 gfp_t gfp_flags, u32 timeout)
+bitmap_ipmac_del(struct ip_set *set, void *value, u32 timeout)
 {
 	struct bitmap_ipmac *map = set->data;
 	const struct ipmac *data = value;
@@ -214,8 +211,7 @@ nla_put_failure:
 /* Timeout variant */
 
 static int
-bitmap_ipmac_ttest(struct ip_set *set, void *value,
-		   gfp_t gfp_flags, u32 timeout)
+bitmap_ipmac_ttest(struct ip_set *set, void *value, u32 timeout)
 {
 	const struct bitmap_ipmac *map = set->data;
 	const struct ipmac *data = value;
@@ -234,8 +230,7 @@ bitmap_ipmac_ttest(struct ip_set *set, void *value,
 }
 
 static int
-bitmap_ipmac_tadd(struct ip_set *set, void *value,
-		  gfp_t gfp_flags, u32 timeout)
+bitmap_ipmac_tadd(struct ip_set *set, void *value, u32 timeout)
 {
 	struct bitmap_ipmac *map = set->data;
 	const struct ipmac *data = value;
@@ -277,8 +272,7 @@ bitmap_ipmac_tadd(struct ip_set *set, void *value,
 }
 
 static int
-bitmap_ipmac_tdel(struct ip_set *set, void *value,
-		  gfp_t gfp_flags, u32 timeout)
+bitmap_ipmac_tdel(struct ip_set *set, void *value, u32 timeout)
 {
 	struct bitmap_ipmac *map = set->data;
 	const struct ipmac *data = value;
@@ -360,7 +354,7 @@ bitmap_ipmac_kadt(struct ip_set *set, const struct sk_buff *skb,
 	data.id -= map->first_ip;
 	data.ether = eth_hdr(skb)->h_source;
 
-	return adtfn(set, &data, GFP_ATOMIC, map->timeout);
+	return adtfn(set, &data, map->timeout);
 }
 
 static const struct nla_policy
@@ -410,7 +404,7 @@ bitmap_ipmac_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 	data.id -= map->first_ip;
 
-	ret = adtfn(set, &data, GFP_ATOMIC, timeout);
+	ret = adtfn(set, &data, timeout);
 
 	return ip_set_eexist(ret, flags) ? 0 : ret;
 }

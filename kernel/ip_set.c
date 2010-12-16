@@ -1334,8 +1334,7 @@ call_ad(struct sock *ctnl, struct sk_buff *skb,
 		write_unlock_bh(&set->lock);
 	} while (ret == -EAGAIN
 		 && set->variant->resize
-		 && (ret = set->variant->resize(set, GFP_ATOMIC,
-						retried++)) == 0);
+		 && (ret = set->variant->resize(set, retried++)) == 0);
 
 	if (!ret || (ret == -IPSET_ERR_EXIST && eexist))
 		return 0;

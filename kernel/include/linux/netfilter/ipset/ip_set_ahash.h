@@ -262,8 +262,7 @@ ip_set_hash_destroy(struct ip_set *set)
 /* Add an element to the hash table when resizing the set:
  * we spare the maintenance of the internal counters. */
 static int
-type_pf_elem_add(struct hbucket *n, const struct type_pf_elem *value,
-		 gfp_t gfp_flags)
+type_pf_elem_add(struct hbucket *n, const struct type_pf_elem *value)
 {
 	if (n->pos >= n->size) {
 		void *tmp;
@@ -274,7 +273,7 @@ type_pf_elem_add(struct hbucket *n, const struct type_pf_elem *value,
 
 		tmp = kzalloc((n->size + AHASH_INIT_SIZE)
 			      * sizeof(struct type_pf_elem),
-			      gfp_flags);
+			      GFP_ATOMIC);
 		if (!tmp)
 			return -ENOMEM;
 		if (n->size) {
@@ -293,7 +292,7 @@ type_pf_elem_add(struct hbucket *n, const struct type_pf_elem *value,
  * and inserting the elements to it. Repeat until we succeed or
  * fail due to memory pressures. */
 static int
-type_pf_resize(struct ip_set *set, gfp_t gfp_flags, bool retried)
+type_pf_resize(struct ip_set *set, bool retried)
 {
 	struct ip_set_hash *h = set->data;
 	struct htable *t, *orig = h->table;
@@ -324,7 +323,7 @@ retry:
 		for (j = 0; j < n->pos; j++) {
 			data = ahash_data(n, j);
 			m = hbucket(t, HKEY(data, h->initval, htable_bits));
-			ret = type_pf_elem_add(m, data, gfp_flags);
+			ret = type_pf_elem_add(m, data);
 			if (ret < 0) {
 				read_unlock_bh(&set->lock);
 				ahash_destroy(t);
@@ -351,7 +350,7 @@ retry:
 /* Add an element to a hash and update the internal counters when succeeded,
  * otherwise report the proper error code. */
 static int
-type_pf_add(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
+type_pf_add(struct ip_set *set, void *value, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
 	struct htable *t;
@@ -373,7 +372,7 @@ type_pf_add(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 			goto out;
 		}
 
-	ret = type_pf_elem_add(n, value, gfp_flags);
+	ret = type_pf_elem_add(n, value);
 	if (ret != 0)
 		goto out;
 
@@ -390,7 +389,7 @@ out:
  * and free up space if possible.
  */
 static int
-type_pf_del(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
+type_pf_del(struct ip_set *set, void *value, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
 	struct htable *t = h->table;
@@ -418,7 +417,7 @@ type_pf_del(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 		if (n->pos + AHASH_INIT_SIZE < n->size) {
 			void *tmp = kzalloc((n->size - AHASH_INIT_SIZE)
 					    * sizeof(struct type_pf_elem),
-					    gfp_flags);
+					    GFP_ATOMIC);
 			if (!tmp)
 				return 0;
 			n->size -= AHASH_INIT_SIZE;
@@ -438,8 +437,7 @@ type_pf_del(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 /* Special test function which takes into account the different network
  * sizes added to the set */
 static inline int
-type_pf_test_cidrs(struct ip_set *set, struct type_pf_elem *d,
-		   gfp_t gfp_flags, u32 timeout)
+type_pf_test_cidrs(struct ip_set *set, struct type_pf_elem *d, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
 	struct htable *t = h->table;
@@ -466,7 +464,7 @@ type_pf_test_cidrs(struct ip_set *set, struct type_pf_elem *d,
 
 /* Test whether the element is added to the set */
 static int
-type_pf_test(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
+type_pf_test(struct ip_set *set, void *value, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
 	struct htable *t = h->table;
@@ -480,7 +478,7 @@ type_pf_test(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 	/* If we test an IP address and not a network address,
 	 * try all possible network sizes */
 	if (d->cidr == SET_HOST_MASK(set->family))
-		return type_pf_test_cidrs(set, d, gfp_flags, timeout);
+		return type_pf_test_cidrs(set, d, timeout);
 #endif
 
 	key = HKEY(d, h->initval, t->htable_bits);
@@ -643,7 +641,7 @@ type_pf_data_timeout_set(struct type_pf_elem *data, u32 timeout)
 
 static int
 type_pf_elem_tadd(struct hbucket *n, const struct type_pf_elem *value,
-		  gfp_t gfp_flags, u32 timeout)
+		  u32 timeout)
 {
 	struct type_pf_elem *data;
 
@@ -656,7 +654,7 @@ type_pf_elem_tadd(struct hbucket *n, const struct type_pf_elem *value,
 
 		tmp = kzalloc((n->size + AHASH_INIT_SIZE)
 			      * sizeof(struct type_pf_telem),
-			      gfp_flags);
+			      GFP_ATOMIC);
 		if (!tmp)
 			return -ENOMEM;
 		if (n->size) {
@@ -717,7 +715,7 @@ type_pf_expire(struct ip_set_hash *h)
 }
 
 static int
-type_pf_tresize(struct ip_set *set, gfp_t gfp_flags, bool retried)
+type_pf_tresize(struct ip_set *set, bool retried)
 {
 	struct ip_set_hash *h = set->data;
 	struct htable *t, *orig = h->table;
@@ -756,7 +754,7 @@ retry:
 		for (j = 0; j < n->pos; j++) {
 			data = ahash_tdata(n, j);
 			m = hbucket(t, HKEY(data, h->initval, htable_bits));
-			ret = type_pf_elem_tadd(m, data, gfp_flags,
+			ret = type_pf_elem_tadd(m, data,
 						type_pf_data_timeout(data));
 			if (ret < 0) {
 				read_unlock_bh(&set->lock);
@@ -780,7 +778,7 @@ retry:
 }
 
 static int
-type_pf_tadd(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
+type_pf_tadd(struct ip_set *set, void *value, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
 	struct htable *t = h->table;
@@ -823,7 +821,7 @@ type_pf_tadd(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 		type_pf_data_timeout_set(data, timeout);
 		goto out;
 	}
-	ret = type_pf_elem_tadd(n, d, gfp_flags, timeout);
+	ret = type_pf_elem_tadd(n, d, timeout);
 	if (ret != 0)
 		goto out;
 
@@ -837,7 +835,7 @@ out:
 }
 
 static int
-type_pf_tdel(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
+type_pf_tdel(struct ip_set *set, void *value, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
 	struct htable *t = h->table;
@@ -867,7 +865,7 @@ type_pf_tdel(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 		if (n->pos + AHASH_INIT_SIZE < n->size) {
 			void *tmp = kzalloc((n->size - AHASH_INIT_SIZE)
 					    * sizeof(struct type_pf_telem),
-					    gfp_flags);
+					    GFP_ATOMIC);
 			if (!tmp)
 				return 0;
 			n->size -= AHASH_INIT_SIZE;
@@ -884,8 +882,7 @@ type_pf_tdel(struct ip_set *set, void *value, gfp_t gfp_flags, u32 timeout)
 
 #ifdef IP_SET_HASH_WITH_NETS
 static inline int
-type_pf_ttest_cidrs(struct ip_set *set, struct type_pf_elem *d,
-		    gfp_t gfp_flags, u32 timeout)
+type_pf_ttest_cidrs(struct ip_set *set, struct type_pf_elem *d, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
 	struct htable *t = h->table;
@@ -910,8 +907,7 @@ type_pf_ttest_cidrs(struct ip_set *set, struct type_pf_elem *d,
 #endif
 
 static int
-type_pf_ttest(struct ip_set *set, void *value,
-	      gfp_t gfp_flags, u32 timeout)
+type_pf_ttest(struct ip_set *set, void *value, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
 	struct htable *t = h->table;
@@ -922,7 +918,7 @@ type_pf_ttest(struct ip_set *set, void *value,
 
 #ifdef IP_SET_HASH_WITH_NETS
 	if (d->cidr == SET_HOST_MASK(set->family))
-		return type_pf_ttest_cidrs(set, d, gfp_flags, timeout);
+		return type_pf_ttest_cidrs(set, d, timeout);
 #endif
 	key = HKEY(d, h->initval, t->htable_bits);
 	n = hbucket(t, key);

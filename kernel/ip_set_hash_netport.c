@@ -171,7 +171,7 @@ hash_netport4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	ip4addrptr(skb, flags & IPSET_DIM_ONE_SRC, &data.ip);
 	data.ip &= NETMASK(data.cidr);
 
-	return adtfn(set, &data, GFP_ATOMIC, h->timeout);
+	return adtfn(set, &data, h->timeout);
 }
 
 static const struct nla_policy
@@ -241,7 +241,7 @@ hash_netport4_uadt(struct ip_set *set, struct nlattr *head, int len,
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 	}
 
-	ret = adtfn(set, &data, GFP_ATOMIC, timeout);
+	ret = adtfn(set, &data, timeout);
 
 	return ip_set_eexist(ret, flags) ? 0 : ret;
 }
@@ -391,7 +391,7 @@ hash_netport6_kadt(struct ip_set *set, const struct sk_buff *skb,
 	ip6addrptr(skb, flags & IPSET_DIM_ONE_SRC, &data.ip.in6);
 	ip6_netmask(&data.ip, data.cidr);
 
-	return adtfn(set, &data, GFP_ATOMIC, h->timeout);
+	return adtfn(set, &data, h->timeout);
 }
 
 static int
@@ -451,7 +451,7 @@ hash_netport6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 	}
 
-	ret = adtfn(set, &data, GFP_ATOMIC, timeout);
+	ret = adtfn(set, &data, timeout);
 
 	return ip_set_eexist(ret, flags) ? 0 : ret;
 }

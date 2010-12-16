@@ -130,7 +130,7 @@ hash_ip4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	if (ip == 0)
 		return -EINVAL;
 
-	return adtfn(set, &ip, GFP_ATOMIC, h->timeout);
+	return adtfn(set, &ip, h->timeout);
 }
 
 static const struct nla_policy
@@ -174,7 +174,7 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	}
 
 	if (adt == IPSET_TEST)
-		return adtfn(set, &ip, GFP_ATOMIC, timeout);
+		return adtfn(set, &ip, timeout);
 
 	ip = ntohl(ip);
 	if (tb[IPSET_ATTR_IP_TO]) {
@@ -198,7 +198,7 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 	for (; !before(ip_to, ip); ip += hosts) {
 		nip = htonl(ip);
-		ret = adtfn(set, &nip, GFP_ATOMIC, timeout);
+		ret = adtfn(set, &nip, timeout);
 
 		if (ret && !ip_set_eexist(ret, flags))
 			return ret;
@@ -320,7 +320,7 @@ hash_ip6_kadt(struct ip_set *set, const struct sk_buff *skb,
 	if (ipv6_addr_any(&ip.in6))
 		return -EINVAL;
 
-	return adtfn(set, &ip, GFP_ATOMIC, h->timeout);
+	return adtfn(set, &ip, h->timeout);
 }
 
 static const struct nla_policy
@@ -362,7 +362,7 @@ hash_ip6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 	}
 
-	ret = adtfn(set, &ip, GFP_ATOMIC, timeout);
+	ret = adtfn(set, &ip, timeout);
 
 	return ip_set_eexist(ret, flags) ? 0 : ret;
 }
