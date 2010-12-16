@@ -42,10 +42,16 @@
 0 test `ipset -S test| grep add| wc -l` -eq 0
 # IP: Flush test set
 0 ipset -F test
-# IP: Delete test set
-0 ipset -X test
 # IP: Stress test resizing
 0 ./resize.sh
+# IP: Check listing, which requires multiple messages
+0 n=`ipset -S resize-test | wc -l` && test $n -eq 8161
+# IP: Swap test and resize-test sets
+0 ipset -W test resize-test
+# IP: Check listing, which requires multiple messages
+0 n=`ipset -S test | wc -l` && test $n -eq 8161
+# IP: Destroy sets
+0 ipset -X
 # Network: Create a set with timeout
 0 ipset -N test iphash --hashsize 128 --netmask 24 timeout 5
 # Network: Add zero valued element
