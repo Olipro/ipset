@@ -16,6 +16,7 @@
 #include <config.h>
 
 #include <libipset/debug.h>		/* D() */
+#include <libipset/data.h>		/* enum ipset_data */
 #include <libipset/parse.h>		/* ipset_parse_* */
 #include <libipset/session.h>		/* ipset_session_* */
 #include <libipset/types.h>		/* struct ipset_type */
@@ -294,20 +295,32 @@ check_mandatory(const struct ipset_type *type, int cmd)
 		}
 }
 
-static const struct ipset_type *
-type_find(const char *name)
+static const char *
+cmd2name(enum ipset_cmd cmd)
 {
-	const struct ipset_type *t = ipset_types();
-	
-	while (t) {
-		if (ipset_match_typename(name, t))
-			return t;
-		t = t->next;
-	}
-	return NULL;
+	const struct ipset_commands *c;
+
+	for (c = ipset_commands; c->cmd; c++)
+		if (cmd == c->cmd)
+			return c->name[0];
+	return "unknown command";
 }
 
-static inline int cmd2cmd(int cmd)
+static const char *
+session_family(void)
+{
+	switch (ipset_data_family(ipset_session_data(session))) {
+	case AF_INET:
+		return "inet";
+	case AF_INET6:
+		return "inet6";
+	default:
+		return "unspec";
+	}
+}
+
+static int
+cmd2cmd(int cmd)
 {
 	switch(cmd) {
 	case IPSET_CMD_ADD:
@@ -321,6 +334,86 @@ static inline int cmd2cmd(int cmd)
 	default:
 		return 0;
 	}
+}
+
+static void
+check_allowed(const struct ipset_type *type, enum ipset_cmd cmd)
+{
+	uint64_t flags = ipset_data_flags(ipset_session_data(session));
+	uint64_t allowed = type->full[cmd2cmd(cmd)];
+	uint64_t cmdflags = cmd == IPSET_CREATE ? IPSET_CREATE_FLAGS : IPSET_ADT_FLAGS;
+	const struct ipset_arg *arg = type->args[cmd];
+	enum ipset_opt i;
+	
+	/* Range can be expressed by ip/cidr or from-to */
+	if (allowed & IPSET_FLAG(IPSET_OPT_IP_TO))
+		allowed |= IPSET_FLAG(IPSET_OPT_CIDR);
+
+	for (i = IPSET_OPT_NONE + 1; i < IPSET_OPT_FLAGS; i++) {
+		if (!(cmdflags & IPSET_FLAG(i))
+		    || (allowed & IPSET_FLAG(i))
+		    || !(flags & IPSET_FLAG(i)))
+			continue;
+		/* Not allowed element-expressions */
+		switch (i) {
+		case IPSET_OPT_CIDR:
+			exit_error(OTHER_PROBLEM,
+				"IP/CIDR range is not allowed in command %s"
+				"with set type %s and family %s",
+				cmd2name(cmd), type->name, session_family());
+			return;
+		case IPSET_OPT_IP_TO:
+			exit_error(OTHER_PROBLEM,
+				"FROM-TO IP range is not allowed in command %s"
+				"with set type %s and family %s",
+				cmd2name(cmd), type->name, session_family());
+			return;
+		case IPSET_OPT_PORT_TO:
+			exit_error(OTHER_PROBLEM,
+				"FROM-TO port range is not allowed in command %s"
+				"with set type %s and family %s",
+				cmd2name(cmd), type->name, session_family());
+			return;
+		default:
+			break;
+		}
+		/* Other options */
+		if (!arg) {
+			exit_error(OTHER_PROBLEM,
+				"There are not allowed options "
+				"but option list is NULL. "
+				"It's a bug, please report the problem.");
+			return;
+		}
+		for (; arg->opt; arg++) {
+			if (arg->opt != i)
+				continue;
+			exit_error(OTHER_PROBLEM,
+				"%s parameter is not allowed in command %s"
+				"with set type %s and family %s",
+				arg->name[0],
+				cmd2name(cmd), type->name, session_family());
+			return;
+		}
+		exit_error(OTHER_PROBLEM,
+			"There are not allowed options "
+			"but can't resolve them. "
+			"It's a bug, please report the problem.");
+		return;
+	}
+}
+
+static const struct ipset_type *
+type_find(const char *name)
+{
+	const struct ipset_type *t = ipset_types();
+	
+	while (t) {
+		if (ipset_match_typename(name, t))
+			return t;
+		t = t->next;
+	}
+	return NULL;
 }
 
 /* Workhorse */
@@ -547,8 +640,9 @@ parse_commandline(int argc, char *argv[])
 		else if (ret)
 			return ret;
 		
-		/* Check mandatory options */
+		/* Check mandatory, then allowed options */
 		check_mandatory(type, IPSET_CREATE);
+		check_allowed(type, IPSET_CMD_CREATE);
 		
 		break;
 	case IPSET_CMD_DESTROY:
@@ -605,8 +699,9 @@ parse_commandline(int argc, char *argv[])
 		else if (ret)
 			return ret;
 		
-		/* Check mandatory options */
+		/* Check mandatory, then allowed options */
 		check_mandatory(type, cmd2cmd(cmd));
+		check_allowed(type, cmd);
 		
 		break;
 	default:
