@@ -38,6 +38,12 @@
 0 diff -I 'Size in memory.*' .foo hash:ip6,port.t.list1 && rm .foo
 # Flush test set
 0 ipset flush test
+# Add multiple elements in one step
+0 ipset add test 1::1,udp:80-85
+# Delete multiple elements in one step
+0 ipset del test 1::1,udp:81-84
+# Check elements after multiple add/del
+0 ipset test test 1::1,udp:80
 # Delete test set
 0 ipset destroy test
 # eof

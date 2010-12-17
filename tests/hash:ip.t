@@ -30,6 +30,14 @@
 0 diff -I 'Size in memory.*' .foo hash:ip.t.list0 && rm .foo
 # IP: Flush test set
 0 ipset -F test
+# IP: Add multiple elements in one step
+0 ipset -A test 1.1.1.1-1.1.1.5
+# IP: Delete multiple elements in one step
+0 ipset -D test 1.1.1.2-1.1.1.5
+# IP: Test element after deletion
+0 ipset -T test 1.1.1.1
+# IP: Test deleted element
+1 ipset -T test 1.1.1.2
 # IP: Delete test set
 0 ipset -X test
 # IP: Restore values so that rehashing is triggered

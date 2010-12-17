@@ -32,6 +32,8 @@
 0 diff -I 'Size in memory.*' .foo hash:ip6.t.list0 && rm .foo
 # IP: Flush test set
 0 ipset -F test
+# IP: Try to add multiple elements in one step
+1 ipset -A test 1::1-1::10
 # IP: Delete test set
 0 ipset -X test
 # Network: Create a set with timeout
