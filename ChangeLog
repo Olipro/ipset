@@ -1,3 +1,6 @@
+5.0
+ - New main branch - ipset completely rewritten
+
 4.2
   - Checking null entries when listing/saving hash types of sets
     deleted because it's unnecessary and can mask possible errors.
