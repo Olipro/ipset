@@ -244,20 +244,21 @@ ipset_parse_port(struct ipset_session *session,
 }
 
 /**
- * ipset_parse_tcp_port - parse TCP port name, number, or range of them
+ * ipset_parse_tcpudp_port - parse TCP/UDP port name, number, or range of them
  * @session: session structure
  * @opt: option kind of the data
  * @str: string to parse
+ * @proto: TCP|UDP
  *
- * Parse string as a TCP port name or number or range of them
+ * Parse string as a TCP/UDP port name or number or range of them
  * separated by a dash. The parsed port numbers are stored
  * in the data blob of the session.
  *
  * Returns 0 on success or a negative error code.
  */
 int
-ipset_parse_tcp_port(struct ipset_session *session,
-		     enum ipset_opt opt, const char *str)
+ipset_parse_tcpudp_port(struct ipset_session *session,
+			enum ipset_opt opt, const char *str, const char *proto)
 {
 	char *a, *saved, *tmp;
 	int err = 0;
@@ -276,15 +277,34 @@ ipset_parse_tcp_port(struct ipset_session *session,
 	if (a != NULL) {
 		/* port-port */
 		*a++ = '\0';
-		err = ipset_parse_port(session, IPSET_OPT_PORT_TO, a, "TCP");
+		err = ipset_parse_port(session, IPSET_OPT_PORT_TO, a, proto);
 		if (err)
 			goto error;
 	}
-	err = ipset_parse_port(session, opt, tmp, "TCP");
+	err = ipset_parse_port(session, opt, tmp, proto);
 
 error:
 	free(saved);
 	return err;
+}
+
+/**
+ * ipset_parse_tcp_port - parse TCP port name, number, or range of them
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string as a TCP port name or number or range of them
+ * separated by a dash. The parsed port numbers are stored
+ * in the data blob of the session.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_parse_tcp_port(struct ipset_session *session,
+		     enum ipset_opt opt, const char *str)
+{
+	return ipset_parse_tcpudp_port(session, opt, str, "TCP");
 }
 
 /**
@@ -516,7 +536,7 @@ ipset_parse_proto_port(struct ipset_session *session,
 			goto error;
 	}
 parse_port:
-	err = ipset_parse_port(session, opt, tmp, proto);
+	err = ipset_parse_tcpudp_port(session, opt, tmp, proto);
 
 error:
 	free(saved);

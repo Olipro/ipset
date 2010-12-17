@@ -26,6 +26,9 @@ extern int ipset_parse_ether(struct ipset_session *session,
 extern int ipset_parse_port(struct ipset_session *session,
 			    enum ipset_opt opt, const char *str,
 			    const char *proto);
+extern int ipset_parse_tcpudp_port(struct ipset_session *session,
+				   enum ipset_opt opt, const char *str,
+				   const char *proto);
 extern int ipset_parse_tcp_port(struct ipset_session *session,
 				enum ipset_opt opt, const char *str);
 extern int ipset_parse_single_tcp_port(struct ipset_session *session,
