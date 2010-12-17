@@ -10,5 +10,5 @@ obj-m += ip_set_hash_net.o ip_set_hash_ipportnet.o ip_set_hash_netport.o
 obj-m += ip_set_list_set.o
 
 # It's for me...
-incdirs := $(M) $(M)/include/linux/netfilter
+incdirs := $(M) $(M)/include/linux/netfilter $(M)/include/linux/netfilter/ipset
 clean-files := $(foreach dir,$(incdirs),$(wildcard $(dir)/*~))
