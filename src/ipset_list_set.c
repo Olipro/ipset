@@ -42,8 +42,8 @@ static const char list_set_usage[] =
 "create SETNAME list:set\n"
 "               [size VALUE] [timeout VALUE]\n"
 "add    SETNAME NAME [before|after NAME] [timeout VALUE]\n"
-"del    SETNAME NAME\n"
-"test   SETNAME NAME\n\n"
+"del    SETNAME NAME [before|after NAME]\n"
+"test   SETNAME NAME [before|after NAME]\n\n"
 "where NAME are existing set names.\n";
 
 struct ipset_type ipset_list_set0 = {

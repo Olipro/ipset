@@ -70,13 +70,14 @@ static const char hash_ip_usage[] =
 "		[family inet|inet6]\n"
 "               [hashsize VALUE] [maxelem VALUE]\n"
 "               [netmask CIDR] [timeout VALUE]\n"
-"add    SETNAME IP|IP/CIDR|FROM-TO [timeout VALUE]\n"
-"del    SETNAME IP|IP/CIDR|FROM-TO\n"
+"add    SETNAME IP [timeout VALUE]\n"
+"del    SETNAME IP\n"
 "test   SETNAME IP\n\n"
 "where depending on the INET family\n"
-"      IP, FROM and TO are IPv4 or IPv6 addresses (or hostnames),\n"
+"      IP is a valid IPv4 or IPv6 address (or hostname),\n"
 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
-"      Adding/deleting multiple elements is supported for IPv4 only.\n";
+"      Adding/deleting multiple elements in IP/CIDR or FROM-TO form\n"
+"      is supported for IPv4.\n";
 
 struct ipset_type ipset_hash_ip0 = {
 	.name = "hash:ip",
