@@ -178,6 +178,7 @@ static const struct nla_policy
 hash_netport_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
 	[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
 	[IPSET_ATTR_PORT]	= { .type = NLA_U16 },
+	[IPSET_ATTR_PORT_TO]	= { .type = NLA_U16 },
 	[IPSET_ATTR_PROTO]	= { .type = NLA_U8 },
 	[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
@@ -192,6 +193,7 @@ hash_netport4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_netport4_elem data = { .cidr = HOST_MASK };
+	u32 port, port_to;
 	u32 timeout = h->timeout;
 	int ret;
 
@@ -241,9 +243,28 @@ hash_netport4_uadt(struct ip_set *set, struct nlattr *head, int len,
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 	}
 
-	ret = adtfn(set, &data, timeout);
+	if (adt == IPSET_TEST
+	    || !(data.proto == IPPROTO_TCP || data.proto == IPPROTO_UDP)
+	    || !tb[IPSET_ATTR_PORT_TO]) {
+		ret = adtfn(set, &data, timeout);
+		return ip_set_eexist(ret, flags) ? 0 : ret;
+	}
 
-	return ip_set_eexist(ret, flags) ? 0 : ret;
+	port = ntohs(data.port);
+	port_to = ip_set_get_h16(tb[IPSET_ATTR_PORT_TO]);
+	if (port > port_to)
+		swap(port, port_to);
+
+	for (; port <= port_to; port++) {
+		data.port = htons(port);
+		ret = adtfn(set, &data, timeout);
+
+		if (ret && !ip_set_eexist(ret, flags))
+			return ret;
+		else
+			ret = 0;
+	}
+	return ret;
 }
 
 static bool
@@ -402,6 +423,7 @@ hash_netport6_uadt(struct ip_set *set, struct nlattr *head, int len,
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_netport6_elem data = { .cidr = HOST_MASK };
+	u32 port, port_to;
 	u32 timeout = h->timeout;
 	int ret;
 
@@ -451,9 +473,28 @@ hash_netport6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 	}
 
-	ret = adtfn(set, &data, timeout);
+	if (adt == IPSET_TEST
+	    || !(data.proto == IPPROTO_TCP || data.proto == IPPROTO_UDP)
+	    || !tb[IPSET_ATTR_PORT_TO]) {
+		ret = adtfn(set, &data, timeout);
+		return ip_set_eexist(ret, flags) ? 0 : ret;
+	}
 
-	return ip_set_eexist(ret, flags) ? 0 : ret;
+	port = ntohs(data.port);
+	port_to = ip_set_get_h16(tb[IPSET_ATTR_PORT_TO]);
+	if (port > port_to)
+		swap(port, port_to);
+
+	for (; port <= port_to; port++) {
+		data.port = htons(port);
+		ret = adtfn(set, &data, timeout);
+
+		if (ret && !ip_set_eexist(ret, flags))
+			return ret;
+		else
+			ret = 0;
+	}
+	return ret;
 }
 
 /* Create hash:ip type of sets */
