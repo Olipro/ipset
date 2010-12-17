@@ -358,19 +358,19 @@ check_allowed(const struct ipset_type *type, enum ipset_cmd cmd)
 		switch (i) {
 		case IPSET_OPT_CIDR:
 			exit_error(OTHER_PROBLEM,
-				"IP/CIDR range is not allowed in command %s"
+				"IP/CIDR range is not allowed in command %s "
 				"with set type %s and family %s",
 				cmd2name(cmd), type->name, session_family());
 			return;
 		case IPSET_OPT_IP_TO:
 			exit_error(OTHER_PROBLEM,
-				"FROM-TO IP range is not allowed in command %s"
+				"FROM-TO IP range is not allowed in command %s "
 				"with set type %s and family %s",
 				cmd2name(cmd), type->name, session_family());
 			return;
 		case IPSET_OPT_PORT_TO:
 			exit_error(OTHER_PROBLEM,
-				"FROM-TO port range is not allowed in command %s"
+				"FROM-TO port range is not allowed in command %s "
 				"with set type %s and family %s",
 				cmd2name(cmd), type->name, session_family());
 			return;
@@ -389,7 +389,7 @@ check_allowed(const struct ipset_type *type, enum ipset_cmd cmd)
 			if (arg->opt != i)
 				continue;
 			exit_error(OTHER_PROBLEM,
-				"%s parameter is not allowed in command %s"
+				"%s parameter is not allowed in command %s "
 				"with set type %s and family %s",
 				arg->name[0],
 				cmd2name(cmd), type->name, session_family());
