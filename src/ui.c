@@ -143,7 +143,7 @@ ipset_match_cmd(const char *arg, const char * const name[])
 
 	if (len > strlen(name[0]) || !len)
 		return false;
-	else if (strcmp(arg, name[0]) == 0)
+	else if (strncmp(arg, name[0], len) == 0)
 		return true;
 	else if (len != 1)
 		return false;
