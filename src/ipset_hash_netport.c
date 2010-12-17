@@ -59,7 +59,8 @@ static const char hash_netport_usage[] =
 "test   SETNAME IP[/CIDR],PROTO:PORT\n\n"
 "where depending on the INET family\n"
 "      IP is a valid IPv4 or IPv6 address (or hostname),\n"
-"      CIDR is a valid IPv4 or IPv6 CIDR prefix,\n";
+"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
+"      Adding/deleting multiple elements with TCP/UDP port range supported.\n";
 
 struct ipset_type ipset_hash_netport0 = {
 	.name = "hash:net,port",
@@ -101,11 +102,13 @@ struct ipset_type ipset_hash_netport0 = {
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
 		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PORT_TO)
 			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
 			| IPSET_FLAG(IPSET_OPT_CIDR),
 		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PORT_TO)
 			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_CIDR),
 		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)

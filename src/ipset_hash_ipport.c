@@ -79,7 +79,11 @@ static const char hash_ipport_usage[] =
 "del    SETNAME IP,PROTO:PORT\n"
 "test   SETNAME IP,PROTO:PORT\n\n"
 "where depending on the INET family\n"
-"      IP is a valid IPv4 or IPv6 address (or hostname),\n";
+"      IP is a valid IPv4 or IPv6 address (or hostname).\n"
+"      Adding/deleting multiple elements in IP/CIDR or FROM-TO form\n"
+"      is supported for IPv4.\n"
+"      Adding/deleting multiple elements with TCP/UDP port range\n"
+"      is supported both for IPv4 and IPv6.\n";
 
 struct ipset_type ipset_hash_ipport0 = {
 	.name = "hash:ip,port",
@@ -89,7 +93,7 @@ struct ipset_type ipset_hash_ipport0 = {
 	.dimension = IPSET_DIM_TWO,
 	.elem = { 
 		[IPSET_DIM_ONE] = { 
-			.parse = ipset_parse_single_ip,
+			.parse = ipset_parse_ip4_single6,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP
 		},
@@ -120,11 +124,15 @@ struct ipset_type ipset_hash_ipport0 = {
 			| IPSET_FLAG(IPSET_OPT_MAXELEM)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
 		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_IP_TO)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PORT_TO)
 			| IPSET_FLAG(IPSET_OPT_PROTO)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
 		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_IP_TO)
 			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PORT_TO)
 			| IPSET_FLAG(IPSET_OPT_PROTO),
 		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_PORT)
