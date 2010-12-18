@@ -352,7 +352,7 @@ check_allowed(const struct ipset_type *type, enum ipset_cmd command)
 	if (allowed & IPSET_FLAG(IPSET_OPT_IP_TO))
 		allowed |= IPSET_FLAG(IPSET_OPT_CIDR);
 
-	for (i = IPSET_OPT_NONE + 1; i < IPSET_OPT_FLAGS; i++) {
+	for (i = IPSET_OPT_IP; i < IPSET_OPT_FLAGS; i++) {
 		if (!(cmdflags & IPSET_FLAG(i))
 		    || (allowed & IPSET_FLAG(i))
 		    || !(flags & IPSET_FLAG(i)))
@@ -363,19 +363,19 @@ check_allowed(const struct ipset_type *type, enum ipset_cmd command)
 			exit_error(OTHER_PROBLEM,
 				"IP/CIDR range is not allowed in command %s "
 				"with set type %s and family %s",
-				cmd2name(cmd), type->name, session_family());
+				cmd2name(command), type->name, session_family());
 			return;
 		case IPSET_OPT_IP_TO:
 			exit_error(OTHER_PROBLEM,
 				"FROM-TO IP range is not allowed in command %s "
 				"with set type %s and family %s",
-				cmd2name(cmd), type->name, session_family());
+				cmd2name(command), type->name, session_family());
 			return;
 		case IPSET_OPT_PORT_TO:
 			exit_error(OTHER_PROBLEM,
 				"FROM-TO port range is not allowed in command %s "
 				"with set type %s and family %s",
-				cmd2name(cmd), type->name, session_family());
+				cmd2name(command), type->name, session_family());
 			return;
 		default:
 			break;
@@ -383,9 +383,9 @@ check_allowed(const struct ipset_type *type, enum ipset_cmd command)
 		/* Other options */
 		if (!arg) {
 			exit_error(OTHER_PROBLEM,
-				"There are not allowed options "
+				"There are not allowed options (%u) "
 				"but option list is NULL. "
-				"It's a bug, please report the problem.");
+				"It's a bug, please report the problem.", i);
 			return;
 		}
 		for (; arg->opt; arg++) {
@@ -395,13 +395,13 @@ check_allowed(const struct ipset_type *type, enum ipset_cmd command)
 				"%s parameter is not allowed in command %s "
 				"with set type %s and family %s",
 				arg->name[0],
-				cmd2name(cmd), type->name, session_family());
+				cmd2name(command), type->name, session_family());
 			return;
 		}
 		exit_error(OTHER_PROBLEM,
-			"There are not allowed options "
+			"There are not allowed options (%u) "
 			"but can't resolve them. "
-			"It's a bug, please report the problem.");
+			"It's a bug, please report the problem.", i);
 		return;
 	}
 }
@@ -644,8 +644,8 @@ parse_commandline(int argc, char *argv[])
 			return ret;
 		
 		/* Check mandatory, then allowed options */
-		check_mandatory(type, IPSET_CREATE);
-		check_allowed(type, IPSET_CMD_CREATE);
+		check_mandatory(type, cmd);
+		check_allowed(type, cmd);
 		
 		break;
 	case IPSET_CMD_DESTROY:
