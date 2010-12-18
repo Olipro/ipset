@@ -56,6 +56,11 @@ then
 	AC_MSG_ERROR([The kernel build directory $kbuilddir is not configured with IP6_NF_IPTABLES support (ip6tables)])
 fi
 
+if test "X`$GREP 'NFNL_SUBSYS_IPSET' $ksourcedir/include/linux/netfilter/nfnetlink.h`" = "X"
+then
+	AC_MSG_ERROR([The kernel source directory $ksourcedir is not patched with netlink.patch to support ipset])
+fi
+
 dnl Check kernel dependencies: nfnetlink.h
 NFNL_CB_CONST="`./check_const $ksourcedir/include/linux/netfilter/nfnetlink.h`"
 AC_SUBST(NFNL_CB_CONST)
