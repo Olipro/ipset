@@ -113,6 +113,12 @@ PKG_CHECK_MODULES([libmnl], [libmnl >= 1])
 
 dnl Checks for header files
 
+dnl Checks for declarations
+AC_CHECK_DECLS([NLA_F_NESTED, NLA_F_NET_BYTEORDER, NLA_TYPE_MASK],,
+		[AC_MSG_ERROR([System kernel header files are older than 2.6.24, use CFLAGS for non-default location])],
+		[#include <sys/socket.h>
+#include <linux/netlink.h>])
+
 dnl Checks for typedefs, structures
 AC_CHECK_TYPES([union nf_inet_addr],,,[#include <linux/types.h>
 #include <netinet/in.h>
