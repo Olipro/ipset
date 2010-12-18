@@ -1,3 +1,7 @@
+ifndef IP_SET_MAX
+$(error "Use the toplevel Makefile, not the one in the kernel/ subdirectory")
+endif
+
 ifneq ($(KERNELRELEASE),)
 include Kbuild
 else
