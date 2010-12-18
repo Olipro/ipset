@@ -341,7 +341,7 @@ check_allowed(const struct ipset_type *type, enum ipset_cmd cmd)
 {
 	uint64_t flags = ipset_data_flags(ipset_session_data(session));
 	uint64_t allowed = type->full[cmd2cmd(cmd)];
-	uint64_t cmdflags = cmd == IPSET_CREATE ? IPSET_CREATE_FLAGS : IPSET_ADT_FLAGS;
+	uint64_t cmdflags = cmd == IPSET_CMD_CREATE ? IPSET_CREATE_FLAGS : IPSET_ADT_FLAGS;
 	const struct ipset_arg *arg = type->args[cmd];
 	enum ipset_opt i;
 	
