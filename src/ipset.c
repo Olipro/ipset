@@ -264,9 +264,27 @@ done:
 	return ret;
 }
 
-static void
-check_mandatory(const struct ipset_type *type, int cmd)
+static enum ipset_adt
+cmd2cmd(int cmd)
 {
+	switch(cmd) {
+	case IPSET_CMD_ADD:
+		return IPSET_ADD;
+	case IPSET_CMD_DEL:
+		return IPSET_DEL;
+	case IPSET_CMD_TEST:
+		return IPSET_TEST;
+	case IPSET_CMD_CREATE:
+		return IPSET_CREATE;
+	default:
+		return 0;
+	}
+}
+
+static void
+check_mandatory(const struct ipset_type *type, enum ipset_cmd command)
+{
+	enum ipset_adt cmd = cmd2cmd(command);
 	uint64_t flags = ipset_data_flags(ipset_session_data(session));
 	uint64_t mandatory = type->mandatory[cmd];
 	const struct ipset_arg *arg = type->args[cmd];
@@ -319,29 +337,14 @@ session_family(void)
 	}
 }
 
-static int
-cmd2cmd(int cmd)
-{
-	switch(cmd) {
-	case IPSET_CMD_ADD:
-		return IPSET_ADD;
-	case IPSET_CMD_DEL:
-		return IPSET_DEL;
-	case IPSET_CMD_TEST:
-		return IPSET_TEST;
-	case IPSET_CMD_CREATE:
-		return IPSET_CREATE;
-	default:
-		return 0;
-	}
-}
-
 static void
-check_allowed(const struct ipset_type *type, enum ipset_cmd cmd)
+check_allowed(const struct ipset_type *type, enum ipset_cmd command)
 {
 	uint64_t flags = ipset_data_flags(ipset_session_data(session));
-	uint64_t allowed = type->full[cmd2cmd(cmd)];
-	uint64_t cmdflags = cmd == IPSET_CMD_CREATE ? IPSET_CREATE_FLAGS : IPSET_ADT_FLAGS;
+	enum ipset_adt cmd = cmd2cmd(command);
+	uint64_t allowed = type->full[cmd];
+	uint64_t cmdflags = command == IPSET_CMD_CREATE
+				? IPSET_CREATE_FLAGS : IPSET_ADT_FLAGS;
 	const struct ipset_arg *arg = type->args[cmd];
 	enum ipset_opt i;
 	
@@ -700,7 +703,7 @@ parse_commandline(int argc, char *argv[])
 			return ret;
 		
 		/* Check mandatory, then allowed options */
-		check_mandatory(type, cmd2cmd(cmd));
+		check_mandatory(type, cmd);
 		check_allowed(type, cmd);
 		
 		break;
