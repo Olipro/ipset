@@ -634,11 +634,15 @@ get_addrinfo(struct ipset_session *session,
 			continue;
 		if (found == 0) {
 			if (family == AF_INET) {
-				err = ipset_session_data_set(session, opt,
-					&((const struct sockaddr_in *)i->ai_addr)->sin_addr);
+				/* Workaround: cast increases required alignment on Sparc */
+				struct sockaddr_in saddr;
+				memcpy(&saddr, i->ai_addr, sizeof(saddr));
+				err = ipset_session_data_set(session, opt, &saddr.sin_addr);
 			} else {
-				err = ipset_session_data_set(session, opt, 
-					&((const struct sockaddr_in6 *)i->ai_addr)->sin6_addr);
+				/* Workaround: cast increases required alignment on Sparc */
+				struct sockaddr_in6 saddr;
+				memcpy(&saddr, i->ai_addr, sizeof(saddr));
+				err = ipset_session_data_set(session, opt, &saddr.sin6_addr);
 			}
 		} else if (found == 1) {
 			ipset_warn(session,
