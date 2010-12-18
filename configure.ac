@@ -96,18 +96,6 @@ AC_ARG_ENABLE([debug],
 	      
 AM_CONDITIONAL([ENABLE_DEBUG], [test "x$enable_debug" = xyes])
 
-dnl Disable extra warn flags
-AC_ARG_ENABLE([extra-flags],
-	      AS_HELP_STRING([--disable-extra-flags],
-	      		     [Disable extra compiler warning flags.]),
-	      [case "${enableval}" in
-	       yes)	extra_flags=yes ;;
-	       no)	extra_flags=no ;;
-	       *) AC_MSG_ERROR([bad value ${enableval} for --disable-extra-flags]) ;;
-	       esac], [extra_flags=yes])
-	      
-AM_CONDITIONAL([DISABLE_EXTRA_FLAGS], [test "x$extra_flags" = xno])
-
 dnl Checks for programs
 AC_PROG_CC
 AM_PROG_CC_C_O
@@ -120,10 +108,42 @@ PKG_CHECK_MODULES([libmnl], [libmnl >= 1])
 
 dnl Checks for header files
 
-dnl Checks for typedefs, structures, and compiler characteristics.
+dnl Checks for typedefs, structures
 AC_CHECK_TYPES([union nf_inet_addr],,,[#include <linux/types.h>
 #include <netinet/in.h>
 #include <linux/netfilter.h>])
+
+dnl Checks for  compiler characteristics.
+dnl Check extra warning flags except
+dnl	-Wconversion		-> we need it
+dnl	-Wunreachable-code	-> fails with ntoh*
+dnl	-Wpointer-arith		-> limbnl uses it
+AX_CFLAGS_GCC_OPTION(-Waggregate-return)
+AX_CFLAGS_GCC_OPTION(-Wbad-function-cast)
+AX_CFLAGS_GCC_OPTION(-Wcast-align)
+AX_CFLAGS_GCC_OPTION(-Wcast-qual)
+AX_CFLAGS_GCC_OPTION(-Werror)
+AX_CFLAGS_GCC_OPTION(-Wextra)
+AX_CFLAGS_GCC_OPTION(-Wfloat-equal)
+AX_CFLAGS_GCC_OPTION(-Wformat=2)
+AX_CFLAGS_GCC_OPTION(-Winit-self)
+AX_CFLAGS_GCC_OPTION(-Winline)
+AX_CFLAGS_GCC_OPTION(-Wmissing-declarations)
+AX_CFLAGS_GCC_OPTION(-Wmissing-format-attribute)
+AX_CFLAGS_GCC_OPTION(-Wmissing-prototypes)
+AX_CFLAGS_GCC_OPTION(-Wnested-externs)
+AX_CFLAGS_GCC_OPTION(-Wno-missing-field-initializers)
+AX_CFLAGS_GCC_OPTION(-Woverlength-strings)
+AX_CFLAGS_GCC_OPTION(-Wpacked)
+AX_CFLAGS_GCC_OPTION(-Wredundant-decls)
+AX_CFLAGS_GCC_OPTION(-Wshadow)
+AX_CFLAGS_GCC_OPTION(-Wsign-compare)
+AX_CFLAGS_GCC_OPTION(-Wstrict-prototypes)
+AX_CFLAGS_GCC_OPTION(-Wswitch-default)
+AX_CFLAGS_GCC_OPTION(-Wundef)
+AX_CFLAGS_GCC_OPTION(-Wunused)
+AX_CFLAGS_GCC_OPTION(-Wwrite-strings)
+
 dnl Checks for library functions.
 
 dnl Generate output

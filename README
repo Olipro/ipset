@@ -22,9 +22,8 @@ This is the ipset source tree. Follow the next steps to install ipset:
 
    Configure parameters can be used to to override the default path
    to the kernel source tree (/lib/modules/`uname -r`/build),
-   the maximum number of sets (256), the default hash sizes (1024)
-   or disable the extra compiler warning flags if your compiler
-   does not support all of them. See `./configure --help`.
+   the maximum number of sets (256), the default hash sizes (1024).
+   See `./configure --help`.
 
    % ./configure
    % make
