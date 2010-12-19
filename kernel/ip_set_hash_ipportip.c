@@ -563,7 +563,7 @@ hash_ipportip_create(struct ip_set *set, struct nlattr *head,
 	return 0;
 }
 
-static struct ip_set_type hash_ipportip_type = {
+static struct ip_set_type hash_ipportip_type __read_mostly = {
 	.name		= "hash:ip,port,ip",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_IP | IPSET_TYPE_PORT | IPSET_TYPE_IP2,

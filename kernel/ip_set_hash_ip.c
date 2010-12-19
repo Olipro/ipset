@@ -457,7 +457,7 @@ hash_ip_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 	return 0;
 }
 
-static struct ip_set_type hash_ip_type = {
+static struct ip_set_type hash_ip_type __read_mostly = {
 	.name		= "hash:ip",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_IP,

@@ -1692,7 +1692,7 @@ static const struct nfnl_callback ip_set_netlink_subsys_cb[IPSET_MSG_MAX] = {
 	},
 };
 
-static struct nfnetlink_subsystem ip_set_netlink_subsys = {
+static struct nfnetlink_subsystem ip_set_netlink_subsys __read_mostly = {
 	.name		= "ip_set",
 	.subsys_id	= NFNL_SUBSYS_IPSET,
 	.cb_count	= IPSET_MSG_MAX,
@@ -1791,7 +1791,7 @@ done:
 	return ret;
 }
 
-static struct nf_sockopt_ops so_set = {
+static struct nf_sockopt_ops so_set __read_mostly = {
 	.pf		= PF_INET,
 	.get_optmin	= SO_IP_SET,
 	.get_optmax	= SO_IP_SET + 1,

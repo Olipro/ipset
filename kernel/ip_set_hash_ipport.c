@@ -542,7 +542,7 @@ hash_ipport_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 	return 0;
 }
 
-static struct ip_set_type hash_ipport_type = {
+static struct ip_set_type hash_ipport_type __read_mostly = {
 	.name		= "hash:ip,port",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_IP | IPSET_TYPE_PORT,

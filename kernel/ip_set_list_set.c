@@ -562,7 +562,7 @@ list_set_create(struct ip_set *set, struct nlattr *head, int len,
 	return 0;
 }
 
-static struct ip_set_type list_set_type = {
+static struct ip_set_type list_set_type __read_mostly = {
 	.name		= "list:set",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_NAME | IPSET_DUMP_LAST,

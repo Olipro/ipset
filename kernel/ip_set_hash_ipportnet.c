@@ -629,7 +629,7 @@ hash_ipportnet_create(struct ip_set *set, struct nlattr *head,
 	return 0;
 }
 
-static struct ip_set_type hash_ipportnet_type = {
+static struct ip_set_type hash_ipportnet_type __read_mostly = {
 	.name		= "hash:ip,port,net",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_IP | IPSET_TYPE_PORT | IPSET_TYPE_IP2,

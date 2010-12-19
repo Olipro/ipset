@@ -700,7 +700,7 @@ bitmap_ip_create(struct ip_set *set, struct nlattr *head, int len,
 	return 0;
 }
 
-static struct ip_set_type bitmap_ip_type = {
+static struct ip_set_type bitmap_ip_type __read_mostly = {
 	.name		= "bitmap:ip",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_IP,
