@@ -95,8 +95,7 @@ bitmap_port_kadt(struct ip_set *set, const struct sk_buff *skb,
 	}
 }
 
-static const struct nla_policy
-bitmap_port_adt_policy[IPSET_ATTR_ADT_MAX+1] __read_mostly = {
+static const struct nla_policy bitmap_port_adt_policy[IPSET_ATTR_ADT_MAX+1] = {
 	[IPSET_ATTR_PORT]	= { .type = NLA_U16 },
 	[IPSET_ATTR_PORT_TO]	= { .type = NLA_U16 },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
@@ -251,7 +250,7 @@ bitmap_port_same_set(const struct ip_set *a, const struct ip_set *b)
 	       && x->last_port == y->last_port;
 }
 
-const struct ip_set_type_variant bitmap_port __read_mostly = {
+const struct ip_set_type_variant bitmap_port = {
 	.kadt	= bitmap_port_kadt,
 	.uadt	= bitmap_port_uadt,
 	.destroy = bitmap_port_destroy,
@@ -489,7 +488,7 @@ bitmap_port_timeout_same_set(const struct ip_set *a, const struct ip_set *b)
 	       && x->timeout == y->timeout;
 }
 
-const struct ip_set_type_variant bitmap_port_timeout __read_mostly = {
+const struct ip_set_type_variant bitmap_port_timeout = {
 	.kadt	= bitmap_port_timeout_kadt,
 	.uadt	= bitmap_port_timeout_uadt,
 	.destroy = bitmap_port_timeout_destroy,
@@ -535,7 +534,7 @@ bitmap_port_gc_init(struct ip_set *set)
 /* Create bitmap:ip type of sets */
 
 static const struct nla_policy
-bitmap_port_create_policy[IPSET_ATTR_CREATE_MAX+1] __read_mostly = {
+bitmap_port_create_policy[IPSET_ATTR_CREATE_MAX+1] = {
 	[IPSET_ATTR_PORT]	= { .type = NLA_U16 },
 	[IPSET_ATTR_PORT_TO]	= { .type = NLA_U16 },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },

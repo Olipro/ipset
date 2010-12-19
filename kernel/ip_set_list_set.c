@@ -112,8 +112,7 @@ list_set_kadt(struct ip_set *set, const struct sk_buff *skb,
 	return -EINVAL;
 }
 
-static const struct nla_policy
-list_set_adt_policy[IPSET_ATTR_ADT_MAX+1] __read_mostly = {
+static const struct nla_policy list_set_adt_policy[IPSET_ATTR_ADT_MAX+1] = {
 	[IPSET_ATTR_NAME]	= { .type = NLA_STRING,
 				    .len = IPSET_MAXNAMELEN },
 	[IPSET_ATTR_NAMEREF]	= { .type = NLA_STRING,
@@ -454,7 +453,7 @@ list_set_same_set(const struct ip_set *a, const struct ip_set *b)
 	       && x->timeout == y->timeout;
 }
 
-static const struct ip_set_type_variant list_set __read_mostly = {
+static const struct ip_set_type_variant list_set = {
 	.kadt	= list_set_kadt,
 	.uadt	= list_set_uadt,
 	.destroy = list_set_destroy,
@@ -502,7 +501,7 @@ list_set_gc_init(struct ip_set *set)
 /* Create list:set type of sets */
 
 static const struct nla_policy
-list_set_create_policy[IPSET_ATTR_CREATE_MAX+1] __read_mostly = {
+list_set_create_policy[IPSET_ATTR_CREATE_MAX+1] = {
 	[IPSET_ATTR_SIZE]	= { .type = NLA_U32 },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
 };

@@ -133,8 +133,7 @@ hash_ip4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	return adtfn(set, &ip, h->timeout);
 }
 
-static const struct nla_policy
-hash_ip4_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
+static const struct nla_policy hash_ip4_adt_policy[IPSET_ATTR_ADT_MAX + 1] = {
 	[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
 	[IPSET_ATTR_IP_TO]	= { .type = NLA_NESTED },
 	[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
@@ -323,8 +322,7 @@ hash_ip6_kadt(struct ip_set *set, const struct sk_buff *skb,
 	return adtfn(set, &ip, h->timeout);
 }
 
-static const struct nla_policy
-hash_ip6_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
+static const struct nla_policy hash_ip6_adt_policy[IPSET_ATTR_ADT_MAX + 1] = {
 	[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
 	[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
@@ -370,7 +368,7 @@ hash_ip6_uadt(struct ip_set *set, struct nlattr *head, int len,
 /* Create hash:ip type of sets */
 
 static const struct nla_policy
-hash_ip_create_policy[IPSET_ATTR_CREATE_MAX+1] __read_mostly = {
+hash_ip_create_policy[IPSET_ATTR_CREATE_MAX+1] = {
 	[IPSET_ATTR_HASHSIZE]	= { .type = NLA_U32 },
 	[IPSET_ATTR_MAXELEM]	= { .type = NLA_U32 },
 	[IPSET_ATTR_PROBES]	= { .type = NLA_U8 },

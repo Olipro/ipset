@@ -747,8 +747,7 @@ start_msg(struct sk_buff *skb, u32 pid, u32 seq, unsigned int flags,
 
 /* Create a set */
 
-static const struct nla_policy
-ip_set_create_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+static const struct nla_policy ip_set_create_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 	[IPSET_ATTR_SETNAME]	= { .type = NLA_NUL_STRING,
 				    .len = IPSET_MAXNAMELEN - 1 },
@@ -929,7 +928,7 @@ out:
 /* Destroy sets */
 
 static const struct nla_policy
-ip_set_setname_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+ip_set_setname_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 	[IPSET_ATTR_SETNAME]	= { .type = NLA_NUL_STRING,
 				    .len = IPSET_MAXNAMELEN - 1 },
@@ -1022,7 +1021,7 @@ ip_set_flush(struct sock *ctnl, struct sk_buff *skb,
 /* Rename a set */
 
 static const struct nla_policy
-ip_set_setname2_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+ip_set_setname2_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 	[IPSET_ATTR_SETNAME]	= { .type = NLA_NUL_STRING,
 				    .len = IPSET_MAXNAMELEN - 1 },
@@ -1306,8 +1305,7 @@ ip_set_dump(struct sock *ctnl, struct sk_buff *skb,
 
 /* Add, del and test */
 
-static const struct nla_policy
-ip_set_adt_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+static const struct nla_policy ip_set_adt_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 	[IPSET_ATTR_SETNAME]	= { .type = NLA_NUL_STRING,
 				    .len = IPSET_MAXNAMELEN - 1 },
@@ -1519,8 +1517,7 @@ nlmsg_failure:
 
 /* Get type data */
 
-static const struct nla_policy
-ip_set_type_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+static const struct nla_policy ip_set_type_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 	[IPSET_ATTR_TYPENAME]	= { .type = NLA_NUL_STRING,
 				    .len = IPSET_MAXNAMELEN - 1 },
@@ -1587,7 +1584,7 @@ nlmsg_failure:
 /* Get protocol version */
 
 static const struct nla_policy
-ip_set_protocol_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+ip_set_protocol_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 };
 
@@ -1627,8 +1624,7 @@ nlmsg_failure:
 	return -EFAULT;
 }
 
-static const struct nfnl_callback __read_mostly
-ip_set_netlink_subsys_cb[IPSET_MSG_MAX] = {
+static const struct nfnl_callback ip_set_netlink_subsys_cb[IPSET_MSG_MAX] = {
 	[IPSET_CMD_CREATE]	= {
 		.call		= ip_set_create,
 		.attr_count	= IPSET_ATTR_CMD_MAX,

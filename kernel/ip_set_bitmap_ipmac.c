@@ -358,7 +358,7 @@ bitmap_ipmac_kadt(struct ip_set *set, const struct sk_buff *skb,
 }
 
 static const struct nla_policy
-bitmap_ipmac_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
+bitmap_ipmac_adt_policy[IPSET_ATTR_ADT_MAX + 1] = {
 	[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
 	[IPSET_ATTR_ETHER]	= { .type = NLA_BINARY, .len  = ETH_ALEN },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
@@ -468,7 +468,7 @@ bitmap_ipmac_same_set(const struct ip_set *a, const struct ip_set *b)
 	       && x->timeout == y->timeout;
 }
 
-const struct ip_set_type_variant bitmap_ipmac __read_mostly = {
+const struct ip_set_type_variant bitmap_ipmac = {
 	.kadt	= bitmap_ipmac_kadt,
 	.uadt	= bitmap_ipmac_uadt,
 	.adt	= {
@@ -483,7 +483,7 @@ const struct ip_set_type_variant bitmap_ipmac __read_mostly = {
 	.same_set = bitmap_ipmac_same_set,
 };
 
-const struct ip_set_type_variant bitmap_tipmac __read_mostly = {
+const struct ip_set_type_variant bitmap_tipmac = {
 	.kadt	= bitmap_ipmac_kadt,
 	.uadt	= bitmap_ipmac_uadt,
 	.adt	= {
@@ -536,7 +536,7 @@ bitmap_ipmac_gc_init(struct ip_set *set)
 /* Create bitmap:ip,mac type of sets */
 
 static const struct nla_policy
-bitmap_ipmac_create_policy[IPSET_ATTR_CREATE_MAX+1] __read_mostly = {
+bitmap_ipmac_create_policy[IPSET_ATTR_CREATE_MAX+1] = {
 	[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
 	[IPSET_ATTR_IP_TO]	= { .type = NLA_NESTED },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },

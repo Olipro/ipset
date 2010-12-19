@@ -100,8 +100,7 @@ bitmap_ip_kadt(struct ip_set *set, const struct sk_buff *skb,
 	}
 }
 
-static const struct nla_policy
-bitmap_ip_adt_policy[IPSET_ATTR_ADT_MAX+1] __read_mostly = {
+static const struct nla_policy bitmap_ip_adt_policy[IPSET_ATTR_ADT_MAX+1] = {
 	[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
 	[IPSET_ATTR_IP_TO]	= { .type = NLA_NESTED },
 	[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
@@ -269,7 +268,7 @@ bitmap_ip_same_set(const struct ip_set *a, const struct ip_set *b)
 	       && x->netmask == y->netmask;
 }
 
-static const struct ip_set_type_variant bitmap_ip __read_mostly = {
+static const struct ip_set_type_variant bitmap_ip = {
 	.kadt	= bitmap_ip_kadt,
 	.uadt	= bitmap_ip_uadt,
 	.destroy = bitmap_ip_destroy,
@@ -517,7 +516,7 @@ bitmap_ip_timeout_same_set(const struct ip_set *a, const struct ip_set *b)
 	       && x->timeout == y->timeout;
 }
 
-static const struct ip_set_type_variant bitmap_ip_timeout __read_mostly = {
+static const struct ip_set_type_variant bitmap_ip_timeout = {
 	.kadt	= bitmap_ip_timeout_kadt,
 	.uadt	= bitmap_ip_timeout_uadt,
 	.destroy = bitmap_ip_timeout_destroy,
@@ -562,7 +561,7 @@ bitmap_ip_gc_init(struct ip_set *set)
 /* Create bitmap:ip type of sets */
 
 static const struct nla_policy
-bitmap_ip_create_policy[IPSET_ATTR_CREATE_MAX+1] __read_mostly = {
+bitmap_ip_create_policy[IPSET_ATTR_CREATE_MAX+1] = {
 	[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
 	[IPSET_ATTR_IP_TO]	= { .type = NLA_NESTED },
 	[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
