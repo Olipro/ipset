@@ -23,16 +23,16 @@ endif
 SUBDIRS		= lib src
 
 modules:
-	cd kernel; make -C $(KBUILD_OUTPUT) M=`pwd` V=$V \
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel V=$V \
 			IP_SET_MAX=$(IP_SET_MAX) \
 			NETLINK_DUMP_CONST=$(NETLINK_DUMP_CONST) \
 			NFNL_CB_CONST=$(NFNL_CB_CONST) modules
 
 modules_install:
-	cd kernel; make -C $(KBUILD_OUTPUT) M=`pwd` modules_install
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel modules_install
 
 modules_clean:
-	cd kernel; make -C $(KBUILD_OUTPUT) M=`pwd` clean
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel clean
 
 update_includes:
 	./update ip_set.h
