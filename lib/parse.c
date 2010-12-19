@@ -345,7 +345,7 @@ int
 ipset_parse_proto(struct ipset_session *session,
 		  enum ipset_opt opt, const char *str)
 {
-	struct protoent *protoent;
+	const struct protoent *protoent;
 	uint8_t proto = 0;
 
 	assert(session);

@@ -31,7 +31,7 @@ struct ipset_handle {
 };
 
 /* Netlink flags of the commands */
-static uint16_t cmdflags[] = {
+static const uint16_t cmdflags[] = {
 	[IPSET_CMD_CREATE-1]	= NLM_F_REQUEST|NLM_F_ACK|NLM_F_CREATE|NLM_F_EXCL,
 	[IPSET_CMD_DESTROY-1]	= NLM_F_REQUEST|NLM_F_ACK,
 	[IPSET_CMD_FLUSH-1]	= NLM_F_REQUEST|NLM_F_ACK,

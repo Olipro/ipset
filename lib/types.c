@@ -393,7 +393,7 @@ ipset_type_get(struct ipset_session *session, enum ipset_cmd cmd)
 const struct ipset_type *
 ipset_type_check(struct ipset_session *session)
 {
-	struct ipset_type *t, *match = NULL;
+	const struct ipset_type *t, *match = NULL;
 	struct ipset_data *data;
 	const char *typename;
 	uint8_t family, revision;

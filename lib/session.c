@@ -690,7 +690,7 @@ retry:
 static int
 list_adt(struct ipset_session *session, struct nlattr *nla[])
 {
-	struct ipset_data *data = session->data;
+	const struct ipset_data *data = session->data;
 	const struct ipset_type *type;
 	const struct ipset_arg *arg;
 	uint8_t family;
@@ -774,7 +774,7 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 static int
 list_create(struct ipset_session *session, struct nlattr *nla[])
 {
-	struct ipset_data *data = session->data;
+	const struct ipset_data *data = session->data;
 	const struct ipset_type *type;
 	const struct ipset_arg *arg;
 	uint8_t family;
@@ -1016,7 +1016,7 @@ static int
 callback_header(struct ipset_session *session, struct nlattr *nla[])
 {
 	const char *setname;
-	struct ipset_data *data = session->data;
+	const struct ipset_data *data = session->data;
 	
 	if (!nla[IPSET_ATTR_SETNAME])
 		FAILURE("Broken HEADER kernel message: missing setname!");
@@ -1047,7 +1047,7 @@ callback_header(struct ipset_session *session, struct nlattr *nla[])
 static int
 callback_type(struct ipset_session *session, struct nlattr *nla[])
 {
-	struct ipset_data *data = session->data;
+	const struct ipset_data *data = session->data;
 	const char *typename, *orig;
 	
 	if (!(nla[IPSET_ATTR_TYPENAME]
