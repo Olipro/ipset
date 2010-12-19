@@ -273,7 +273,7 @@ struct ipset_attr_policy {
 };
 
 /* Attribute policies and mapping to options */
-const struct ipset_attr_policy cmd_attrs[] = {
+static const struct ipset_attr_policy cmd_attrs[] = {
 	[IPSET_ATTR_PROTOCOL] = {
 		.type = MNL_TYPE_U8,
 	},
@@ -317,7 +317,7 @@ const struct ipset_attr_policy cmd_attrs[] = {
 	},
 };
 
-const struct ipset_attr_policy create_attrs[] = {
+static const struct ipset_attr_policy create_attrs[] = {
 	[IPSET_ATTR_IP]	= {
 		.type = MNL_TYPE_NESTED,
 		.opt = IPSET_OPT_IP,
@@ -392,7 +392,7 @@ const struct ipset_attr_policy create_attrs[] = {
 	},
 };
 
-const struct ipset_attr_policy adt_attrs[] = {
+static const struct ipset_attr_policy adt_attrs[] = {
 	[IPSET_ATTR_IP]	= {
 		.type = MNL_TYPE_NESTED,
 		.opt = IPSET_OPT_IP,
@@ -454,7 +454,7 @@ const struct ipset_attr_policy adt_attrs[] = {
 	},
 };
 
-const struct ipset_attr_policy ipaddr_attrs[] = {
+static const struct ipset_attr_policy ipaddr_attrs[] = {
 	[IPSET_ATTR_IPADDR_IPV4] = {
 		.type = MNL_TYPE_U32,
 	},
