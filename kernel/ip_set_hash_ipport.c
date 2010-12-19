@@ -140,7 +140,7 @@ static int
 hash_ipport4_kadt(struct ip_set *set, const struct sk_buff *skb,
 		  enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
 {
-	struct ip_set_hash *h = set->data;
+	const struct ip_set_hash *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_ipport4_elem data = { };
 
@@ -169,7 +169,7 @@ static int
 hash_ipport4_uadt(struct ip_set *set, struct nlattr *head, int len,
 		  enum ipset_adt adt, u32 *lineno, u32 flags)
 {
-	struct ip_set_hash *h = set->data;
+	const struct ip_set_hash *h = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_ipport4_elem data = { };
@@ -268,8 +268,8 @@ hash_ipport4_uadt(struct ip_set *set, struct nlattr *head, int len,
 static bool
 hash_ipport_same_set(const struct ip_set *a, const struct ip_set *b)
 {
-	struct ip_set_hash *x = a->data;
-	struct ip_set_hash *y = b->data;
+	const struct ip_set_hash *x = a->data;
+	const struct ip_set_hash *y = b->data;
 
 	/* Resizing changes htable_bits, so we ignore it */
 	return x->maxelem == y->maxelem
@@ -374,7 +374,7 @@ static int
 hash_ipport6_kadt(struct ip_set *set, const struct sk_buff *skb,
 		  enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
 {
-	struct ip_set_hash *h = set->data;
+	const struct ip_set_hash *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_ipport6_elem data = { };
 
@@ -391,7 +391,7 @@ static int
 hash_ipport6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		  enum ipset_adt adt, u32 *lineno, u32 flags)
 {
-	struct ip_set_hash *h = set->data;
+	const struct ip_set_hash *h = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_ipport6_elem data = { };

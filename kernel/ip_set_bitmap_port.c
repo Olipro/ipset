@@ -181,7 +181,7 @@ bitmap_port_flush(struct ip_set *set)
 static int
 bitmap_port_head(struct ip_set *set, struct sk_buff *skb)
 {
-	struct bitmap_port *map = set->data;
+	const struct bitmap_port *map = set->data;
 	struct nlattr *nested;
 
 	nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
@@ -201,10 +201,10 @@ nla_put_failure:
 }
 
 static int
-bitmap_port_list(struct ip_set *set,
+bitmap_port_list(const struct ip_set *set,
 		 struct sk_buff *skb, struct netlink_callback *cb)
 {
-	struct bitmap_port *map = set->data;
+	const struct bitmap_port *map = set->data;
 	struct nlattr *atd, *nested;
 	u16 id, first = cb->args[2];
 	u16 last = map->last_port - map->first_port;
@@ -243,8 +243,8 @@ nla_put_failure:
 static bool
 bitmap_port_same_set(const struct ip_set *a, const struct ip_set *b)
 {
-	struct bitmap_port *x = a->data;
-	struct bitmap_port *y = b->data;
+	const struct bitmap_port *x = a->data;
+	const struct bitmap_port *y = b->data;
 
 	return x->first_port == y->first_port
 	       && x->last_port == y->last_port;
@@ -413,7 +413,7 @@ bitmap_port_timeout_flush(struct ip_set *set)
 static int
 bitmap_port_timeout_head(struct ip_set *set, struct sk_buff *skb)
 {
-	struct bitmap_port_timeout *map = set->data;
+	const struct bitmap_port_timeout *map = set->data;
 	struct nlattr *nested;
 
 	nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
@@ -434,14 +434,14 @@ nla_put_failure:
 }
 
 static int
-bitmap_port_timeout_list(struct ip_set *set,
+bitmap_port_timeout_list(const struct ip_set *set,
 			 struct sk_buff *skb, struct netlink_callback *cb)
 {
-	struct bitmap_port_timeout *map = set->data;
+	const struct bitmap_port_timeout *map = set->data;
 	struct nlattr *adt, *nested;
 	u16 id, first = cb->args[2];
 	u16 last = map->last_port - map->first_port;
-	unsigned long *table = map->members;
+	const unsigned long *table = map->members;
 
 	adt = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!adt)
@@ -480,8 +480,8 @@ nla_put_failure:
 static bool
 bitmap_port_timeout_same_set(const struct ip_set *a, const struct ip_set *b)
 {
-	struct bitmap_port_timeout *x = a->data;
-	struct bitmap_port_timeout *y = b->data;
+	const struct bitmap_port_timeout *x = a->data;
+	const struct bitmap_port_timeout *y = b->data;
 
 	return x->first_port == y->first_port
 	       && x->last_port == y->last_port

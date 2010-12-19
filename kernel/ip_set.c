@@ -623,7 +623,7 @@ EXPORT_SYMBOL(ip_set_put_byindex);
 const char *
 ip_set_name_byindex(ip_set_id_t index)
 {
-	struct ip_set *set = ip_set_list[index];
+	const struct ip_set *set = ip_set_list[index];
 
 	BUG_ON(set == NULL);
 	BUG_ON(atomic_read(&set->ref) == 0);
@@ -762,7 +762,7 @@ static ip_set_id_t
 find_set_id(const char *name)
 {
 	ip_set_id_t i, index = IPSET_INVALID_ID;
-	struct ip_set *set;
+	const struct ip_set *set;
 
 	for (i = 0; index == IPSET_INVALID_ID && i < ip_set_max; i++) {
 		set = ip_set_list[i];
@@ -1141,7 +1141,7 @@ ip_set_dump_done(struct netlink_callback *cb)
 static inline void
 dump_attrs(struct nlmsghdr *nlh)
 {
-	struct nlattr *attr;
+	const struct nlattr *attr;
 	int rem;
 
 	pr_debug("dump nlmsg");
@@ -1472,7 +1472,7 @@ ip_set_header(struct sock *ctnl, struct sk_buff *skb,
 	      NFNL_CB_CONST struct nlmsghdr *nlh,
 	      NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
-	struct ip_set *set;
+	const struct ip_set *set;
 	struct sk_buff *skb2;
 	struct nlmsghdr *nlh2;
 	ip_set_id_t index;

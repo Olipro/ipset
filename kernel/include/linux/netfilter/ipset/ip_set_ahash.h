@@ -530,7 +530,7 @@ nla_put_failure:
 
 /* Reply a LIST/SAVE request: dump the elements of the specified set */
 static int
-type_pf_list(struct ip_set *set,
+type_pf_list(const struct ip_set *set,
 	     struct sk_buff *skb, struct netlink_callback *cb)
 {
 	const struct ip_set_hash *h = set->data;
@@ -931,7 +931,7 @@ type_pf_ttest(struct ip_set *set, void *value, u32 timeout)
 }
 
 static int
-type_pf_tlist(struct ip_set *set,
+type_pf_tlist(const struct ip_set *set,
 	      struct sk_buff *skb, struct netlink_callback *cb)
 {
 	const struct ip_set_hash *h = set->data;

@@ -164,7 +164,7 @@ bitmap_ipmac_del(struct ip_set *set, void *value, u32 timeout)
 }
 
 static int
-bitmap_ipmac_list(struct ip_set *set,
+bitmap_ipmac_list(const struct ip_set *set,
 		  struct sk_buff *skb, struct netlink_callback *cb)
 {
 	const struct bitmap_ipmac *map = set->data;
@@ -287,7 +287,7 @@ bitmap_ipmac_tdel(struct ip_set *set, void *value, u32 timeout)
 }
 
 static int
-bitmap_ipmac_tlist(struct ip_set *set,
+bitmap_ipmac_tlist(const struct ip_set *set,
 		   struct sk_buff *skb, struct netlink_callback *cb)
 {
 	const struct bitmap_ipmac *map = set->data;
@@ -369,7 +369,7 @@ static int
 bitmap_ipmac_uadt(struct ip_set *set, struct nlattr *head, int len,
 		  enum ipset_adt adt, u32 *lineno, u32 flags)
 {
-	struct bitmap_ipmac *map = set->data;
+	const struct bitmap_ipmac *map = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct ipmac data;
@@ -460,8 +460,8 @@ nla_put_failure:
 static bool
 bitmap_ipmac_same_set(const struct ip_set *a, const struct ip_set *b)
 {
-	struct bitmap_ipmac *x = a->data;
-	struct bitmap_ipmac *y = b->data;
+	const struct bitmap_ipmac *x = a->data;
+	const struct bitmap_ipmac *y = b->data;
 
 	return x->first_ip == y->first_ip
 	       && x->last_ip == y->last_ip

@@ -240,7 +240,7 @@ struct ip_set_type_variant {
 	/* List set header data */
 	int (*head)(struct ip_set *set, struct sk_buff *skb);
 	/* List elements */
-	int (*list)(struct ip_set *set, struct sk_buff *skb,
+	int (*list)(const struct ip_set *set, struct sk_buff *skb,
 		    struct netlink_callback *cb);
 
 	/* Return true if "b" set is the same as "a"

@@ -220,7 +220,7 @@ nla_put_failure:
 }
 
 static int
-bitmap_ip_list(struct ip_set *set,
+bitmap_ip_list(const struct ip_set *set,
 	       struct sk_buff *skb, struct netlink_callback *cb)
 {
 	const struct bitmap_ip *map = set->data;
@@ -260,8 +260,8 @@ nla_put_failure:
 static bool
 bitmap_ip_same_set(const struct ip_set *a, const struct ip_set *b)
 {
-	struct bitmap_ip *x = a->data;
-	struct bitmap_ip *y = b->data;
+	const struct bitmap_ip *x = a->data;
+	const struct bitmap_ip *y = b->data;
 
 	return x->first_ip == y->first_ip
 	       && x->last_ip == y->last_ip
@@ -462,13 +462,13 @@ nla_put_failure:
 }
 
 static int
-bitmap_ip_timeout_list(struct ip_set *set,
+bitmap_ip_timeout_list(const struct ip_set *set,
 		       struct sk_buff *skb, struct netlink_callback *cb)
 {
 	const struct bitmap_ip_timeout *map = set->data;
 	struct nlattr *adt, *nested;
 	u32 id, first = cb->args[2];
-	unsigned long *table = map->members;
+	const unsigned long *table = map->members;
 
 	adt = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!adt)
@@ -507,8 +507,8 @@ nla_put_failure:
 static bool
 bitmap_ip_timeout_same_set(const struct ip_set *a, const struct ip_set *b)
 {
-	struct bitmap_ip_timeout *x = a->data;
-	struct bitmap_ip_timeout *y = b->data;
+	const struct bitmap_ip_timeout *x = a->data;
+	const struct bitmap_ip_timeout *y = b->data;
 
 	return x->first_ip == y->first_ip
 	       && x->last_ip == y->last_ip

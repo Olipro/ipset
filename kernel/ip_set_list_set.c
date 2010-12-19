@@ -169,7 +169,7 @@ static int
 list_set_add(struct list_set *map, u32 i, ip_set_id_t id,
 	     unsigned long timeout)
 {
-	struct set_elem *e = list_set_elem(map, i);
+	const struct set_elem *e = list_set_elem(map, i);
 
 	if (i == map->size - 1 && e->id != IPSET_INVALID_ID)
 		/* Last element replaced: e.g. add new,before,last */
@@ -214,7 +214,7 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 	int before = 0;
 	u32 timeout = map->timeout;
 	ip_set_id_t id, refid = IPSET_INVALID_ID;
-	struct set_elem *elem;
+	const struct set_elem *elem;
 	struct ip_set *s;
 	u32 i;
 	int ret = 0;
@@ -395,7 +395,7 @@ nla_put_failure:
 }
 
 static int
-list_set_list(struct ip_set *set,
+list_set_list(const struct ip_set *set,
 	      struct sk_buff *skb, struct netlink_callback *cb)
 {
 	const struct list_set *map = set->data;
@@ -446,8 +446,8 @@ nla_put_failure:
 static bool
 list_set_same_set(const struct ip_set *a, const struct ip_set *b)
 {
-	struct list_set *x = a->data;
-	struct list_set *y = b->data;
+	const struct list_set *x = a->data;
+	const struct list_set *y = b->data;
 
 	return x->size == y->size
 	       && x->timeout == y->timeout;
