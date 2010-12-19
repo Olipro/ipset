@@ -54,7 +54,7 @@ ipset_cache_add(const char *name, const struct ipset_type *type,
 	if (n == NULL)
 		return -ENOMEM;
 
-	ipset_strncpy(n->name, name, IPSET_MAXNAMELEN);
+	ipset_strlcpy(n->name, name, IPSET_MAXNAMELEN);
 	n->type = type;
 	n->family = family;
 	n->next = NULL;	
@@ -133,7 +133,7 @@ ipset_cache_rename(const char *from, const char *to)
 
 	for (s = setlist; s != NULL; s = s->next) {
 		if (STREQ(s->name, from)) {
-			ipset_strncpy(s->name, to, IPSET_MAXNAMELEN);
+			ipset_strlcpy(s->name, to, IPSET_MAXNAMELEN);
 			return 0;
 		}
 	}
@@ -164,8 +164,8 @@ ipset_cache_swap(const char *from, const char *to)
 			b = s;
 	}
 	if (a != NULL && b != NULL) {
-		ipset_strncpy(a->name, to, IPSET_MAXNAMELEN);
-		ipset_strncpy(b->name, from, IPSET_MAXNAMELEN);
+		ipset_strlcpy(a->name, to, IPSET_MAXNAMELEN);
+		ipset_strlcpy(b->name, from, IPSET_MAXNAMELEN);
 		return 0;
 	}
 		

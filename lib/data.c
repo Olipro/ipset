@@ -85,7 +85,7 @@ copy_addr(uint8_t family, union nf_inet_addr *ip, const void *value)
 }
 
 /**
- * ipset_strncpy - copy the string from src to dst
+ * ipset_strlcpy - copy the string from src to dst
  * @dst: the target string buffer
  * @src: the source string buffer
  * @len: the length of bytes to copy, including the terminating null byte.
@@ -94,7 +94,7 @@ copy_addr(uint8_t family, union nf_inet_addr *ip, const void *value)
  * copied. The target is unconditionally terminated by the null byte.
  */
 void
-ipset_strncpy(char *dst, const char *src, size_t len)
+ipset_strlcpy(char *dst, const char *src, size_t len)
 {
 	assert(dst);
 	assert(src);
@@ -199,7 +199,7 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	switch (opt) {
 	/* Common ones */
 	case IPSET_SETNAME:
-		ipset_strncpy(data->setname, value, IPSET_MAXNAMELEN);
+		ipset_strlcpy(data->setname, value, IPSET_MAXNAMELEN);
 		break;
 	case IPSET_OPT_TYPE:
 		data->type = value;
@@ -265,7 +265,7 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		break;
 	/* Create-specific options, type */
 	case IPSET_OPT_TYPENAME:
-		ipset_strncpy(data->u.create.typename, value,
+		ipset_strlcpy(data->u.create.typename, value,
 			      IPSET_MAXNAMELEN);
 		break;
 	case IPSET_OPT_REVISION:
@@ -279,10 +279,10 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		memcpy(data->u.adt.ether, value, ETH_ALEN);
 		break;
 	case IPSET_OPT_NAME:
-		ipset_strncpy(data->u.adt.name, value, IPSET_MAXNAMELEN);
+		ipset_strlcpy(data->u.adt.name, value, IPSET_MAXNAMELEN);
 		break;
 	case IPSET_OPT_NAMEREF:
-		ipset_strncpy(data->u.adt.nameref, value, IPSET_MAXNAMELEN);
+		ipset_strlcpy(data->u.adt.nameref, value, IPSET_MAXNAMELEN);
 		break;
 	case IPSET_OPT_IP2:
 		if (!(data->family == AF_INET || data->family == AF_INET6))
@@ -297,7 +297,7 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		break;
 	/* Swap/rename */
 	case IPSET_OPT_SETNAME2:
-		ipset_strncpy(data->u.setname2, value, IPSET_MAXNAMELEN);
+		ipset_strlcpy(data->u.setname2, value, IPSET_MAXNAMELEN);
 		break;
 	/* flags */
 	case IPSET_OPT_EXIST:
