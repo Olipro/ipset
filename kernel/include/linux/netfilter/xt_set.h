@@ -15,11 +15,11 @@
 struct xt_set_info_v0 {
 	ip_set_id_t index;
 	union {
-		u_int32_t flags[IPSET_DIM_MAX + 1];
+		__u32 flags[IPSET_DIM_MAX + 1];
 		struct {
-			u_int32_t __flags[IPSET_DIM_MAX];
-			u_int8_t dim;
-			u_int8_t flags;
+			__u32 __flags[IPSET_DIM_MAX];
+			__u8 dim;
+			__u8 flags;
 		} compat;
 	} u;
 };
@@ -38,8 +38,8 @@ struct xt_set_info_target_v0 {
 
 struct xt_set_info {
 	ip_set_id_t index;
-	u_int8_t dim;
-	u_int8_t flags;
+	__u8 dim;
+	__u8 flags;
 };
 
 /* match and target infos */
