@@ -468,7 +468,7 @@ static int
 generic_data_attr_cb(const struct nlattr *attr, void *data,
 		     int attr_max, const struct ipset_attr_policy *policy)
 {
-	const struct nlattr **tb = (const struct nlattr **)data;
+	const struct nlattr **tb = data;
 	int type = mnl_attr_get_type(attr);
 	
 	D("attr type: %u, len %u", type, attr->nla_len);
@@ -1464,7 +1464,7 @@ static int
 build_send_private_msg(struct ipset_session *session, enum ipset_cmd cmd)
 {
 	char buffer[PRIVATE_MSG_BUFLEN] __attribute__ ((aligned));
-	struct nlmsghdr *nlh = (struct nlmsghdr *) (void *) buffer;
+	struct nlmsghdr *nlh = (void *)buffer;
 	struct ipset_data *data = session->data;
 	int len = PRIVATE_MSG_BUFLEN, ret;
 	enum ipset_cmd saved = session->cmd;
@@ -1521,7 +1521,7 @@ may_aggregate_ad(struct ipset_session *session, struct ipset_data *data,
 static int
 build_msg(struct ipset_session *session, bool aggregate)
 {
-	struct nlmsghdr *nlh = (struct nlmsghdr *) session->buffer;
+	struct nlmsghdr *nlh = session->buffer;
 	struct ipset_data *data = session->data;
 
 	/* Public commands */
@@ -1678,7 +1678,7 @@ ipset_commit(struct ipset_session *session)
 
 	assert(session);
 
-	nlh = (struct nlmsghdr *) session->buffer;
+	nlh = session->buffer;
 	D("send buffer: len %u, cmd %s", nlh->nlmsg_len, cmd2name[session->cmd]);
 	if (nlh->nlmsg_len == 0)
 		/* Nothing to do */

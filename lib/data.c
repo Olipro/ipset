@@ -79,9 +79,9 @@ static void
 copy_addr(uint8_t family, union nf_inet_addr *ip, const void *value)
 {
 	if (family == AF_INET)
-		in4cpy(&ip->in, (const struct in_addr *)value);
+		in4cpy(&ip->in, value);
 	else
-		in6cpy(&ip->in6, (const struct in6_addr *)value);
+		in6cpy(&ip->in6, value);
 }
 
 /**
