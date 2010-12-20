@@ -530,7 +530,7 @@ nla_put_failure:
 
 /* Reply a LIST/SAVE request: dump the elements of the specified set */
 static int
-type_pf_list(struct ip_set *set,
+type_pf_list(const struct ip_set *set,
 	     struct sk_buff *skb, struct netlink_callback *cb)
 {
 	const struct ip_set_hash *h = set->data;
@@ -592,7 +592,7 @@ static int
 type_pf_uadt(struct ip_set *set, struct nlattr *head, int len,
 	     enum ipset_adt adt, u32 *lineno, u32 flags);
 
-static const struct ip_set_type_variant type_pf_variant __read_mostly = {
+static const struct ip_set_type_variant type_pf_variant = {
 	.kadt	= type_pf_kadt,
 	.uadt	= type_pf_uadt,
 	.adt	= {
@@ -931,7 +931,7 @@ type_pf_ttest(struct ip_set *set, void *value, u32 timeout)
 }
 
 static int
-type_pf_tlist(struct ip_set *set,
+type_pf_tlist(const struct ip_set *set,
 	      struct sk_buff *skb, struct netlink_callback *cb)
 {
 	const struct ip_set_hash *h = set->data;
@@ -986,7 +986,7 @@ nla_put_failure:
 	return 0;
 }
 
-static const struct ip_set_type_variant type_pf_tvariant __read_mostly = {
+static const struct ip_set_type_variant type_pf_tvariant = {
 	.kadt	= type_pf_kadt,
 	.uadt	= type_pf_uadt,
 	.adt	= {

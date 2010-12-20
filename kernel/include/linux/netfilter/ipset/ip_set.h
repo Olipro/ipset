@@ -240,7 +240,7 @@ struct ip_set_type_variant {
 	/* List set header data */
 	int (*head)(struct ip_set *set, struct sk_buff *skb);
 	/* List elements */
-	int (*list)(struct ip_set *set, struct sk_buff *skb,
+	int (*list)(const struct ip_set *set, struct sk_buff *skb,
 		    struct netlink_callback *cb);
 
 	/* Return true if "b" set is the same as "a"
@@ -383,8 +383,7 @@ ip_set_get_n16(const struct nlattr *attr)
 	return attr->nla_type & NLA_F_NET_BYTEORDER ? value : htons(value);
 }
 
-static const struct nla_policy
-ipaddr_policy[IPSET_ATTR_IPADDR_MAX + 1] __read_mostly = {
+static const struct nla_policy ipaddr_policy[IPSET_ATTR_IPADDR_MAX + 1] = {
 	[IPSET_ATTR_IPADDR_IPV4]	= { .type = NLA_U32 },
 	[IPSET_ATTR_IPADDR_IPV6]	= { .type = NLA_BINARY,
 					    .len = sizeof(struct in6_addr) },

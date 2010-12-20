@@ -100,7 +100,7 @@ enum ipset_opt {
 
 struct ipset_data;
 
-extern void ipset_strncpy(char *dst, const char *src, size_t len);
+extern void ipset_strlcpy(char *dst, const char *src, size_t len);
 extern bool ipset_data_flags_test(const struct ipset_data *data,
 				  uint64_t flags);
 extern void ipset_data_flags_set(struct ipset_data *data, uint64_t flags);

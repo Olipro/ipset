@@ -158,7 +158,7 @@ static int
 hash_ipportnet4_kadt(struct ip_set *set, const struct sk_buff *skb,
 		     enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
 {
-	struct ip_set_hash *h = set->data;
+	const struct ip_set_hash *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_ipportnet4_elem data =
 		{ .cidr = h->nets[0].cidr || HOST_MASK };
@@ -180,7 +180,7 @@ hash_ipportnet4_kadt(struct ip_set *set, const struct sk_buff *skb,
 }
 
 static const struct nla_policy
-hash_ipportnet_adt_policy[IPSET_ATTR_ADT_MAX + 1] __read_mostly = {
+hash_ipportnet_adt_policy[IPSET_ATTR_ADT_MAX + 1] = {
 	[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
 	[IPSET_ATTR_IP_TO]	= { .type = NLA_NESTED },
 	[IPSET_ATTR_IP2]	= { .type = NLA_NESTED },
@@ -197,7 +197,7 @@ static int
 hash_ipportnet4_uadt(struct ip_set *set, struct nlattr *head, int len,
 		     enum ipset_adt adt, u32 *lineno, u32 flags)
 {
-	struct ip_set_hash *h = set->data;
+	const struct ip_set_hash *h = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_ipportnet4_elem data = { .cidr = HOST_MASK };
@@ -308,8 +308,8 @@ hash_ipportnet4_uadt(struct ip_set *set, struct nlattr *head, int len,
 static bool
 hash_ipportnet_same_set(const struct ip_set *a, const struct ip_set *b)
 {
-	struct ip_set_hash *x = a->data;
-	struct ip_set_hash *y = b->data;
+	const struct ip_set_hash *x = a->data;
+	const struct ip_set_hash *y = b->data;
 	
 	/* Resizing changes htable_bits, so we ignore it */
 	return x->maxelem == y->maxelem
@@ -438,7 +438,7 @@ static int
 hash_ipportnet6_kadt(struct ip_set *set, const struct sk_buff *skb,
 		     enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
 {
-	struct ip_set_hash *h = set->data;
+	const struct ip_set_hash *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_ipportnet6_elem data =
 		{ .cidr = h->nets[0].cidr || HOST_MASK };
@@ -463,7 +463,7 @@ static int
 hash_ipportnet6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		     enum ipset_adt adt, u32 *lineno, u32 flags)
 {
-	struct ip_set_hash *h = set->data;
+	const struct ip_set_hash *h = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_ipportnet6_elem data = { .cidr = HOST_MASK };
@@ -550,7 +550,7 @@ hash_ipportnet6_uadt(struct ip_set *set, struct nlattr *head, int len,
 /* Create hash:ip type of sets */
 
 static const struct nla_policy
-hash_ipportnet_create_policy[IPSET_ATTR_CREATE_MAX+1] __read_mostly = {
+hash_ipportnet_create_policy[IPSET_ATTR_CREATE_MAX+1] = {
 	[IPSET_ATTR_HASHSIZE]	= { .type = NLA_U32 },
 	[IPSET_ATTR_MAXELEM]	= { .type = NLA_U32 },
 	[IPSET_ATTR_PROBES]	= { .type = NLA_U8 },
@@ -629,7 +629,7 @@ hash_ipportnet_create(struct ip_set *set, struct nlattr *head,
 	return 0;
 }
 
-static struct ip_set_type hash_ipportnet_type = {
+static struct ip_set_type hash_ipportnet_type __read_mostly = {
 	.name		= "hash:ip,port,net",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_IP | IPSET_TYPE_PORT | IPSET_TYPE_IP2,

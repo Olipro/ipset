@@ -273,7 +273,7 @@ struct ipset_attr_policy {
 };
 
 /* Attribute policies and mapping to options */
-const struct ipset_attr_policy cmd_attrs[] = {
+static const struct ipset_attr_policy cmd_attrs[] = {
 	[IPSET_ATTR_PROTOCOL] = {
 		.type = MNL_TYPE_U8,
 	},
@@ -317,7 +317,7 @@ const struct ipset_attr_policy cmd_attrs[] = {
 	},
 };
 
-const struct ipset_attr_policy create_attrs[] = {
+static const struct ipset_attr_policy create_attrs[] = {
 	[IPSET_ATTR_IP]	= {
 		.type = MNL_TYPE_NESTED,
 		.opt = IPSET_OPT_IP,
@@ -392,7 +392,7 @@ const struct ipset_attr_policy create_attrs[] = {
 	},
 };
 
-const struct ipset_attr_policy adt_attrs[] = {
+static const struct ipset_attr_policy adt_attrs[] = {
 	[IPSET_ATTR_IP]	= {
 		.type = MNL_TYPE_NESTED,
 		.opt = IPSET_OPT_IP,
@@ -454,7 +454,7 @@ const struct ipset_attr_policy adt_attrs[] = {
 	},
 };
 
-const struct ipset_attr_policy ipaddr_attrs[] = {
+static const struct ipset_attr_policy ipaddr_attrs[] = {
 	[IPSET_ATTR_IPADDR_IPV4] = {
 		.type = MNL_TYPE_U32,
 	},
@@ -468,7 +468,7 @@ static int
 generic_data_attr_cb(const struct nlattr *attr, void *data,
 		     int attr_max, const struct ipset_attr_policy *policy)
 {
-	const struct nlattr **tb = (const struct nlattr **)data;
+	const struct nlattr **tb = data;
 	int type = mnl_attr_get_type(attr);
 	
 	D("attr type: %u, len %u", type, attr->nla_len);
@@ -690,7 +690,7 @@ retry:
 static int
 list_adt(struct ipset_session *session, struct nlattr *nla[])
 {
-	struct ipset_data *data = session->data;
+	const struct ipset_data *data = session->data;
 	const struct ipset_type *type;
 	const struct ipset_arg *arg;
 	uint8_t family;
@@ -774,7 +774,7 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 static int
 list_create(struct ipset_session *session, struct nlattr *nla[])
 {
-	struct ipset_data *data = session->data;
+	const struct ipset_data *data = session->data;
 	const struct ipset_type *type;
 	const struct ipset_arg *arg;
 	uint8_t family;
@@ -1016,7 +1016,7 @@ static int
 callback_header(struct ipset_session *session, struct nlattr *nla[])
 {
 	const char *setname;
-	struct ipset_data *data = session->data;
+	const struct ipset_data *data = session->data;
 	
 	if (!nla[IPSET_ATTR_SETNAME])
 		FAILURE("Broken HEADER kernel message: missing setname!");
@@ -1047,7 +1047,7 @@ callback_header(struct ipset_session *session, struct nlattr *nla[])
 static int
 callback_type(struct ipset_session *session, struct nlattr *nla[])
 {
-	struct ipset_data *data = session->data;
+	const struct ipset_data *data = session->data;
 	const char *typename, *orig;
 	
 	if (!(nla[IPSET_ATTR_TYPENAME]
@@ -1464,7 +1464,7 @@ static int
 build_send_private_msg(struct ipset_session *session, enum ipset_cmd cmd)
 {
 	char buffer[PRIVATE_MSG_BUFLEN] __attribute__ ((aligned));
-	struct nlmsghdr *nlh = (struct nlmsghdr *) (void *) buffer;
+	struct nlmsghdr *nlh = (void *)buffer;
 	struct ipset_data *data = session->data;
 	int len = PRIVATE_MSG_BUFLEN, ret;
 	enum ipset_cmd saved = session->cmd;
@@ -1521,7 +1521,7 @@ may_aggregate_ad(struct ipset_session *session, struct ipset_data *data,
 static int
 build_msg(struct ipset_session *session, bool aggregate)
 {
-	struct nlmsghdr *nlh = (struct nlmsghdr *) session->buffer;
+	struct nlmsghdr *nlh = session->buffer;
 	struct ipset_data *data = session->data;
 
 	/* Public commands */
@@ -1678,7 +1678,7 @@ ipset_commit(struct ipset_session *session)
 
 	assert(session);
 
-	nlh = (struct nlmsghdr *) session->buffer;
+	nlh = session->buffer;
 	D("send buffer: len %u, cmd %s", nlh->nlmsg_len, cmd2name[session->cmd]);
 	if (nlh->nlmsg_len == 0)
 		/* Nothing to do */

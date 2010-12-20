@@ -454,7 +454,7 @@ ipset_print_proto(char *buf, unsigned int len,
 		  const struct ipset_data *data, enum ipset_opt opt,
 		  uint8_t env UNUSED)
 {
-	struct protoent *protoent;
+	const struct protoent *protoent;
 	uint8_t proto;
 
 	assert(buf);

@@ -186,7 +186,7 @@ const union nf_inet_addr prefixlen_netmask_map[] = {
 	E(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE),
 	E(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF),
 };
-EXPORT_SYMBOL(prefixlen_netmask_map);
+EXPORT_SYMBOL_GPL(prefixlen_netmask_map);
 
 #undef  E
 #define E(a, b, c, d) \
@@ -327,7 +327,7 @@ const union nf_inet_addr prefixlen_hostmask_map[] = {
 	E(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE),
 	E(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF),
 };
-EXPORT_SYMBOL(prefixlen_hostmask_map);
+EXPORT_SYMBOL_GPL(prefixlen_hostmask_map);
 
 /*
  * The set types are implemented in modules and registered set types
@@ -441,7 +441,7 @@ unlock:
 	ip_set_type_unlock();
 	return ret;
 }
-EXPORT_SYMBOL(ip_set_type_register);
+EXPORT_SYMBOL_GPL(ip_set_type_register);
 
 /* Unregister a set type. There's a small race with ip_set_create */
 void
@@ -462,7 +462,7 @@ unlock:
 
 	synchronize_rcu();
 }
-EXPORT_SYMBOL(ip_set_type_unregister);
+EXPORT_SYMBOL_GPL(ip_set_type_unregister);
 
 /*
  * Creating/destroying/renaming/swapping affect the existence and
@@ -524,7 +524,7 @@ ip_set_test(ip_set_id_t index, const struct sk_buff *skb,
 	/* Convert error codes to nomatch */
 	return (ret < 0 ? 0 : ret);
 }
-EXPORT_SYMBOL(ip_set_test);
+EXPORT_SYMBOL_GPL(ip_set_test);
 
 int
 ip_set_add(ip_set_id_t index, const struct sk_buff *skb,
@@ -546,7 +546,7 @@ ip_set_add(ip_set_id_t index, const struct sk_buff *skb,
 
 	return ret;
 }
-EXPORT_SYMBOL(ip_set_add);
+EXPORT_SYMBOL_GPL(ip_set_add);
 
 int
 ip_set_del(ip_set_id_t index, const struct sk_buff *skb,
@@ -568,7 +568,7 @@ ip_set_del(ip_set_id_t index, const struct sk_buff *skb,
 
 	return ret;
 }
-EXPORT_SYMBOL(ip_set_del);
+EXPORT_SYMBOL_GPL(ip_set_del);
 
 /*
  * Find set by name, reference it once. The reference makes sure the
@@ -593,7 +593,7 @@ ip_set_get_byname(const char *name, struct ip_set **set)
 
 	return index;
 }
-EXPORT_SYMBOL(ip_set_get_byname);
+EXPORT_SYMBOL_GPL(ip_set_get_byname);
 
 /*
  * If the given set pointer points to a valid set, decrement
@@ -610,7 +610,7 @@ ip_set_put_byindex(ip_set_id_t index)
 		__ip_set_put(index);
 	}
 }
-EXPORT_SYMBOL(ip_set_put_byindex);
+EXPORT_SYMBOL_GPL(ip_set_put_byindex);
 
 /*
  * Get the name of a set behind a set index.
@@ -623,7 +623,7 @@ EXPORT_SYMBOL(ip_set_put_byindex);
 const char *
 ip_set_name_byindex(ip_set_id_t index)
 {
-	struct ip_set *set = ip_set_list[index];
+	const struct ip_set *set = ip_set_list[index];
 
 	BUG_ON(set == NULL);
 	BUG_ON(atomic_read(&set->ref) == 0);
@@ -631,7 +631,7 @@ ip_set_name_byindex(ip_set_id_t index)
 	/* Referenced, so it's safe */
 	return set->name;
 }
-EXPORT_SYMBOL(ip_set_name_byindex);
+EXPORT_SYMBOL_GPL(ip_set_name_byindex);
 
 /*
  * Routines to call by external subsystems, which do not
@@ -656,7 +656,7 @@ ip_set_nfnl_get(const char *name)
 
 	return index;
 }
-EXPORT_SYMBOL(ip_set_nfnl_get);
+EXPORT_SYMBOL_GPL(ip_set_nfnl_get);
 
 /*
  * Find set by index, reference it once. The reference makes sure the
@@ -679,7 +679,7 @@ ip_set_nfnl_get_byindex(ip_set_id_t index)
 
 	return index;
 }
-EXPORT_SYMBOL(ip_set_nfnl_get_byindex);
+EXPORT_SYMBOL_GPL(ip_set_nfnl_get_byindex);
 
 /*
  * If the given set pointer points to a valid set, decrement
@@ -698,7 +698,7 @@ ip_set_nfnl_put(ip_set_id_t index)
 	}
 	nfnl_unlock();
 }
-EXPORT_SYMBOL(ip_set_nfnl_put);
+EXPORT_SYMBOL_GPL(ip_set_nfnl_put);
 
 /*
  * Communication protocol with userspace over netlink.
@@ -747,8 +747,7 @@ start_msg(struct sk_buff *skb, u32 pid, u32 seq, unsigned int flags,
 
 /* Create a set */
 
-static const struct nla_policy
-ip_set_create_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+static const struct nla_policy ip_set_create_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 	[IPSET_ATTR_SETNAME]	= { .type = NLA_NUL_STRING,
 				    .len = IPSET_MAXNAMELEN - 1 },
@@ -763,7 +762,7 @@ static ip_set_id_t
 find_set_id(const char *name)
 {
 	ip_set_id_t i, index = IPSET_INVALID_ID;
-	struct ip_set *set;
+	const struct ip_set *set;
 
 	for (i = 0; index == IPSET_INVALID_ID && i < ip_set_max; i++) {
 		set = ip_set_list[i];
@@ -929,7 +928,7 @@ out:
 /* Destroy sets */
 
 static const struct nla_policy
-ip_set_setname_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+ip_set_setname_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 	[IPSET_ATTR_SETNAME]	= { .type = NLA_NUL_STRING,
 				    .len = IPSET_MAXNAMELEN - 1 },
@@ -1022,7 +1021,7 @@ ip_set_flush(struct sock *ctnl, struct sk_buff *skb,
 /* Rename a set */
 
 static const struct nla_policy
-ip_set_setname2_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+ip_set_setname2_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 	[IPSET_ATTR_SETNAME]	= { .type = NLA_NUL_STRING,
 				    .len = IPSET_MAXNAMELEN - 1 },
@@ -1142,7 +1141,7 @@ ip_set_dump_done(struct netlink_callback *cb)
 static inline void
 dump_attrs(struct nlmsghdr *nlh)
 {
-	struct nlattr *attr;
+	const struct nlattr *attr;
 	int rem;
 
 	pr_debug("dump nlmsg");
@@ -1306,8 +1305,7 @@ ip_set_dump(struct sock *ctnl, struct sk_buff *skb,
 
 /* Add, del and test */
 
-static const struct nla_policy
-ip_set_adt_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+static const struct nla_policy ip_set_adt_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 	[IPSET_ATTR_SETNAME]	= { .type = NLA_NUL_STRING,
 				    .len = IPSET_MAXNAMELEN - 1 },
@@ -1474,7 +1472,7 @@ ip_set_header(struct sock *ctnl, struct sk_buff *skb,
 	      NFNL_CB_CONST struct nlmsghdr *nlh,
 	      NFNL_CB_CONST struct nlattr * NFNL_CB_CONST attr[])
 {
-	struct ip_set *set;
+	const struct ip_set *set;
 	struct sk_buff *skb2;
 	struct nlmsghdr *nlh2;
 	ip_set_id_t index;
@@ -1519,8 +1517,7 @@ nlmsg_failure:
 
 /* Get type data */
 
-static const struct nla_policy
-ip_set_type_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+static const struct nla_policy ip_set_type_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 	[IPSET_ATTR_TYPENAME]	= { .type = NLA_NUL_STRING,
 				    .len = IPSET_MAXNAMELEN - 1 },
@@ -1587,7 +1584,7 @@ nlmsg_failure:
 /* Get protocol version */
 
 static const struct nla_policy
-ip_set_protocol_policy[IPSET_ATTR_CMD_MAX + 1] __read_mostly = {
+ip_set_protocol_policy[IPSET_ATTR_CMD_MAX + 1] = {
 	[IPSET_ATTR_PROTOCOL]	= { .type = NLA_U8 },
 };
 
@@ -1627,8 +1624,7 @@ nlmsg_failure:
 	return -EFAULT;
 }
 
-static const struct nfnl_callback __read_mostly
-ip_set_netlink_subsys_cb[IPSET_MSG_MAX] = {
+static const struct nfnl_callback ip_set_netlink_subsys_cb[IPSET_MSG_MAX] = {
 	[IPSET_CMD_CREATE]	= {
 		.call		= ip_set_create,
 		.attr_count	= IPSET_ATTR_CMD_MAX,
@@ -1696,7 +1692,7 @@ ip_set_netlink_subsys_cb[IPSET_MSG_MAX] = {
 	},
 };
 
-static struct nfnetlink_subsystem ip_set_netlink_subsys = {
+static struct nfnetlink_subsystem ip_set_netlink_subsys __read_mostly = {
 	.name		= "ip_set",
 	.subsys_id	= NFNL_SUBSYS_IPSET,
 	.cb_count	= IPSET_MSG_MAX,
@@ -1795,7 +1791,7 @@ done:
 	return ret;
 }
 
-static struct nf_sockopt_ops so_set = {
+static struct nf_sockopt_ops so_set __read_mostly = {
 	.pf		= PF_INET,
 	.get_optmin	= SO_IP_SET,
 	.get_optmax	= SO_IP_SET + 1,

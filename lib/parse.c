@@ -48,7 +48,7 @@ ipset_strchr(const char *str, const char *sep)
 	assert(sep);
 	
 	for (; *sep != '\0'; sep++)
-		if ((match = strchr(str, (int)sep[0])) != NULL
+		if ((match = strchr(str, sep[0])) != NULL
 		    && str[0] != sep[0]
 		    && str[strlen(str)-1] != sep[0])
 			return match;
@@ -103,7 +103,7 @@ string_to_u8(struct ipset_session *session,
 	unsigned long long num = 0;
 
 	err = string_to_number_ll(session, str, 0, 255, &num);
-	*ret = (uint8_t) num;
+	*ret = num;
 
 	return err;
 }
@@ -129,7 +129,7 @@ string_to_u16(struct ipset_session *session,
 	unsigned long long num = 0;
 
 	err = string_to_number_ll(session, str, 0, USHRT_MAX, &num);
-	*ret = (uint16_t) num;
+	*ret = num;
 
 	return err;
 }
@@ -142,7 +142,7 @@ string_to_u32(struct ipset_session *session,
 	unsigned long long num = 0;
 
 	err = string_to_number_ll(session, str, 0, UINT_MAX, &num);
-	*ret = (uint32_t) num;
+	*ret = num;
 
 	return err;
 }
@@ -345,7 +345,7 @@ int
 ipset_parse_proto(struct ipset_session *session,
 		  enum ipset_opt opt, const char *str)
 {
-	struct protoent *protoent;
+	const struct protoent *protoent;
 	uint8_t proto = 0;
 
 	assert(session);
