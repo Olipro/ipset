@@ -1,11 +1,12 @@
 This is the ipset source tree. Follow the next steps to install ipset:
 
-0. You need the source tree of your kernel (version >= 2.6.31)
+0. You need the source tree of your kernel (version >= 2.6.34)
    and it have to be configured with ip6tables support enabled,
    modules compiled. Please apply the netlink.patch against your kernel
    tree, which adds the new subsystem identifier for ipset.
 
-   Recompile and install the patched kernel and its modules.
+   Recompile and install the patched kernel and its modules. Please note,
+   you have to run the patched kernel for ipset to work.
 
    The ipset source code depends on the libmnl library so the library
    must be installed. You can download the libmnl library from

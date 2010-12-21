@@ -24,9 +24,7 @@ SUBDIRS		= lib src
 
 modules:
 	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel V=$V \
-			IP_SET_MAX=$(IP_SET_MAX) \
-			NETLINK_DUMP_CONST=$(NETLINK_DUMP_CONST) \
-			NFNL_CB_CONST=$(NFNL_CB_CONST) modules
+			IP_SET_MAX=$(IP_SET_MAX) modules
 
 modules_install:
 	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel modules_install

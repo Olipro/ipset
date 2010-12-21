@@ -61,14 +61,6 @@ then
 	AC_MSG_ERROR([The kernel source directory $ksourcedir is not patched with netlink.patch to support ipset])
 fi
 
-dnl Check kernel dependencies: nfnetlink.h
-NFNL_CB_CONST="`./check_const $ksourcedir/include/linux/netfilter/nfnetlink.h`"
-AC_SUBST(NFNL_CB_CONST)
-
-dnl Check kernel dependencies: netlink.h
-NETLINK_DUMP_CONST="`./check_const $ksourcedir/include/linux/netlink.h`"
-AC_SUBST(NETLINK_DUMP_CONST)
-
 dnl Maximal number of sets supported by the kernel, default 256
 AC_ARG_WITH([maxsets],
 	    AS_HELP_STRING([--with-maxsets=256],
