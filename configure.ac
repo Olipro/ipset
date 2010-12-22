@@ -96,7 +96,7 @@ AM_CONDITIONAL([ENABLE_DEBUG], [test "x$enable_debug" = xyes])
 dnl Checks for programs
 AC_PROG_CC
 AM_PROG_CC_C_O
-LT_INIT
+AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
