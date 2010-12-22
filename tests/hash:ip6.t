@@ -24,12 +24,22 @@
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # IP: Check listing
 0 diff -I 'Size in memory.*' .foo hash:ip6.t.list2 && rm .foo
+# IP: Save set
+0 ipset save test > hash:ip6.t.restore
 # Sleep 5s so that element can time out
 0 sleep 5
 # IP: List set
 0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
 # IP: Check listing
 0 diff -I 'Size in memory.*' .foo hash:ip6.t.list0 && rm .foo
+# IP: Destroy set
+0 ipset x test
+# IP: Restore saved set
+0 ipset restore < hash:ip6.t.restore && rm hash:ip6.t.restore
+# IP: List set
+0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
+# IP: Check listing
+0 diff -I 'Size in memory.*' .foo hash:ip6.t.list2 && rm .foo
 # IP: Flush test set
 0 ipset -F test
 # IP: Try to add multiple elements in one step
@@ -76,4 +86,16 @@
 0 ipset -F test
 # Network: Delete test set
 0 ipset -X test
+# Check more complex restore commands
+0 ipset restore < restore.t.restore
+# List restored set a
+0 ipset l a > .foo0 && ./sort.sh .foo0
+# Check listing of set a
+0 diff -I 'Size in memory.*' .foo restore.t.list0
+# List restored set b
+0 ipset l b > .foo0 && ./sort.sh .foo0
+# Check listing of set b
+0 diff -I 'Size in memory.*' .foo restore.t.list1 && rm .foo
+# Destroy by restore
+0 ipset restore < restore.t.destroy
 # eof
