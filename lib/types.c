@@ -276,10 +276,9 @@ found:
 }
 
 #define set_family_and_type(data, match, family) do {		\
-	if (family == AF_UNSPEC && match->family != AF_UNSPEC) {	\
+	if (family == AF_UNSPEC && match->family != AF_UNSPEC)	\
 		family = match->family == AF_INET46 ? AF_INET : match->family;\
-		ipset_data_set(data, IPSET_OPT_FAMILY, &family);\
-	}							\
+	ipset_data_set(data, IPSET_OPT_FAMILY, &family);	\
 	ipset_data_set(data, IPSET_OPT_TYPE, match);		\
 } while (0)
 
@@ -293,7 +292,7 @@ adt_type_get(struct ipset_session *session)
 	const struct ipset_type *match;
 	const char *setname, *typename;
 	const uint8_t *revision;
-	uint8_t family;
+	uint8_t family = AF_UNSPEC;
 	int ret;
 
 	data = ipset_session_data(session);
@@ -304,8 +303,9 @@ adt_type_get(struct ipset_session *session)
 	/* Check existing sets in cache */
 	for (s = setlist; s != NULL; s = s->next) {
 		if (STREQ(setname, s->name)) {
-			match = s->type;
-			goto found;
+			ipset_data_set(data, IPSET_OPT_FAMILY, &s->family);
+			ipset_data_set(data, IPSET_OPT_TYPE, s->type);
+			return s->type;
 		}
 	}
 
@@ -342,7 +342,6 @@ adt_type_get(struct ipset_session *session)
 				    family == AF_INET6 ? "inet6" : "unspec",
 				    *revision);
 
-found:
 	set_family_and_type(data, match, family);
 
 	return match;
@@ -396,7 +395,7 @@ ipset_type_check(struct ipset_session *session)
 	const struct ipset_type *t, *match = NULL;
 	struct ipset_data *data;
 	const char *typename;
-	uint8_t family, revision;
+	uint8_t family = AF_UNSPEC, revision;
 
 	assert(session);
 	data = ipset_session_data(session);

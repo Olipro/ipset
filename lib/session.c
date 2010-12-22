@@ -1510,12 +1510,12 @@ build_send_private_msg(struct ipset_session *session, enum ipset_cmd cmd)
 }
 
 static inline bool
-may_aggregate_ad(struct ipset_session *session, struct ipset_data *data,
-		 enum ipset_cmd cmd)
+may_aggregate_ad(struct ipset_session *session, enum ipset_cmd cmd)
 {
-	return (cmd == IPSET_CMD_ADD || cmd == IPSET_CMD_DEL)
+	return session->lineno != 0
+	       && (cmd == IPSET_CMD_ADD || cmd == IPSET_CMD_DEL)
 	       && cmd == session->cmd
-	       && STREQ(ipset_data_setname(data), session->saved_setname);
+	       && STREQ(ipset_data_setname(session->data), session->saved_setname);
 }
 
 static int
@@ -1693,7 +1693,8 @@ ipset_commit(struct ipset_session *session)
 					session->buffer,
 					session->bufsize);
 
-	/* Reset data block and nested state */
+	/* Reset saved data and nested state */
+	session->saved_setname[0] = '\0';
 	for (i = session->nestid - 1; i >= 0; i--)
 		session->nested[i] = NULL;
 	session->nestid = 0;
@@ -1771,8 +1772,13 @@ ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd, uint32_t lineno)
 		return build_send_private_msg(session, cmd);
 	
 	/* Check aggregatable commands */
-	if (session->lineno != 0)
-		aggregate = may_aggregate_ad(session, data, cmd);
+	aggregate = may_aggregate_ad(session, cmd);
+	if (!aggregate) {
+		/* Flush possible aggregated commands */
+		ret = ipset_commit(session);
+		if (ret < 0)
+			return ret;
+	}
 
 	/* Real command: update lineno too */
 	session->cmd = cmd;
@@ -1793,7 +1799,8 @@ ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd, uint32_t lineno)
 	D("build_msg returned %u", ret);
 	if (ret > 0) {
 		/* Buffer is full, send buffered commands */
-		if (ipset_commit(session) < 0)
+		ret = ipset_commit(session);
+		if (ret < 0)
 			goto cleanup;
 		ret = build_msg(session, false);
 		D("build_msg 2 returned %u", ret);
@@ -1804,16 +1811,19 @@ ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd, uint32_t lineno)
 
 	/* We have to save the type for error handling */
 	session->saved_type = ipset_data_get(data, IPSET_OPT_TYPE);
-	/* Save setname for the next possible aggregated restore line */
 	if (session->lineno != 0
 	    && (cmd == IPSET_CMD_ADD || cmd == IPSET_CMD_DEL)) {
+		/* Save setname for the next possible aggregated restore line */
 		strcpy(session->saved_setname, ipset_data_setname(data));
-		ret = 0;
+		ipset_data_reset(data);
 		/* Don't commit: we may aggregate next command */
-	} else {
-		D("call commit");	
-		ret = ipset_commit(session);
+		ret = 0;
+		goto cleanup;
 	}
+
+	D("call commit");	
+	ret = ipset_commit(session);
+
 cleanup:
 	D("reset data");
 	ipset_data_reset(data);
