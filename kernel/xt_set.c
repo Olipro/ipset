@@ -50,8 +50,8 @@ match_set(ip_set_id_t index, const struct sk_buff *skb,
  *  2.6.34: rcu: Add lockdep-enabled variants of rcu_dereference()
  */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
-#error "Linux kernel version too old: must be >= 2.6.35"
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 34)
+#error "Linux kernel version too old: must be >= 2.6.34"
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
