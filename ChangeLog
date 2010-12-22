@@ -1,3 +1,22 @@
+5.1
+ - Test cases for IPv6 restore and more complex restore sessions added
+ - Restore mode did not work for IPv6, fixed (reported by Elie Rosenblum)
+ - libipset: static annotations (Jan Engelhardt)
+ - libipset: const annotations (Jan Engelhardt)
+ - libipset: remove redundant casts (Jan Engelhardt)
+ - libipset: remove redundant indirection via union name (Jan Engelhardt) 
+ - libipset: ipset_strncpy is really a strlcpy-type operation
+   (Jan Engelhardt)
+ - Prevent calling Makefile directly in the kernel/ subdirectory
+ - Put back the Sparc specific workaround at getaddrinfo
+   (reported by Jan Engelhardt)
+ - Check old system kernel header files
+ - Check from `configure` that the kernel source is patched with
+   netlink.patch
+ - Use configure to detect compiler warning flags
+ - Try to solve PKG_CHECK_MODULES issue (reported by Rob Sterenborg)
+ - Fix incorrect comparison in check_allowed (reported by Jan Engelhardt)
+
 5.0
  - New main branch - ipset completely rewritten
 

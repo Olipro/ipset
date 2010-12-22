@@ -1,3 +1,16 @@
+5.1
+ - Kernel version compatibility: support bumped starting from 2.6.34
+   (Supporting older kernel releases would mean too much burden for me,
+   sorry.)
+ - kernel: use EXPORT_SYMBOL_GPL (Jan Engelhardt)
+ - kernel: const annotations (Jan Engelhardt)
+ - kernel: use __read_mostly for registration-type structures
+   (Jan Engelhardt)
+ - kernel: do not mix const and __read_mostly (Jan Engelhardt)
+ - xt_set: avoid user types in exported kernel headers (Jan Engelhardt)
+ - build: enable parallel building (Jan Engelhardt)
+ - Fix Kbuild for me to delete backup files
+
 5.0
  - New main branch - ipset completely rewritten
 
