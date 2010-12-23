@@ -162,7 +162,9 @@ __getnameinfo##f(char *buf, unsigned int len,				\
 				  sizeof(saddr),			\
 				  buf, len, NULL, 0, 			\
 				  flags | NI_NUMERICHOST);		\
-	return (err != 0 ? -1 : (int)strlen(buf));			\
+	D("getnameinfo err: %i, errno %i", err, errno);			\
+	return (err == 0 ? (int)strlen(buf) :				\
+	       (err == EAI_OVERFLOW || err == EAI_SYSTEM) ? (int)len : -1);\
 }
 
 #define SNPRINTF_IP(mask, f)						\
@@ -236,6 +238,7 @@ ipset_print_ip(char *buf, unsigned int len,
 		size = snprintf_ipv6(buf, len, flags, ip, cidr);
 	else
 		return -1;
+	D("size %i, len %u", size, len);
 	SNPRINTF_FAILURE(size, len, offset);
 
 	D("len: %u, offset %u", len, offset);

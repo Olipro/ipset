@@ -636,9 +636,10 @@ safe_snprintf(struct ipset_session *session, const char *fmt, ...)
 	int len, ret, loop = 0;
 
 retry:
-	len = IPSET_OUTBUFLEN - strlen(session->outbuf);
+	len = strlen(session->outbuf);
+	D("len: %u, retry %u", len, loop);
 	va_start(args, fmt);
-	ret = vsnprintf(session->outbuf + IPSET_OUTBUFLEN - len, len,
+	ret = vsnprintf(session->outbuf + len, IPSET_OUTBUFLEN - len,
 			fmt, args);
 	va_end(args);
 	
@@ -646,13 +647,14 @@ retry:
 		return ipset_err(session,
 				 "Internal error at printing to output buffer");
 
-	if (ret >= len) {
+	if (ret >= IPSET_OUTBUFLEN - len) {
 		/* Buffer was too small, push it out and retry */
+		D("print buffer and try again: %u", len);
 		if (loop++)
 			return ipset_err(session,
 				"Internal error at printing, loop detected!");
 
-		session->outbuf[IPSET_OUTBUFLEN - len] = '\0';
+		session->outbuf[len] = '\0';
 		if (!call_outfn(session))
 			goto retry;
 	}
@@ -666,21 +668,23 @@ safe_dprintf(struct ipset_session *session, ipset_printfn fn,
 	int len, ret, loop = 0;
 
 retry:
-	len = IPSET_OUTBUFLEN - strlen(session->outbuf);
-	ret = fn(session->outbuf + IPSET_OUTBUFLEN - len, len,
+	len = strlen(session->outbuf);
+	D("len: %u, retry %u", len, loop);
+	ret = fn(session->outbuf + len, IPSET_OUTBUFLEN - len,
 		 session->data, opt, session->envopts);
 	
 	if (ret < 0)
 		return ipset_err(session,
 			"Internal error at printing to output buffer");
 
-	if (ret >= len) {
+	if (ret >= IPSET_OUTBUFLEN - len) {
 		/* Buffer was too small, push it out and retry */
+		D("print buffer and try again: %u", len);
 		if (loop++)
 			return ipset_err(session,
 			"Internal error at printing, loop detected!");
 
-		session->outbuf[IPSET_OUTBUFLEN - len] = '\0';
+		session->outbuf[len] = '\0';
 		if (!call_outfn(session))
 			goto retry;
 	}
