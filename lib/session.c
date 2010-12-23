@@ -6,6 +6,7 @@
  */
 #include <assert.h>				/* assert */
 #include <errno.h>				/* errno */
+#include <setjmp.h>				/* setjmp, longjmp */
 #include <stdio.h>				/* snprintf */
 #include <stdarg.h>				/* va_* */
 #include <stdlib.h>				/* free */
@@ -629,6 +630,9 @@ call_outfn(struct ipset_session *session)
 	return ret < 0 ? ret : 0;
 }
 
+/* Handle printing failures */
+static jmp_buf printf_failure;
+
 static int __attribute__((format(printf,2,3)))
 safe_snprintf(struct ipset_session *session, const char *fmt, ...)
 {
@@ -643,16 +647,20 @@ retry:
 			fmt, args);
 	va_end(args);
 	
-	if (ret < 0)
-		return ipset_err(session,
-				 "Internal error at printing to output buffer");
+	if (ret < 0) {
+		ipset_err(session,
+			 "Internal error at printing to output buffer");
+		longjmp(printf_failure, 1);
+	}
 
 	if (ret >= IPSET_OUTBUFLEN - len) {
 		/* Buffer was too small, push it out and retry */
 		D("print buffer and try again: %u", len);
-		if (loop++)
-			return ipset_err(session,
+		if (loop++) {
+			ipset_err(session,
 				"Internal error at printing, loop detected!");
+			longjmp(printf_failure, 1);
+		}
 
 		session->outbuf[len] = '\0';
 		if (!call_outfn(session))
@@ -673,16 +681,20 @@ retry:
 	ret = fn(session->outbuf + len, IPSET_OUTBUFLEN - len,
 		 session->data, opt, session->envopts);
 	
-	if (ret < 0)
-		return ipset_err(session,
+	if (ret < 0) {
+		ipset_err(session,
 			"Internal error at printing to output buffer");
+		longjmp(printf_failure, 1);
+	}
 
 	if (ret >= IPSET_OUTBUFLEN - len) {
 		/* Buffer was too small, push it out and retry */
 		D("print buffer and try again: %u", len);
-		if (loop++)
-			return ipset_err(session,
-			"Internal error at printing, loop detected!");
+		if (loop++) {
+			ipset_err(session,
+				"Internal error at printing, loop detected!");
+			longjmp(printf_failure, 1);
+		}
 
 		session->outbuf[len] = '\0';
 		if (!call_outfn(session))
@@ -903,6 +915,9 @@ callback_list(struct ipset_session *session, struct nlattr *nla[],
 	      enum ipset_cmd cmd)
 {
 	struct ipset_data *data = session->data;
+
+	if (setjmp(printf_failure))
+		return MNL_CB_ERROR;
 
 	if (!nla[IPSET_ATTR_SETNAME])
 		FAILURE("Broken %s kernel message: missing setname!",
