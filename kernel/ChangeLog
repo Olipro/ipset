@@ -1,3 +1,6 @@
+5.2
+ - Kernel version check at minimal supported version was mistyped, now fixed.
+
 5.1
  - Kernel version compatibility: support bumped starting from 2.6.34
    (Supporting older kernel releases would mean too much burden for me,

@@ -1,3 +1,10 @@
+5.2
+ - Handle internal printing errors
+ - Use cast to void * instead of memcpy as Sparc workaround at sockaddr_XXX
+   (suggested by Jan Engelhardt)
+ - Listing/saving of large sets could produce broken listing, fixed.
+ - Support libtool < 2.2
+
 5.1
  - Test cases for IPv6 restore and more complex restore sessions added
  - Restore mode did not work for IPv6, fixed (reported by Elie Rosenblum)
