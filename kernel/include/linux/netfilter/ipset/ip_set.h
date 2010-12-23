@@ -218,11 +218,17 @@ typedef int (*ipset_adtfn)(struct ip_set *set, void *value, u32 timeout);
 
 /* Set type, variant-specific part */
 struct ip_set_type_variant {
-	/* Kernelspace: test/add/del entries */
+	/* Kernelspace: test/add/del entries
+	 *		returns negative error code,
+	 *			zero for no match/success to add/delete
+	 *			positive for matching element */
 	int (*kadt)(struct ip_set *set, const struct sk_buff * skb,
 		    enum ipset_adt adt, u8 pf, u8 dim, u8 flags);
 
-	/* Userspace: test/add/del entries */
+	/* Userspace: test/add/del entries
+	 *		returns negative error code,
+	 *			zero for no match/success to add/delete
+	 *			positive for matching element */
 	int (*uadt)(struct ip_set *set, struct nlattr *head, int len,
 		    enum ipset_adt adt, u32 *lineno, u32 flags);
 
