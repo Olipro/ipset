@@ -1,12 +1,12 @@
 dnl Boilerplate
 AC_INIT([ipset], [5.2], [kadlec@blackhole.kfki.hu])
-AC_CANONICAL_TARGET
+AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 
 dnl Shortcut: Linux supported alone
-case $target in
+case "$host" in
 *-*-linux*) ;;
 *) AC_MSG_ERROR([Linux systems supported exclusively!]);;
 esac
