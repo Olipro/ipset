@@ -1315,8 +1315,7 @@ static const struct nla_policy ip_set_adt_policy[IPSET_ATTR_CMD_MAX + 1] = {
 };
 
 static int
-call_ad(struct sock *ctnl, struct sk_buff *skb,
-	const struct nlattr * const attr[],
+call_ad(struct sk_buff *skb, const struct nlattr *const attr[],
 	struct ip_set *set, const struct nlattr *nla,
 	enum ipset_adt adt, u32 flags)
 {
@@ -1372,7 +1371,7 @@ ip_set_uadd(struct sock *ctnl, struct sk_buff *skb,
 		return -EEXIST;
 
 	if (attr[IPSET_ATTR_DATA]) {
-		ret = call_ad(ctnl, skb, attr,
+		ret = call_ad(skb, attr,
 			      set, attr[IPSET_ATTR_DATA], IPSET_ADD, flags);
 	} else {
 		int nla_rem;
@@ -1381,7 +1380,7 @@ ip_set_uadd(struct sock *ctnl, struct sk_buff *skb,
 			if (nla_type(nla) != IPSET_ATTR_DATA
 			    || !flag_nested(nla))
 				return -IPSET_ERR_PROTOCOL;
-			ret = call_ad(ctnl, skb, attr,
+			ret = call_ad(skb, attr,
 				       set, nla, IPSET_ADD, flags);
 			if (ret < 0)
 				return ret;
@@ -1416,7 +1415,7 @@ ip_set_udel(struct sock *ctnl, struct sk_buff *skb,
 		return -EEXIST;
 
 	if (attr[IPSET_ATTR_DATA]) {
-		ret = call_ad(ctnl, skb, attr,
+		ret = call_ad(skb, attr,
 			      set, attr[IPSET_ATTR_DATA], IPSET_DEL, flags);
 	} else {
 		int nla_rem;
@@ -1425,7 +1424,7 @@ ip_set_udel(struct sock *ctnl, struct sk_buff *skb,
 			if (nla_type(nla) != IPSET_ATTR_DATA
 			    || !flag_nested(nla))
 				return -IPSET_ERR_PROTOCOL;
-			ret = call_ad(ctnl, skb, attr,
+			ret = call_ad(skb, attr,
 				       set, nla, IPSET_DEL, flags);
 			if (ret < 0)
 				return ret;
