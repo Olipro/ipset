@@ -58,10 +58,10 @@
 0 ipset test test 2.0.0.1,tcp:80
 # Test element with UDP protocol
 0 ipset test test 2.0.0.1,udp:80
-# Add element with ospf
-0 ipset add test 2.0.0.1,ospf:0
-# Test element with ospf
-0 ipset test test 2.0.0.1,ospf:0
+# Add element with vrrp
+0 ipset add test 2.0.0.1,vrrp:0
+# Test element with vrrp
+0 ipset test test 2.0.0.1,vrrp:0
 # List set
 0 ipset list test > .foo0 && ./sort.sh .foo0
 # Check listing
