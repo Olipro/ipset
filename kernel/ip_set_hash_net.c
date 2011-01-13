@@ -8,7 +8,7 @@
 /* Kernel module implementing an IP set type: the hash:net type */
 
 #include <linux/netfilter/ipset/ip_set_kernel.h>
-#include <linux/netfilter/ipset/jhash.h>
+#include <linux/jhash.h>
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>

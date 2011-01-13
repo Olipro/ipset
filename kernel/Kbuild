@@ -1,5 +1,5 @@
-EXTRA_CFLAGS := -I$(M)/include \
-	-DCONFIG_IP_SET_MAX=$(IP_SET_MAX)
+NOSTDINC_FLAGS += -I$(M)/include
+EXTRA_CFLAGS := -DCONFIG_IP_SET_MAX=$(IP_SET_MAX)
 
 ip_set-y := ip_set_core.o pfxlen.o
 obj-m += ip_set.o xt_set.o

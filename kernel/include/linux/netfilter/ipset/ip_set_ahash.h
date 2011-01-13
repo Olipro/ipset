@@ -2,7 +2,7 @@
 #define _IP_SET_AHASH_H
 
 #include <linux/rcupdate.h>
-#include <linux/netfilter/ipset/jhash.h>
+#include <linux/jhash.h>
 #include <linux/netfilter/ipset/ip_set_timeout.h>
 
 /* Hashing which uses arrays to resolve clashing. The hash table is resized
