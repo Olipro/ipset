@@ -491,15 +491,6 @@ bitmap_bytes(u32 a, u32 b)
 	return 4 * ((((b - a + 8) / 8) + 3) / 4);
 }
 
-/* Prefixlen maps */
-extern const union nf_inet_addr prefixlen_netmask_map[];
-extern const union nf_inet_addr prefixlen_hostmask_map[];
-
-#define NETMASK(n)	prefixlen_netmask_map[n].ip
-#define NETMASK6(n)	prefixlen_netmask_map[n].ip6
-#define HOSTMASK(n)	prefixlen_hostmask_map[n].ip
-#define HOSTMASK6(n)	prefixlen_hostmask_map[n].ip6
-
 /* Interface to iptables/ip6tables */
 
 #define SO_IP_SET		83

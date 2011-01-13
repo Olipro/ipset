@@ -1,6 +1,7 @@
 EXTRA_CFLAGS := -I$(M)/include \
 	-DCONFIG_IP_SET_MAX=$(IP_SET_MAX)
 
+ip_set-y := ip_set_core.o pfxlen.o
 obj-m += ip_set.o xt_set.o
 obj-m += ip_set_bitmap_ip.o ip_set_bitmap_ipmac.o ip_set_bitmap_port.o
 obj-m += ip_set_hash_ip.o ip_set_hash_ipport.o ip_set_hash_ipportip.o

@@ -23,6 +23,7 @@
 #include <net/netlink.h>
 #include <net/tcp.h>
 
+#include <linux/netfilter/ipset/pfxlen.h>
 #include <linux/netfilter/ipset/ip_set.h>
 #include <linux/netfilter/ipset/ip_set_bitmap.h>
 #define IP_SET_BITMAP_TIMEOUT

@@ -23,6 +23,7 @@
 #include <net/tcp.h>
 
 #include <linux/netfilter.h>
+#include <linux/netfilter/ipset/pfxlen.h>
 #include <linux/netfilter/ipset/ip_set.h>
 #include <linux/netfilter/ipset/ip_set_timeout.h>
 #include <linux/netfilter/ipset/ip_set_getport.h>
