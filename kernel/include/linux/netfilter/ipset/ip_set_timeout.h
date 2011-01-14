@@ -1,7 +1,7 @@
 #ifndef _IP_SET_TIMEOUT_H
 #define _IP_SET_TIMEOUT_H
 
-/* Copyright (C) 2003-2010 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
+/* Copyright (C) 2003-2011 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as

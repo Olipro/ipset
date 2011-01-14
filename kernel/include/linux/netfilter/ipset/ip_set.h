@@ -4,7 +4,7 @@
 /* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
  *                         Patrick Schaaf <bof@bof.de>
  *                         Martin Josefsson <gandalf@wlug.westbo.se>
- * Copyright (C) 2003-2010 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
+ * Copyright (C) 2003-2011 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -279,6 +279,7 @@ struct ip_set_type {
 	struct module *me;
 };
 
+/* register and unregister set type */
 extern int ip_set_type_register(struct ip_set_type *set_type);
 extern void ip_set_type_unregister(struct ip_set_type *set_type);
 

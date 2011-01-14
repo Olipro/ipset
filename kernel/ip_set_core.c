@@ -1,6 +1,6 @@
 /* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
  *                         Patrick Schaaf <bof@bof.de>
- * Copyright (C) 2003-2010 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
+ * Copyright (C) 2003-2011 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -96,8 +96,7 @@ find_set_type_rcu(const char *name, u8 family, u8 revision)
  * filled out.
  */
 static bool
-find_set_type_minmax(const char *name, u8 family,
-		     u8 *min, u8 *max)
+find_set_type_minmax(const char *name, u8 family, u8 *min, u8 *max)
 {
 	struct ip_set_type *type;
 	bool ret = false;
