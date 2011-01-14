@@ -825,10 +825,6 @@ ip_set_swap(struct sock *ctnl, struct sk_buff *skb,
 	ip_set_list[from_id] = to;
 	ip_set_list[to_id] = from;
 
-	/* Avoid possible race between ongoing slow add/del in kernel space
-	 * and next destroy command. */
-	synchronize_net();
-
 	return 0;
 }
 
