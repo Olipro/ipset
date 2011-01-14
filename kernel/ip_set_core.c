@@ -556,7 +556,7 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 	if (!set)
 		return -ENOMEM;
 	rwlock_init(&set->lock);
-	strncpy(set->name, name, IPSET_MAXNAMELEN);
+	strlcpy(set->name, name, IPSET_MAXNAMELEN);
 	atomic_set(&set->ref, 0);
 	set->family = family;
 
