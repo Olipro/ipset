@@ -25,6 +25,11 @@
 #define MAX(a, b)		(a > b ? a : b)
 
 #define UNUSED			__attribute__ ((unused))
+#ifdef NDEBUG
+#define ASSERT_UNUSED		UNUSED
+#else
+#define ASSERT_UNUSED
+#endif
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)		(sizeof(x) / sizeof(*(x)))

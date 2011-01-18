@@ -89,7 +89,8 @@ ipset_print_ether(char *buf, unsigned int len,
  */
 int
 ipset_print_family(char *buf, unsigned int len,
-		   const struct ipset_data *data, enum ipset_opt opt,
+		   const struct ipset_data *data,
+		   enum ipset_opt opt ASSERT_UNUSED,
 		   uint8_t env UNUSED)
 {
 	uint8_t family;
@@ -410,7 +411,8 @@ ipset_print_name(char *buf, unsigned int len,
  */
 int
 ipset_print_port(char *buf, unsigned int len,
-		 const struct ipset_data *data, enum ipset_opt opt,
+		 const struct ipset_data *data,
+		 enum ipset_opt opt ASSERT_UNUSED,
 		 uint8_t env UNUSED)
 {
 	const uint16_t *port;
@@ -454,7 +456,8 @@ ipset_print_port(char *buf, unsigned int len,
  */
 int
 ipset_print_proto(char *buf, unsigned int len,
-		  const struct ipset_data *data, enum ipset_opt opt,
+		  const struct ipset_data *data,
+		  enum ipset_opt opt ASSERT_UNUSED,
 		  uint8_t env UNUSED)
 {
 	const struct protoent *protoent;
@@ -490,7 +493,8 @@ ipset_print_proto(char *buf, unsigned int len,
  */
 int
 ipset_print_icmp(char *buf, unsigned int len,
-		 const struct ipset_data *data, enum ipset_opt opt,
+		 const struct ipset_data *data,
+		 enum ipset_opt opt ASSERT_UNUSED,
 		 uint8_t env UNUSED)
 {
 	const char *name;
@@ -523,7 +527,8 @@ ipset_print_icmp(char *buf, unsigned int len,
  */
 int
 ipset_print_icmpv6(char *buf, unsigned int len,
-		   const struct ipset_data *data, enum ipset_opt opt,
+		   const struct ipset_data *data,
+		   enum ipset_opt opt ASSERT_UNUSED,
 		   uint8_t env UNUSED)
 {
 	const char *name;
@@ -556,7 +561,8 @@ ipset_print_icmpv6(char *buf, unsigned int len,
  */
 int
 ipset_print_proto_port(char *buf, unsigned int len,
-		       const struct ipset_data *data, enum ipset_opt opt,
+		       const struct ipset_data *data,
+		       enum ipset_opt opt ASSERT_UNUSED,
 		       uint8_t env UNUSED)
 {
 	int size, offset = 0;

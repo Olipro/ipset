@@ -845,7 +845,7 @@ ipset_parse_net(struct ipset_session *session,
  */
 int
 ipset_parse_range(struct ipset_session *session,
-		  enum ipset_opt opt, const char *str)
+		  enum ipset_opt opt ASSERT_UNUSED, const char *str)
 {
 	assert(session);
 	assert(opt == IPSET_OPT_IP || opt == IPSET_OPT_IP2);
@@ -1322,7 +1322,7 @@ ipset_parse_flag(struct ipset_session *session,
  */
 int
 ipset_parse_typename(struct ipset_session *session,
-		     enum ipset_opt opt, const char *str)
+		     enum ipset_opt opt ASSERT_UNUSED, const char *str)
 {
 	const struct ipset_type *type;
 	const char *typename;
