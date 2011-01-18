@@ -98,6 +98,19 @@ ipset_saved_type(const struct ipset_session *session)
 	return session->saved_type;
 }
 
+/**
+ * ipset_session_lineno - set session lineno
+ * @session: session structure
+ *
+ * Set session lineno to report parser errors correctly.
+ */
+void
+ipset_session_lineno(struct ipset_session *session, uint32_t lineno)
+{
+	assert(session);
+	session->lineno = lineno;
+}
+
 /*
  * Environment options
  */

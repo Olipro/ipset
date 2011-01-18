@@ -439,6 +439,9 @@ parse_commandline(int argc, char *argv[])
 				"Cannot initialize ipset session, aborting.");
 	}
 
+	/* Set session lineno to report parser errors correctly */
+	ipset_session_lineno(session, restore_line);
+
 	/* Commandline parsing, somewhat similar to that of 'ip' */
 
 	/* First: parse core options */
