@@ -431,14 +431,6 @@ parse_commandline(int argc, char *argv[])
 	const struct ipset_commands *command;
 	const struct ipset_type *type;
 
-	/* Initialize session */
-	if (session == NULL) {
-		session = ipset_session_init(printf);
-		if (session == NULL)
-			return exit_error(OTHER_PROBLEM,
-				"Cannot initialize ipset session, aborting.");
-	}
-
 	/* Set session lineno to report parser errors correctly */
 	ipset_session_lineno(session, restore_line);
 
@@ -745,6 +737,12 @@ main(int argc, char *argv[])
 	ipset_type_add(&ipset_hash_ipportip0);
 	ipset_type_add(&ipset_hash_ipportnet0);
 	ipset_type_add(&ipset_list_set0);
+
+	/* Initialize session */
+	session = ipset_session_init(printf);
+	if (session == NULL)
+		return exit_error(OTHER_PROBLEM,
+			"Cannot initialize ipset session, aborting.");
 
 	return parse_commandline(argc, argv);
 }
