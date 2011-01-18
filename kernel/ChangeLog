@@ -1,3 +1,12 @@
+5.3
+ - There is no need to call synchronize_net() at swapping
+ - Replace strncpy with strlcpy at creating a set
+ - Update copyright date and some style changes
+ - Use jhash.h accepted in kernel, with backward compatibility
+ - Separate prefixlens from ip_set core
+ - Remove unused ctnl parameter from call_ad (Jan Engelhardt)
+ - Comment the possible return values of the add/del/test type-functions
+
 5.2
  - Kernel version check at minimal supported version was mistyped, now fixed.
 
