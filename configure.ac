@@ -3,7 +3,7 @@ AC_INIT([ipset], [5.2], [kadlec@blackhole.kfki.hu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 dnl Shortcut: Linux supported alone
 case "$host" in
@@ -94,6 +94,8 @@ AC_ARG_ENABLE([debug],
 AM_CONDITIONAL([ENABLE_DEBUG], [test "x$enable_debug" = xyes])
 
 dnl Checks for programs
+: ${CFLAGS=""}
+
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
@@ -121,6 +123,8 @@ dnl Check extra warning flags except
 dnl	-Wconversion		-> we need it
 dnl	-Wunreachable-code	-> fails with ntoh*
 dnl	-Wpointer-arith		-> limbnl uses it
+if test "x$enable_debug" = "xyes"
+then
 AX_CFLAGS_GCC_OPTION(-Waggregate-return)
 AX_CFLAGS_GCC_OPTION(-Wbad-function-cast)
 AX_CFLAGS_GCC_OPTION(-Wcast-align)
@@ -146,7 +150,7 @@ AX_CFLAGS_GCC_OPTION(-Wswitch-default)
 AX_CFLAGS_GCC_OPTION(-Wundef)
 AX_CFLAGS_GCC_OPTION(-Wunused)
 AX_CFLAGS_GCC_OPTION(-Wwrite-strings)
-
+fi
 dnl Checks for library functions.
 
 dnl Generate output
