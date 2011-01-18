@@ -711,6 +711,14 @@ enum ipaddr_type {
 	IPADDR_RANGE,
 };
 
+static inline bool
+cidr_hostaddr(const char *str, uint8_t family)
+{
+	char *a = cidr_separator(str);
+	
+	return family == AF_INET ? STREQ(a, "/32") : STREQ(a, "/128");
+}
+
 static int
 parse_ip(struct ipset_session *session,
 	 enum ipset_opt opt, const char *str, enum ipaddr_type addrtype)
@@ -725,7 +733,8 @@ parse_ip(struct ipset_session *session,
 
 	switch (addrtype) {
 	case IPADDR_PLAIN:
-		if (range_separator(str) || cidr_separator(str))
+		if (range_separator(str)
+		    || (cidr_separator(str) && !cidr_hostaddr(str, family)))
 			return syntax_err("plain IP address must be supplied: %s",
 					  str);
 		break;
