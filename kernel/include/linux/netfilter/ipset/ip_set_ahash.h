@@ -701,7 +701,7 @@ type_pf_expire(struct ip_set_hash *h)
 		if (n->pos + AHASH_INIT_SIZE < n->size) {
 			void *tmp = kzalloc((n->size - AHASH_INIT_SIZE)
 					    * sizeof(struct type_pf_telem),
-					    GFP_KERNEL);
+					    GFP_ATOMIC);
 			if (!tmp)
 				/* Still try to delete expired elements */
 				continue;
