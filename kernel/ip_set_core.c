@@ -216,7 +216,7 @@ static const struct nla_policy ipaddr_policy[IPSET_ATTR_IPADDR_MAX + 1] = {
 };
 
 int
-ip_set_get_ipaddr4(struct nlattr *attr[], int type, u32 *ipaddr)
+ip_set_get_ipaddr4(struct nlattr *attr[], int type, __be32 *ipaddr)
 {
 	struct nlattr *tb[IPSET_ATTR_IPADDR_MAX+1];
 
@@ -230,7 +230,7 @@ ip_set_get_ipaddr4(struct nlattr *attr[], int type, u32 *ipaddr)
 	if (!tb[IPSET_ATTR_IPADDR_IPV4])
 		return -IPSET_ERR_IPADDR_IPV4;
 
-	*ipaddr = ip_set_get_n32(tb[IPSET_ATTR_IPADDR_IPV4]);
+	*ipaddr = nla_get_be32(tb[IPSET_ATTR_IPADDR_IPV4]);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(ip_set_get_ipaddr4);
@@ -1489,7 +1489,7 @@ static struct nfnetlink_subsystem ip_set_netlink_subsys __read_mostly = {
 /* Interface to iptables/ip6tables */
 
 static int
-ip_set_sockfn_get(struct sock *sk, int optval, void *user, int *len)
+ip_set_sockfn_get(struct sock *sk, int optval, void __user *user, int *len)
 {
 	unsigned *op;
 	void *data;

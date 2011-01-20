@@ -20,10 +20,10 @@ ip_set_netmask6(u8 pfxlen)
 	return &ip_set_netmask_map[pfxlen].ip6[0];
 }
 
-static inline __be32
+static inline u32
 ip_set_hostmask(u8 pfxlen)
 {
-	return ip_set_hostmask_map[pfxlen].ip;
+	return (__force u32) ip_set_hostmask_map[pfxlen].ip;
 }
 
 static inline const __be32 *

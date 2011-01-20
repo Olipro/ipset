@@ -320,9 +320,21 @@ extern int ip_set_test(ip_set_id_t id, const struct sk_buff *skb,
 /* Utility functions */
 extern void * ip_set_alloc(size_t size, gfp_t gfp_mask);
 extern void ip_set_free(void *members);
-extern int ip_set_get_ipaddr4(struct nlattr *attr[], int type, u32 *ipaddr);
+extern int ip_set_get_ipaddr4(struct nlattr *attr[], int type, __be32 *ipaddr);
 extern int ip_set_get_ipaddr6(struct nlattr *attr[], int type,
 			      union nf_inet_addr *ipaddr);
+
+static inline int
+ip_set_get_hostipaddr4(struct nlattr *attr[], int type, u32 *ipaddr)
+{
+	__be32 ip;
+	int ret = ip_set_get_ipaddr4(attr, type, &ip);
+	
+	if (ret)
+		return ret;
+	*ipaddr = ntohl(ip);
+	return 0;
+}
 
 /* Ignore IPSET_ERR_EXIST errors if asked to do so? */
 static inline bool
@@ -335,33 +347,13 @@ ip_set_eexist(int ret, u32 flags)
 static inline u32
 ip_set_get_h32(const struct nlattr *attr)
 {
-	u32 value = nla_get_u32(attr);
-
-	return attr->nla_type & NLA_F_NET_BYTEORDER ? ntohl(value) : value;
+	return ntohl(nla_get_be32(attr));
 }
 
 static inline u16
 ip_set_get_h16(const struct nlattr *attr)
 {
-	u16 value = nla_get_u16(attr);
-
-	return attr->nla_type & NLA_F_NET_BYTEORDER ? ntohs(value) : value;
-}
-
-static inline u32
-ip_set_get_n32(const struct nlattr *attr)
-{
-	u32 value = nla_get_u32(attr);
-
-	return attr->nla_type & NLA_F_NET_BYTEORDER ? value : htonl(value);
-}
-
-static inline u16
-ip_set_get_n16(const struct nlattr *attr)
-{
-	u16 value = nla_get_u16(attr);
-
-	return attr->nla_type & NLA_F_NET_BYTEORDER ? value : htons(value);
+	return ntohs(nla_get_be16(attr));
 }
 
 #define ipset_nest_start(skb, attr) nla_nest_start(skb, attr | NLA_F_NESTED)
@@ -389,14 +381,14 @@ do {								\
 } while (0)
 
 /* Get address from skbuff */
-static inline u32
+static inline __be32
 ip4addr(const struct sk_buff *skb, bool src)
 {
 	return src ? ip_hdr(skb)->saddr : ip_hdr(skb)->daddr;
 }
 
 static inline void
-ip4addrptr(const struct sk_buff *skb, bool src, u32 *addr)
+ip4addrptr(const struct sk_buff *skb, bool src, __be32 *addr)
 {
 	*addr = src ? ip_hdr(skb)->saddr : ip_hdr(skb)->daddr;
 }

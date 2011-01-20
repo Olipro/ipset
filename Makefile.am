@@ -22,6 +22,10 @@ endif
 
 SUBDIRS		= lib src
 
+modules_sparse:
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel V=$V C=2 CF=-D__CHECK_ENDIAN__ \
+			IP_SET_MAX=$(IP_SET_MAX) modules
+
 modules:
 	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel V=$V \
 			IP_SET_MAX=$(IP_SET_MAX) modules

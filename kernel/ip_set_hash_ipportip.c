@@ -46,18 +46,18 @@ hash_ipportip_same_set(const struct ip_set *a, const struct ip_set *b);
 
 /* Member elements without timeout */
 struct hash_ipportip4_elem {
-	u32 ip;
-	u32 ip2;
-	u16 port;
+	__be32 ip;
+	__be32 ip2;
+	__be16 port;
 	u8 proto;
 	u8 padding;
 };
 
 /* Member elements with timeout support */
 struct hash_ipportip4_telem {
-	u32 ip;
-	u32 ip2;
-	u16 port;
+	__be32 ip;
+	__be32 ip2;
+	__be16 port;
 	u8 proto;
 	u8 padding;
 	unsigned long timeout;
@@ -200,7 +200,7 @@ hash_ipportip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 		return ret;
 
 	if (tb[IPSET_ATTR_PORT])
-		data.port = ip_set_get_n16(tb[IPSET_ATTR_PORT]);
+		data.port = nla_get_be16(tb[IPSET_ATTR_PORT]);
 	else
 		return -IPSET_ERR_PROTOCOL;
 
@@ -238,10 +238,9 @@ hash_ipportip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 	ip = ntohl(data.ip);
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
+		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
 		if (ret)
 			return ret;
-		ip_to = ntohl(ip_to);
 		if (ip > ip_to)
 			swap(ip, ip_to);
 	} else if (tb[IPSET_ATTR_CIDR]) {
@@ -292,7 +291,7 @@ hash_ipportip_same_set(const struct ip_set *a, const struct ip_set *b)
 struct hash_ipportip6_elem {
 	union nf_inet_addr ip;
 	union nf_inet_addr ip2;
-	u16 port;
+	__be16 port;
 	u8 proto;
 	u8 padding;
 };
@@ -300,7 +299,7 @@ struct hash_ipportip6_elem {
 struct hash_ipportip6_telem {
 	union nf_inet_addr ip;
 	union nf_inet_addr ip2;
-	u16 port;
+	__be16 port;
 	u8 proto;
 	u8 padding;
 	unsigned long timeout;
@@ -432,7 +431,7 @@ hash_ipportip6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		return ret;
 
 	if (tb[IPSET_ATTR_PORT])
-		data.port = ip_set_get_n16(tb[IPSET_ATTR_PORT]);
+		data.port = nla_get_be16(tb[IPSET_ATTR_PORT]);
 	else
 		return -IPSET_ERR_PROTOCOL;
 

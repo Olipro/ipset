@@ -70,12 +70,13 @@ bitmap_port_kadt(struct ip_set *set, const struct sk_buff *skb,
 		 enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
 {
 	struct bitmap_port *map = set->data;
+	__be16 __port;
 	u16 port = 0;
 
-	if (!get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &port))
+	if (!get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &__port))
 		return -EINVAL;
 
-	port = ntohs(port);
+	port = ntohs(__port);
 
 	if (port < map->first_port || port > map->last_port)
 		return -IPSET_ERR_BITMAP_RANGE;
@@ -249,7 +250,7 @@ bitmap_port_same_set(const struct ip_set *a, const struct ip_set *b)
 	       x->last_port == y->last_port;
 }
 
-const struct ip_set_type_variant bitmap_port = {
+static const struct ip_set_type_variant bitmap_port = {
 	.kadt	= bitmap_port_kadt,
 	.uadt	= bitmap_port_uadt,
 	.destroy = bitmap_port_destroy,
@@ -307,12 +308,13 @@ bitmap_port_timeout_kadt(struct ip_set *set, const struct sk_buff *skb,
 			 enum ipset_adt adt, u8 pf, u8 dim, u8 flags)
 {
 	struct bitmap_port_timeout *map = set->data;
+	__be16 __port;
 	u16 port = 0;
 
-	if (!get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &port))
+	if (!get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &__port))
 		return -EINVAL;
 
-	port = ntohs(port);
+	port = ntohs(__port);
 
 	if (port < map->first_port || port > map->last_port)
 		return -IPSET_ERR_BITMAP_RANGE;
@@ -487,7 +489,7 @@ bitmap_port_timeout_same_set(const struct ip_set *a, const struct ip_set *b)
 	       x->timeout == y->timeout;
 }
 
-const struct ip_set_type_variant bitmap_port_timeout = {
+static const struct ip_set_type_variant bitmap_port_timeout = {
 	.kadt	= bitmap_port_timeout_kadt,
 	.uadt	= bitmap_port_timeout_uadt,
 	.destroy = bitmap_port_timeout_destroy,
@@ -621,7 +623,7 @@ bitmap_port_create(struct ip_set *set, struct nlattr *head, int len,
 	return 0;
 }
 
-struct ip_set_type bitmap_port_type = {
+static struct ip_set_type bitmap_port_type = {
 	.name		= "bitmap:port",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_PORT,

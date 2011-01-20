@@ -45,12 +45,12 @@ hash_ip_same_set(const struct ip_set *a, const struct ip_set *b);
 
 /* Member elements without timeout */
 struct hash_ip4_elem {
-	u32 ip;
+	__be32 ip;
 };
 
 /* Member elements with timeout support */
 struct hash_ip4_telem {
-	u32 ip;
+	__be32 ip;
 	unsigned long timeout;
 };
 
@@ -123,7 +123,7 @@ hash_ip4_kadt(struct ip_set *set, const struct sk_buff *skb,
 {
 	const struct ip_set_hash *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	u32 ip;
+	__be32 ip;
 
 	ip4addrptr(skb, flags & IPSET_DIM_ONE_SRC, &ip);
 	ip &= ip_set_netmask(h->netmask);
@@ -148,7 +148,8 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	const struct ip_set_hash *h = set->data;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	u32 ip, nip, ip_to, hosts, timeout = h->timeout;
+	u32 ip, ip_to, hosts, timeout = h->timeout;
+	__be32 nip;
 	int ret = 0;
 
 	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
@@ -158,13 +159,11 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP, &ip);
+	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &ip);
 	if (ret)
 		return ret;
 
-	ip &= ip_set_netmask(h->netmask);
-	if (ip == 0)
-		return -IPSET_ERR_HASH_ELEM;
+	ip &= ip_set_hostmask(h->netmask);
 
 	if (tb[IPSET_ATTR_TIMEOUT]) {
 		if (!with_timeout(h->timeout))
@@ -172,15 +171,17 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 	}
 
-	if (adt == IPSET_TEST)
-		return adtfn(set, &ip, timeout);
+	if (adt == IPSET_TEST) {
+		nip = htonl(ip);
+		if (nip == 0)
+			return -IPSET_ERR_HASH_ELEM;
+		return adtfn(set, &nip, timeout);
+	}
 
-	ip = ntohl(ip);
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
+		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
 		if (ret)
 			return ret;
-		ip_to = ntohl(ip_to);
 		if (ip > ip_to)
 			swap(ip, ip_to);
 	} else if (tb[IPSET_ATTR_CIDR]) {
@@ -197,6 +198,8 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 	for (; !before(ip_to, ip); ip += hosts) {
 		nip = htonl(ip);
+		if (nip == 0)
+			return -IPSET_ERR_HASH_ELEM;
 		ret = adtfn(set, &nip, timeout);
 
 		if (ret && !ip_set_eexist(ret, flags))

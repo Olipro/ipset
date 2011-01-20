@@ -45,16 +45,16 @@ hash_netport_same_set(const struct ip_set *a, const struct ip_set *b);
 
 /* Member elements without timeout */
 struct hash_netport4_elem {
-	u32 ip;
-	u16 port;
+	__be32 ip;
+	__be16 port;
 	u8 proto;
 	u8 cidr;
 };
 
 /* Member elements with timeout support */
 struct hash_netport4_telem {
-	u32 ip;
-	u16 port;
+	__be32 ip;
+	__be16 port;
 	u8 proto;
 	u8 cidr;
 	unsigned long timeout;
@@ -215,7 +215,7 @@ hash_netport4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	data.ip &= ip_set_netmask(data.cidr);
 
 	if (tb[IPSET_ATTR_PORT])
-		data.port = ip_set_get_n16(tb[IPSET_ATTR_PORT]);
+		data.port = nla_get_be16(tb[IPSET_ATTR_PORT]);
 	else
 		return -IPSET_ERR_PROTOCOL;
 
@@ -282,14 +282,14 @@ hash_netport_same_set(const struct ip_set *a, const struct ip_set *b)
 
 struct hash_netport6_elem {
 	union nf_inet_addr ip;
-	u16 port;
+	__be16 port;
 	u8 proto;
 	u8 cidr;
 };
 
 struct hash_netport6_telem {
 	union nf_inet_addr ip;
-	u16 port;
+	__be16 port;
 	u8 proto;
 	u8 cidr;
 	unsigned long timeout;
@@ -445,7 +445,7 @@ hash_netport6_uadt(struct ip_set *set, struct nlattr *head, int len,
 	ip6_netmask(&data.ip, data.cidr);
 
 	if (tb[IPSET_ATTR_PORT])
-		data.port = ip_set_get_n16(tb[IPSET_ATTR_PORT]);
+		data.port = nla_get_be16(tb[IPSET_ATTR_PORT]);
 	else
 		return -IPSET_ERR_PROTOCOL;
 

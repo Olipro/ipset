@@ -383,10 +383,9 @@ bitmap_ipmac_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP, &data.id);
+	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &data.id);
 	if (ret)
 		return ret;
-	data.id = ntohl(data.id);
 
 	if (data.id < map->first_ip || data.id > map->last_ip)
 		return -IPSET_ERR_BITMAP_RANGE;
@@ -468,7 +467,7 @@ bitmap_ipmac_same_set(const struct ip_set *a, const struct ip_set *b)
 	       x->timeout == y->timeout;
 }
 
-const struct ip_set_type_variant bitmap_ipmac = {
+static const struct ip_set_type_variant bitmap_ipmac = {
 	.kadt	= bitmap_ipmac_kadt,
 	.uadt	= bitmap_ipmac_uadt,
 	.adt	= {
@@ -483,7 +482,7 @@ const struct ip_set_type_variant bitmap_ipmac = {
 	.same_set = bitmap_ipmac_same_set,
 };
 
-const struct ip_set_type_variant bitmap_tipmac = {
+static const struct ip_set_type_variant bitmap_tipmac = {
 	.kadt	= bitmap_ipmac_kadt,
 	.uadt	= bitmap_ipmac_uadt,
 	.adt	= {
@@ -573,16 +572,14 @@ bitmap_ipmac_create(struct ip_set *set, struct nlattr *head, int len,
 		      bitmap_ipmac_create_policy))
 		return -IPSET_ERR_PROTOCOL;
 
-	ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP, &first_ip);
+	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &first_ip);
 	if (ret)
 		return ret;
-	first_ip = ntohl(first_ip);
 
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP_TO, &last_ip);
+		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &last_ip);
 		if (ret)
 			return ret;
-		last_ip = ntohl(last_ip);
 		if (first_ip > last_ip) {
 			u32 tmp = first_ip;
 
@@ -633,7 +630,7 @@ bitmap_ipmac_create(struct ip_set *set, struct nlattr *head, int len,
 	return 0;
 }
 
-struct ip_set_type bitmap_ipmac_type = {
+static struct ip_set_type bitmap_ipmac_type = {
 	.name		= "bitmap:ip,mac",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_IP | IPSET_TYPE_MAC,

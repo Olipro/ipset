@@ -12,7 +12,7 @@
 /* We must handle non-linear skbs */
 static inline bool
 get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
-	 bool src, u16 *port, u8 *proto)
+	 bool src, __be16 *port, u8 *proto)
 {
 	switch (protocol) {
 	case IPPROTO_TCP: {
@@ -47,7 +47,7 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 		if (ic == NULL)
 			return false;
 
-		*port = (ic->type << 8) & ic->code;
+		*port = (__force __be16)((ic->type << 8) & ic->code);
 		break;
 	}
 	case IPPROTO_ICMPV6: {
@@ -58,7 +58,7 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 		if (ic == NULL)
 			return false;
 
-		*port = (ic->icmp6_type << 8) & ic->icmp6_code;
+		*port = (__force __be16)((ic->icmp6_type << 8) & ic->icmp6_code);
 		break;
 	}
 	default:
@@ -70,7 +70,7 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 }
 
 static inline bool
-get_ip4_port(const struct sk_buff *skb, bool src, u16 *port, u8 *proto)
+get_ip4_port(const struct sk_buff *skb, bool src, __be16 *port, u8 *proto)
 {
 	const struct iphdr *iph = ip_hdr(skb);
 	unsigned int protooff = ip_hdrlen(skb);
@@ -84,7 +84,7 @@ get_ip4_port(const struct sk_buff *skb, bool src, u16 *port, u8 *proto)
 }
 
 static inline bool
-get_ip6_port(const struct sk_buff *skb, bool src, u16 *port, u8 *proto)
+get_ip6_port(const struct sk_buff *skb, bool src, __be16 *port, u8 *proto)
 {
 	unsigned int protooff = 0;
 	int protocol;
@@ -98,7 +98,7 @@ get_ip6_port(const struct sk_buff *skb, bool src, u16 *port, u8 *proto)
 }
 
 static inline bool
-get_ip_port(const struct sk_buff *skb, u8 pf, bool src, u16 *port)
+get_ip_port(const struct sk_buff *skb, u8 pf, bool src, __be16 *port)
 {
 	bool ret;
 	u8 proto;

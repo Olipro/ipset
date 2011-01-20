@@ -124,10 +124,9 @@ bitmap_ip_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP, &ip);
+	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &ip);
 	if (ret)
 		return ret;
-	ip = ntohl(ip);
 
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -IPSET_ERR_BITMAP_RANGE;
@@ -141,10 +140,9 @@ bitmap_ip_uadt(struct ip_set *set, struct nlattr *head, int len,
 		return bitmap_ip_test(map, ip_to_id(map, ip));
 
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
+		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
 		if (ret)
 			return ret;
-		ip_to = ntohl(ip_to);
 		if (ip > ip_to) {
 			swap(ip, ip_to);
 			if (ip < map->first_ip)
@@ -364,10 +362,9 @@ bitmap_ip_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP, &ip);
+	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &ip);
 	if (ret)
 		return ret;
-	ip = ntohl(ip);
 
 	if (ip < map->first_ip || ip > map->last_ip)
 		return -IPSET_ERR_BITMAP_RANGE;
@@ -377,10 +374,9 @@ bitmap_ip_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 				ip_to_id((const struct bitmap_ip *)map, ip));
 
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
+		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
 		if (ret)
 			return ret;
-		ip_to = ntohl(ip_to);
 		if (ip > ip_to) {
 			swap(ip, ip_to);
 			if (ip < map->first_ip)
@@ -602,16 +598,14 @@ bitmap_ip_create(struct ip_set *set, struct nlattr *head, int len,
 		      bitmap_ip_create_policy))
 		return -IPSET_ERR_PROTOCOL;
 
-	ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP, &first_ip);
+	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &first_ip);
 	if (ret)
 		return ret;
-	first_ip = ntohl(first_ip);
 
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP_TO, &last_ip);
+		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &last_ip);
 		if (ret)
 			return ret;
-		last_ip = htonl(last_ip);
 		if (first_ip > last_ip) {
 			u32 tmp = first_ip;
 

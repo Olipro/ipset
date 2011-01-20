@@ -44,7 +44,7 @@ hash_net_same_set(const struct ip_set *a, const struct ip_set *b);
 
 /* Member elements without timeout */
 struct hash_net4_elem {
-	u32 ip;
+	__be32 ip;
 	u16 padding0;
 	u8 padding1;
 	u8 cidr;
@@ -52,7 +52,7 @@ struct hash_net4_elem {
 
 /* Member elements with timeout support */
 struct hash_net4_telem {
-	u32 ip;
+	__be32 ip;
 	u16 padding0;
 	u8 padding1;
 	u8 cidr;
