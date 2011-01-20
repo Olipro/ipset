@@ -168,8 +168,8 @@ hash_ipportnet4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	if (adt == IPSET_TEST)
 		data.cidr = HOST_MASK;
 
-	if (!get_ip4_port(skb, flags & IPSET_DIM_TWO_SRC,
-			  &data.port, &data.proto))
+	if (!ip_set_get_ip4_port(skb, flags & IPSET_DIM_TWO_SRC,
+				 &data.port, &data.proto))
 		return -EINVAL;
 
 	ip4addrptr(skb, flags & IPSET_DIM_ONE_SRC, &data.ip);
@@ -453,8 +453,8 @@ hash_ipportnet6_kadt(struct ip_set *set, const struct sk_buff *skb,
 	if (adt == IPSET_TEST)
 		data.cidr = HOST_MASK;
 
-	if (!get_ip6_port(skb, flags & IPSET_DIM_TWO_SRC,
-			  &data.port, &data.proto))
+	if (!ip_set_get_ip6_port(skb, flags & IPSET_DIM_TWO_SRC,
+				 &data.port, &data.proto))
 		return -EINVAL;
 
 	ip6addrptr(skb, flags & IPSET_DIM_ONE_SRC, &data.ip.in6);

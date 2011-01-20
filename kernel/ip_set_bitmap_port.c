@@ -73,7 +73,7 @@ bitmap_port_kadt(struct ip_set *set, const struct sk_buff *skb,
 	__be16 __port;
 	u16 port = 0;
 
-	if (!get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &__port))
+	if (!ip_set_get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &__port))
 		return -EINVAL;
 
 	port = ntohs(__port);
@@ -311,7 +311,7 @@ bitmap_port_timeout_kadt(struct ip_set *set, const struct sk_buff *skb,
 	__be16 __port;
 	u16 port = 0;
 
-	if (!get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &__port))
+	if (!ip_set_get_ip_port(skb, pf, flags & IPSET_DIM_ONE_SRC, &__port))
 		return -EINVAL;
 
 	port = ntohs(__port);
