@@ -181,8 +181,8 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 			return CHECK_FAIL;	/* error */
 		}
 	}
-	if (info->add_set.u.flags[IPSET_DIM_MAX-1] != 0
-	    || info->del_set.u.flags[IPSET_DIM_MAX-1] != 0) {
+	if (info->add_set.u.flags[IPSET_DIM_MAX-1] != 0 ||
+	    info->del_set.u.flags[IPSET_DIM_MAX-1] != 0) {
 		pr_warning("That's nasty!");
 		return CHECK_FAIL;	/* error */
 	}
@@ -309,8 +309,8 @@ set_target_checkentry(const struct xt_tgchk_param *par)
 			return CHECK_FAIL;	/* error */
 		}
 	}
-	if (info->add_set.dim > IPSET_DIM_MAX
-	    || info->del_set.flags > IPSET_DIM_MAX) {
+	if (info->add_set.dim > IPSET_DIM_MAX ||
+	    info->del_set.flags > IPSET_DIM_MAX) {
 		pr_warning("That's nasty!");
 		return CHECK_FAIL;	/* error */
 	}

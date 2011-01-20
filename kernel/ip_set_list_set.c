@@ -68,8 +68,8 @@ list_set_expired(const struct list_set *map, u32 id)
 static inline int
 list_set_exist(const struct set_telem *elem)
 {
-	return elem->id != IPSET_INVALID_ID
-	       && !ip_set_timeout_expired(elem->timeout);
+	return elem->id != IPSET_INVALID_ID &&
+	       !ip_set_timeout_expired(elem->timeout);
 }
 
 /* Set list without and with timeout */
@@ -129,9 +129,9 @@ next_id_eq(const struct list_set *map, u32 i, ip_set_id_t id)
 
 	if (i + 1 < map->size) {
 		elem = list_set_elem(map, i + 1);
-		return !!(elem->id == id
-			  && !(with_timeout(map->timeout)
-			       && list_set_expired(map, i + 1)));
+		return !!(elem->id == id &&
+			  !(with_timeout(map->timeout) &&
+			    list_set_expired(map, i + 1)));
 	}
 
 	return 0;
@@ -270,8 +270,8 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 	case IPSET_TEST:
 		for (i = 0; i < map->size && !ret; i++) {
 			elem = list_set_elem(map, i);
-			if (elem->id == IPSET_INVALID_ID
-			    || (before != 0 && i + 1 >= map->size))
+			if (elem->id == IPSET_INVALID_ID ||
+			    (before != 0 && i + 1 >= map->size))
 				break;
 			else if (with_timeout && list_set_expired(map, i))
 				continue;
@@ -286,8 +286,8 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 	case IPSET_ADD:
 		for (i = 0; i < map->size && !ret; i++) {
 			elem = list_set_elem(map, i);
-			if (elem->id == id
-			    && !(with_timeout && list_set_expired(map, i)))
+			if (elem->id == id &&
+			    !(with_timeout && list_set_expired(map, i)))
 				ret = -IPSET_ERR_EXIST;
 		}
 		if (ret == -IPSET_ERR_EXIST)
@@ -318,14 +318,14 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 				break;
 			} else if (with_timeout && list_set_expired(map, i))
 				continue;
-			else if (elem->id == id
-				 && (before == 0
-				     || (before > 0
-					 && next_id_eq(map, i, refid))))
+			else if (elem->id == id &&
+				 (before == 0 ||
+				  (before > 0 &&
+				   next_id_eq(map, i, refid))))
 				ret = list_set_del(map, id, i);
-			else if (before < 0
-				 && elem->id == refid
-				 && next_id_eq(map, i, id))
+			else if (before < 0 &&
+				 elem->id == refid &&
+				 next_id_eq(map, i, id))
 				ret = list_set_del(map, id, i + 1);
 		}
 		break;
@@ -449,8 +449,8 @@ list_set_same_set(const struct ip_set *a, const struct ip_set *b)
 	const struct list_set *x = a->data;
 	const struct list_set *y = b->data;
 
-	return x->size == y->size
-	       && x->timeout == y->timeout;
+	return x->size == y->size &&
+	       x->timeout == y->timeout;
 }
 
 static const struct ip_set_type_variant list_set = {
@@ -476,8 +476,8 @@ list_set_gc(unsigned long ul_set)
 	read_lock_bh(&set->lock);
 	for (i = map->size - 1; i >= 0; i--) {
 		e = (struct set_telem *) list_set_elem(map, i);
-		if (e->id != IPSET_INVALID_ID
-		    && list_set_expired(map, i))
+		if (e->id != IPSET_INVALID_ID &&
+		    list_set_expired(map, i))
 			list_set_del(map, e->id, i);
 	}
 	read_unlock_bh(&set->lock);

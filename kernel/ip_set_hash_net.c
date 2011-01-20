@@ -210,8 +210,8 @@ hash_net_same_set(const struct ip_set *a, const struct ip_set *b)
 	const struct ip_set_hash *y = b->data;
 
 	/* Resizing changes htable_bits, so we ignore it */
-	return x->maxelem == y->maxelem
-	       && x->timeout == y->timeout;
+	return x->maxelem == y->maxelem &&
+	       x->timeout == y->timeout;
 }
 
 /* The type variant functions: IPv6 */
@@ -235,8 +235,8 @@ static inline bool
 hash_net6_data_equal(const struct hash_net6_elem *ip1,
 		     const struct hash_net6_elem *ip2)
 {
-	return ipv6_addr_cmp(&ip1->ip.in6, &ip2->ip.in6) == 0
-	       && ip1->cidr == ip2->cidr;
+	return ipv6_addr_cmp(&ip1->ip.in6, &ip2->ip.in6) == 0 &&
+	       ip1->cidr == ip2->cidr;
 }
 
 static inline bool

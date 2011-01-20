@@ -95,9 +95,9 @@ bitmap_expired(const struct bitmap_ipmac *map, u32 id)
 static inline int
 bitmap_ipmac_exist(const struct ipmac_telem *elem)
 {
-	return elem->match == MAC_UNSET
-		|| (elem->match == MAC_FILLED
-		    && !ip_set_timeout_expired(elem->timeout));
+	return elem->match == MAC_UNSET ||
+	       (elem->match == MAC_FILLED &&
+		!ip_set_timeout_expired(elem->timeout));
 }
 
 /* Base variant */
@@ -114,8 +114,8 @@ bitmap_ipmac_test(struct ip_set *set, void *value, u32 timeout)
 		/* Trigger kernel to fill out the ethernet address */
 		return -EAGAIN;
 	case MAC_FILLED:
-		return data->ether == NULL
-		       || compare_ether_addr(data->ether, elem->ether) == 0;
+		return data->ether == NULL ||
+		       compare_ether_addr(data->ether, elem->ether) == 0;
 	}
 	return 0;
 }
@@ -223,9 +223,9 @@ bitmap_ipmac_ttest(struct ip_set *set, void *value, u32 timeout)
 		/* Trigger kernel to fill out the ethernet address */
 		return -EAGAIN;
 	case MAC_FILLED:
-		return (data->ether == NULL
-			|| compare_ether_addr(data->ether, elem->ether) == 0)
-		       && !bitmap_expired(map, data->id);
+		return (data->ether == NULL ||
+			compare_ether_addr(data->ether, elem->ether) == 0) &&
+		       !bitmap_expired(map, data->id);
 	}
 	return 0;
 }
@@ -348,8 +348,8 @@ bitmap_ipmac_kadt(struct ip_set *set, const struct sk_buff *skb,
 		return -IPSET_ERR_BITMAP_RANGE;
 
 	/* Backward compatibility: we don't check the second flag */
-	if (skb_mac_header(skb) < skb->head
-	    || (skb_mac_header(skb) + ETH_HLEN) > skb->data)
+	if (skb_mac_header(skb) < skb->head ||
+	    (skb_mac_header(skb) + ETH_HLEN) > skb->data)
 		return -EINVAL;
 
 	data.id -= map->first_ip;
@@ -464,9 +464,9 @@ bitmap_ipmac_same_set(const struct ip_set *a, const struct ip_set *b)
 	const struct bitmap_ipmac *x = a->data;
 	const struct bitmap_ipmac *y = b->data;
 
-	return x->first_ip == y->first_ip
-	       && x->last_ip == y->last_ip
-	       && x->timeout == y->timeout;
+	return x->first_ip == y->first_ip &&
+	       x->last_ip == y->last_ip &&
+	       x->timeout == y->timeout;
 }
 
 const struct ip_set_type_variant bitmap_ipmac = {
@@ -512,8 +512,8 @@ bitmap_ipmac_gc(unsigned long ul_set)
 	read_lock_bh(&set->lock);
 	for (id = 0; id <= last; id++) {
 		elem = bitmap_ipmac_elem(map, id);
-		if (elem->match == MAC_FILLED
-		    && ip_set_timeout_expired(elem->timeout))
+		if (elem->match == MAC_FILLED &&
+		    ip_set_timeout_expired(elem->timeout))
 			elem->match = MAC_EMPTY;
 	}
 	read_unlock_bh(&set->lock);

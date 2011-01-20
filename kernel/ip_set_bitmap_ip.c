@@ -264,9 +264,9 @@ bitmap_ip_same_set(const struct ip_set *a, const struct ip_set *b)
 	const struct bitmap_ip *x = a->data;
 	const struct bitmap_ip *y = b->data;
 
-	return x->first_ip == y->first_ip
-	       && x->last_ip == y->last_ip
-	       && x->netmask == y->netmask;
+	return x->first_ip == y->first_ip &&
+	       x->last_ip == y->last_ip &&
+	       x->netmask == y->netmask;
 }
 
 static const struct ip_set_type_variant bitmap_ip = {
@@ -511,10 +511,10 @@ bitmap_ip_timeout_same_set(const struct ip_set *a, const struct ip_set *b)
 	const struct bitmap_ip_timeout *x = a->data;
 	const struct bitmap_ip_timeout *y = b->data;
 
-	return x->first_ip == y->first_ip
-	       && x->last_ip == y->last_ip
-	       && x->netmask == y->netmask
-	       && x->timeout == y->timeout;
+	return x->first_ip == y->first_ip &&
+	       x->last_ip == y->last_ip &&
+	       x->netmask == y->netmask &&
+	       x->timeout == y->timeout;
 }
 
 static const struct ip_set_type_variant bitmap_ip_timeout = {
@@ -647,8 +647,8 @@ bitmap_ip_create(struct ip_set *set, struct nlattr *head, int len,
 
 		mask = range_to_mask(first_ip, last_ip, &mask_bits);
 
-		if ((!mask && (first_ip || last_ip != 0xFFFFFFFF))
-		    || netmask <= mask_bits)
+		if ((!mask && (first_ip || last_ip != 0xFFFFFFFF)) ||
+		    netmask <= mask_bits)
 			return -IPSET_ERR_BITMAP_RANGE;
 
 		pr_debug("mask_bits %u, netmask %u", mask_bits, netmask);

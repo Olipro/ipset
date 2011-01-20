@@ -68,11 +68,11 @@ static inline bool
 hash_ipportnet4_data_equal(const struct hash_ipportnet4_elem *ip1,
 			   const struct hash_ipportnet4_elem *ip2)
 {
-	return ip1->ip == ip2->ip
-	       && ip1->ip2 == ip2->ip2
-	       && ip1->cidr == ip2->cidr
-	       && ip1->port == ip2->port
-	       && ip1->proto == ip2->proto;
+	return ip1->ip == ip2->ip &&
+	       ip1->ip2 == ip2->ip2 &&
+	       ip1->cidr == ip2->cidr &&
+	       ip1->port == ip2->port &&
+	       ip1->proto == ip2->proto;
 }
 
 static inline bool
@@ -258,10 +258,10 @@ hash_ipportnet4_uadt(struct ip_set *set, struct nlattr *head, int len,
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 	}
 
-	if (adt == IPSET_TEST
-	    || !(data.proto == IPPROTO_TCP || data.proto == IPPROTO_UDP)
-	    || !(tb[IPSET_ATTR_IP_TO] || tb[IPSET_ATTR_CIDR]
-	    	 || tb[IPSET_ATTR_PORT_TO])) {
+	if (adt == IPSET_TEST ||
+	    !(data.proto == IPPROTO_TCP || data.proto == IPPROTO_UDP) ||
+	    !(tb[IPSET_ATTR_IP_TO] || tb[IPSET_ATTR_CIDR] ||
+	      tb[IPSET_ATTR_PORT_TO])) {
 		ret = adtfn(set, &data, timeout);
 		return ip_set_eexist(ret, flags) ? 0 : ret;
 	}
@@ -313,8 +313,8 @@ hash_ipportnet_same_set(const struct ip_set *a, const struct ip_set *b)
 	const struct ip_set_hash *y = b->data;
 	
 	/* Resizing changes htable_bits, so we ignore it */
-	return x->maxelem == y->maxelem
-	       && x->timeout == y->timeout;
+	return x->maxelem == y->maxelem &&
+	       x->timeout == y->timeout;
 }
 
 /* The type variant functions: IPv6 */
@@ -340,11 +340,11 @@ static inline bool
 hash_ipportnet6_data_equal(const struct hash_ipportnet6_elem *ip1,
 			   const struct hash_ipportnet6_elem *ip2)
 {
-	return ipv6_addr_cmp(&ip1->ip.in6, &ip2->ip.in6) == 0
-	       && ipv6_addr_cmp(&ip1->ip2.in6, &ip2->ip2.in6) == 0
-	       && ip1->cidr == ip2->cidr
-	       && ip1->port == ip2->port
-	       && ip1->proto == ip2->proto;
+	return ipv6_addr_cmp(&ip1->ip.in6, &ip2->ip.in6) == 0 &&
+	       ipv6_addr_cmp(&ip1->ip2.in6, &ip2->ip2.in6) == 0 &&
+	       ip1->cidr == ip2->cidr &&
+	       ip1->port == ip2->port &&
+	       ip1->proto == ip2->proto;
 }
 
 static inline bool
@@ -524,9 +524,9 @@ hash_ipportnet6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
 	}
 
-	if (adt == IPSET_TEST
-	    || !(data.proto == IPPROTO_TCP || data.proto == IPPROTO_UDP)
-	    || !tb[IPSET_ATTR_PORT_TO]) {
+	if (adt == IPSET_TEST ||
+	    !(data.proto == IPPROTO_TCP || data.proto == IPPROTO_UDP) ||
+	    !tb[IPSET_ATTR_PORT_TO]) {
 		ret = adtfn(set, &data, timeout);
 		return ip_set_eexist(ret, flags) ? 0 : ret;
 	}

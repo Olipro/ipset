@@ -43,17 +43,17 @@ ip_set_timeout_uget(struct nlattr *tb)
 static inline bool
 ip_set_timeout_test(unsigned long timeout)
 {
-	return timeout != IPSET_ELEM_UNSET
-		&& (timeout == IPSET_ELEM_PERMANENT
-		    || time_after(timeout, jiffies));
+	return timeout != IPSET_ELEM_UNSET &&
+	       (timeout == IPSET_ELEM_PERMANENT ||
+		time_after(timeout, jiffies));
 }
 
 static inline bool
 ip_set_timeout_expired(unsigned long timeout)
 {
-	return timeout != IPSET_ELEM_UNSET
-	       && timeout != IPSET_ELEM_PERMANENT
-	       && time_before(timeout, jiffies);
+	return timeout != IPSET_ELEM_UNSET &&
+	       timeout != IPSET_ELEM_PERMANENT &&
+	       time_before(timeout, jiffies);
 }
 
 static inline unsigned long
@@ -88,15 +88,15 @@ ip_set_timeout_get(unsigned long timeout)
 static inline bool
 ip_set_timeout_test(unsigned long timeout)
 {
-	return timeout == IPSET_ELEM_PERMANENT
-	       || time_after(timeout, jiffies);
+	return timeout == IPSET_ELEM_PERMANENT ||
+	       time_after(timeout, jiffies);
 }
 
 static inline bool
 ip_set_timeout_expired(unsigned long timeout)
 {
-	return timeout != IPSET_ELEM_PERMANENT
-	       && time_before(timeout, jiffies);
+	return timeout != IPSET_ELEM_PERMANENT &&
+	       time_before(timeout, jiffies);
 }
 
 static inline unsigned long

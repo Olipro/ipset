@@ -215,9 +215,9 @@ hash_ip_same_set(const struct ip_set *a, const struct ip_set *b)
 	const struct ip_set_hash *y = b->data;
 
 	/* Resizing changes htable_bits, so we ignore it */
-	return x->maxelem == y->maxelem
-	       && x->timeout == y->timeout
-	       && x->netmask == y->netmask;
+	return x->maxelem == y->maxelem &&
+	       x->timeout == y->timeout &&
+	       x->netmask == y->netmask;
 }
 
 /* The type variant functions: IPv6 */
@@ -408,9 +408,9 @@ hash_ip_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 	if (tb[IPSET_ATTR_NETMASK]) {
 		netmask = nla_get_u8(tb[IPSET_ATTR_NETMASK]);
 
-		if ((set->family == AF_INET && netmask > 32)
-		    || (set->family == AF_INET6 && netmask > 128)
-		    || netmask == 0)
+		if ((set->family == AF_INET && netmask > 32) ||
+		    (set->family == AF_INET6 && netmask > 128) ||
+		    netmask == 0)
 			return -IPSET_ERR_INVALID_NETMASK;
 	}
 

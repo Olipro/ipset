@@ -246,8 +246,8 @@ bitmap_port_same_set(const struct ip_set *a, const struct ip_set *b)
 	const struct bitmap_port *x = a->data;
 	const struct bitmap_port *y = b->data;
 
-	return x->first_port == y->first_port
-	       && x->last_port == y->last_port;
+	return x->first_port == y->first_port &&
+	       x->last_port == y->last_port;
 }
 
 const struct ip_set_type_variant bitmap_port = {
@@ -483,9 +483,9 @@ bitmap_port_timeout_same_set(const struct ip_set *a, const struct ip_set *b)
 	const struct bitmap_port_timeout *x = a->data;
 	const struct bitmap_port_timeout *y = b->data;
 
-	return x->first_port == y->first_port
-	       && x->last_port == y->last_port
-	       && x->timeout == y->timeout;
+	return x->first_port == y->first_port &&
+	       x->last_port == y->last_port &&
+	       x->timeout == y->timeout;
 }
 
 const struct ip_set_type_variant bitmap_port_timeout = {

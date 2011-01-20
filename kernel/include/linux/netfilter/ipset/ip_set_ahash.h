@@ -807,8 +807,8 @@ type_pf_tadd(struct ip_set *set, void *value, u32 timeout)
 				ret = -IPSET_ERR_EXIST;
 				goto out;
 			}
-		} else if (j == AHASH_MAX_SIZE + 1 
-			 && type_pf_data_expired(data))
+		} else if (j == AHASH_MAX_SIZE + 1 && 
+			   type_pf_data_expired(data))
 			j = i;
 	}
 	if (j != AHASH_MAX_SIZE + 1) {
