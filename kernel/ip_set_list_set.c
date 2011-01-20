@@ -222,20 +222,22 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 		      list_set_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
 
+	if (unlikely(!tb[IPSET_ATTR_NAME] ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT) ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_CADT_FLAGS)))
+		return -IPSET_ERR_PROTOCOL;
+
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	if (tb[IPSET_ATTR_NAME]) {
-		id = ip_set_get_byname(nla_data(tb[IPSET_ATTR_NAME]), &s);
-		if (id == IPSET_INVALID_ID)
-			return -IPSET_ERR_NAME;
-		/* "Loop detection" */
-		if (s->type->features & IPSET_TYPE_NAME) {
-			ret = -IPSET_ERR_LOOP;
-			goto finish;
-		}
-	} else
-		return -IPSET_ERR_PROTOCOL;
+	id = ip_set_get_byname(nla_data(tb[IPSET_ATTR_NAME]), &s);
+	if (id == IPSET_INVALID_ID)
+		return -IPSET_ERR_NAME;
+	/* "Loop detection" */
+	if (s->type->features & IPSET_TYPE_NAME) {
+		ret = -IPSET_ERR_LOOP;
+		goto finish;
+	}
 
 	if (tb[IPSET_ATTR_CADT_FLAGS]) {
 		u32 f = ip_set_get_h32(tb[IPSET_ATTR_CADT_FLAGS]);
@@ -539,6 +541,10 @@ list_set_create(struct ip_set *set, struct nlattr *head, int len,
 
 	if (nla_parse(tb, IPSET_ATTR_CREATE_MAX, head, len,
 		      list_set_create_policy))
+		return -IPSET_ERR_PROTOCOL;
+
+	if (unlikely(!ip_set_optattr_netorder(tb, IPSET_ATTR_SIZE) ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT)))
 		return -IPSET_ERR_PROTOCOL;
 
 	if (tb[IPSET_ATTR_SIZE])

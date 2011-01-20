@@ -320,15 +320,14 @@ extern int ip_set_test(ip_set_id_t id, const struct sk_buff *skb,
 /* Utility functions */
 extern void * ip_set_alloc(size_t size, gfp_t gfp_mask);
 extern void ip_set_free(void *members);
-extern int ip_set_get_ipaddr4(struct nlattr *attr[], int type, __be32 *ipaddr);
-extern int ip_set_get_ipaddr6(struct nlattr *attr[], int type,
-			      union nf_inet_addr *ipaddr);
+extern int ip_set_get_ipaddr4(struct nlattr *nla,  __be32 *ipaddr);
+extern int ip_set_get_ipaddr6(struct nlattr *nla, union nf_inet_addr *ipaddr);
 
 static inline int
-ip_set_get_hostipaddr4(struct nlattr *attr[], int type, u32 *ipaddr)
+ip_set_get_hostipaddr4(struct nlattr *nla, u32 *ipaddr)
 {
 	__be32 ip;
-	int ret = ip_set_get_ipaddr4(attr, type, &ip);
+	int ret = ip_set_get_ipaddr4(nla, &ip);
 	
 	if (ret)
 		return ret;
@@ -341,6 +340,19 @@ static inline bool
 ip_set_eexist(int ret, u32 flags)
 {
 	return ret == -IPSET_ERR_EXIST && (flags & IPSET_FLAG_EXIST);
+}
+
+/* Check the NLA_F_NET_BYTEORDER flag */
+static inline bool
+ip_set_attr_netorder(struct nlattr *tb[], int type)
+{
+	return tb[type] && (tb[type]->nla_type & NLA_F_NET_BYTEORDER);
+}
+
+static inline bool
+ip_set_optattr_netorder(struct nlattr *tb[], int type)
+{
+	return !tb[type] || (tb[type]->nla_type & NLA_F_NET_BYTEORDER);
 }
 
 /* Useful converters */

@@ -380,10 +380,14 @@ bitmap_ipmac_uadt(struct ip_set *set, struct nlattr *head, int len,
 		      bitmap_ipmac_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
 
+	if (unlikely(!tb[IPSET_ATTR_IP] ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT)))
+		return -IPSET_ERR_PROTOCOL;
+
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &data.id);
+	ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP], &data.id);
 	if (ret)
 		return ret;
 
@@ -538,6 +542,7 @@ static const struct nla_policy
 bitmap_ipmac_create_policy[IPSET_ATTR_CREATE_MAX+1] = {
 	[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
 	[IPSET_ATTR_IP_TO]	= { .type = NLA_NESTED },
+	[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
 };
 
@@ -572,12 +577,16 @@ bitmap_ipmac_create(struct ip_set *set, struct nlattr *head, int len,
 		      bitmap_ipmac_create_policy))
 		return -IPSET_ERR_PROTOCOL;
 
-	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &first_ip);
+	if (unlikely(!tb[IPSET_ATTR_IP] ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT)))
+		return -IPSET_ERR_PROTOCOL;
+
+	ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP], &first_ip);
 	if (ret)
 		return ret;
 
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &last_ip);
+		ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP_TO], &last_ip);
 		if (ret)
 			return ret;
 		if (first_ip > last_ip) {

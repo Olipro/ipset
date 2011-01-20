@@ -209,6 +209,12 @@ ip_set_free(void *members)
 }
 EXPORT_SYMBOL_GPL(ip_set_free);
 
+static inline bool
+flag_nested(const struct nlattr *nla)
+{
+	return nla->nla_type & NLA_F_NESTED;
+}
+
 static const struct nla_policy ipaddr_policy[IPSET_ATTR_IPADDR_MAX + 1] = {
 	[IPSET_ATTR_IPADDR_IPV4]	= { .type = NLA_U32 },
 	[IPSET_ATTR_IPADDR_IPV6]	= { .type = NLA_BINARY,
@@ -216,19 +222,17 @@ static const struct nla_policy ipaddr_policy[IPSET_ATTR_IPADDR_MAX + 1] = {
 };
 
 int
-ip_set_get_ipaddr4(struct nlattr *attr[], int type, __be32 *ipaddr)
+ip_set_get_ipaddr4(struct nlattr *nla,  __be32 *ipaddr)
 {
 	struct nlattr *tb[IPSET_ATTR_IPADDR_MAX+1];
 
-	if (!attr[type])
+	if (unlikely(!flag_nested(nla)))
 		return -IPSET_ERR_PROTOCOL;
-
-	if (nla_parse(tb, IPSET_ATTR_IPADDR_MAX,
-		      nla_data(attr[type]), nla_len(attr[type]),
+	if (nla_parse(tb, IPSET_ATTR_IPADDR_MAX, nla_data(nla), nla_len(nla),
 		      ipaddr_policy))
 		return -IPSET_ERR_PROTOCOL;
-	if (!tb[IPSET_ATTR_IPADDR_IPV4])
-		return -IPSET_ERR_IPADDR_IPV4;
+	if (unlikely(!ip_set_attr_netorder(tb, IPSET_ATTR_IPADDR_IPV4)))
+		return -IPSET_ERR_PROTOCOL;
 
 	*ipaddr = nla_get_be32(tb[IPSET_ATTR_IPADDR_IPV4]);
 	return 0;
@@ -236,19 +240,18 @@ ip_set_get_ipaddr4(struct nlattr *attr[], int type, __be32 *ipaddr)
 EXPORT_SYMBOL_GPL(ip_set_get_ipaddr4);
 
 int
-ip_set_get_ipaddr6(struct nlattr *attr[], int type, union nf_inet_addr *ipaddr)
+ip_set_get_ipaddr6(struct nlattr *nla, union nf_inet_addr *ipaddr)
 {
 	struct nlattr *tb[IPSET_ATTR_IPADDR_MAX+1];
 
-	if (!attr[type])
+	if (unlikely(!flag_nested(nla)))
 		return -IPSET_ERR_PROTOCOL;
 
-	if (nla_parse(tb, IPSET_ATTR_IPADDR_MAX,
-		      nla_data(attr[type]), nla_len(attr[type]),
+	if (nla_parse(tb, IPSET_ATTR_IPADDR_MAX, nla_data(nla), nla_len(nla),
 		      ipaddr_policy))
 		return -IPSET_ERR_PROTOCOL;
-	if (!tb[IPSET_ATTR_IPADDR_IPV6])
-		return -IPSET_ERR_IPADDR_IPV6;
+	if (unlikely(!ip_set_attr_netorder(tb, IPSET_ATTR_IPADDR_IPV6)))
+		return -IPSET_ERR_PROTOCOL;
 
 	memcpy(ipaddr, nla_data(tb[IPSET_ATTR_IPADDR_IPV6]),
 		sizeof(struct in6_addr));
@@ -509,12 +512,6 @@ static inline u32
 flag_exist(const struct nlmsghdr *nlh)
 {
 	return nlh->nlmsg_flags & NLM_F_EXCL ? 0 : IPSET_FLAG_EXIST;
-}
-
-static inline bool
-flag_nested(const struct nlattr *nla)
-{
-	return nla->nla_type & NLA_F_NESTED;
 }
 
 static struct nlmsghdr *

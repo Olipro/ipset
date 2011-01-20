@@ -209,14 +209,20 @@ hash_ipportnet4_uadt(struct ip_set *set, struct nlattr *head, int len,
 		      hash_ipportnet_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
 
+	if (unlikely(!tb[IPSET_ATTR_IP] || !tb[IPSET_ATTR_IP2] ||
+		     !ip_set_attr_netorder(tb, IPSET_ATTR_PORT) ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_PORT_TO) ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT)))
+		return -IPSET_ERR_PROTOCOL;
+
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP, &data.ip);
+	ret = ip_set_get_ipaddr4(tb[IPSET_ATTR_IP], &data.ip);
 	if (ret)
 		return ret;
 
-	ret = ip_set_get_ipaddr4(tb, IPSET_ATTR_IP2, &data.ip2);
+	ret = ip_set_get_ipaddr4(tb[IPSET_ATTR_IP2], &data.ip2);
 	if (ret)
 		return ret;
 
@@ -267,7 +273,7 @@ hash_ipportnet4_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 	ip = ntohl(data.ip);
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
+		ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP_TO], &ip_to);
 		if (ret)
 			return ret;
 		if (ip > ip_to)
@@ -474,14 +480,20 @@ hash_ipportnet6_uadt(struct ip_set *set, struct nlattr *head, int len,
 		      hash_ipportnet_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
 
+	if (unlikely(!tb[IPSET_ATTR_IP] || !tb[IPSET_ATTR_IP2] ||
+		     !ip_set_attr_netorder(tb, IPSET_ATTR_PORT) ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_PORT_TO) ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT)))
+		return -IPSET_ERR_PROTOCOL;
+
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	ret = ip_set_get_ipaddr6(tb, IPSET_ATTR_IP, &data.ip);
+	ret = ip_set_get_ipaddr6(tb[IPSET_ATTR_IP], &data.ip);
 	if (ret)
 		return ret;
 
-	ret = ip_set_get_ipaddr6(tb, IPSET_ATTR_IP2, &data.ip2);
+	ret = ip_set_get_ipaddr6(tb[IPSET_ATTR_IP2], &data.ip2);
 	if (ret)
 		return ret;
 
@@ -571,6 +583,11 @@ hash_ipportnet_create(struct ip_set *set, struct nlattr *head,
 
 	if (nla_parse(tb, IPSET_ATTR_CREATE_MAX, head, len,
 		      hash_ipportnet_create_policy))
+		return -IPSET_ERR_PROTOCOL;
+
+	if (unlikely(!ip_set_optattr_netorder(tb, IPSET_ATTR_HASHSIZE) ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_MAXELEM) ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT)))
 		return -IPSET_ERR_PROTOCOL;
 
 	if (tb[IPSET_ATTR_HASHSIZE]) {

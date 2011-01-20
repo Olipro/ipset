@@ -121,10 +121,13 @@ bitmap_ip_uadt(struct ip_set *set, struct nlattr *head, int len,
 		      bitmap_ip_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
 
+	if (unlikely(!tb[IPSET_ATTR_IP]))
+		return -IPSET_ERR_PROTOCOL;
+
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &ip);
+	ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP], &ip);
 	if (ret)
 		return ret;
 
@@ -140,7 +143,7 @@ bitmap_ip_uadt(struct ip_set *set, struct nlattr *head, int len,
 		return bitmap_ip_test(map, ip_to_id(map, ip));
 
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
+		ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP_TO], &ip_to);
 		if (ret)
 			return ret;
 		if (ip > ip_to) {
@@ -359,10 +362,14 @@ bitmap_ip_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 		      bitmap_ip_adt_policy))
 		return -IPSET_ERR_PROTOCOL;
 
+	if (unlikely(!tb[IPSET_ATTR_IP] ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT)))
+		return -IPSET_ERR_PROTOCOL;
+
 	if (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &ip);
+	ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP], &ip);
 	if (ret)
 		return ret;
 
@@ -374,7 +381,7 @@ bitmap_ip_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 				ip_to_id((const struct bitmap_ip *)map, ip));
 
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &ip_to);
+		ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP_TO], &ip_to);
 		if (ret)
 			return ret;
 		if (ip > ip_to) {
@@ -598,12 +605,16 @@ bitmap_ip_create(struct ip_set *set, struct nlattr *head, int len,
 		      bitmap_ip_create_policy))
 		return -IPSET_ERR_PROTOCOL;
 
-	ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP, &first_ip);
+	if (unlikely(!tb[IPSET_ATTR_IP] ||
+		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT)))
+		return -IPSET_ERR_PROTOCOL;
+
+	ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP], &first_ip);
 	if (ret)
 		return ret;
 
 	if (tb[IPSET_ATTR_IP_TO]) {
-		ret = ip_set_get_hostipaddr4(tb, IPSET_ATTR_IP_TO, &last_ip);
+		ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP_TO], &last_ip);
 		if (ret)
 			return ret;
 		if (first_ip > last_ip) {
