@@ -594,7 +594,7 @@ bitmap_ipmac_create(struct ip_set *set, struct nlattr *head, int len,
 
 		if (cidr >= 32)
 			return -IPSET_ERR_INVALID_CIDR;
-		last_ip = first_ip | ~HOSTMASK(cidr);
+		last_ip = first_ip | ~ip_set_hostmask(cidr);
 	} else
 		return -IPSET_ERR_PROTOCOL;
 

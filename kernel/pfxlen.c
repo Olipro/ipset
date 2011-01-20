@@ -14,7 +14,7 @@
  * This table works for both IPv4 and IPv6;
  * just use prefixlen_netmask_map[prefixlength].ip.
  */
-const union nf_inet_addr prefixlen_netmask_map[] = {
+const union nf_inet_addr ip_set_netmask_map[] = {
 	E(0x00000000, 0x00000000, 0x00000000, 0x00000000),
 	E(0x80000000, 0x00000000, 0x00000000, 0x00000000),
 	E(0xC0000000, 0x00000000, 0x00000000, 0x00000000),
@@ -145,7 +145,7 @@ const union nf_inet_addr prefixlen_netmask_map[] = {
 	E(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE),
 	E(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF),
 };
-EXPORT_SYMBOL_GPL(prefixlen_netmask_map);
+EXPORT_SYMBOL_GPL(ip_set_netmask_map);
 
 #undef  E
 #define E(a, b, c, d) \
@@ -155,7 +155,7 @@ EXPORT_SYMBOL_GPL(prefixlen_netmask_map);
  * This table works for both IPv4 and IPv6;
  * just use prefixlen_hostmask_map[prefixlength].ip.
  */
-const union nf_inet_addr prefixlen_hostmask_map[] = {
+const union nf_inet_addr ip_set_hostmask_map[] = {
 	E(0x00000000, 0x00000000, 0x00000000, 0x00000000),
 	E(0x80000000, 0x00000000, 0x00000000, 0x00000000),
 	E(0xC0000000, 0x00000000, 0x00000000, 0x00000000),
@@ -286,4 +286,4 @@ const union nf_inet_addr prefixlen_hostmask_map[] = {
 	E(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE),
 	E(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF),
 };
-EXPORT_SYMBOL_GPL(prefixlen_hostmask_map);
+EXPORT_SYMBOL_GPL(ip_set_hostmask_map);

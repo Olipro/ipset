@@ -46,9 +46,9 @@ struct bitmap_ip {
 };
 
 static inline u32
-ip_to_id(const struct bitmap_ip *map, u32 ip)
+ip_to_id(const struct bitmap_ip *m, u32 ip)
 {
-	return ((ip & HOSTMASK(map->netmask)) - map->first_ip)/map->hosts;
+	return ((ip & ip_set_hostmask(m->netmask)) - m->first_ip)/m->hosts;
 }
 
 static inline int
@@ -155,8 +155,8 @@ bitmap_ip_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 		if (cidr > 32)
 			return -IPSET_ERR_INVALID_CIDR;
-		ip &= HOSTMASK(cidr);
-		ip_to = ip | ~HOSTMASK(cidr);
+		ip &= ip_set_hostmask(cidr);
+		ip_to = ip | ~ip_set_hostmask(cidr);
 	} else
 		ip_to = ip;
 
@@ -391,8 +391,8 @@ bitmap_ip_timeout_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 		if (cidr > 32)
 			return -IPSET_ERR_INVALID_CIDR;
-		ip &= HOSTMASK(cidr);
-		ip_to = ip | ~HOSTMASK(cidr);
+		ip &= ip_set_hostmask(cidr);
+		ip_to = ip | ~ip_set_hostmask(cidr);
 	} else
 		ip_to = ip;
 
@@ -623,7 +623,7 @@ bitmap_ip_create(struct ip_set *set, struct nlattr *head, int len,
 
 		if (cidr >= 32)
 			return -IPSET_ERR_INVALID_CIDR;
-		last_ip = first_ip | ~HOSTMASK(cidr);
+		last_ip = first_ip | ~ip_set_hostmask(cidr);
 	} else
 		return -IPSET_ERR_PROTOCOL;
 
@@ -633,8 +633,8 @@ bitmap_ip_create(struct ip_set *set, struct nlattr *head, int len,
 		if (netmask > 32)
 			return -IPSET_ERR_INVALID_NETMASK;
 
-		first_ip &= HOSTMASK(netmask);
-		last_ip |= ~HOSTMASK(netmask);
+		first_ip &= ip_set_hostmask(netmask);
+		last_ip |= ~ip_set_hostmask(netmask);
 	}
 
 	if (netmask == 32) {

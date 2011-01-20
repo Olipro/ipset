@@ -101,7 +101,7 @@ hash_ipportnet4_data_swap(struct hash_ipportnet4_elem *dst,
 static inline void
 hash_ipportnet4_data_netmask(struct hash_ipportnet4_elem *elem, u8 cidr)
 {
-	elem->ip2 &= NETMASK(cidr);
+	elem->ip2 &= ip_set_netmask(cidr);
 	elem->cidr = cidr;
 }
 
@@ -174,7 +174,7 @@ hash_ipportnet4_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	ip4addrptr(skb, flags & IPSET_DIM_ONE_SRC, &data.ip);
 	ip4addrptr(skb, flags & IPSET_DIM_THREE_SRC, &data.ip2);
-	data.ip2 &= NETMASK(data.cidr);
+	data.ip2 &= ip_set_netmask(data.cidr);
 
 	return adtfn(set, &data, h->timeout);
 }
@@ -226,7 +226,7 @@ hash_ipportnet4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (!data.cidr)
 		return -IPSET_ERR_INVALID_CIDR;
 
-	data.ip2 &= NETMASK(data.cidr);
+	data.ip2 &= ip_set_netmask(data.cidr);
 
 	if (tb[IPSET_ATTR_PORT])
 		data.port = ip_set_get_n16(tb[IPSET_ATTR_PORT]);
@@ -278,8 +278,8 @@ hash_ipportnet4_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 		if (cidr > 32)
 			return -IPSET_ERR_INVALID_CIDR;
-		ip &= HOSTMASK(cidr);
-		ip_to = ip | ~HOSTMASK(cidr);
+		ip &= ip_set_hostmask(cidr);
+		ip_to = ip | ~ip_set_hostmask(cidr);
 	} else
 		ip_to = ip;
 
@@ -379,10 +379,10 @@ hash_ipportnet6_data_zero_out(struct hash_ipportnet6_elem *elem)
 static inline void
 ip6_netmask(union nf_inet_addr *ip, u8 prefix)
 {
-	ip->ip6[0] &= NETMASK6(prefix)[0];
-	ip->ip6[1] &= NETMASK6(prefix)[1];
-	ip->ip6[2] &= NETMASK6(prefix)[2];
-	ip->ip6[3] &= NETMASK6(prefix)[3];
+	ip->ip6[0] &= ip_set_netmask6(prefix)[0];
+	ip->ip6[1] &= ip_set_netmask6(prefix)[1];
+	ip->ip6[2] &= ip_set_netmask6(prefix)[2];
+	ip->ip6[3] &= ip_set_netmask6(prefix)[3];
 }
 
 static inline void

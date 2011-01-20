@@ -126,7 +126,7 @@ hash_ip4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	u32 ip;
 
 	ip4addrptr(skb, flags & IPSET_DIM_ONE_SRC, &ip);
-	ip &= NETMASK(h->netmask);
+	ip &= ip_set_netmask(h->netmask);
 	if (ip == 0)
 		return -EINVAL;
 
@@ -162,7 +162,7 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 	if (ret)
 		return ret;
 
-	ip &= NETMASK(h->netmask);
+	ip &= ip_set_netmask(h->netmask);
 	if (ip == 0)
 		return -IPSET_ERR_HASH_ELEM;
 
@@ -188,8 +188,8 @@ hash_ip4_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 		if (cidr > 32)
 			return -IPSET_ERR_INVALID_CIDR;
-		ip &= HOSTMASK(cidr);
-		ip_to = ip | ~HOSTMASK(cidr);
+		ip &= ip_set_hostmask(cidr);
+		ip_to = ip | ~ip_set_hostmask(cidr);
 	} else
 		ip_to = ip;
 
@@ -268,10 +268,10 @@ hash_ip6_data_zero_out(struct hash_ip6_elem *elem)
 static inline void
 ip6_netmask(union nf_inet_addr *ip, u8 prefix)
 {
-	ip->ip6[0] &= NETMASK6(prefix)[0];
-	ip->ip6[1] &= NETMASK6(prefix)[1];
-	ip->ip6[2] &= NETMASK6(prefix)[2];
-	ip->ip6[3] &= NETMASK6(prefix)[3];
+	ip->ip6[0] &= ip_set_netmask6(prefix)[0];
+	ip->ip6[1] &= ip_set_netmask6(prefix)[1];
+	ip->ip6[2] &= ip_set_netmask6(prefix)[2];
+	ip->ip6[3] &= ip_set_netmask6(prefix)[3];
 }
 
 static inline bool
