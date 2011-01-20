@@ -174,6 +174,88 @@ unlock:
 }
 EXPORT_SYMBOL_GPL(ip_set_type_unregister);
 
+/* Utility functions */
+void *
+ip_set_alloc(size_t size, gfp_t gfp_mask)
+{
+	void *members = NULL;
+
+	if (size < KMALLOC_MAX_SIZE)
+		members = kzalloc(size, gfp_mask | __GFP_NOWARN);
+
+	if (members) {
+		pr_debug("%p: allocated with kmalloc", members);
+		return members;
+	}
+
+	members = __vmalloc(size, gfp_mask | __GFP_ZERO, PAGE_KERNEL);
+	if (!members)
+		return NULL;
+	pr_debug("%p: allocated with vmalloc", members);
+
+	return members;
+}
+EXPORT_SYMBOL_GPL(ip_set_alloc);
+
+void
+ip_set_free(void *members)
+{
+	pr_debug("%p: free with %s", members,
+		 is_vmalloc_addr(members) ? "vfree" : "kfree");
+	if (is_vmalloc_addr(members))
+		vfree(members);
+	else
+		kfree(members);
+}
+EXPORT_SYMBOL_GPL(ip_set_free);
+
+static const struct nla_policy ipaddr_policy[IPSET_ATTR_IPADDR_MAX + 1] = {
+	[IPSET_ATTR_IPADDR_IPV4]	= { .type = NLA_U32 },
+	[IPSET_ATTR_IPADDR_IPV6]	= { .type = NLA_BINARY,
+					    .len = sizeof(struct in6_addr) },
+};
+
+int
+ip_set_get_ipaddr4(struct nlattr *attr[], int type, u32 *ipaddr)
+{
+	struct nlattr *tb[IPSET_ATTR_IPADDR_MAX+1];
+
+	if (!attr[type])
+		return -IPSET_ERR_PROTOCOL;
+
+	if (nla_parse(tb, IPSET_ATTR_IPADDR_MAX,
+		      nla_data(attr[type]), nla_len(attr[type]),
+		      ipaddr_policy))
+		return -IPSET_ERR_PROTOCOL;
+	if (!tb[IPSET_ATTR_IPADDR_IPV4])
+		return -IPSET_ERR_IPADDR_IPV4;
+
+	*ipaddr = ip_set_get_n32(tb[IPSET_ATTR_IPADDR_IPV4]);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(ip_set_get_ipaddr4);
+
+int
+ip_set_get_ipaddr6(struct nlattr *attr[], int type, union nf_inet_addr *ipaddr)
+{
+	struct nlattr *tb[IPSET_ATTR_IPADDR_MAX+1];
+
+	if (!attr[type])
+		return -IPSET_ERR_PROTOCOL;
+
+	if (nla_parse(tb, IPSET_ATTR_IPADDR_MAX,
+		      nla_data(attr[type]), nla_len(attr[type]),
+		      ipaddr_policy))
+		return -IPSET_ERR_PROTOCOL;
+	if (!tb[IPSET_ATTR_IPADDR_IPV6])
+		return -IPSET_ERR_IPADDR_IPV6;
+
+	memcpy(ipaddr, nla_data(tb[IPSET_ATTR_IPADDR_IPV6]),
+		sizeof(struct in6_addr));
+	return 0;
+}
+EXPORT_SYMBOL_GPL(ip_set_get_ipaddr6);
+
 /*
  * Creating/destroying/renaming/swapping affect the existence and
  * the properties of a set. All of these can be executed from userspace
