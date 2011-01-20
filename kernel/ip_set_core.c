@@ -188,7 +188,8 @@ ip_set_alloc(size_t size, gfp_t gfp_mask)
 		return members;
 	}
 
-	members = __vmalloc(size, gfp_mask | __GFP_ZERO, PAGE_KERNEL);
+	members = __vmalloc(size, gfp_mask | __GFP_ZERO | __GFP_HIGHMEM,
+			    PAGE_KERNEL);
 	if (!members)
 		return NULL;
 	pr_debug("%p: allocated with vmalloc", members);
