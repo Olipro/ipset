@@ -23,7 +23,7 @@
 #include <linux/netfilter/nfnetlink.h>
 #include <linux/netfilter/ipset/ip_set.h>
 
-static struct list_head ip_set_type_list;	/* all registered set types */
+static LIST_HEAD(ip_set_type_list);		/* all registered set types */
 static DEFINE_MUTEX(ip_set_type_mutex);		/* protects ip_set_type_list */
 
 static struct ip_set **ip_set_list;		/* all individual sets */
@@ -1520,8 +1520,6 @@ ip_set_init(void)
 		pr_err("ip_set: Unable to create ip_set_list");
 		return -ENOMEM;
 	}
-
-	INIT_LIST_HEAD(&ip_set_type_list);
 
 	ret = nfnetlink_subsys_register(&ip_set_netlink_subsys);
 	if (ret != 0) {
