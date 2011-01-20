@@ -10,7 +10,6 @@
 
 /* Kernel module implementing an IP set type: the bitmap:ip,mac type */
 
-#include <linux/netfilter/ipset/ip_set_kernel.h>
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <linux/etherdevice.h>

@@ -9,7 +9,6 @@
 
 /* Kernel module implementing an IP set type: the bitmap:ip type */
 
-#include <linux/netfilter/ipset/ip_set_kernel.h>
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>

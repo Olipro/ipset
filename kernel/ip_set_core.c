@@ -9,7 +9,6 @@
 
 /* Kernel module for IP set management */
 
-#include <linux/netfilter/ipset/ip_set_kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
