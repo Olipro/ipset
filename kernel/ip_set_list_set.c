@@ -121,7 +121,7 @@ static const struct nla_policy list_set_adt_policy[IPSET_ATTR_ADT_MAX+1] = {
 	[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
 };
 
-static inline bool
+static bool
 next_id_eq(const struct list_set *map, u32 i, ip_set_id_t id)
 {
 	const struct set_elem *elem;
@@ -136,7 +136,7 @@ next_id_eq(const struct list_set *map, u32 i, ip_set_id_t id)
 	return 0;
 }
 
-static inline void
+static void
 list_elem_add(struct list_set *map, u32 i, ip_set_id_t id)
 {
 	struct set_elem *e;
@@ -149,7 +149,7 @@ list_elem_add(struct list_set *map, u32 i, ip_set_id_t id)
 	}
 }
 
-static inline void
+static void
 list_elem_tadd(struct list_set *map, u32 i, ip_set_id_t id,
 	       unsigned long timeout)
 {
@@ -487,7 +487,7 @@ list_set_gc(unsigned long ul_set)
 	add_timer(&map->gc);
 }
 
-static inline void
+static void
 list_set_gc_init(struct ip_set *set)
 {
 	struct list_set *map = set->data;
@@ -507,7 +507,7 @@ list_set_create_policy[IPSET_ATTR_CREATE_MAX+1] = {
 	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
 };
 
-static inline bool
+static bool
 init_list_set(struct ip_set *set, u32 size, size_t dsize,
 	      unsigned long timeout)
 {

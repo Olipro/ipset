@@ -87,23 +87,12 @@ hash_ipportip4_data_copy(struct hash_ipportip4_elem *dst,
 }
 
 static inline void
-hash_ipportip4_data_swap(struct hash_ipportip4_elem *dst,
-			 struct hash_ipportip4_elem *src)
-{
-	struct hash_ipportip4_elem tmp;
-
-	memcpy(&tmp, dst, sizeof(tmp));
-	memcpy(dst, src, sizeof(tmp));
-	memcpy(src, &tmp, sizeof(tmp));
-}
-
-static inline void
 hash_ipportip4_data_zero_out(struct hash_ipportip4_elem *elem)
 {
 	elem->proto = 0;
 }
 
-static inline bool
+static bool
 hash_ipportip4_data_list(struct sk_buff *skb,
 		       const struct hash_ipportip4_elem *data)
 {
@@ -117,7 +106,7 @@ nla_put_failure:
 	return 1;
 }
 
-static inline bool
+static bool
 hash_ipportip4_data_tlist(struct sk_buff *skb,
 			const struct hash_ipportip4_elem *data)
 {
@@ -335,23 +324,12 @@ hash_ipportip6_data_copy(struct hash_ipportip6_elem *dst,
 }
 
 static inline void
-hash_ipportip6_data_swap(struct hash_ipportip6_elem *dst,
-			 struct hash_ipportip6_elem *src)
-{
-	struct hash_ipportip6_elem tmp;
-
-	memcpy(&tmp, dst, sizeof(tmp));
-	memcpy(dst, src, sizeof(tmp));
-	memcpy(src, &tmp, sizeof(tmp));
-}
-
-static inline void
 hash_ipportip6_data_zero_out(struct hash_ipportip6_elem *elem)
 {
 	elem->proto = 0;
 }
 
-static inline bool
+static bool
 hash_ipportip6_data_list(struct sk_buff *skb,
 			 const struct hash_ipportip6_elem *data)
 {
@@ -365,7 +343,7 @@ nla_put_failure:
 	return 1;
 }
 
-static inline bool
+static bool
 hash_ipportip6_data_tlist(struct sk_buff *skb,
 			  const struct hash_ipportip6_elem *data)
 {

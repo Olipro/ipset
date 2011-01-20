@@ -63,7 +63,7 @@ struct ip_set_hash {
 };
 
 /* Compute htable_bits from the user input parameter hashsize */
-static inline u8
+static u8
 htable_bits(u32 hashsize)
 {
 	/* Assume that hashsize == 2^htable_bits */
@@ -81,7 +81,7 @@ htable_bits(u32 hashsize)
 
 /* Network cidr size book keeping when the hash stores different
  * sized networks */
-static inline void
+static void
 add_cidr(struct ip_set_hash *h, u8 cidr, u8 host_mask)
 {
 	u8 i;
@@ -103,7 +103,7 @@ add_cidr(struct ip_set_hash *h, u8 cidr, u8 host_mask)
 		h->nets[i].cidr = cidr;
 }
 
-static inline void
+static void
 del_cidr(struct ip_set_hash *h, u8 cidr, u8 host_mask)
 {
 	u8 i;
@@ -142,7 +142,7 @@ ahash_destroy(struct htable *t)
 }
 
 /* Calculate the actual memory size of the set data */
-static inline size_t
+static size_t
 ahash_memsize(const struct ip_set_hash *h, size_t dsize, u8 host_mask)
 {
 	u32 i;
@@ -436,7 +436,7 @@ type_pf_del(struct ip_set *set, void *value, u32 timeout)
 
 /* Special test function which takes into account the different network
  * sizes added to the set */
-static inline int
+static int
 type_pf_test_cidrs(struct ip_set *set, struct type_pf_elem *d, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
@@ -881,7 +881,7 @@ type_pf_tdel(struct ip_set *set, void *value, u32 timeout)
 }
 
 #ifdef IP_SET_HASH_WITH_NETS
-static inline int
+static int
 type_pf_ttest_cidrs(struct ip_set *set, struct type_pf_elem *d, u32 timeout)
 {
 	struct ip_set_hash *h = set->data;
@@ -1017,7 +1017,7 @@ type_pf_gc(unsigned long ul_set)
 	add_timer(&h->gc);
 }
 
-static inline void
+static void
 type_pf_gc_init(struct ip_set *set)
 {
 	struct ip_set_hash *h = set->data;

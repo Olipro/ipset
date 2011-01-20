@@ -73,12 +73,6 @@ hash_ip4_data_copy(struct hash_ip4_elem *dst, const struct hash_ip4_elem *src)
 	dst->ip = src->ip;
 }
 
-static inline void
-hash_ip4_data_swap(struct hash_ip4_elem *dst, struct hash_ip4_elem *src)
-{
-	swap(dst->ip, src->ip);
-}
-
 /* Zero valued IP addresses cannot be stored */
 static inline void
 hash_ip4_data_zero_out(struct hash_ip4_elem *elem)
@@ -96,7 +90,7 @@ nla_put_failure:
 	return 1;
 }
 
-static inline bool
+static bool
 hash_ip4_data_tlist(struct sk_buff *skb, const struct hash_ip4_elem *data)
 {
 	const struct hash_ip4_telem *tdata =
@@ -257,16 +251,6 @@ hash_ip6_data_copy(struct hash_ip6_elem *dst, const struct hash_ip6_elem *src)
 }
 
 static inline void
-hash_ip6_data_swap(struct hash_ip6_elem *dst, struct hash_ip6_elem *src)
-{
-	struct in6_addr tmp;
-
-	ipv6_addr_copy(&tmp, &dst->ip.in6);
-	ipv6_addr_copy(&dst->ip.in6, &src->ip.in6);
-	ipv6_addr_copy(&src->ip.in6, &tmp);
-}
-
-static inline void
 hash_ip6_data_zero_out(struct hash_ip6_elem *elem)
 {
 	ipv6_addr_set(&elem->ip.in6, 0, 0, 0, 0);
@@ -281,7 +265,7 @@ ip6_netmask(union nf_inet_addr *ip, u8 prefix)
 	ip->ip6[3] &= ip_set_netmask6(prefix)[3];
 }
 
-static inline bool
+static bool
 hash_ip6_data_list(struct sk_buff *skb, const struct hash_ip6_elem *data)
 {
 	NLA_PUT_IPADDR6(skb, IPSET_ATTR_IP, &data->ip);
@@ -291,7 +275,7 @@ nla_put_failure:
 	return 1;
 }
 
-static inline bool
+static bool
 hash_ip6_data_tlist(struct sk_buff *skb, const struct hash_ip6_elem *data)
 {
 	const struct hash_ip6_telem *e =

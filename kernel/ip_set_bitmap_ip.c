@@ -549,7 +549,7 @@ bitmap_ip_gc(unsigned long ul_set)
 	add_timer(&map->gc);
 }
 
-static inline void
+static void
 bitmap_ip_gc_init(struct ip_set *set)
 {
 	struct bitmap_ip_timeout *map = set->data;

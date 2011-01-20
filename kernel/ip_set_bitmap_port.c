@@ -521,7 +521,7 @@ bitmap_port_gc(unsigned long ul_set)
 	add_timer(&map->gc);
 }
 
-static inline void
+static void
 bitmap_port_gc_init(struct ip_set *set)
 {
 	struct bitmap_port_timeout *map = set->data;

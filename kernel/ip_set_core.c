@@ -60,7 +60,7 @@ ip_set_type_unlock(void)
 
 /* Register and deregister settype */
 
-static inline struct ip_set_type *
+static struct ip_set_type *
 find_set_type(const char *name, u8 family, u8 revision)
 {
 	struct ip_set_type *type;
@@ -717,7 +717,7 @@ ip_set_setname_policy[IPSET_ATTR_CMD_MAX + 1] = {
 				    .len = IPSET_MAXNAMELEN - 1 },
 };
 
-static inline void
+static void
 ip_set_destroy_set(ip_set_id_t index)
 {
 	struct ip_set *set = ip_set_list[index];
@@ -766,7 +766,7 @@ ip_set_destroy(struct sock *ctnl, struct sk_buff *skb,
 
 /* Flush sets */
 
-static inline void
+static void
 ip_set_flush_set(struct ip_set *set)
 {
 	pr_debug("set: %s",  set->name);
@@ -929,7 +929,7 @@ dump_attrs(struct nlmsghdr *nlh)
 	}
 }
 
-static inline int
+static int
 dump_init(struct netlink_callback *cb)
 {
 	struct nlmsghdr *nlh = nlmsg_hdr(cb->skb);

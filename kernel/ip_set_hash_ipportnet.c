@@ -88,17 +88,6 @@ hash_ipportnet4_data_copy(struct hash_ipportnet4_elem *dst,
 }
 
 static inline void
-hash_ipportnet4_data_swap(struct hash_ipportnet4_elem *dst,
-			  struct hash_ipportnet4_elem *src)
-{
-	struct hash_ipportnet4_elem tmp;
-
-	memcpy(&tmp, dst, sizeof(tmp));
-	memcpy(dst, src, sizeof(tmp));
-	memcpy(src, &tmp, sizeof(tmp));
-}
-
-static inline void
 hash_ipportnet4_data_netmask(struct hash_ipportnet4_elem *elem, u8 cidr)
 {
 	elem->ip2 &= ip_set_netmask(cidr);
@@ -111,7 +100,7 @@ hash_ipportnet4_data_zero_out(struct hash_ipportnet4_elem *elem)
 	elem->proto = 0;
 }
 
-static inline bool
+static bool
 hash_ipportnet4_data_list(struct sk_buff *skb,
 			  const struct hash_ipportnet4_elem *data)
 {
@@ -126,7 +115,7 @@ nla_put_failure:
 	return 1;
 }
 
-static inline bool
+static bool
 hash_ipportnet4_data_tlist(struct sk_buff *skb,
 			   const struct hash_ipportnet4_elem *data)
 {
@@ -365,17 +354,6 @@ hash_ipportnet6_data_copy(struct hash_ipportnet6_elem *dst,
 }
 
 static inline void
-hash_ipportnet6_data_swap(struct hash_ipportnet6_elem *dst,
-			 struct hash_ipportnet6_elem *src)
-{
-	struct hash_ipportnet6_elem tmp;
-	
-	memcpy(&tmp, dst, sizeof(tmp));
-	memcpy(dst, src, sizeof(tmp));
-	memcpy(src, &tmp, sizeof(tmp));
-}
-
-static inline void
 hash_ipportnet6_data_zero_out(struct hash_ipportnet6_elem *elem)
 {
 	elem->proto = 0;
@@ -397,7 +375,7 @@ hash_ipportnet6_data_netmask(struct hash_ipportnet6_elem *elem, u8 cidr)
 	elem->cidr = cidr;
 }
 
-static inline bool
+static bool
 hash_ipportnet6_data_list(struct sk_buff *skb,
 			  const struct hash_ipportnet6_elem *data)
 {
@@ -412,7 +390,7 @@ nla_put_failure:
 	return 1;
 }
 
-static inline bool
+static bool
 hash_ipportnet6_data_tlist(struct sk_buff *skb,
 			   const struct hash_ipportnet6_elem *data)
 {
