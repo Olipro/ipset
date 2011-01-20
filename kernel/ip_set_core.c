@@ -31,7 +31,7 @@ static ip_set_id_t ip_set_max = CONFIG_IP_SET_MAX; /* max number of sets */
 
 #define STREQ(a, b)	(strncmp(a, b, IPSET_MAXNAMELEN) == 0)
 
-static int max_sets;
+static unsigned int max_sets;
 
 module_param(max_sets, int, 0600);
 MODULE_PARM_DESC(max_sets, "maximal number of sets");
