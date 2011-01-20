@@ -438,12 +438,6 @@ ip_set_get_ipaddr6(struct nlattr *attr[], int type, union nf_inet_addr *ipaddr)
 #define ipset_nest_start(skb, attr) nla_nest_start(skb, attr | NLA_F_NESTED)
 #define ipset_nest_end(skb, start)  nla_nest_end(skb, start)
 
-#define NLA_PUT_NET32(skb, type, value)	\
-	NLA_PUT_BE32(skb, type | NLA_F_NET_BYTEORDER, value)
-
-#define NLA_PUT_NET16(skb, type, value)	\
-	NLA_PUT_BE16(skb, type | NLA_F_NET_BYTEORDER, value)
-
 #define NLA_PUT_IPADDR4(skb, type, ipaddr)			\
 do {								\
 	struct nlattr *__nested = ipset_nest_start(skb, type);	\
