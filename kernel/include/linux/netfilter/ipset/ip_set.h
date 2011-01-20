@@ -292,7 +292,7 @@ struct ip_set {
 	/* References to the set */
 	atomic_t ref;
 	/* The core set type */
-	const struct ip_set_type *type;
+	struct ip_set_type *type;
 	/* The type variant doing the real job */
 	const struct ip_set_type_variant *variant;
 	/* The actual INET family of the set */

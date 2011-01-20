@@ -73,47 +73,64 @@ find_set_type(const char *name, u8 family, u8 revision)
 	return NULL;
 }
 
-/* Find a set type so that rcu_read_lock() is called by the function.
- * If we succeeded, the RCU lock is NOT released and the caller
- * must release it later.
- */
-static struct ip_set_type *
-find_set_type_rcu(const char *name, u8 family, u8 revision)
+/* Unlock, try to load a set type module and lock again */
+static int
+try_to_load_type(const char *name)
 {
-	struct ip_set_type *type;
+	nfnl_unlock();
+	pr_debug("try to load ip_set_%s\n", name);
+	if (request_module("ip_set_%s", name) < 0) {
+		pr_warning("Can't find ip_set type %s\n", name);
+		nfnl_lock();
+		return -IPSET_ERR_FIND_TYPE;
+	}
+	nfnl_lock();
+	return -EAGAIN;
+}
 
+/* Find a set type and reference it */
+static int
+find_set_type_get(const char *name, u8 family, u8 revision,
+		  struct ip_set_type **found)
+{
 	rcu_read_lock();
-	type = find_set_type(name, family, revision);
-	if (type == NULL)
+	*found = find_set_type(name, family, revision);
+	if (*found) {
+		int err = !try_module_get((*found)->me);
 		rcu_read_unlock();
+		return err ? -EFAULT : 0;
+	}
+	rcu_read_unlock();
 
-	return type;
+	return try_to_load_type(name);
 }
 
 /* Find a given set type by name and family.
  * If we succeeded, the supported minimal and maximum revisions are
  * filled out.
  */
-static bool
+static int
 find_set_type_minmax(const char *name, u8 family, u8 *min, u8 *max)
 {
 	struct ip_set_type *type;
-	bool ret = false;
+	bool found = false;
 
 	*min = *max = 0;
 	rcu_read_lock();
 	list_for_each_entry_rcu(type, &ip_set_type_list, list)
 		if (STREQ(type->name, name) &&
 		    (type->family == family || type->family == AF_UNSPEC)) {
-			ret = true;
+			found = true;
 			if (type->revision < *min)
 				*min = type->revision;
 			else if (type->revision > *max)
 				*max = type->revision;
 		}
 	rcu_read_unlock();
+	if (found)
+		return 0;
 
-	return ret;
+	return try_to_load_type(name);
 }
 
 #define family_name(f)	((f) == AF_INET ? "inet" : \
@@ -592,13 +609,6 @@ find_free_id(const char *name, ip_set_id_t *index, struct ip_set **set)
 	return 0;
 }
 
-static inline void
-load_type_module(const char *typename)
-{
-	pr_debug("try to load ip_set_%s", typename);
-	request_module("ip_set_%s", typename);
-}
-
 static int
 ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 	      const struct nlmsghdr *nlh,
@@ -647,26 +657,9 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 	 * After referencing the type, we try to create the type
 	 * specific part of the set without holding any locks.
 	 */
-	set->type = find_set_type_rcu(typename, family, revision);
-	if (set->type == NULL) {
-		/* Try loading the module */
-		load_type_module(typename);
-		set->type = find_set_type_rcu(typename, family, revision);
-		if (set->type == NULL) {
-			pr_warning("Can't find ip_set type %s, family %s, "
-				   "revision %u: set '%s' not created",
-				   typename, family_name(family), revision,
-				   name);
-			ret = -IPSET_ERR_FIND_TYPE;
-			goto out;
-		}
-	}
-	if (!try_module_get(set->type->me)) {
-		rcu_read_unlock();
-		ret = -EFAULT;
+	ret = find_set_type_get(typename, family, revision, &(set->type));
+	if (ret)
 		goto out;
-	}
-	rcu_read_unlock();
 
 	/*
 	 * Without holding any locks, create private part.
@@ -1327,15 +1320,9 @@ ip_set_type(struct sock *ctnl, struct sk_buff *skb,
 
 	family = nla_get_u8(attr[IPSET_ATTR_FAMILY]);
 	typename = nla_data(attr[IPSET_ATTR_TYPENAME]);
-	if (!find_set_type_minmax(typename, family, &min, &max)) {
-		/* Try to load in the type module */
-		load_type_module(typename);
-		if (!find_set_type_minmax(typename, family, &min, &max)) {
-			pr_debug("can't find: %s, family: %u",
-				 typename, family);
-			return -EEXIST;
-		}
-	}
+	ret = find_set_type_minmax(typename, family, &min, &max);
+	if (ret)
+		return ret;
 
 	skb2 = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (skb2 == NULL)
