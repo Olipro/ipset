@@ -47,25 +47,26 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 		break;
 	}
 	case IPPROTO_ICMP: {
-		struct icmphdr _icmph;
+		struct icmphdr _ich;
 		const struct icmphdr *ic;
 
-		ic = skb_header_pointer(skb, protooff, sizeof(_icmph), &_icmph);
+		ic = skb_header_pointer(skb, protooff, sizeof(_ich), &_ich);
 		if (ic == NULL)
 			return false;
 
-		*port = (__force __be16)((ic->type << 8) & ic->code);
+		*port = (__force __be16)htons((ic->type << 8) | ic->code);
 		break;
 	}
 	case IPPROTO_ICMPV6: {
-		struct icmp6hdr _icmph;
+		struct icmp6hdr _ich;
 		const struct icmp6hdr *ic;
 
-		ic = skb_header_pointer(skb, protooff, sizeof(_icmph), &_icmph);
+		ic = skb_header_pointer(skb, protooff, sizeof(_ich), &_ich);
 		if (ic == NULL)
 			return false;
 
-		*port = (__force __be16)((ic->icmp6_type << 8) & ic->icmp6_code);
+		*port = (__force __be16)
+			htons((ic->icmp6_type << 8) | ic->icmp6_code);
 		break;
 	}
 	default:
