@@ -1,3 +1,26 @@
+5.4
+ - Fixed broken ICMP and ICMPv6 handling
+ - Fix trailing whitespaces and pr_* messages
+ - Un-inline functions which are not small enough (suggested by Patrick McHardy)
+ - Fix module loading at create/header command (reported by Patrick McHardy)
+ - Fix wrong kzalloc flag in type_pf_expire
+ - The get_ip*_port functions are too large to be inlined, move into the core
+ - Add missing __GFP_HIGHMEM flag to __vmalloc (suggested by Eric Dumazet)
+ - Enforce network-order data in the netlink protocol
+ - Use annotated types and fix sparse warnings (suggested by Patrick McHardy)
+ - Move ip_set_alloc, ip_set_free and ip_set_get_ipaddr* into core
+   (suggested by Patrick McHardy)
+ - NETMASK*, HOSTMASK* macros are too generic, use small inline functions
+   (suggested by Patrick McHardy)
+ - Use static LIST_HEAD() for ip_set_type_list (suggested by Patrick McHardy)
+ - Move NLA_PUT_NET* macros to include/net/netlink.h (suggested by Patrick
+   McHardy)
+ - The module parameter max_sets should be unsigned int (reported by Patrick
+   McHardy)
+ - Get rid of ip_set_kernel.h (suggested by Patrick McHardy)
+ - Fix the placement style of boolean operators at continued lines
+   (suggested by Patrick McHardy)
+
 5.3
  - There is no need to call synchronize_net() at swapping
  - Replace strncpy with strlcpy at creating a set
