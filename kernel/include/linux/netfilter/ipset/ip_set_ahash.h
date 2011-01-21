@@ -88,7 +88,7 @@ add_cidr(struct ip_set_hash *h, u8 cidr, u8 host_mask)
 
 	++h->nets[cidr-1].nets;
 
-	pr_debug("add_cidr added %u: %u", cidr, h->nets[cidr-1].nets);
+	pr_debug("add_cidr added %u: %u\n", cidr, h->nets[cidr-1].nets);
 
 	if (h->nets[cidr-1].nets > 1)
 		return;
@@ -110,7 +110,7 @@ del_cidr(struct ip_set_hash *h, u8 cidr, u8 host_mask)
 
 	--h->nets[cidr-1].nets;
 
-	pr_debug("del_cidr deleted %u: %u", cidr, h->nets[cidr-1].nets);
+	pr_debug("del_cidr deleted %u: %u\n", cidr, h->nets[cidr-1].nets);
 
 	if (h->nets[cidr-1].nets != 0)
 		return;
@@ -340,7 +340,7 @@ retry:
 	/* Give time to other readers of the set */
 	synchronize_rcu_bh();
 
-	pr_debug("set %s resized from %u (%p) to %u (%p)", set->name,
+	pr_debug("set %s resized from %u (%p) to %u (%p)\n", set->name,
 		 orig->htable_bits, orig, t->htable_bits, t);
 	ahash_destroy(orig);
 
@@ -447,7 +447,7 @@ type_pf_test_cidrs(struct ip_set *set, struct type_pf_elem *d, u32 timeout)
 	u32 key;
 	u8 host_mask = SET_HOST_MASK(set->family);
 
-	pr_debug("test by nets");
+	pr_debug("test by nets\n");
 	for (; j < host_mask && h->nets[j].cidr; j++) {
 		type_pf_data_netmask(d, h->nets[j].cidr);
 		key = HKEY(d, h->initval, t->htable_bits);
@@ -546,14 +546,14 @@ type_pf_list(const struct ip_set *set,
 	atd = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!atd)
 		return -EFAULT;
-	pr_debug("list hash set %s", set->name);
+	pr_debug("list hash set %s\n", set->name);
 	for (; cb->args[2] < jhash_size(t->htable_bits); cb->args[2]++) {
 		incomplete = skb_tail_pointer(skb);
 		n = hbucket(t, cb->args[2]);
-		pr_debug("cb->args[2]: %lu, t %p n %p", cb->args[2], t, n); 
+		pr_debug("cb->args[2]: %lu, t %p n %p\n", cb->args[2], t, n);
 		for (i = 0; i < n->pos; i++) {
 			data = ahash_data(n, i);
-			pr_debug("list hash %lu hbucket %p i %u, data %p",
+			pr_debug("list hash %lu hbucket %p i %u, data %p\n",
 				 cb->args[2], n, i, data);
 			nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 			if (!nested) {
@@ -686,7 +686,7 @@ type_pf_expire(struct ip_set_hash *h)
 		for (j = 0; j < n->pos; j++) {
 			data = ahash_tdata(n, j);
 			if (type_pf_data_expired(data)) {
-				pr_debug("expired %u/%u", i, j);
+				pr_debug("expired %u/%u\n", i, j);
 #ifdef IP_SET_HASH_WITH_NETS
 				del_cidr(h, data->cidr, HOST_MASK);
 #endif
@@ -807,7 +807,7 @@ type_pf_tadd(struct ip_set *set, void *value, u32 timeout)
 				ret = -IPSET_ERR_EXIST;
 				goto out;
 			}
-		} else if (j == AHASH_MAX_SIZE + 1 && 
+		} else if (j == AHASH_MAX_SIZE + 1 &&
 			   type_pf_data_expired(data))
 			j = i;
 	}
@@ -952,10 +952,10 @@ type_pf_tlist(const struct ip_set *set,
 		n = hbucket(t, cb->args[2]);
 		for (i = 0; i < n->pos; i++) {
 			data = ahash_tdata(n, i);
-			pr_debug("list %p %u", n, i);
+			pr_debug("list %p %u\n", n, i);
 			if (type_pf_data_expired(data))
 				continue;
-			pr_debug("do list %p %u", n, i);
+			pr_debug("do list %p %u\n", n, i);
 			nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 			if (!nested) {
 				if (cb->args[2] == first) {
@@ -1008,7 +1008,7 @@ type_pf_gc(unsigned long ul_set)
 	struct ip_set *set = (struct ip_set *) ul_set;
 	struct ip_set_hash *h = set->data;
 
-	pr_debug("called");
+	pr_debug("called\n");
 	write_lock_bh(&set->lock);
 	type_pf_expire(h);
 	write_unlock_bh(&set->lock);
@@ -1027,7 +1027,7 @@ type_pf_gc_init(struct ip_set *set)
 	h->gc.function = type_pf_gc;
 	h->gc.expires = jiffies + IPSET_GC_PERIOD(h->timeout) * HZ;
 	add_timer(&h->gc);
-	pr_debug("gc initialized, run in every %u",
+	pr_debug("gc initialized, run in every %u\n",
 		 IPSET_GC_PERIOD(h->timeout));
 }
 

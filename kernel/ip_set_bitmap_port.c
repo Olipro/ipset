@@ -611,7 +611,7 @@ bitmap_port_create(struct ip_set *set, struct nlattr *head, int len,
 			return -ENOMEM;
 
 		map->memsize = bitmap_bytes(0, last_port - first_port);
-		pr_debug("memsize: %zu", map->memsize);
+		pr_debug("memsize: %zu\n", map->memsize);
 		if (!init_map_port(set, map, first_port, last_port)) {
 			kfree(map);
 			return -ENOMEM;

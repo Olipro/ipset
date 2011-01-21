@@ -383,7 +383,7 @@ hash_ip_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 	if (!(set->family == AF_INET || set->family == AF_INET6))
 		return -IPSET_ERR_INVALID_FAMILY;
 	netmask = set->family == AF_INET ? 32 : 128;
-	pr_debug("Create set %s with family %s",
+	pr_debug("Create set %s with family %s\n",
 		 set->name, set->family == AF_INET ? "inet" : "inet6");
 
 	if (nla_parse(tb, IPSET_ATTR_CREATE_MAX, head, len,
@@ -450,7 +450,7 @@ hash_ip_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 			? &hash_ip4_variant : &hash_ip6_variant;
 	}
 
-	pr_debug("create %s hashsize %u (%u) maxelem %u: %p(%p)",
+	pr_debug("create %s hashsize %u (%u) maxelem %u: %p(%p)\n",
 		 set->name, jhash_size(h->table->htable_bits),
 		 h->table->htable_bits, h->maxelem, set->data, h->table);
 

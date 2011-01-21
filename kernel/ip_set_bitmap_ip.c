@@ -655,14 +655,14 @@ bitmap_ip_create(struct ip_set *set, struct nlattr *head, int len,
 		    netmask <= mask_bits)
 			return -IPSET_ERR_BITMAP_RANGE;
 
-		pr_debug("mask_bits %u, netmask %u", mask_bits, netmask);
+		pr_debug("mask_bits %u, netmask %u\n", mask_bits, netmask);
 		hosts = 2 << (32 - netmask - 1);
 		elements = 2 << (netmask - mask_bits - 1);
 	}
 	if (elements > IPSET_BITMAP_MAX_RANGE + 1)
 		return -IPSET_ERR_BITMAP_RANGE_SIZE;
 
-	pr_debug("hosts %u, elements %u", hosts, elements);
+	pr_debug("hosts %u, elements %u\n", hosts, elements);
 
 	if (tb[IPSET_ATTR_TIMEOUT]) {
 		struct bitmap_ip_timeout *map;

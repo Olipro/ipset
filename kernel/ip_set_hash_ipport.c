@@ -531,7 +531,7 @@ hash_ipport_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 			? &hash_ipport4_variant : &hash_ipport6_variant;
 	}
 
-	pr_debug("create %s hashsize %u (%u) maxelem %u: %p(%p)",
+	pr_debug("create %s hashsize %u (%u) maxelem %u: %p(%p)\n",
 		 set->name, jhash_size(h->table->htable_bits),
 		 h->table->htable_bits, h->maxelem, set->data, h->table);
 

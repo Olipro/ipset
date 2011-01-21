@@ -162,7 +162,7 @@ ip_set_type_register(struct ip_set_type *type)
 		goto unlock;
 	}
 	list_add_rcu(&type->list, &ip_set_type_list);
-	pr_debug("type %s, family %s, revision %u registered.",
+	pr_debug("type %s, family %s, revision %u registered.\n",
 		 type->name, family_name(type->family), type->revision);
 unlock:
 	ip_set_type_unlock();
@@ -182,7 +182,7 @@ ip_set_type_unregister(struct ip_set_type *type)
 		goto unlock;
 	}
 	list_del_rcu(&type->list);
-	pr_debug("type %s, family %s, revision %u unregistered.",
+	pr_debug("type %s, family %s, revision %u unregistered.\n",
 		 type->name, family_name(type->family), type->revision);
 unlock:
 	ip_set_type_unlock();
@@ -201,7 +201,7 @@ ip_set_alloc(size_t size, gfp_t gfp_mask)
 		members = kzalloc(size, gfp_mask | __GFP_NOWARN);
 
 	if (members) {
-		pr_debug("%p: allocated with kmalloc", members);
+		pr_debug("%p: allocated with kmalloc\n", members);
 		return members;
 	}
 
@@ -209,7 +209,7 @@ ip_set_alloc(size_t size, gfp_t gfp_mask)
 			    PAGE_KERNEL);
 	if (!members)
 		return NULL;
-	pr_debug("%p: allocated with vmalloc", members);
+	pr_debug("%p: allocated with vmalloc\n", members);
 
 	return members;
 }
@@ -218,7 +218,7 @@ EXPORT_SYMBOL_GPL(ip_set_alloc);
 void
 ip_set_free(void *members)
 {
-	pr_debug("%p: free with %s", members,
+	pr_debug("%p: free with %s\n", members,
 		 is_vmalloc_addr(members) ? "vfree" : "kfree");
 	if (is_vmalloc_addr(members))
 		vfree(members);
@@ -315,7 +315,7 @@ ip_set_test(ip_set_id_t index, const struct sk_buff *skb,
 	int ret = 0;
 
 	BUG_ON(set == NULL || atomic_read(&set->ref) == 0);
-	pr_debug("set %s, index %u", set->name, index);
+	pr_debug("set %s, index %u\n", set->name, index);
 
 	if (dim < set->type->dimension ||
 	    !(family == set->family || set->family == AF_UNSPEC))
@@ -327,7 +327,7 @@ ip_set_test(ip_set_id_t index, const struct sk_buff *skb,
 
 	if (ret == -EAGAIN) {
 		/* Type requests element to be completed */
-		pr_debug("element must be competed, ADD is triggered");
+		pr_debug("element must be competed, ADD is triggered\n");
 		write_lock_bh(&set->lock);
 		set->variant->kadt(set, skb, IPSET_ADD, family, dim, flags);
 		write_unlock_bh(&set->lock);
@@ -347,7 +347,7 @@ ip_set_add(ip_set_id_t index, const struct sk_buff *skb,
 	int ret;
 
 	BUG_ON(set == NULL || atomic_read(&set->ref) == 0);
-	pr_debug("set %s, index %u", set->name, index);
+	pr_debug("set %s, index %u\n", set->name, index);
 
 	if (dim < set->type->dimension ||
 	    !(family == set->family || set->family == AF_UNSPEC))
@@ -369,7 +369,7 @@ ip_set_del(ip_set_id_t index, const struct sk_buff *skb,
 	int ret = 0;
 
 	BUG_ON(set == NULL || atomic_read(&set->ref) == 0);
-	pr_debug("set %s, index %u", set->name, index);
+	pr_debug("set %s, index %u\n", set->name, index);
 
 	if (dim < set->type->dimension ||
 	    !(family == set->family || set->family == AF_UNSPEC))
@@ -634,7 +634,7 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 	typename = nla_data(attr[IPSET_ATTR_TYPENAME]);
 	family = nla_get_u8(attr[IPSET_ATTR_FAMILY]);
 	revision = nla_get_u8(attr[IPSET_ATTR_REVISION]);
-	pr_debug("setname: %s, typename: %s, family: %s, revision: %u",
+	pr_debug("setname: %s, typename: %s, family: %s, revision: %u\n",
 		 name, typename, family_name(family), revision);
 
 	/*
@@ -665,7 +665,7 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 	 * Without holding any locks, create private part.
 	 */
 	len = attr[IPSET_ATTR_DATA] ? nla_len(attr[IPSET_ATTR_DATA]) : 0;
-	pr_debug("data len: %u", len);
+	pr_debug("data len: %u\n", len);
 	ret = set->type->create(set, attr[IPSET_ATTR_DATA] ?
 				nla_data(attr[IPSET_ATTR_DATA]) : NULL, len,
 				flags);
@@ -694,7 +694,7 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 	/*
 	 * Finally! Add our shiny new set to the list, and be done.
 	 */
-	pr_debug("create: '%s' created with index %u!", set->name, index);
+	pr_debug("create: '%s' created with index %u!\n", set->name, index);
 	ip_set_list[index] = set;
 
 	return ret;
@@ -722,7 +722,7 @@ ip_set_destroy_set(ip_set_id_t index)
 {
 	struct ip_set *set = ip_set_list[index];
 
-	pr_debug("set: %s",  set->name);
+	pr_debug("set: %s\n",  set->name);
 	ip_set_list[index] = NULL;
 
 	/* Must call it without holding any lock */
@@ -769,7 +769,7 @@ ip_set_destroy(struct sock *ctnl, struct sk_buff *skb,
 static void
 ip_set_flush_set(struct ip_set *set)
 {
-	pr_debug("set: %s",  set->name);
+	pr_debug("set: %s\n",  set->name);
 
 	write_lock_bh(&set->lock);
 	set->variant->flush(set);
@@ -911,7 +911,7 @@ static int
 ip_set_dump_done(struct netlink_callback *cb)
 {
 	if (cb->args[2]) {
-		pr_debug("release set %s", ip_set_list[cb->args[1]]->name);
+		pr_debug("release set %s\n", ip_set_list[cb->args[1]]->name);
 		__ip_set_put((ip_set_id_t) cb->args[1]);
 	}
 	return 0;
@@ -923,9 +923,9 @@ dump_attrs(struct nlmsghdr *nlh)
 	const struct nlattr *attr;
 	int rem;
 
-	pr_debug("dump nlmsg");
+	pr_debug("dump nlmsg\n");
 	nlmsg_for_each_attr(attr, nlh, sizeof(struct nfgenmsg), rem) {
-		pr_debug("type: %u, len %u", nla_type(attr), attr->nla_len);
+		pr_debug("type: %u, len %u\n", nla_type(attr), attr->nla_len);
 	}
 }
 
@@ -1002,10 +1002,10 @@ ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
 		    !((cb->args[0] == DUMP_ALL) ^
 		      (set->type->features & IPSET_DUMP_LAST)))
 			continue;
-		pr_debug("List set: %s", set->name);
+		pr_debug("List set: %s\n", set->name);
 		if (!cb->args[2]) {
 			/* Start listing: make sure set won't be destroyed */
-			pr_debug("reference set");
+			pr_debug("reference set\n");
 			__ip_set_get(index);
 		}
 		nlh = start_msg(skb, NETLINK_CB(cb->skb).pid,
@@ -1051,7 +1051,7 @@ nla_put_failure:
 release_refcount:
 	/* If there was an error or set is done, release set */
 	if (ret || !cb->args[2]) {
-		pr_debug("release set %s", ip_set_list[index]->name);
+		pr_debug("release set %s\n", ip_set_list[index]->name);
 		__ip_set_put(index);
 	}
 
@@ -1062,7 +1062,7 @@ release_refcount:
 out:
 	if (nlh) {
 		nlmsg_end(skb, nlh);
-		pr_debug("nlmsg_len: %u", nlh->nlmsg_len);
+		pr_debug("nlmsg_len: %u\n", nlh->nlmsg_len);
 		dump_attrs(nlh);
 	}
 
@@ -1339,7 +1339,7 @@ ip_set_type(struct sock *ctnl, struct sk_buff *skb,
 	NLA_PUT_U8(skb2, IPSET_ATTR_REVISION_MIN, min);
 	nlmsg_end(skb2, nlh2);
 
-	pr_debug("Send TYPE, nlmsg_len: %u", nlh2->nlmsg_len);
+	pr_debug("Send TYPE, nlmsg_len: %u\n", nlh2->nlmsg_len);
 	ret = netlink_unicast(ctnl, skb2, NETLINK_CB(skb).pid, MSG_DONTWAIT);
 	if (ret < 0)
 		return -EFAULT;
@@ -1584,25 +1584,25 @@ ip_set_init(void)
 	ip_set_list = kzalloc(sizeof(struct ip_set *) * ip_set_max,
 			      GFP_KERNEL);
 	if (!ip_set_list) {
-		pr_err("ip_set: Unable to create ip_set_list");
+		pr_err("ip_set: Unable to create ip_set_list\n");
 		return -ENOMEM;
 	}
 
 	ret = nfnetlink_subsys_register(&ip_set_netlink_subsys);
 	if (ret != 0) {
-		pr_err("ip_set: cannot register with nfnetlink.");
+		pr_err("ip_set: cannot register with nfnetlink.\n");
 		kfree(ip_set_list);
 		return ret;
 	}
 	ret = nf_register_sockopt(&so_set);
 	if (ret != 0) {
-		pr_err("SO_SET registry failed: %d", ret);
+		pr_err("SO_SET registry failed: %d\n", ret);
 		nfnetlink_subsys_unregister(&ip_set_netlink_subsys);
 		kfree(ip_set_list);
 		return ret;
 	}
 
-	pr_notice("ip_set: protocol %u", IPSET_PROTOCOL);
+	pr_notice("ip_set: protocol %u\n", IPSET_PROTOCOL);
 	return 0;
 }
 
@@ -1613,7 +1613,7 @@ ip_set_fini(void)
 	nf_unregister_sockopt(&so_set);
 	nfnetlink_subsys_unregister(&ip_set_netlink_subsys);
 	kfree(ip_set_list);
-	pr_debug("these are the famous last words");
+	pr_debug("these are the famous last words\n");
 }
 
 module_init(ip_set_init);

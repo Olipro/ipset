@@ -1,8 +1,6 @@
 #ifndef _IP_SET_GETPORT_H
 #define _IP_SET_GETPORT_H
 
-#define IPSET_INVALID_PORT	65536
-
 extern bool ip_set_get_ip4_port(const struct sk_buff *skb, bool src,
 				__be16 *port, u8 *proto);
 extern bool ip_set_get_ip6_port(const struct sk_buff *skb, bool src,

@@ -230,7 +230,7 @@ hash_ipportnet4_uadt(struct ip_set *set, struct nlattr *head, int len,
 
 	if (tb[IPSET_ATTR_PROTO]) {
 		data.proto = nla_get_u8(tb[IPSET_ATTR_PROTO]);
-		
+
 		if (data.proto == 0)
 			return -IPSET_ERR_INVALID_PROTO;
 	} else
@@ -304,7 +304,7 @@ hash_ipportnet_same_set(const struct ip_set *a, const struct ip_set *b)
 {
 	const struct ip_set_hash *x = a->data;
 	const struct ip_set_hash *y = b->data;
-	
+
 	/* Resizing changes htable_bits, so we ignore it */
 	return x->maxelem == y->maxelem &&
 	       x->timeout == y->timeout;
@@ -394,9 +394,9 @@ static bool
 hash_ipportnet6_data_tlist(struct sk_buff *skb,
 			   const struct hash_ipportnet6_elem *data)
 {
-	const struct hash_ipportnet6_telem *e = 
+	const struct hash_ipportnet6_telem *e =
 		(const struct hash_ipportnet6_telem *)data;
-	
+
 	NLA_PUT_IPADDR6(skb, IPSET_ATTR_IP, &e->ip);
 	NLA_PUT_IPADDR6(skb, IPSET_ATTR_IP2, &data->ip2);
 	NLA_PUT_NET16(skb, IPSET_ATTR_PORT, data->port);
@@ -602,7 +602,7 @@ hash_ipportnet_create(struct ip_set *set, struct nlattr *head,
 
 	if (tb[IPSET_ATTR_TIMEOUT]) {
 		h->timeout = ip_set_timeout_uget(tb[IPSET_ATTR_TIMEOUT]);
-		
+
 		set->variant = set->family == AF_INET
 			? &hash_ipportnet4_tvariant
 			: &hash_ipportnet6_tvariant;
@@ -615,11 +615,11 @@ hash_ipportnet_create(struct ip_set *set, struct nlattr *head,
 		set->variant = set->family == AF_INET
 			? &hash_ipportnet4_variant : &hash_ipportnet6_variant;
 	}
-	
-	pr_debug("create %s hashsize %u (%u) maxelem %u: %p(%p)",
+
+	pr_debug("create %s hashsize %u (%u) maxelem %u: %p(%p)\n",
 		 set->name, jhash_size(h->table->htable_bits),
 		 h->table->htable_bits, h->maxelem, set->data, h->table);
-	   
+
 	return 0;
 }
 
