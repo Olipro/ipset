@@ -30,14 +30,14 @@ static const struct ipset_errcode_table core_errcode_table[] = {
 	{ EEXIST, IPSET_CMD_CREATE,
 	  "Set cannot be created: set with the same name already exists" },
 	{ IPSET_ERR_FIND_TYPE, 0,
-	  "Kernel error received: set type does not supported" },
+	  "Kernel error received: set type not supported" },
 	{ IPSET_ERR_MAX_SETS, 0,
 	  "Kernel error received: maximal number of sets reached, "
 	  "cannot create more." },
 	{ IPSET_ERR_INVALID_NETMASK, 0,
 	  "The value of the netmask parameter is invalid" },
 	{ IPSET_ERR_INVALID_FAMILY, 0,
-	  "The protocol family not supported by the set type" },
+	  "Potocol family not supported by the set type" },
 
 	/* DESTROY specific error codes */
 	{ IPSET_ERR_BUSY, IPSET_CMD_DESTROY,
