@@ -158,7 +158,8 @@ __getnameinfo##f(char *buf, unsigned int len,				\
 			  sizeof(saddr),				\
 			  buf, len, NULL, 0, flags);			\
 									\
-	if (err == EAI_AGAIN && !(flags & NI_NUMERICHOST))		\
+	if (!(flags & NI_NUMERICHOST) &&				\
+	    (err == EAI_AGAIN || (err == 0 && strchr(buf, '-') != NULL))) \
 		err = getnameinfo((const struct sockaddr *)&saddr, 	\
 				  sizeof(saddr),			\
 				  buf, len, NULL, 0, 			\
