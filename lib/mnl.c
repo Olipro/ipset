@@ -75,7 +75,7 @@ ipset_mnl_fill_hdr(struct ipset_handle *handle, enum ipset_cmd cmd,
 	nlh->nlmsg_flags = cmdflags[cmd - 1];
 	if (envflags & IPSET_ENV_EXIST)
 	    	nlh->nlmsg_flags &=  ~NLM_F_EXCL;
-	nlh->nlmsg_seq = handle->seq = time(NULL);
+	nlh->nlmsg_seq = ++handle->seq;
 
 	nfg = mnl_nlmsg_put_extra_header(nlh, sizeof(struct nfgenmsg));
 	nfg->nfgen_family = AF_INET;
@@ -135,6 +135,7 @@ ipset_mnl_init(mnl_cb_t *cb_ctl, void *data)
 	handle->portid = mnl_socket_get_portid(handle->h);
 	handle->cb_ctl = cb_ctl;
 	handle->data = data;
+	handle->seq = time(NULL);
 	
 	return handle;
 
