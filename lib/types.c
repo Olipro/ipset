@@ -441,13 +441,15 @@ ipset_type_add(struct ipset_type *type)
 
 	assert(type);
 
+	if (strlen(type->name) > IPSET_MAXNAMELEN - 1)
+		return -EINVAL;
+
 	/* Add to the list: higher revision numbers first */
 	for (t = typelist, prev = NULL; t != NULL; t = t->next) {
 		if (STREQ(t->name, type->name)) {
-			if (t->revision == type->revision) {
-				errno = EEXIST;
-				return -1;
-			} else if (t->revision < type->revision) {
+			if (t->revision == type->revision)
+				return -EEXIST;
+			else if (t->revision < type->revision) {
 				type->next = t;
 				if (prev)
 					prev->next = type;
@@ -457,10 +459,9 @@ ipset_type_add(struct ipset_type *type)
 			}
 		}
 		if (t->next != NULL && STREQ(t->next->name, type->name)) {
-			if (t->next->revision == type->revision) {
-				errno = EEXIST;
-				return -1;
-			} else if (t->next->revision < type->revision) {
+			if (t->next->revision == type->revision)
+				return -EEXIST;
+			else if (t->next->revision < type->revision) {
 				type->next = t->next;
 				t->next = type;
 				return 0;

@@ -70,7 +70,7 @@ struct ipset_elem {
  * but for the readability the full list is supported.
   */
 struct ipset_type {
-	char name[IPSET_MAXNAMELEN];		/* type name */
+	const char *name;
 	uint8_t revision;			/* revision number */
 	uint8_t family;				/* supported family */
 	uint8_t dimension;			/* elem dimension */
