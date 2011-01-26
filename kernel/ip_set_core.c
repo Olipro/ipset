@@ -755,7 +755,7 @@ ip_set_destroy(struct sock *ctnl, struct sk_buff *skb,
 	} else {
 		i = find_set_id(nla_data(attr[IPSET_ATTR_SETNAME]));
 		if (i == IPSET_INVALID_ID)
-			return -EEXIST;
+			return -ENOENT;
 		else if (atomic_read(&ip_set_list[i]->ref))
 			return -IPSET_ERR_BUSY;
 
@@ -793,7 +793,7 @@ ip_set_flush(struct sock *ctnl, struct sk_buff *skb,
 	} else {
 		i = find_set_id(nla_data(attr[IPSET_ATTR_SETNAME]));
 		if (i == IPSET_INVALID_ID)
-			return -EEXIST;
+			return -ENOENT;
 
 		ip_set_flush_set(ip_set_list[i]);
 	}
@@ -828,7 +828,7 @@ ip_set_rename(struct sock *ctnl, struct sk_buff *skb,
 
 	set = find_set(nla_data(attr[IPSET_ATTR_SETNAME]));
 	if (set == NULL)
-		return -EEXIST;
+		return -ENOENT;
 	if (atomic_read(&set->ref) != 0)
 		return -IPSET_ERR_REFERENCED;
 
@@ -869,7 +869,7 @@ ip_set_swap(struct sock *ctnl, struct sk_buff *skb,
 
 	from_id = find_set_id(nla_data(attr[IPSET_ATTR_SETNAME]));
 	if (from_id == IPSET_INVALID_ID)
-		return -EEXIST;
+		return -ENOENT;
 
 	to_id = find_set_id(nla_data(attr[IPSET_ATTR_SETNAME2]));
 	if (to_id == IPSET_INVALID_ID)
@@ -954,7 +954,7 @@ dump_init(struct netlink_callback *cb)
 
 	index = find_set_id(nla_data(cda[IPSET_ATTR_SETNAME]));
 	if (index == IPSET_INVALID_ID)
-		return -EEXIST;
+		return -ENOENT;
 
 	cb->args[0] = DUMP_ONE;
 	cb->args[1] = index;
@@ -990,7 +990,7 @@ ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
 		set = ip_set_list[index];
 		if (set == NULL) {
 			if (cb->args[0] == DUMP_ONE) {
-				ret = -EEXIST;
+				ret = -ENOENT;
 				goto out;
 			}
 			continue;
@@ -1012,7 +1012,7 @@ ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
 				cb->nlh->nlmsg_seq, flags,
 				IPSET_CMD_LIST);
 		if (!nlh) {
-			ret = -EFAULT;
+			ret = -EMSGSIZE;
 			goto release_refcount;
 		}
 		NLA_PUT_U8(skb, IPSET_ATTR_PROTOCOL, IPSET_PROTOCOL);
@@ -1147,7 +1147,7 @@ ip_set_uadd(struct sock *ctnl, struct sk_buff *skb,
 
 	set = find_set(nla_data(attr[IPSET_ATTR_SETNAME]));
 	if (set == NULL)
-		return -EEXIST;
+		return -ENOENT;
 
 	if (attr[IPSET_ATTR_DATA]) {
 		ret = call_ad(skb, attr,
@@ -1191,7 +1191,7 @@ ip_set_udel(struct sock *ctnl, struct sk_buff *skb,
 
 	set = find_set(nla_data(attr[IPSET_ATTR_SETNAME]));
 	if (set == NULL)
-		return -EEXIST;
+		return -ENOENT;
 
 	if (attr[IPSET_ATTR_DATA]) {
 		ret = call_ad(skb, attr,
@@ -1228,7 +1228,7 @@ ip_set_utest(struct sock *ctnl, struct sk_buff *skb,
 
 	set = find_set(nla_data(attr[IPSET_ATTR_SETNAME]));
 	if (set == NULL)
-		return -EEXIST;
+		return -ENOENT;
 
 	read_lock_bh(&set->lock);
 	ret = set->variant->uadt(set,
@@ -1262,7 +1262,7 @@ ip_set_header(struct sock *ctnl, struct sk_buff *skb,
 
 	index = find_set_id(nla_data(attr[IPSET_ATTR_SETNAME]));
 	if (index == IPSET_INVALID_ID)
-		return -EEXIST;
+		return -ENOENT;
 	set = ip_set_list[index];
 
 	skb2 = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
@@ -1282,7 +1282,7 @@ ip_set_header(struct sock *ctnl, struct sk_buff *skb,
 
 	ret = netlink_unicast(ctnl, skb2, NETLINK_CB(skb).pid, MSG_DONTWAIT);
 	if (ret < 0)
-		return -EFAULT;
+		return ret;
 
 	return 0;
 
@@ -1290,7 +1290,7 @@ nla_put_failure:
 	nlmsg_cancel(skb2, nlh2);
 nlmsg_failure:
 	kfree_skb(skb2);
-	return -EFAULT;
+	return -EMSGSIZE;
 }
 
 /* Get type data */
@@ -1342,7 +1342,7 @@ ip_set_type(struct sock *ctnl, struct sk_buff *skb,
 	pr_debug("Send TYPE, nlmsg_len: %u\n", nlh2->nlmsg_len);
 	ret = netlink_unicast(ctnl, skb2, NETLINK_CB(skb).pid, MSG_DONTWAIT);
 	if (ret < 0)
-		return -EFAULT;
+		return ret;
 
 	return 0;
 
@@ -1350,7 +1350,7 @@ nla_put_failure:
 	nlmsg_cancel(skb2, nlh2);
 nlmsg_failure:
 	kfree_skb(skb2);
-	return -EFAULT;
+	return -EMSGSIZE;
 }
 
 /* Get protocol version */
@@ -1385,7 +1385,7 @@ ip_set_protocol(struct sock *ctnl, struct sk_buff *skb,
 
 	ret = netlink_unicast(ctnl, skb2, NETLINK_CB(skb).pid, MSG_DONTWAIT);
 	if (ret < 0)
-		return -EFAULT;
+		return ret;
 
 	return 0;
 
@@ -1393,7 +1393,7 @@ nla_put_failure:
 	nlmsg_cancel(skb2, nlh2);
 nlmsg_failure:
 	kfree_skb(skb2);
-	return -EFAULT;
+	return -EMSGSIZE;
 }
 
 static const struct nfnl_callback ip_set_netlink_subsys_cb[IPSET_MSG_MAX] = {

@@ -175,7 +175,7 @@ bitmap_ipmac_list(const struct ip_set *set,
 
 	atd = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!atd)
-		return -EFAULT;
+		return -EMSGSIZE;
 	for (; cb->args[2] <= last; cb->args[2]++) {
 		id = cb->args[2];
 		elem = bitmap_ipmac_elem(map, id);
@@ -185,7 +185,7 @@ bitmap_ipmac_list(const struct ip_set *set,
 		if (!nested) {
 			if (id == first) {
 				nla_nest_cancel(skb, atd);
-				return -EFAULT;
+				return -EMSGSIZE;
 			} else
 				goto nla_put_failure;
 		}
@@ -205,6 +205,10 @@ bitmap_ipmac_list(const struct ip_set *set,
 nla_put_failure:
 	nla_nest_cancel(skb, nested);
 	ipset_nest_end(skb, atd);
+	if (unlikely(id == first)) {
+		cb->args[2] = 0;
+		return -EMSGSIZE;
+	}
 	return 0;
 }
 
@@ -298,7 +302,7 @@ bitmap_ipmac_tlist(const struct ip_set *set,
 
 	atd = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!atd)
-		return -EFAULT;
+		return -EMSGSIZE;
 	for (; cb->args[2] <= last; cb->args[2]++) {
 		id = cb->args[2];
 		elem = bitmap_ipmac_elem(map, id);
@@ -308,7 +312,7 @@ bitmap_ipmac_tlist(const struct ip_set *set,
 		if (!nested) {
 			if (id == first) {
 				nla_nest_cancel(skb, atd);
-				return -EFAULT;
+				return -EMSGSIZE;
 			} else
 				goto nla_put_failure;
 		}
@@ -331,7 +335,7 @@ bitmap_ipmac_tlist(const struct ip_set *set,
 nla_put_failure:
 	nla_nest_cancel(skb, nested);
 	ipset_nest_end(skb, atd);
-	return 0;
+	return -EMSGSIZE;
 }
 
 static int
@@ -457,7 +461,7 @@ bitmap_ipmac_head(struct ip_set *set, struct sk_buff *skb)
 
 	return 0;
 nla_put_failure:
-	return -EFAULT;
+	return -EMSGSIZE;
 }
 
 static bool

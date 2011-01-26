@@ -21,8 +21,10 @@
 /* Core kernel error codes */
 static const struct ipset_errcode_table core_errcode_table[] = {
 	/* Generic error codes */
-	{ EEXIST, 0,
+	{ ENOENT, 0,
 	  "The set with the given name does not exist" },
+	{ EMSGSIZE, 0,
+	  "Kernel error received: message could not be created" },
 	{ IPSET_ERR_PROTOCOL,  0,
 	  "Kernel error received: ipset protocol error" },
 

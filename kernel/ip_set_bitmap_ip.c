@@ -217,7 +217,7 @@ bitmap_ip_head(struct ip_set *set, struct sk_buff *skb)
 
 	return 0;
 nla_put_failure:
-	return -EFAULT;
+	return -EMSGSIZE;
 }
 
 static int
@@ -230,7 +230,7 @@ bitmap_ip_list(const struct ip_set *set,
 
 	atd = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!atd)
-		return -EFAULT;
+		return -EMSGSIZE;
 	for (; cb->args[2] < map->elements; cb->args[2]++) {
 		id = cb->args[2];
 		if (!bitmap_ip_test(map, id))
@@ -239,7 +239,7 @@ bitmap_ip_list(const struct ip_set *set,
 		if (!nested) {
 			if (id == first) {
 				nla_nest_cancel(skb, atd);
-				return -EFAULT;
+				return -EMSGSIZE;
 			} else
 				goto nla_put_failure;
 		}
@@ -255,6 +255,10 @@ bitmap_ip_list(const struct ip_set *set,
 nla_put_failure:
 	nla_nest_cancel(skb, nested);
 	ipset_nest_end(skb, atd);
+	if (unlikely(id == first)) {
+		cb->args[2] = 0;
+		return -EMSGSIZE;
+	}
 	return 0;
 }
 
@@ -461,7 +465,7 @@ bitmap_ip_timeout_head(struct ip_set *set, struct sk_buff *skb)
 
 	return 0;
 nla_put_failure:
-	return -EFAULT;
+	return -EMSGSIZE;
 }
 
 static int
@@ -475,7 +479,7 @@ bitmap_ip_timeout_list(const struct ip_set *set,
 
 	adt = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!adt)
-		return -EFAULT;
+		return -EMSGSIZE;
 	for (; cb->args[2] < map->elements; cb->args[2]++) {
 		id = cb->args[2];
 		if (!bitmap_ip_timeout_test(map, id))
@@ -484,7 +488,7 @@ bitmap_ip_timeout_list(const struct ip_set *set,
 		if (!nested) {
 			if (id == first) {
 				nla_nest_cancel(skb, adt);
-				return -EFAULT;
+				return -EMSGSIZE;
 			} else
 				goto nla_put_failure;
 		}
@@ -504,6 +508,10 @@ bitmap_ip_timeout_list(const struct ip_set *set,
 nla_put_failure:
 	nla_nest_cancel(skb, nested);
 	ipset_nest_end(skb, adt);
+	if (unlikely(id == first)) {
+		cb->args[2] = 0;
+		return -EMSGSIZE;
+	}
 	return 0;
 }
 
