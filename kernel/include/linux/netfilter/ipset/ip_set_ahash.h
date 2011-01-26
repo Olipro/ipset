@@ -311,8 +311,7 @@ retry:
 		/* In case we have plenty of memory :-) */
 		return -IPSET_ERR_HASH_FULL;
 	t = ip_set_alloc(sizeof(*t)
-			 + jhash_size(htable_bits) * sizeof(struct hbucket),
-			 GFP_KERNEL);
+			 + jhash_size(htable_bits) * sizeof(struct hbucket));
 	if (!t)
 		return -ENOMEM;
 	t->htable_bits = htable_bits;
@@ -743,8 +742,7 @@ retry:
 		/* In case we have plenty of memory :-) */
 		return -IPSET_ERR_HASH_FULL;
 	t = ip_set_alloc(sizeof(*t)
-			 + jhash_size(htable_bits) * sizeof(struct hbucket),
-			 GFP_KERNEL);
+			 + jhash_size(htable_bits) * sizeof(struct hbucket));
 	if (!t)
 		return -ENOMEM;
 	t->htable_bits = htable_bits;

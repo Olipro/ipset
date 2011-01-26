@@ -554,7 +554,7 @@ static bool
 init_map_port(struct ip_set *set, struct bitmap_port *map,
 	      u16 first_port, u16 last_port)
 {
-	map->members = ip_set_alloc(map->memsize, GFP_KERNEL);
+	map->members = ip_set_alloc(map->memsize);
 	if (!map->members)
 		return false;
 	map->first_port = first_port;

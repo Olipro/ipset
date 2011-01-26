@@ -318,7 +318,7 @@ extern int ip_set_test(ip_set_id_t id, const struct sk_buff *skb,
 		       u8 family, u8 dim, u8 flags);
 
 /* Utility functions */
-extern void * ip_set_alloc(size_t size, gfp_t gfp_mask);
+extern void * ip_set_alloc(size_t size);
 extern void ip_set_free(void *members);
 extern int ip_set_get_ipaddr4(struct nlattr *nla,  __be32 *ipaddr);
 extern int ip_set_get_ipaddr6(struct nlattr *nla, union nf_inet_addr *ipaddr);

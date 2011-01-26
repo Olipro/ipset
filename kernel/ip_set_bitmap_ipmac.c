@@ -554,8 +554,7 @@ static bool
 init_map_ipmac(struct ip_set *set, struct bitmap_ipmac *map,
 	       u32 first_ip, u32 last_ip)
 {
-	map->members = ip_set_alloc((last_ip - first_ip + 1) * map->dsize,
-				    GFP_KERNEL);
+	map->members = ip_set_alloc((last_ip - first_ip + 1) * map->dsize);
 	if (!map->members)
 		return false;
 	map->first_ip = first_ip;

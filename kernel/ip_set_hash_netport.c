@@ -542,8 +542,7 @@ hash_netport_create(struct ip_set *set, struct nlattr *head, int len, u32 flags)
 	hbits = htable_bits(hashsize);
 	h->table = ip_set_alloc(
 			sizeof(struct htable)
-			+ jhash_size(hbits) * sizeof(struct hbucket),
-			GFP_KERNEL);
+			+ jhash_size(hbits) * sizeof(struct hbucket));
 	if (!h->table) {
 		kfree(h);
 		return -ENOMEM;

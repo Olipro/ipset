@@ -17,6 +17,7 @@
 #include <linux/spinlock.h>
 #include <linux/netlink.h>
 #include <linux/rculist.h>
+#include <linux/version.h>
 #include <net/netlink.h>
 
 #include <linux/netfilter.h>
@@ -193,20 +194,24 @@ EXPORT_SYMBOL_GPL(ip_set_type_unregister);
 
 /* Utility functions */
 void *
-ip_set_alloc(size_t size, gfp_t gfp_mask)
+ip_set_alloc(size_t size)
 {
 	void *members = NULL;
 
 	if (size < KMALLOC_MAX_SIZE)
-		members = kzalloc(size, gfp_mask | __GFP_NOWARN);
+		members = kzalloc(size, GFP_KERNEL | __GFP_NOWARN);
 
 	if (members) {
 		pr_debug("%p: allocated with kmalloc\n", members);
 		return members;
 	}
 
-	members = __vmalloc(size, gfp_mask | __GFP_ZERO | __GFP_HIGHMEM,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 37)
+	members = __vmalloc(size, GFP_KERNEL | __GFP_ZERO | __GFP_HIGHMEM,
 			    PAGE_KERNEL);
+#else
+	members = vzalloc(size);
+#endif
 	if (!members)
 		return NULL;
 	pr_debug("%p: allocated with vmalloc\n", members);
