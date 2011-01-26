@@ -1118,7 +1118,17 @@ call_ad(struct sk_buff *skb, const struct nlattr *const attr[],
 		return 0;
 	if (lineno && attr[IPSET_ATTR_LINENO]) {
 		/* Error in restore/batch mode: send back lineno */
-		u32 *errline = nla_data(attr[IPSET_ATTR_LINENO]);
+		struct nlmsghdr *nlh = nlmsg_hdr(skb);
+		int min_len = NLMSG_SPACE(sizeof(struct nfgenmsg));
+		struct nlattr *cda[IPSET_ATTR_CMD_MAX+1];
+		struct nlattr *cmdattr = (void *)nlh + min_len;
+		u32 *errline;
+
+		nla_parse(cda, IPSET_ATTR_CMD_MAX,
+			  cmdattr, nlh->nlmsg_len - min_len,
+			  ip_set_adt_policy);
+
+		errline = nla_data(cda[IPSET_ATTR_LINENO]);
 
 		*errline = lineno;
 	}
