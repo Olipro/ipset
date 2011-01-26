@@ -973,9 +973,11 @@ ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
 	if (cb->args[0] == DUMP_INIT) {
 		ret = dump_init(cb);
 		if (ret < 0) {
+			struct nlmsghdr *nlh = nlmsg_hdr(cb->skb);
 			/* We have to create and send the error message
 			 * manually :-( */
-			netlink_ack(cb->skb, nlmsg_hdr(cb->skb), ret);
+			if (nlh->nlmsg_flags & NLM_F_ACK)
+				netlink_ack(cb->skb, nlh, ret);
 			return ret;
 		}
 	}
