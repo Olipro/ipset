@@ -39,7 +39,7 @@ static const struct ipset_errcode_table core_errcode_table[] = {
 	{ IPSET_ERR_INVALID_NETMASK, 0,
 	  "The value of the netmask parameter is invalid" },
 	{ IPSET_ERR_INVALID_FAMILY, 0,
-	  "Potocol family not supported by the set type" },
+	  "Protocol family not supported by the set type" },
 
 	/* DESTROY specific error codes */
 	{ IPSET_ERR_BUSY, IPSET_CMD_DESTROY,
