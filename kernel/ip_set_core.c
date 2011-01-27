@@ -984,7 +984,7 @@ ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
 	if (cb->args[0] == DUMP_INIT) {
 		ret = dump_init(cb);
 		if (ret < 0) {
-			struct nlmsghdr *nlh = nlmsg_hdr(cb->skb);
+			nlh = nlmsg_hdr(cb->skb);
 			/* We have to create and send the error message
 			 * manually :-( */
 			if (nlh->nlmsg_flags & NLM_F_ACK)
