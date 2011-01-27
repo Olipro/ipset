@@ -111,16 +111,6 @@ list_set_kadt(struct ip_set *set, const struct sk_buff *skb,
 	return -EINVAL;
 }
 
-static const struct nla_policy list_set_adt_policy[IPSET_ATTR_ADT_MAX+1] = {
-	[IPSET_ATTR_NAME]	= { .type = NLA_STRING,
-				    .len = IPSET_MAXNAMELEN },
-	[IPSET_ATTR_NAMEREF]	= { .type = NLA_STRING,
-				    .len = IPSET_MAXNAMELEN },
-	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
-	[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
-	[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
-};
-
 static bool
 next_id_eq(const struct list_set *map, u32 i, ip_set_id_t id)
 {
@@ -204,11 +194,10 @@ list_set_del(struct list_set *map, ip_set_id_t id, u32 i)
 }
 
 static int
-list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
+list_set_uadt(struct ip_set *set, struct nlattr *tb[],
 	      enum ipset_adt adt, u32 *lineno, u32 flags)
 {
 	struct list_set *map = set->data;
-	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1];
 	bool with_timeout = with_timeout(map->timeout);
 	int before = 0;
 	u32 timeout = map->timeout;
@@ -217,10 +206,6 @@ list_set_uadt(struct ip_set *set, struct nlattr *head, int len,
 	struct ip_set *s;
 	u32 i;
 	int ret = 0;
-
-	if (nla_parse(tb, IPSET_ATTR_ADT_MAX, head, len,
-		      list_set_adt_policy))
-		return -IPSET_ERR_PROTOCOL;
 
 	if (unlikely(!tb[IPSET_ATTR_NAME] ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT) ||
@@ -505,12 +490,6 @@ list_set_gc_init(struct ip_set *set)
 
 /* Create list:set type of sets */
 
-static const struct nla_policy
-list_set_create_policy[IPSET_ATTR_CREATE_MAX+1] = {
-	[IPSET_ATTR_SIZE]	= { .type = NLA_U32 },
-	[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
-};
-
 static bool
 init_list_set(struct ip_set *set, u32 size, size_t dsize,
 	      unsigned long timeout)
@@ -537,15 +516,9 @@ init_list_set(struct ip_set *set, u32 size, size_t dsize,
 }
 
 static int
-list_set_create(struct ip_set *set, struct nlattr *head, int len,
-		u32 flags)
+list_set_create(struct ip_set *set, struct nlattr *tb[], u32 flags)
 {
-	struct nlattr *tb[IPSET_ATTR_CREATE_MAX+1];
 	u32 size = IP_SET_LIST_DEFAULT_SIZE;
-
-	if (nla_parse(tb, IPSET_ATTR_CREATE_MAX, head, len,
-		      list_set_create_policy))
-		return -IPSET_ERR_PROTOCOL;
 
 	if (unlikely(!ip_set_optattr_netorder(tb, IPSET_ATTR_SIZE) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT)))
@@ -579,6 +552,19 @@ static struct ip_set_type list_set_type __read_mostly = {
 	.family		= AF_UNSPEC,
 	.revision	= 0,
 	.create		= list_set_create,
+	.create_policy	= {
+		[IPSET_ATTR_SIZE]	= { .type = NLA_U32 },
+		[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+	},
+	.adt_policy	= {
+		[IPSET_ATTR_NAME]	= { .type = NLA_STRING,
+					    .len = IPSET_MAXNAMELEN },
+		[IPSET_ATTR_NAMEREF]	= { .type = NLA_STRING,
+					    .len = IPSET_MAXNAMELEN },
+		[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
+		[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
+		[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
+	},
 	.me		= THIS_MODULE,
 };
 

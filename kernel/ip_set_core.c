@@ -621,10 +621,11 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 {
 	struct ip_set *set, *clash;
 	ip_set_id_t index = IPSET_INVALID_ID;
+	struct nlattr *tb[IPSET_ATTR_CREATE_MAX+1] = {};
 	const char *name, *typename;
 	u8 family, revision;
 	u32 flags = flag_exist(nlh);
-	int ret = 0, len;
+	int ret = 0;
 
 	if (unlikely(protocol_failed(attr) ||
 		     attr[IPSET_ATTR_SETNAME] == NULL ||
@@ -669,11 +670,16 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 	/*
 	 * Without holding any locks, create private part.
 	 */
-	len = attr[IPSET_ATTR_DATA] ? nla_len(attr[IPSET_ATTR_DATA]) : 0;
-	pr_debug("data len: %u\n", len);
-	ret = set->type->create(set, attr[IPSET_ATTR_DATA] ?
-				nla_data(attr[IPSET_ATTR_DATA]) : NULL, len,
-				flags);
+	if (attr[IPSET_ATTR_DATA] &&
+	    nla_parse(tb, IPSET_ATTR_CREATE_MAX,
+	    	      nla_data(attr[IPSET_ATTR_DATA]),
+	    	      nla_len(attr[IPSET_ATTR_DATA]),
+	    	      set->type->create_policy)) {
+	    	ret = -IPSET_ERR_PROTOCOL;
+	    	goto put_out;
+	}
+
+	ret = set->type->create(set, tb, flags);
 	if (ret != 0)
 		goto put_out;
 
@@ -1101,19 +1107,17 @@ static const struct nla_policy ip_set_adt_policy[IPSET_ATTR_CMD_MAX + 1] = {
 };
 
 static int
-call_ad(struct sk_buff *skb, const struct nlattr *const attr[],
-	struct ip_set *set, const struct nlattr *nla,
-	enum ipset_adt adt, u32 flags)
+call_ad(struct sk_buff *skb, struct ip_set *set,
+	struct nlattr *tb[], enum ipset_adt adt,
+	u32 flags, bool use_lineno)
 {
-	struct nlattr *head = nla_data(nla);
-	int ret, len = nla_len(nla), retried = 0;
+	int ret, retried = 0;
 	u32 lineno = 0;
 	bool eexist = flags & IPSET_FLAG_EXIST;
 
 	do {
 		write_lock_bh(&set->lock);
-		ret = set->variant->uadt(set, head, len, adt,
-					 &lineno, flags);
+		ret = set->variant->uadt(set, tb, adt, &lineno, flags);
 		write_unlock_bh(&set->lock);
 	} while (ret == -EAGAIN &&
 		 set->variant->resize &&
@@ -1121,7 +1125,7 @@ call_ad(struct sk_buff *skb, const struct nlattr *const attr[],
 
 	if (!ret || (ret == -IPSET_ERR_EXIST && eexist))
 		return 0;
-	if (lineno && attr[IPSET_ATTR_LINENO]) {
+	if (lineno && use_lineno) {
 		/* Error in restore/batch mode: send back lineno */
 		struct nlmsghdr *nlh = nlmsg_hdr(skb);
 		int min_len = NLMSG_SPACE(sizeof(struct nfgenmsg));
@@ -1147,8 +1151,10 @@ ip_set_uadd(struct sock *ctnl, struct sk_buff *skb,
 	    const struct nlattr * const attr[])
 {
 	struct ip_set *set;
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1] = {};
 	const struct nlattr *nla;
 	u32 flags = flag_exist(nlh);
+	bool use_lineno;
 	int ret = 0;
 
 	if (unlikely(protocol_failed(attr) ||
@@ -1166,18 +1172,27 @@ ip_set_uadd(struct sock *ctnl, struct sk_buff *skb,
 	if (set == NULL)
 		return -ENOENT;
 
+	use_lineno = !!attr[IPSET_ATTR_LINENO];
 	if (attr[IPSET_ATTR_DATA]) {
-		ret = call_ad(skb, attr,
-			      set, attr[IPSET_ATTR_DATA], IPSET_ADD, flags);
+		if (nla_parse(tb, IPSET_ATTR_ADT_MAX,
+			      nla_data(attr[IPSET_ATTR_DATA]),
+			      nla_len(attr[IPSET_ATTR_DATA]),
+			      set->type->adt_policy))
+			return -IPSET_ERR_PROTOCOL;
+		ret = call_ad(skb, set, tb, IPSET_ADD, flags, use_lineno);
 	} else {
 		int nla_rem;
 
 		nla_for_each_nested(nla, attr[IPSET_ATTR_ADT], nla_rem) {
+			memset(tb, 0, sizeof(tb));
 			if (nla_type(nla) != IPSET_ATTR_DATA ||
-			    !flag_nested(nla))
+			    !flag_nested(nla) ||
+			    nla_parse(tb, IPSET_ATTR_ADT_MAX,
+			    	      nla_data(nla), nla_len(nla),
+			    	      set->type->adt_policy))
 				return -IPSET_ERR_PROTOCOL;
-			ret = call_ad(skb, attr,
-				       set, nla, IPSET_ADD, flags);
+			ret = call_ad(skb, set, tb, IPSET_ADD,
+				      flags, use_lineno);
 			if (ret < 0)
 				return ret;
 		}
@@ -1191,8 +1206,10 @@ ip_set_udel(struct sock *ctnl, struct sk_buff *skb,
 	    const struct nlattr * const attr[])
 {
 	struct ip_set *set;
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1] = {};
 	const struct nlattr *nla;
 	u32 flags = flag_exist(nlh);
+	bool use_lineno;
 	int ret = 0;
 
 	if (unlikely(protocol_failed(attr) ||
@@ -1210,18 +1227,27 @@ ip_set_udel(struct sock *ctnl, struct sk_buff *skb,
 	if (set == NULL)
 		return -ENOENT;
 
+	use_lineno = !!attr[IPSET_ATTR_LINENO];
 	if (attr[IPSET_ATTR_DATA]) {
-		ret = call_ad(skb, attr,
-			      set, attr[IPSET_ATTR_DATA], IPSET_DEL, flags);
+		if (nla_parse(tb, IPSET_ATTR_ADT_MAX,
+			      nla_data(attr[IPSET_ATTR_DATA]),
+			      nla_len(attr[IPSET_ATTR_DATA]),
+			      set->type->adt_policy))
+			return -IPSET_ERR_PROTOCOL;
+		ret = call_ad(skb, set, tb, IPSET_DEL, flags, use_lineno);
 	} else {
 		int nla_rem;
 
 		nla_for_each_nested(nla, attr[IPSET_ATTR_ADT], nla_rem) {
+			memset(tb, 0, sizeof(*tb));
 			if (nla_type(nla) != IPSET_ATTR_DATA ||
-			    !flag_nested(nla))
+			    !flag_nested(nla) ||
+			    nla_parse(tb, IPSET_ATTR_ADT_MAX,
+			    	      nla_data(nla), nla_len(nla),
+			    	      set->type->adt_policy))
 				return -IPSET_ERR_PROTOCOL;
-			ret = call_ad(skb, attr,
-				       set, nla, IPSET_DEL, flags);
+			ret = call_ad(skb, set, tb, IPSET_DEL,
+				      flags, use_lineno);
 			if (ret < 0)
 				return ret;
 		}
@@ -1235,6 +1261,7 @@ ip_set_utest(struct sock *ctnl, struct sk_buff *skb,
 	     const struct nlattr * const attr[])
 {
 	struct ip_set *set;
+	struct nlattr *tb[IPSET_ATTR_ADT_MAX+1] = {};
 	int ret = 0;
 
 	if (unlikely(protocol_failed(attr) ||
@@ -1247,11 +1274,14 @@ ip_set_utest(struct sock *ctnl, struct sk_buff *skb,
 	if (set == NULL)
 		return -ENOENT;
 
+	if (nla_parse(tb, IPSET_ATTR_ADT_MAX,
+		      nla_data(attr[IPSET_ATTR_DATA]),
+		      nla_len(attr[IPSET_ATTR_DATA]),
+		      set->type->adt_policy))
+		return -IPSET_ERR_PROTOCOL;
+
 	read_lock_bh(&set->lock);
-	ret = set->variant->uadt(set,
-				 nla_data(attr[IPSET_ATTR_DATA]),
-				 nla_len(attr[IPSET_ATTR_DATA]),
-				 IPSET_TEST, NULL, 0);
+	ret = set->variant->uadt(set, tb, IPSET_TEST, NULL, 0);
 	read_unlock_bh(&set->lock);
 	/* Userspace can't trigger element to be re-added */
 	if (ret == -EAGAIN)

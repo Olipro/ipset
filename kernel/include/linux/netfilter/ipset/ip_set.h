@@ -229,7 +229,7 @@ struct ip_set_type_variant {
 	 *		returns negative error code,
 	 *			zero for no match/success to add/delete
 	 *			positive for matching element */
-	int (*uadt)(struct ip_set *set, struct nlattr *head, int len,
+	int (*uadt)(struct ip_set *set, struct nlattr *tb[],
 		    enum ipset_adt adt, u32 *lineno, u32 flags);
 
 	/* Low level add/del/test functions */
@@ -272,8 +272,11 @@ struct ip_set_type {
 	u8 revision;
 
 	/* Create set */
-	int (*create)(struct ip_set *set,
-		      struct nlattr *head, int len, u32 flags);
+	int (*create)(struct ip_set *set, struct nlattr *tb[], u32 flags);
+
+	/* Attribute policies */
+	const struct nla_policy create_policy[IPSET_ATTR_CREATE_MAX + 1];
+	const struct nla_policy adt_policy[IPSET_ATTR_ADT_MAX + 1];
 
 	/* Set this to THIS_MODULE if you are a module, otherwise NULL */
 	struct module *me;
