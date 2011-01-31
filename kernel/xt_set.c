@@ -56,10 +56,10 @@ match_set(ip_set_id_t index, const struct sk_buff *skb,
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
 #define CHECK_OK	1
-#define CHECK_FAIL	0
+#define CHECK_FAIL(err)	0
 #else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
 #define	CHECK_OK	0
-#define CHECK_FAIL	(-EINVAL)
+#define CHECK_FAIL(err)	(err)
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
@@ -110,12 +110,12 @@ set_match_v0_checkentry(const struct xt_mtchk_param *par)
 	if (index == IPSET_INVALID_ID) {
 		pr_warning("Cannot find set indentified by id %u to match\n",
 			   info->match_set.index);
-		return CHECK_FAIL;	/* error */
+		return CHECK_FAIL(-ENOENT);	/* error */
 	}
 	if (info->match_set.u.flags[IPSET_DIM_MAX-1] != 0) {
 		pr_warning("Protocol error: set match dimension "
 			   "is over the limit!\n");
-		return CHECK_FAIL;	/* error */
+		return CHECK_FAIL(-ERANGE);	/* error */
 	}
 
 	/* Fill out compatibility data */
@@ -170,7 +170,7 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find add_set index %u as target\n",
 				   info->add_set.index);
-			return CHECK_FAIL;	/* error */
+			return CHECK_FAIL(-ENOENT);	/* error */
 		}
 	}
 
@@ -179,14 +179,14 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find del_set index %u as target\n",
 				   info->del_set.index);
-			return CHECK_FAIL;	/* error */
+			return CHECK_FAIL(-ENOENT);	/* error */
 		}
 	}
 	if (info->add_set.u.flags[IPSET_DIM_MAX-1] != 0 ||
 	    info->del_set.u.flags[IPSET_DIM_MAX-1] != 0) {
 		pr_warning("Protocol error: SET target dimension "
 			   "is over the limit!\n");
-		return CHECK_FAIL;	/* error */
+		return CHECK_FAIL(-ERANGE);	/* error */
 	}
 
 	/* Fill out compatibility data */
@@ -241,12 +241,12 @@ set_match_checkentry(const struct xt_mtchk_param *par)
 	if (index == IPSET_INVALID_ID) {
 		pr_warning("Cannot find set indentified by id %u to match\n",
 			   info->match_set.index);
-		return CHECK_FAIL;	/* error */
+		return CHECK_FAIL(-ENOENT);	/* error */
 	}
 	if (info->match_set.dim > IPSET_DIM_MAX) {
 		pr_warning("Protocol error: set match dimension "
 			   "is over the limit!\n");
-		return CHECK_FAIL;	/* error */
+		return CHECK_FAIL(-ERANGE);	/* error */
 	}
 
 	return CHECK_OK;
@@ -300,7 +300,7 @@ set_target_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find add_set index %u as target\n",
 				   info->add_set.index);
-			return CHECK_FAIL;	/* error */
+			return CHECK_FAIL(-ENOENT);	/* error */
 		}
 	}
 
@@ -309,14 +309,14 @@ set_target_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find del_set index %u as target\n",
 				   info->del_set.index);
-			return CHECK_FAIL;	/* error */
+			return CHECK_FAIL(-ENOENT);	/* error */
 		}
 	}
 	if (info->add_set.dim > IPSET_DIM_MAX ||
 	    info->del_set.flags > IPSET_DIM_MAX) {
 		pr_warning("Protocol error: SET target dimension "
 			   "is over the limit!\n");
-		return CHECK_FAIL;	/* error */
+		return CHECK_FAIL(-ERANGE);	/* error */
 	}
 
 	return CHECK_OK;
