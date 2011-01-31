@@ -12,7 +12,7 @@
  */
 
 /* The protocol version */
-#define IPSET_PROTOCOL		5
+#define IPSET_PROTOCOL		6
 
 /* The max length of strings including NUL: set and type identifiers */
 #define IPSET_MAXNAMELEN	32
@@ -118,7 +118,7 @@ enum {
 
 /* Error codes */
 enum ipset_errno {
-	IPSET_ERR_PRIVATE = 128,
+	IPSET_ERR_PRIVATE = 4096,
 	IPSET_ERR_PROTOCOL,
 	IPSET_ERR_FIND_TYPE,
 	IPSET_ERR_MAX_SETS,
@@ -135,7 +135,7 @@ enum ipset_errno {
 	IPSET_ERR_IPADDR_IPV6,
 
 	/* Type specific error codes */
-	IPSET_ERR_TYPE_SPECIFIC = 160,
+	IPSET_ERR_TYPE_SPECIFIC = 4352,
 };
 
 /* Flags at command level */
