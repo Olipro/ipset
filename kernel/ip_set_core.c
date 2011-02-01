@@ -251,8 +251,7 @@ ip_set_get_ipaddr4(struct nlattr *nla,  __be32 *ipaddr)
 
 	if (unlikely(!flag_nested(nla)))
 		return -IPSET_ERR_PROTOCOL;
-	if (nla_parse(tb, IPSET_ATTR_IPADDR_MAX, nla_data(nla), nla_len(nla),
-		      ipaddr_policy))
+	if (nla_parse_nested(tb, IPSET_ATTR_IPADDR_MAX, nla, ipaddr_policy))
 		return -IPSET_ERR_PROTOCOL;
 	if (unlikely(!ip_set_attr_netorder(tb, IPSET_ATTR_IPADDR_IPV4)))
 		return -IPSET_ERR_PROTOCOL;
@@ -270,8 +269,7 @@ ip_set_get_ipaddr6(struct nlattr *nla, union nf_inet_addr *ipaddr)
 	if (unlikely(!flag_nested(nla)))
 		return -IPSET_ERR_PROTOCOL;
 
-	if (nla_parse(tb, IPSET_ATTR_IPADDR_MAX, nla_data(nla), nla_len(nla),
-		      ipaddr_policy))
+	if (nla_parse_nested(tb, IPSET_ATTR_IPADDR_MAX, nla, ipaddr_policy))
 		return -IPSET_ERR_PROTOCOL;
 	if (unlikely(!ip_set_attr_netorder(tb, IPSET_ATTR_IPADDR_IPV6)))
 		return -IPSET_ERR_PROTOCOL;
@@ -671,10 +669,8 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 	 * Without holding any locks, create private part.
 	 */
 	if (attr[IPSET_ATTR_DATA] &&
-	    nla_parse(tb, IPSET_ATTR_CREATE_MAX,
-	    	      nla_data(attr[IPSET_ATTR_DATA]),
-	    	      nla_len(attr[IPSET_ATTR_DATA]),
-	    	      set->type->create_policy)) {
+	    nla_parse_nested(tb, IPSET_ATTR_CREATE_MAX, attr[IPSET_ATTR_DATA],
+			     set->type->create_policy)) {
 	    	ret = -IPSET_ERR_PROTOCOL;
 	    	goto put_out;
 	}
@@ -1174,10 +1170,9 @@ ip_set_uadd(struct sock *ctnl, struct sk_buff *skb,
 
 	use_lineno = !!attr[IPSET_ATTR_LINENO];
 	if (attr[IPSET_ATTR_DATA]) {
-		if (nla_parse(tb, IPSET_ATTR_ADT_MAX,
-			      nla_data(attr[IPSET_ATTR_DATA]),
-			      nla_len(attr[IPSET_ATTR_DATA]),
-			      set->type->adt_policy))
+		if (nla_parse_nested(tb, IPSET_ATTR_ADT_MAX,
+				     attr[IPSET_ATTR_DATA],
+				     set->type->adt_policy))
 			return -IPSET_ERR_PROTOCOL;
 		ret = call_ad(skb, set, tb, IPSET_ADD, flags, use_lineno);
 	} else {
@@ -1187,9 +1182,8 @@ ip_set_uadd(struct sock *ctnl, struct sk_buff *skb,
 			memset(tb, 0, sizeof(tb));
 			if (nla_type(nla) != IPSET_ATTR_DATA ||
 			    !flag_nested(nla) ||
-			    nla_parse(tb, IPSET_ATTR_ADT_MAX,
-			    	      nla_data(nla), nla_len(nla),
-			    	      set->type->adt_policy))
+			    nla_parse_nested(tb, IPSET_ATTR_ADT_MAX, nla,
+					     set->type->adt_policy))
 				return -IPSET_ERR_PROTOCOL;
 			ret = call_ad(skb, set, tb, IPSET_ADD,
 				      flags, use_lineno);
@@ -1229,10 +1223,9 @@ ip_set_udel(struct sock *ctnl, struct sk_buff *skb,
 
 	use_lineno = !!attr[IPSET_ATTR_LINENO];
 	if (attr[IPSET_ATTR_DATA]) {
-		if (nla_parse(tb, IPSET_ATTR_ADT_MAX,
-			      nla_data(attr[IPSET_ATTR_DATA]),
-			      nla_len(attr[IPSET_ATTR_DATA]),
-			      set->type->adt_policy))
+		if (nla_parse_nested(tb, IPSET_ATTR_ADT_MAX,
+				     attr[IPSET_ATTR_DATA],
+				     set->type->adt_policy))
 			return -IPSET_ERR_PROTOCOL;
 		ret = call_ad(skb, set, tb, IPSET_DEL, flags, use_lineno);
 	} else {
@@ -1242,9 +1235,8 @@ ip_set_udel(struct sock *ctnl, struct sk_buff *skb,
 			memset(tb, 0, sizeof(*tb));
 			if (nla_type(nla) != IPSET_ATTR_DATA ||
 			    !flag_nested(nla) ||
-			    nla_parse(tb, IPSET_ATTR_ADT_MAX,
-			    	      nla_data(nla), nla_len(nla),
-			    	      set->type->adt_policy))
+			    nla_parse_nested(tb, IPSET_ATTR_ADT_MAX, nla,
+					     set->type->adt_policy))
 				return -IPSET_ERR_PROTOCOL;
 			ret = call_ad(skb, set, tb, IPSET_DEL,
 				      flags, use_lineno);
@@ -1274,10 +1266,8 @@ ip_set_utest(struct sock *ctnl, struct sk_buff *skb,
 	if (set == NULL)
 		return -ENOENT;
 
-	if (nla_parse(tb, IPSET_ATTR_ADT_MAX,
-		      nla_data(attr[IPSET_ATTR_DATA]),
-		      nla_len(attr[IPSET_ATTR_DATA]),
-		      set->type->adt_policy))
+	if (nla_parse_nested(tb, IPSET_ATTR_ADT_MAX, attr[IPSET_ATTR_DATA],
+			     set->type->adt_policy))
 		return -IPSET_ERR_PROTOCOL;
 
 	read_lock_bh(&set->lock);
