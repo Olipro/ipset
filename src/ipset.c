@@ -236,10 +236,7 @@ call_parser(int *argc, char *argv[], const struct ipset_arg *args)
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
 				if (i + 1 <= *argc) {
-					ret = ipset_call_parser(session,
-							arg->parse,
-							optstr, arg->opt,
-							argv[i]);
+					ret = ipset_call_parser(session, arg, argv[i]);
 					if (ret < 0)
 						return ret;
 					ipset_shift_argv(argc, argv, i);
@@ -247,10 +244,7 @@ call_parser(int *argc, char *argv[], const struct ipset_arg *args)
 				}
 				/* Fall through */
 			default:
-				ret = ipset_call_parser(session,
-							arg->parse,
-							optstr, arg->opt,
-							optstr);
+				ret = ipset_call_parser(session, arg, optstr);
 				if (ret < 0)
 					return ret;
 			}

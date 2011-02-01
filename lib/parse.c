@@ -1416,15 +1416,14 @@ ipset_parse_ignored(struct ipset_session *session,
  */
 int
 ipset_call_parser(struct ipset_session *session,
-		  ipset_parsefn parse, const char *optstr,
-		  enum ipset_opt opt, const char *str)
+				  const struct ipset_arg *arg,
+				  const char *str)
 {
 	if (ipset_data_flags_test(ipset_session_data(session),
-				  IPSET_FLAG(opt)))
-		syntax_err("%s already specified", optstr);
+				  IPSET_FLAG(arg->opt)))
+		syntax_err("%s already specified", arg->name[0]);
 
-	return parse(session, opt, parse == ipset_parse_ignored
-				   ? optstr : str);
+	return arg->parse(session, arg->opt, str);
 }
 
 #define parse_elem(s, t, d, str)					\
