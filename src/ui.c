@@ -23,9 +23,9 @@
 const struct ipset_commands ipset_commands[] = {
 	/* Order is important */
 
-	{	/* c[reate], --create, n, -N */
+	{	/* c[reate], --create, n[ew], -N */
 		.cmd = IPSET_CMD_CREATE,
-		.name = { "create", "n" },
+		.name = { "create", "new" },
 		.has_arg = IPSET_MANDATORY_ARG2,
 		.help = "SETNAME TYPENAME [type-specific-options]\n"
 			"        Create a new set",
@@ -143,14 +143,14 @@ ipset_match_cmd(const char *arg, const char * const name[])
 
 	if (len > strlen(name[0]) || !len)
 		return false;
-	else if (strncmp(arg, name[0], len) == 0)
+	else if (len > 1 &&
+		 ((strncmp(arg, name[0], len) == 0) ||
+		  (name[1] != NULL && (strncmp(arg, name[1], len) == 0))))
 		return true;
 	else if (len != 1)
 		return false;
-	else if (name[1] == NULL)
-		return tolower(arg[0]) == name[0][0];
-	else
-		return tolower(arg[0]) == name[1][0];	
+	else return tolower(arg[0]) == name[0][0] ||
+		    (name[1] != NULL && tolower(arg[0]) == name[1][0]);	
 }
 
 const struct ipset_envopts ipset_envopts[] = {
