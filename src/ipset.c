@@ -206,40 +206,37 @@ restore(char *argv0)
 static int
 call_parser(int *argc, char *argv[], const struct ipset_arg *args)
 {
-	int i = 1, ret = 0;
+	int ret = 0;
 	const struct ipset_arg *arg;
 	const char *optstr;
 	
 	/* Currently CREATE and ADT may have got additional arguments */
-	if (!args)
-		goto done;
-	for (arg = args; arg->opt; arg++) {
-		for (i = 1; i < *argc; ) {
-			D("argc: %u, i: %u: %s vs %s",
-			  *argc, i, argv[i], arg->name[0]);
-			if (!(ipset_match_option(argv[i], arg->name))) {
-				i++;
+	if (!args && *argc > 1)
+		goto err_unknown;
+	while (*argc > 1) {
+		for (arg = args; arg->opt; arg++) {
+			D("argc: %u, %s vs %s", *argc, argv[1], arg->name[0]);
+			if (!(ipset_match_option(argv[1], arg->name)))
 				continue;
-			}
-			optstr = argv[i];
+
+			optstr = argv[1];
 			/* Shift off matched option */
 			D("match %s", arg->name[0]);
-			ipset_shift_argv(argc, argv, i);
-			D("argc: %u, i: %u", *argc, i);
+			ipset_shift_argv(argc, argv, 1);
 			switch (arg->has_arg) {
 			case IPSET_MANDATORY_ARG:
-				if (i + 1 > *argc)
+				if (*argc < 2)
 					return exit_error(PARAMETER_PROBLEM,
 						"Missing mandatory argument "
 						"of option `%s'",
 						arg->name[0]);
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
-				if (i + 1 <= *argc) {
-					ret = ipset_call_parser(session, arg, argv[i]);
+				if (*argc >= 2) {
+					ret = ipset_call_parser(session, arg, argv[1]);
 					if (ret < 0)
 						return ret;
-					ipset_shift_argv(argc, argv, i);
+					ipset_shift_argv(argc, argv, 1);
 					break;
 				}
 				/* Fall through */
@@ -248,14 +245,15 @@ call_parser(int *argc, char *argv[], const struct ipset_arg *args)
 				if (ret < 0)
 					return ret;
 			}
+			break;
 		}
+		if (!arg->opt)
+			goto err_unknown;
 	}
-done:
-	if (i < *argc)
-		return exit_error(PARAMETER_PROBLEM,
-				  "Unknown argument: `%s'",
-				  argv[i]);
 	return ret;
+
+err_unknown:
+	return exit_error(PARAMETER_PROBLEM, "Unknown argument: `%s'", argv[1]);
 }
 
 static enum ipset_adt
