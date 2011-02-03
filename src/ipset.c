@@ -553,7 +553,8 @@ parse_commandline(int argc, char *argv[])
 				argv[1]);
 		return exit_error(PARAMETER_PROBLEM, "No command specified.");
 	case IPSET_CMD_VERSION:
-		printf("%s v%s.\n", program_name, program_version);
+		printf("%s v%s, protocol version: %u\n",
+		       program_name, program_version, IPSET_PROTOCOL);
 		if (interactive)
 			return 0;
 		return exit_error(NO_PROBLEM, NULL);
