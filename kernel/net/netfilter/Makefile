@@ -1,5 +1,5 @@
 ifndef IP_SET_MAX
-$(error "Use the toplevel Makefile, not the one in the kernel/ subdirectory")
+$(error "Use the toplevel Makefile, not the ones under the kernel/ subdirectory")
 endif
 
 ifneq ($(KERNELRELEASE),)

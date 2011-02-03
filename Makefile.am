@@ -23,18 +23,21 @@ endif
 SUBDIRS		= lib src
 
 modules_sparse:
-	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel V=$V C=2 CF=-D__CHECK_ENDIAN__ \
-			IP_SET_MAX=$(IP_SET_MAX) modules
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter \
+			V=$V C=2 CF=-D__CHECK_ENDIAN__ \
+			IP_SET_MAX=$(IP_SET_MAX) KDIR=$$PWD/kernel modules
 
 modules:
-	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel V=$V \
-			IP_SET_MAX=$(IP_SET_MAX) modules
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter V=$V \
+			IP_SET_MAX=$(IP_SET_MAX) KDIR=$$PWD/kernel modules
 
 modules_install:
-	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel modules_install
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter \
+			KDIR=$$PWD/kernel modules_install
 
 modules_clean:
-	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel clean
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter \
+			KDIR=$$PWD/kernel clean
 
 update_includes:
 	./update ip_set.h
