@@ -1,3 +1,29 @@
+6.0
+ - Reorganized kernel/ subdir
+ - netfilter: ipset: fix linking with CONFIG_IPV6=n (Patrick McHardy)
+ - netfilter: ipset: send error message manually
+ - netfilter: ipset: add missing break statemtns in 
+   ip_set_get_ip_port() (Patrick McHardy)
+ - netfilter: ipset: add missing include to xt_set.h (Patrick McHardy)
+ - netfilter: ipset: remove unnecessary includes (Patrick McHardy)
+ - netfilter: ipset: use nla_parse_nested() (Patrick McHardy)
+ - Separate ipset errnos completely from system ones and bump protocol
+   version
+ - Use better error codes in xt_set.c
+ - Fix sparse warning about shadowed definition
+ - bitmap:ip type: flavour specific adt functions (Patrick McHardy's review)
+ - bitmap:port type: flavour specific adt functions (Patrick McHardy's
+   review)
+ - Move the type specifici attribute validation to the core
+   (suggested by Patrick McHardy)
+ - Use vzalloc() instead of __vmalloc() (Eric Dumazet, Patrick McHardy)
+ - Use meaningful error messages in xt_set.c (Patrick McHardy's review)
+ - Constified attribute cannot be written (Patrick McHardy's review)
+ - Send (N)ACK at dumping only when NLM_F_ACK is set
+   (Patrick McHardy's review)
+ - Correct the error codes: use ENOENT and EMSGSIZE (Patrick McHardy's
+   review)
+
 5.4
  - Fixed broken ICMP and ICMPv6 handling
  - Fix trailing whitespaces and pr_* messages

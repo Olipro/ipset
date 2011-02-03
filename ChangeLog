@@ -1,3 +1,20 @@
+6.0
+ - Print protocol version together with ipset version
+ - Testsuite compatibility with debugging enabled
+ - Allow "new" as a commad alias to "create"
+ - ipset: improve command argument parsing (Holger Eitzenberger)
+ - ipset: avoid the unnecessary argv[] loop (Holger Eitzenberger)
+ - ipset: pass ipset_arg argument pointer (Holger Eitzenberger)
+ - Separate ipset errnos completely from system ones and bump protocol
+   version
+ - Fix the spelling error fix :-) (Ferenc Wagner)
+ - Resolving IP addresses did not work at listing/saving sets, fixed
+ - ipset: fix spelling error (Holger Eitzenberger)
+ - ipset: fix the Netlink sequence number (Holger Eitzenberger)
+ - ipset: turn Set name[] into a const pointer (Holger Eitzenberger)
+ - Check ICMP and ICMPv6 with the set match and target in the testsuite
+ - Avoid possible syntax clashing at saving hostnames
+
 5.3
  - Set the non-debug compiling the default
  - Testsuite fix of ospf replaced with vrrp.

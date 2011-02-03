@@ -61,16 +61,18 @@ ipset and its match and target from iptables.
 
 Compatibilities and incompatibilities:
 
-- The ipset 5.x userspace utility contains a backward compatibility
+- The ipset 6.x userspace utility contains a backward compatibility
   interface to support the commandline syntax of ipset 4.x.
-- The ipset 5.x userspace utility can't talk to the kernel part of ipset 4.x.
-- The ipset 5.x kernel part can't talk to the userspace utility from
-  ipset 4.x.
-- The ipset 5.x kernel part can work together with the set match and SET
+  The commandline syntax of ipset 6.x is fully compatible with 5.x.
+- The ipset 6.x userspace utility can't talk to the kernel part of ipset 5.x
+  or 4.x.
+- The ipset 6.x kernel part can't talk to the userspace utility from
+  ipset 5.x or 4.x.
+- The ipset 6.x kernel part can work together with the set match and SET
   target from iptables 1.4.7 and below, however if you need the IPv6 support
-  from ipset 5.x, then you have to use iptables 1.4.8 or above.
+  from ipset 6.x, then you have to use iptables 1.4.8 or above.
 
-The ipset 5.x can interpret the commandline syntax of ipset 4.x, however
+The ipset 6.x can interpret the commandline syntax of ipset 4.x, however
 some internal changes mean different behaviour:
 
 - The "--matchunset" flag for the macipmap type is ignored and not used
@@ -82,5 +84,5 @@ some internal changes mean different behaviour:
 - The hash types are not resized when new entries are added by the SET
   target. If you use a set together with the SET target, create it with
   the proper size because it won't be resized automatically.
-- The iptree, iptreemap types are not implemented in ipset 5.x. The types
+- The iptree, iptreemap types are not implemented in ipset 6.x. The types
   are automatically substituted with the hash:ip type.
