@@ -17,5 +17,7 @@ ipset_SOURCES	= ipset.c \
 ipset_LDADD	= ../lib/libipset.la
 AM_LDFLAGS	= -static
 
+man_MANS = ipset.8
+
 #%.o: %.c
 #	${AM_VERBOSE_CC} ${CC} ${AM_DEPFLAGS} ${AM_CFLAGS} ${CFLAGS} -o $@ -c $<
