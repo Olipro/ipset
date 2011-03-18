@@ -330,6 +330,9 @@ Mandatory options to use when creating a \fBbitmap:port\fR type of set:
 \fBrange\fP \fIfromport\fP\-\fItoport\fR
 Create the set from the specified inclusive port range.
 .PP 
+The \fBset\fR match and \fBSET\fR target netfilter kernel modules interpret
+the stored numbers as TCP or UDP port numbers.
+.PP 
 Examples:
 .IP 
 ipset create foo bitmap:port range 0\-1024
@@ -380,9 +383,9 @@ a range or a network:
 .PP 
 Examples:
 .IP 
-ipset create foo hash:ip netmask 24
+ipset create foo hash:ip netmask 30
 .IP 
-ipset add foo 192.168.1.1\-192.168.1.2
+ipset add foo 192.168.1.0/24
 .IP 
 ipset test foo 192.168.1.2
 .SS hash:net
@@ -414,8 +417,10 @@ correct value.
 The maximal number of elements which can be stored in the set, default 65536.
 .PP 
 When adding/deleting/testing entries, if the cidr prefix parameter is not specified,
-then the host prefix value is assumed. When adding/deleting entries, overlapping
-elements are not checked.
+then the host prefix value is assumed. When adding/deleting entries, the exact
+element is added/deleted and overlapping elements are not checked by the kernel.
+When testing entries, if a host address is tested, then the kernel tries to match
+the host address in the networks added to the set and reports the result accordingly.
 .PP 
 From the \fBset\fR netfilter match point of view the searching for a match
 always  starts  from  the smallest  size  of netblock (most specific
@@ -431,7 +436,7 @@ Examples:
 .IP 
 ipset create foo hash:net
 .IP 
-ipset add foo 192.168.0/24
+ipset add foo 192.168.0.0/24
 .IP 
 ipset add foo 10.1.0.0/16
 .IP 
@@ -481,8 +486,8 @@ TCP port or range of ports expressed in TCP portname identifiers from /etc/servi
 \fIportnumber[\-portnumber]\fR
 TCP port or range of ports expressed in TCP port numbers
 .TP 
-\fBtcp\fR|\fBudp\fR:\fIportname\fR|\fIportnumber\fR[\-\fIportname\fR|\fIportnumber\fR]
-TCP or UDP port or port range expressed in port name(s) or port number(s)
+\fBtcp\fR|\fBsctp\fR|\fBudp\fR|\fBudplite\fR:\fIportname\fR|\fIportnumber\fR[\-\fIportname\fR|\fIportnumber\fR]
+TCP, SCTP, UDP or UDPLITE port or port range expressed in port name(s) or port number(s)
 .TP 
 \fBicmp\fR:\fIcodename\fR|\fItype\fR/\fIcode\fR
 ICMP codename or type/code. The supported ICMP codename identifiers can always
@@ -508,7 +513,7 @@ ipset add foo 192.168.1.0/24,80\-82
 .IP 
 ipset add foo 192.168.1.1,udp:53
 .IP 
-ipset add foo 192.168.1.1,ospf:0
+ipset add foo 192.168.1.1,vrrp:0
 .IP 
 ipset test foo 192.168.1.1,80
 .SS hash:net,port
@@ -547,8 +552,10 @@ part of the elements see the description at the
 \fBhash:ip,port\fR set type.
 .PP 
 When adding/deleting/testing entries, if the cidr prefix parameter is not specified,
-then the host prefix value is assumed. When adding/deleting entries, overlapping
-elements are not checked.
+then the host prefix value is assumed. When adding/deleting entries, the exact
+element is added/deleted and overlapping elements are not checked by the kernel.
+When testing entries, if a host address is tested, then the kernel tries to match
+the host address in the networks added to the set and reports the result accordingly.
 .PP 
 From the \fBset\fR netfilter match point of view the searching for a  match
 always  starts  from  the smallest  size  of netblock (most specific

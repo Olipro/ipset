@@ -83,13 +83,13 @@ static const char hash_ipportnet_usage[] =
 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
 "      Adding/deleting multiple elements in IP/CIDR or FROM-TO form\n"
 "      in the first IP component is supported for IPv4.\n"
-"      Adding/deleting multiple elements with TCP/UDP port range\n"
-"      is supported both for IPv4 and IPv6.\n";
+"      Adding/deleting multiple elements with TCP/SCTP/UDP/UDPLITE\n"
+"      port range is supported both for IPv4 and IPv6.\n";
 
 struct ipset_type ipset_hash_ipportnet0 = {
 	.name = "hash:ip,port,net",
 	.alias = { "ipportnethash", NULL },
-	.revision = 0,
+	.revision = 1,
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_THREE,
 	.elem = { 

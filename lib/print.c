@@ -585,7 +585,9 @@ ipset_print_proto_port(char *buf, unsigned int len,
 
 		switch (proto) {
 		case IPPROTO_TCP:
+		case IPPROTO_SCTP:
 		case IPPROTO_UDP:
+		case IPPROTO_UDPLITE:
 			break;
 		case IPPROTO_ICMP:
 			return ipset_print_icmp(buf + offset, len, data,

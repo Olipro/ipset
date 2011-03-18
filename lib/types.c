@@ -198,7 +198,7 @@ create_type_get(struct ipset_session *session)
 	struct ipset_data *data;
 	const char *typename;
 	uint8_t family, tmin = 0, tmax = 0;
-	const uint8_t *kmin, *kmax;
+	uint8_t kmin, kmax;
 	int ret;
 
 	data = ipset_session_data(session);
@@ -240,32 +240,32 @@ create_type_get(struct ipset_session *session)
 	if (ret != 0)
 		return NULL;
 
-	kmax = ipset_data_get(data, IPSET_OPT_REVISION);
+	kmax = *(const uint8_t *)ipset_data_get(data, IPSET_OPT_REVISION);
 	if (ipset_data_test(data, IPSET_OPT_REVISION_MIN))
-		kmin = ipset_data_get(data, IPSET_OPT_REVISION_MIN);
+		kmin = *(const uint8_t *)ipset_data_get(data, IPSET_OPT_REVISION_MIN);
 	else
 		kmin = kmax;
-	if (MAX(tmin, *kmin) > MIN(tmax, *kmax)) {
-		if (*kmin > tmax)
+	if (MAX(tmin, kmin) > MIN(tmax, kmax)) {
+		if (kmin > tmax)
 			return ipset_errptr(session,
-				"Kernel supports %s type with family %s "
-				"in minimal revision %u while ipset library "
-				"in maximal revision %u. "
-				"You need to upgrade your ipset library.",
+				"Kernel supports %s type, family %s "
+				"with minimal revision %u while ipset program "
+				"with maximal revision %u.\n"
+				"You need to upgrade your ipset program.",
 				typename,
 				family == AF_INET ? "INET" :
 				family == AF_INET6 ? "INET6" : "UNSPEC",
-				*kmin, tmax);
+				kmin, tmax);
 		else
 			return ipset_errptr(session,
-				"Kernel supports %s type with family %s "
-				"in maximal revision %u while ipset library "
-				"in minimal revision %u. "
+				"Kernel supports %s type, family %s "
+				"with maximal revision %u while ipset program "
+				"with minimal revision %u.\n"
 				"You need to upgrade your kernel.",
 				typename,
 				family == AF_INET ? "INET" :
 				family == AF_INET6 ? "INET6" : "UNSPEC",
-				*kmax, tmin);
+				kmax, tmin);
 	}
 	
 	match->kernel_check = IPSET_KERNEL_OK;

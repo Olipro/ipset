@@ -60,12 +60,13 @@ static const char hash_netport_usage[] =
 "where depending on the INET family\n"
 "      IP is a valid IPv4 or IPv6 address (or hostname),\n"
 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
-"      Adding/deleting multiple elements with TCP/UDP port range supported.\n";
+"      Adding/deleting multiple elements with TCP/SCTP/UDP/UDPLITE\n"
+"      port range is supported both for IPv4 and IPv6.\n";
 
 struct ipset_type ipset_hash_netport0 = {
 	.name = "hash:net,port",
 	.alias = { "netporthash", NULL },
-	.revision = 0,
+	.revision = 1,
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_TWO,
 	.elem = { 

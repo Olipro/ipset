@@ -62,6 +62,12 @@
 0 ipset add test 2.0.0.1,vrrp:0
 # Test element with vrrp
 0 ipset test test 2.0.0.1,vrrp:0
+# Add element with sctp
+0 ipset add test 2.0.0.1,sctp:80
+# Test element with sctp
+0 ipset test test 2.0.0.1,sctp:80
+# Delete element with sctp
+0 ipset del test 2.0.0.1,sctp:80
 # List set
 0 ipset list test > .foo0 && ./sort.sh .foo0
 # Check listing

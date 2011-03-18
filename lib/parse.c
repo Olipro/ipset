@@ -500,10 +500,9 @@ ipset_parse_proto_port(struct ipset_session *session,
 		p = *(const uint8_t *) ipset_data_get(data, IPSET_OPT_PROTO);
 		switch (p) {
 		case IPPROTO_TCP:
-			proto = tmp;
-			tmp = a;
-			goto parse_port;
+		case IPPROTO_SCTP:
 		case IPPROTO_UDP:
+		case IPPROTO_UDPLITE:
 			proto = tmp;
 			tmp = a;
 			goto parse_port;
