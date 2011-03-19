@@ -1,3 +1,7 @@
+6.1
+ - Manpage was not installed (reported by Mark A. Ziesemer)
+ - SCTP, UDPLITE support to the hash:*port* types added
+
 6.0
  - Print protocol version together with ipset version
  - Testsuite compatibility with debugging enabled

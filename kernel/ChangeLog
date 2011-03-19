@@ -1,3 +1,9 @@
+6.1
+ - The hash:*port* types ignored the address range with non TCP/UDP, fixed
+ - Fix checking the revision number of the set type at create command
+ - SCTP, UDPLITE support to hash:*port* types added
+ - Fix revision reporting got broken by the revision checking patch
+
 6.0
  - Reorganized kernel/ subdir
  - netfilter: ipset: fix linking with CONFIG_IPV6=n (Patrick McHardy)
