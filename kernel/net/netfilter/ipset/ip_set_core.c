@@ -136,7 +136,7 @@ find_set_type_minmax(const char *name, u8 family, u8 *min, u8 *max)
 			found = true;
 			if (type->revision < *min)
 				*min = type->revision;
-			else if (type->revision > *max)
+			if (type->revision > *max)
 				*max = type->revision;
 		}
 	rcu_read_unlock();

@@ -216,7 +216,7 @@ create_type_get(struct ipset_session *session)
 		    && MATCH_FAMILY(t, family)) {
 			if (match == NULL) {
 		    		match = t;
-		    		tmax = t->revision;
+		    		tmin = tmax = t->revision;
 			} else if (t->family == match->family)
 				tmin = t->revision;
 		}	
@@ -240,11 +240,10 @@ create_type_get(struct ipset_session *session)
 	if (ret != 0)
 		return NULL;
 
-	kmax = *(const uint8_t *)ipset_data_get(data, IPSET_OPT_REVISION);
+	kmin = kmax = *(const uint8_t *)ipset_data_get(data, IPSET_OPT_REVISION);
 	if (ipset_data_test(data, IPSET_OPT_REVISION_MIN))
 		kmin = *(const uint8_t *)ipset_data_get(data, IPSET_OPT_REVISION_MIN);
-	else
-		kmin = kmax;
+
 	if (MAX(tmin, kmin) > MIN(tmax, kmax)) {
 		if (kmin > tmax)
 			return ipset_errptr(session,
