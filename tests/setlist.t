@@ -29,7 +29,7 @@
 # Test foo,after,bar
 1 ipset -T test foo,after,bar
 # Save sets
-0 ipset -S > setlist.t.restore
+0 ipset -S > setlist.t.r
 # Delete bar,before,foo
 1 ipset -D test bar,before,foo
 # Delete foo,after,bar
@@ -43,7 +43,7 @@
 # Delete all sets
 0 ipset -X
 # Restore saved sets
-0 ipset -R < setlist.t.restore
+0 ipset -R < setlist.t.r
 # List set
 0 ipset -L test > .foo
 # Check listing
@@ -51,5 +51,29 @@
 # Flush all sets
 0 ipset -F
 # Delete all sets
-0 ipset -X && rm setlist.t.restore
+0 ipset -X && rm setlist.t.r
+# Restore list:set with timeout
+0 ipset -R < setlist.t.restore
+# Add set "before" last one
+0 ipset add test e before d
+# Check reference number of the pushed off set
+0 ref=`ipset list d | grep References | sed 's/References: //'` && test $ref -eq 0
+# Try to add already added set
+1 ipset add test a
+# Check reference number of added set
+0 ref=`ipset list a | grep References | sed 's/References: //'` && test $ref -eq 1
+# Try to add already added set with exist flag
+0 ipset add test a -!
+# Check reference number of added set
+0 ref=`ipset list a | grep References | sed 's/References: //'` && test $ref -eq 1
+# Delete set from the set
+0 ipset del test a
+# Check reference number of deleted set
+0 ref=`ipset list a | grep References | sed 's/References: //'` && test $ref -eq 0
+# Sleep 10s so that entries can time out
+0 sleep 10
+# Check reference numbers of the sets
+0 ref=`ipset list | grep 'References: 1' | wc -l` && test $ref -eq 0
+# Delete all sets
+0 ipset -x
 # eof
