@@ -44,3 +44,16 @@ index 373f1a9..8a3906a 100644
  #define NLA_PUT_STRING(skb, attrtype, value) \
  	NLA_PUT(skb, attrtype, strlen(value) + 1, value)
  
+diff --git a/net/netfilter/nfnetlink.c b/net/netfilter/nfnetlink.c
+index b4a4532..51dd302 100644
+--- a/net/netfilter/nfnetlink.c
++++ b/net/netfilter/nfnetlink.c
+@@ -35,7 +35,7 @@ MODULE_LICENSE("GPL");
+ MODULE_AUTHOR("Harald Welte <laforge@netfilter.org>");
+ MODULE_ALIAS_NET_PF_PROTO(PF_NETLINK, NETLINK_NETFILTER);
+ 
+-static char __initdata nfversion[] = "0.30";
++static char __initdata nfversion[] = "0.30 with ipset netlink.patch";
+ 
+ static const struct nfnetlink_subsystem *subsys_table[NFNL_SUBSYS_COUNT];
+ static DEFINE_MUTEX(nfnl_mutex);
