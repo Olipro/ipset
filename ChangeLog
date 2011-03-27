@@ -1,3 +1,6 @@
+6.2
+ - Manpage update
+
 6.1
  - Manpage was not installed (reported by Mark A. Ziesemer)
  - SCTP, UDPLITE support to the hash:*port* types added

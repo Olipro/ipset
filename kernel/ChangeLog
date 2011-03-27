@@ -1,3 +1,9 @@
+6.2
+ - list:set timeout variant fixes
+ - References are protected by rwlock instead of mutex
+ - Add explicit text message to detect patched kernel (netlink.patch)
+ - Timeout can be modified for already added elements
+
 6.1
  - The hash:*port* types ignored the address range with non TCP/UDP, fixed
  - Fix checking the revision number of the set type at create command
