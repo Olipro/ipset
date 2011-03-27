@@ -231,6 +231,8 @@ parameter for the \fBcreate\fR command means the default timeout value (in secon
 for new entries. If a set is created with timeout support, then the same 
 \fBtimeout\fR option can be used to specify non\-default timeout values
 when adding entries. Zero timeout value means the entry is added permanent to the set.
+The timeout value of already added elements can be changed by readding the element
+using the \fB\-exist\fR option.
 .SS bitmap:ip
 The \fBbitmap:ip\fR set type uses a memory range to store either IPv4 host
 (default) or IPv4 network addresses. A \fBbitmap:ip\fR type of set can store up
