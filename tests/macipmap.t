@@ -130,6 +130,14 @@
 0 diff -I 'Size in memory.*' .foo macipmap.t.list2 && rm .foo
 # Range: Flush test set
 0 ipset -F test
+# Range: add element with 1s timeout
+0 ipset add test 2.0.200.214,00:11:22:33:44:57 timeout 1
+# Range: readd element with 3s timeout
+0 ipset add test 2.0.200.214,00:11:22:33:44:57 timeout 3 -exist
+# Range: sleep 2s
+0 sleep 2s
+# Range: check readded element
+0 ipset test test 2.0.200.214
 # Range: Delete test set
 0 ipset -X test
 # eof

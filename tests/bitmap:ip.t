@@ -148,6 +148,16 @@
 0 ipset list test > .foo
 # Full: Check listing
 0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list3 && rm .foo
+# Full: flush set
+0 ipset flush test
+# Full: add element with 1s timeout
+0 ipset add test 1.1.1.1 timeout 1
+# Full: readd element with 3s timeout
+0 ipset add test 1.1.1.1 timeout 3 -exist
+# Full: sleep 2s
+0 sleep 2s
+# Full: check readded element
+0 ipset test test 1.1.1.1
 # Full: Delete test set
 0 ipset destroy test
 # eof

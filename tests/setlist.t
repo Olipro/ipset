@@ -52,6 +52,38 @@
 0 ipset -F
 # Delete all sets
 0 ipset -X && rm setlist.t.r
+# Create sets a, b, c to check before/after in all combinations
+0 ipset restore < setlist.t.before
+# Add set a to test set
+0 ipset add test b
+# Add set c after b
+0 ipset add test c after b
+# Add set a before b
+0 ipset add test a before b
+# List test set
+0 ipset list test > .foo
+# Check listing
+0 diff -I 'Size in memory.*' .foo setlist.t.list1 && rm .foo
+# Test a set before b
+0 ipset test test a before b
+# Test c set after b
+0 ipset test test c after b
+# Delete b set before c
+0 ipset del test b before c
+# List test set
+0 ipset list test > .foo
+# Check listing
+0 diff -I 'Size in memory.*' .foo setlist.t.list2 && rm .foo
+# Delete c set after a
+0 ipset del test c after a
+# List test set
+0 ipset list test > .foo
+# Check listing
+0 diff -I 'Size in memory.*' .foo setlist.t.list3 && rm .foo
+# Flush sets
+0 ipset flush
+# Destroy sets
+0 ipset destroy
 # Restore list:set with timeout
 0 ipset -R < setlist.t.restore
 # Add set "before" last one
@@ -84,6 +116,17 @@
 0 sleep 10
 # Check reference numbers of the sets
 0 ref=`ipset list | grep 'References: 1' | wc -l` && test $ref -eq 0
+# Flush test set
+0 ipset flush test
+# Add element with 1s timeout
+0 ipset add test a timeout 1
+# Readd element with 3s timeout
+0 ipset add test a timeout 3 -exist
+# Sleep 2s
+# Check readded element
+0 ipset test test a
+# Flush all sets
+0 ipset flush
 # Delete all sets
 0 ipset -x
 # eof

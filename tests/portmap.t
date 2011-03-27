@@ -80,6 +80,14 @@
 # 0 diff -I 'Size in memory.*' .foo portmap.t.list2 && rm .foo
 # Full: Flush test set
 0 ipset -F test
+# Full: add element with 1s timeout
+0 ipset add test 567 timeout 1
+# Full: readd element with 3s timeout
+0 ipset add test 567 timeout 3 -exist
+# Full: sleep 2s
+0 sleep 2s
+# Full: check readded element
+0 ipset test test 567
 # Full: Delete test set
 0 ipset -X test
 # eof

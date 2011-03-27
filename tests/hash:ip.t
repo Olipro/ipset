@@ -96,6 +96,14 @@
 0 diff -I 'Size in memory.*' .foo hash:ip.t.list1 && rm .foo
 # Network: Flush test set
 0 ipset -F test
+# Network: add element with 1s timeout
+0 ipset add test 200.100.0.12 timeout 1
+# Network: readd element with 3s timeout
+0 ipset add test 200.100.0.12 timeout 3 -exist
+# Network: sleep 2s
+0 sleep 2s
+# Network: check readded element
+0 ipset test test 200.100.0.12
 # Network: Delete test set
 0 ipset -X test
 # eof
