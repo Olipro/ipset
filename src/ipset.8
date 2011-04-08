@@ -302,9 +302,10 @@ matched by the kernel, it will automatically fill out the missing MAC address wi
 source MAC address from the packet. If the entry was specified with a timeout value,
 the timer starts off when the IP and MAC address pair is complete.
 .PP 
-Please note, the \fBset\fR match and \fBSET\fR target netfilter kernel modules
-\fBalways\fR use the source MAC address from the packet to match, add or delete
-entries from a \fBbitmap:ip,mac\fR type of set.
+The \fBbitmap:ip,mac\fR type of sets require two \fBsrc/dst\fR parameters of
+the \fBset\fR match and \fBSET\fR target netfilter kernel modules and the second
+one must be \fBsrc\fR to match, add or delete entries because the \fBset\fR match
+and \fBSET\fR target have access to the source MAC address only.
 .PP 
 Examples:
 .IP 
