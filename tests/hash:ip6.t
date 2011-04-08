@@ -23,7 +23,7 @@
 # IP: List set
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # IP: Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip6.t.list2 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:ip6.t.list2
 # IP: Save set
 0 ipset save test > hash:ip6.t.restore
 # Sleep 5s so that element can time out
@@ -31,7 +31,7 @@
 # IP: List set
 0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
 # IP: Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip6.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:ip6.t.list0
 # IP: Destroy set
 0 ipset x test
 # IP: Restore saved set
@@ -39,7 +39,7 @@
 # IP: List set
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # IP: Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip6.t.list2 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:ip6.t.list2
 # IP: Flush test set
 0 ipset -F test
 # IP: Try to add multiple elements in one step
@@ -75,13 +75,13 @@
 # Network: List set
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Network: Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip6.t.list3 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:ip6.t.list3
 # Sleep 5s so that elements can time out
 0 sleep 5
 # Network: List set
 0 ipset -L test > .foo
 # Network: Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip6.t.list1 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:ip6.t.list1
 # Network: Flush test set
 0 ipset -F test
 # Network: Delete test set
@@ -95,7 +95,7 @@
 # List restored set b
 0 ipset l b > .foo0 && ./sort.sh .foo0
 # Check listing of set b
-0 diff -I 'Size in memory.*' .foo restore.t.list1 && rm .foo
+0 diff -I 'Size in memory.*' .foo restore.t.list1
 # Destroy by restore
 0 ipset restore < restore.t.destroy
 # eof

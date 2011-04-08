@@ -35,7 +35,7 @@
 # List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
 # Check listing
-0 diff -I 'Size in memory.*' .foo nethash.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo nethash.t.list0
 # Flush test set
 0 ipset -F test
 # Delete test set

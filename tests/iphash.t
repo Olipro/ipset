@@ -25,7 +25,7 @@
 # IP: List set
 0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
 # IP: Check listing
-0 diff -I 'Size in memory.*' .foo iphash.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo iphash.t.list0
 # IP: Flush test set
 0 ipset -F test
 # IP: Delete test set
@@ -33,13 +33,13 @@
 # IP: Restore values so that rehashing is triggered, old format
 0 ipset -R < iphash.t.restore.old
 # IP: Check that all values are restored
-0 (grep add iphash.t.restore | sort > .foo.1) && (ipset -S test | grep add | sort > .foo.2) && cmp .foo.1 .foo.2 && rm .foo.*
+0 (grep add iphash.t.restore | sort > .foo.1) && (ipset -S test | grep add | sort > .foo.2) && cmp .foo.1 .foo.2
 # IP: Delete test set
 0 ipset -X test
 # IP: Restore values so that rehashing is triggered
 0 ipset -R < iphash.t.restore
 # IP: Check that all values are restored
-0 (grep add iphash.t.restore | sort > .foo.1) && (ipset -S test | grep add | sort > .foo.2) && cmp .foo.1 .foo.2 && rm .foo.*
+0 (grep add iphash.t.restore | sort > .foo.1) && (ipset -S test | grep add | sort > .foo.2) && cmp .foo.1 .foo.2
 # IP: Flush test set
 0 ipset -F test
 # IP: Delete test set
@@ -49,7 +49,7 @@
 # IP: Save the restored set
 0 ipset save test | sort > .foo.1
 # IP: Compare save and restore
-0 (sort iphash.t.large > .foo.2) && (cmp .foo.1 .foo.2) && rm .foo.*
+0 (sort iphash.t.large > .foo.2) && (cmp .foo.1 .foo.2)
 # IP: Delete test set
 0 ipset x test
 # Network: Create a set 
@@ -79,7 +79,7 @@
 # Network: List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
 # Network: Check listing
-0 diff -I 'Size in memory.*' .foo iphash.t.list1 && rm .foo
+0 diff -I 'Size in memory.*' .foo iphash.t.list1
 # Network: Flush test set
 0 ipset -F test
 # Network: Delete test set

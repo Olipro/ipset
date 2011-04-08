@@ -47,7 +47,7 @@
 # List set
 0 ipset -L test > .foo
 # Check listing
-0 diff -I 'Size in memory.*' .foo setlist.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo setlist.t.list0
 # Flush all sets
 0 ipset -F
 # Delete all sets
@@ -63,7 +63,7 @@
 # List test set
 0 ipset list test > .foo
 # Check listing
-0 diff -I 'Size in memory.*' .foo setlist.t.list1 && rm .foo
+0 diff -I 'Size in memory.*' .foo setlist.t.list1
 # Test a set before b
 0 ipset test test a before b
 # Test c set after b
@@ -73,13 +73,13 @@
 # List test set
 0 ipset list test > .foo
 # Check listing
-0 diff -I 'Size in memory.*' .foo setlist.t.list2 && rm .foo
+0 diff -I 'Size in memory.*' .foo setlist.t.list2
 # Delete c set after a
 0 ipset del test c after a
 # List test set
 0 ipset list test > .foo
 # Check listing
-0 diff -I 'Size in memory.*' .foo setlist.t.list3 && rm .foo
+0 diff -I 'Size in memory.*' .foo setlist.t.list3
 # Flush sets
 0 ipset flush
 # Destroy sets

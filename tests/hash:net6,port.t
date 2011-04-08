@@ -39,13 +39,13 @@
 # Save set
 0 ipset save test > hash:net6,port.t.restore
 # Check listing
-0 diff -I 'Size in memory.*' .foo hash:net6,port.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:net6,port.t.list0
 # Sleep 5s so that element can time out
 0 sleep 5
 # IP: List set
 0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
 # IP: Check listing
-0 diff -I 'Size in memory.*' .foo hash:net6,port.t.list1 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:net6,port.t.list1
 # Destroy set
 0 ipset x test
 # Restore set
@@ -53,7 +53,7 @@
 # List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Check listing
-0 diff -I 'Size in memory.*' .foo hash:net6,port.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:net6,port.t.list0
 # Flush test set
 0 ipset flush test
 # Add multiple elements in one step

@@ -103,6 +103,6 @@ for x in $tests; do
 	esac
 done
 rmmod ip_set >/dev/null 2>&1
-rm -f .foo.err
+rm -f .foo*
 echo "All tests are passed"
 

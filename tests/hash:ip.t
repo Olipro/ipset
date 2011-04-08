@@ -21,13 +21,13 @@
 # IP: List set
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # IP: Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip.t.list2 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:ip.t.list2
 # Sleep 5s so that element can time out
 0 sleep 5
 # IP: List set
 0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
 # IP: Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:ip.t.list0
 # IP: Flush test set
 0 ipset -F test
 # IP: Add multiple elements in one step
@@ -87,13 +87,13 @@
 # Network: List set
 0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Network: Check listing
-0 diff -I 'Size in memory.*' -I 'Size in memory.*' .foo hash:ip.t.list3 && rm .foo
+0 diff -I 'Size in memory.*' -I 'Size in memory.*' .foo hash:ip.t.list3
 # Sleep 5s so that elements can time out
 0 sleep 5
 # Network: List set
 0 ipset -L test > .foo
 # Network: Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip.t.list1 && rm .foo
+0 diff -I 'Size in memory.*' .foo hash:ip.t.list1
 # Network: Flush test set
 0 ipset -F test
 # Network: add element with 1s timeout

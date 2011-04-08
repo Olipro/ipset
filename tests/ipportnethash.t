@@ -37,7 +37,7 @@
 # Range: List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
 # Range: Check listing
-0 diff -I 'Size in memory.*' .foo ipportnethash.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo ipportnethash.t.list0
 # Range: Flush test set
 0 ipset -F test
 # Range: Delete test set
@@ -67,7 +67,7 @@
 # Network: List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
 # Network: Check listing
-0 diff -I 'Size in memory.*' .foo ipportnethash.t.list1 && rm .foo
+0 diff -I 'Size in memory.*' .foo ipportnethash.t.list1
 # Network: Flush test set
 0 ipset -F test
 # Network: Delete test set

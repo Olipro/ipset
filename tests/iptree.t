@@ -15,7 +15,7 @@
 # Static: List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
 # Static: Check listing
-0 diff -I 'Size in memory.*' .foo iptree.t.list0 && rm .foo
+0 diff -I 'Size in memory.*' .foo iptree.t.list0
 # Static: Flush test set
 0 ipset -F test
 # Static: Delete test set
