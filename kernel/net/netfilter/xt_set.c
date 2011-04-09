@@ -115,6 +115,7 @@ set_match_v0_checkentry(const struct xt_mtchk_param *par)
 	if (info->match_set.u.flags[IPSET_DIM_MAX-1] != 0) {
 		pr_warning("Protocol error: set match dimension "
 			   "is over the limit!\n");
+		ip_set_nfnl_put(info->match_set.index);
 		return CHECK_FAIL(-ERANGE);	/* error */
 	}
 
@@ -179,6 +180,8 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find del_set index %u as target\n",
 				   info->del_set.index);
+			if (info->add_set.index != IPSET_INVALID_ID)
+				ip_set_nfnl_put(info->add_set.index);
 			return CHECK_FAIL(-ENOENT);	/* error */
 		}
 	}
@@ -186,6 +189,10 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 	    info->del_set.u.flags[IPSET_DIM_MAX-1] != 0) {
 		pr_warning("Protocol error: SET target dimension "
 			   "is over the limit!\n");
+		if (info->add_set.index != IPSET_INVALID_ID)
+			ip_set_nfnl_put(info->add_set.index);
+		if (info->del_set.index != IPSET_INVALID_ID)
+			ip_set_nfnl_put(info->del_set.index);
 		return CHECK_FAIL(-ERANGE);	/* error */
 	}
 
@@ -246,6 +253,7 @@ set_match_checkentry(const struct xt_mtchk_param *par)
 	if (info->match_set.dim > IPSET_DIM_MAX) {
 		pr_warning("Protocol error: set match dimension "
 			   "is over the limit!\n");
+		ip_set_nfnl_put(info->match_set.index);
 		return CHECK_FAIL(-ERANGE);	/* error */
 	}
 
@@ -278,7 +286,7 @@ set_target(struct sk_buff *skb, const struct xt_action_param *par)
 	if (info->del_set.index != IPSET_INVALID_ID)
 		ip_set_del(info->del_set.index,
 			   skb, par->family,
-			   info->add_set.dim,
+			   info->del_set.dim,
 			   info->del_set.flags);
 
 	return XT_CONTINUE;
@@ -309,13 +317,19 @@ set_target_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find del_set index %u as target\n",
 				   info->del_set.index);
+			if (info->add_set.index != IPSET_INVALID_ID)
+				ip_set_nfnl_put(info->add_set.index);
 			return CHECK_FAIL(-ENOENT);	/* error */
 		}
 	}
 	if (info->add_set.dim > IPSET_DIM_MAX ||
-	    info->del_set.flags > IPSET_DIM_MAX) {
+	    info->del_set.dim > IPSET_DIM_MAX) {
 		pr_warning("Protocol error: SET target dimension "
 			   "is over the limit!\n");
+		if (info->add_set.index != IPSET_INVALID_ID)
+			ip_set_nfnl_put(info->add_set.index);
+		if (info->del_set.index != IPSET_INVALID_ID)
+			ip_set_nfnl_put(info->del_set.index);
 		return CHECK_FAIL(-ERANGE);	/* error */
 	}
 
