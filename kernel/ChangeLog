@@ -1,3 +1,9 @@
+6.3
+ - ipset/Kconfig was a mixed up kernel config file, fixed (Michael Tokarev)
+ - bitmap:ip,mac type requires "src" for MAC, enforce it
+ - whitespace fixes: some space before tab slipped in
+ - set match and SET target fixes (bugs reported by Lennert Buytenhek)
+
 6.2
  - list:set timeout variant fixes
  - References are protected by rwlock instead of mutex

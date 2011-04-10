@@ -1,3 +1,9 @@
+6.3
+ - Testsuite changes: keep temporary files
+ - bitmap:ip,mac type requires "src" for MAC: manpage is updated to reflect
+   the change
+ - Testsuite checks added (SET target and dir parameter checks)
+
 6.2
  - Manpage update
 
