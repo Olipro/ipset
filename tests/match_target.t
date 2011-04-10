@@ -1,3 +1,15 @@
+# Create test set
+0 ipset create test hash:ip
+# Check that iptables set match catches invalid number of dir parameters
+2 iptables -m set --match-set test src,dst,src,dst,src,dst,src
+# Check reference number of test set
+0 ref=`ipset list test|grep References|sed 's/References: //'` && test $ref -eq 0
+# Check that iptables SET target catches invalid number of dir parameters
+2 iptables -j SET --add-set test src,dst,src,dst,src,dst,src
+# Check reference number of test set
+0 ref=`ipset list test|grep References|sed 's/References: //'` && test $ref -eq 0
+# Destroy test set
+0 ipset destroy test
 # Create sets and inet rules which call set match and SET target
 0 ./iptables.sh inet start
 # Check that 10.255.255.64,tcp:1025 is not in ipport set
@@ -38,6 +50,12 @@
 0 sendip -d r10 -p ipv4 -id 127.0.0.1 -is 10.255.255.64 -p icmp -ct 3 -cd 10 127.0.0.1
 # Check that 10.255.255.64,icmp:3/10 is in ipport set now
 0 ipset test ipport 10.255.255.64,icmp:host-prohibited
+# Modify rules to check target and deletion
+0 ./iptables.sh inet del
+# Send probe packet 10.255.255.64,icmp:host-prohibited
+0 sendip -d r10 -p ipv4 -id 127.0.0.1 -is 10.255.255.64 -p icmp -ct 3 -cd 10 127.0.0.1
+# Check that 10.255.255.64,icmp:3/10 isn't in ipport
+1 ipset test ipport 10.255.255.64,icmp:host-prohibited
 # Destroy sets and rules
 0 ./iptables.sh inet stop
 # eof

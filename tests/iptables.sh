@@ -60,6 +60,10 @@ start)
 	$cmd -A OUTPUT -d $NET -j DROP
 	cat /dev/null > .foo.err
 	;;
+del)
+	$cmd -F INPUT
+	$cmd -A INPUT -j SET --del-set ipport src,src
+	;;
 stop)
 	$cmd -F
 	$cmd -X
