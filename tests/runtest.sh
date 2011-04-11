@@ -13,6 +13,10 @@ tests="$tests hash:ip,port,net hash:ip6,port,net6"
 tests="$tests setlist"
 tests="$tests iptree iptreemap"
 
+# For correct sorting:
+LC_ALL=C
+export LC_ALL
+
 add_tests() {
 	# inet|inet6 network
 	if [ $1 = "inet" ]; then
