@@ -37,7 +37,7 @@
 # Range: List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
 # Range: Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip6,port,net6.t.list0
+0 diff -u -I 'Size in memory.*' .foo hash:ip6,port,net6.t.list0
 # Range: Flush test set
 0 ipset -F test
 # Range: Delete test set

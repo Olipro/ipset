@@ -37,13 +37,13 @@
 # Range: List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo
 # Range: Check listing
-0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list4
+0 diff -u -I 'Size in memory.*' .foo bitmap:ip.t.list4
 # Sleep 5s so that entries can time out
 0 sleep 5s
 # Range: List set after timeout
 0 ipset list test > .foo
 # Range: Check listing
-0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list0
+0 diff -u -I 'Size in memory.*' .foo bitmap:ip.t.list0
 # Range: Flush test set
 0 ipset flush test
 # Range: Delete test set
@@ -79,13 +79,13 @@
 # Network: List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo
 # Network: Check listing
-0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list5
+0 diff -u -I 'Size in memory.*' .foo bitmap:ip.t.list5
 # Sleep 5s so that entries can time out
 0 sleep 5s
 # Network: List set
 0 ipset list test > .foo
 # Network: Check listing
-0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list1
+0 diff -u -I 'Size in memory.*' .foo bitmap:ip.t.list1
 # Network: Flush test set
 0 ipset flush test
 # Network: Delete test set
@@ -121,13 +121,13 @@
 # Subnets: List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo
 # Subnets: Check listing
-0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list6
+0 diff -u -I 'Size in memory.*' .foo bitmap:ip.t.list6
 # Sleep 5s so that entries can time out
 0 sleep 5s
 # Subnets: List set
 0 ipset list test > .foo
 # Subnets: Check listing
-0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list2
+0 diff -u -I 'Size in memory.*' .foo bitmap:ip.t.list2
 # Subnets: Flush test set
 0 ipset flush test
 # Subnets: Delete test set
@@ -147,7 +147,7 @@
 # Full: List set
 0 ipset list test > .foo
 # Full: Check listing
-0 diff -I 'Size in memory.*' .foo bitmap:ip.t.list3
+0 diff -u -I 'Size in memory.*' .foo bitmap:ip.t.list3
 # Full: flush set
 0 ipset flush test
 # Full: add element with 1s timeout

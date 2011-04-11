@@ -33,7 +33,7 @@
 # List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
 # Check listing
-0 diff -I 'Size in memory.*' .foo ipporthash.t.list0
+0 diff -u -I 'Size in memory.*' .foo ipporthash.t.list0
 # Flush test set
 0 ipset -F test
 # Delete test set
@@ -63,7 +63,7 @@
 # List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
 # Check listing
-0 diff -I 'Size in memory.*' .foo ipporthash.t.list1
+0 diff -u -I 'Size in memory.*' .foo ipporthash.t.list1
 # Flush test set
 0 ipset -F test
 # Delete test set

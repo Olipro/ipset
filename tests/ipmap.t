@@ -51,13 +51,13 @@
 # Range: List set
 0 ipset -L test > .foo
 # Range: Check listing
-0 diff -I 'Size in memory.*' .foo ipmap.t.list0
+0 diff -u -I 'Size in memory.*' .foo ipmap.t.list0
 # Range: Delete a range of elements
 0 ipset -! -D test 2.0.0.128-2.0.0.132
 # Range: List set
 0 ipset -L test > .foo
 # Range: Check listing
-0 diff -I 'Size in memory.*' .foo ipmap.t.list1
+0 diff -u -I 'Size in memory.*' .foo ipmap.t.list1
 # Range: Flush test set
 0 ipset -F test
 # Range: Delete test set
@@ -93,7 +93,7 @@
 # Network: List set
 0 ipset -L test > .foo
 # Network: Check listing
-0 diff -I 'Size in memory.*' .foo ipmap.t.list2
+0 diff -u -I 'Size in memory.*' .foo ipmap.t.list2
 # Network: Flush test set
 0 ipset -F test
 # Network: Delete test set
@@ -129,7 +129,7 @@
 # Subnets: List set
 0 ipset -L test > .foo
 # Subnets: Check listing
-0 diff -I 'Size in memory.*' .foo ipmap.t.list3
+0 diff -u -I 'Size in memory.*' .foo ipmap.t.list3
 # Subnets: FLush test set
 0 ipset -F test
 # Subnets: Delete test set
@@ -155,7 +155,7 @@
 # Full: List set
 0 ipset -L test > .foo
 # Full: Check listing
-0 diff -I 'Size in memory.*' .foo ipmap.t.list4
+0 diff -u -I 'Size in memory.*' .foo ipmap.t.list4
 # Full: Delete test set
 0 ipset -X test
 # eof

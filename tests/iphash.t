@@ -25,7 +25,7 @@
 # IP: List set
 0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
 # IP: Check listing
-0 diff -I 'Size in memory.*' .foo iphash.t.list0
+0 diff -u -I 'Size in memory.*' .foo iphash.t.list0
 # IP: Flush test set
 0 ipset -F test
 # IP: Delete test set
@@ -79,7 +79,7 @@
 # Network: List set
 0 ipset -L test > .foo0 && ./sort.sh .foo0
 # Network: Check listing
-0 diff -I 'Size in memory.*' .foo iphash.t.list1
+0 diff -u -I 'Size in memory.*' .foo iphash.t.list1
 # Network: Flush test set
 0 ipset -F test
 # Network: Delete test set

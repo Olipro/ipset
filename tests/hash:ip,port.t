@@ -29,13 +29,13 @@
 # List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip,port.t.list0
+0 diff -u -I 'Size in memory.*' .foo hash:ip,port.t.list0
 # Sleep 5s so that elements can time out
 0 sleep 5
 # List set
 0 ipset list test > .foo0 && ./sort.sh .foo0
 # Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip,port.t.list1
+0 diff -u -I 'Size in memory.*' .foo hash:ip,port.t.list1
 # Flush test set
 0 ipset flush test
 # Add multiple elements in one step
@@ -71,7 +71,7 @@
 # List set
 0 ipset list test > .foo0 && ./sort.sh .foo0
 # Check listing
-0 diff -I 'Size in memory.*' .foo hash:ip,port.t.list2
+0 diff -u -I 'Size in memory.*' .foo hash:ip,port.t.list2
 # Delete set
 0 ipset destroy test
 # eof
