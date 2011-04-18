@@ -892,7 +892,7 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 			"\n" : "\nMembers:\n");
 		break;
 	case IPSET_LIST_XML:
-		safe_snprintf(session, "</elements>\n    <memsize>");
+		safe_snprintf(session, "    <memsize>");
 		safe_dprintf(session, ipset_print_number, IPSET_OPT_MEMSIZE);
 		safe_snprintf(session, "</memsize>\n    <references>");
 		safe_dprintf(session, ipset_print_number, IPSET_OPT_REFERENCES);
