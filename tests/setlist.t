@@ -80,6 +80,10 @@
 0 ipset list test > .foo
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo setlist.t.list3
+# List all sets
+0 ipset list > .foo
+# Check listing
+0 diff -u -I 'Size in memory.*' .foo setlist.t.list4
 # Flush sets
 0 ipset flush
 # Destroy sets
