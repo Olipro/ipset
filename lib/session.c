@@ -136,6 +136,8 @@ ipset_envopt_parse(struct ipset_session *session, int opt,
 	case IPSET_ENV_QUIET:
 	case IPSET_ENV_RESOLVE:
 	case IPSET_ENV_EXIST:
+	case IPSET_ENV_LIST_SETNAME:
+	case IPSET_ENV_LIST_HEADER:
 		session->envopts |= opt;
 		return 0;
 	default:
@@ -885,7 +887,9 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 		safe_dprintf(session, ipset_print_number, IPSET_OPT_MEMSIZE);
 		safe_snprintf(session, "\nReferences: ");
 		safe_dprintf(session, ipset_print_number, IPSET_OPT_REFERENCES);
-		safe_snprintf(session, "\nMembers:\n");
+		safe_snprintf(session,
+			session->envopts & IPSET_ENV_LIST_HEADER ?
+			"\n" : "\nMembers:\n");
 		break;
 	case IPSET_LIST_XML:
 		safe_snprintf(session, "</elements>\n    <memsize>");
@@ -938,6 +942,16 @@ callback_list(struct ipset_session *session, struct nlattr *nla[],
 
 	ATTR2DATA(session, nla, IPSET_ATTR_SETNAME, cmd_attrs);
 	D("setname %s", ipset_data_setname(data));
+	if (session->envopts & IPSET_ENV_LIST_SETNAME) {
+		if (session->mode == IPSET_LIST_XML)
+			safe_snprintf(session, "<ipset name=\"%s\"/>\n",
+				      ipset_data_setname(data));
+		else
+			safe_snprintf(session, "%s\n",
+				      ipset_data_setname(data));
+		return call_outfn(session) ? MNL_CB_ERROR : MNL_CB_OK;
+	}
+
 	if (STREQ(ipset_data_setname(data), session->saved_setname)) {
 		/* Header part already seen */
 		if (ipset_data_test(data, IPSET_OPT_TYPE)
@@ -1602,11 +1616,26 @@ build_msg(struct ipset_session *session, bool aggregate)
 	}
 	case IPSET_CMD_DESTROY:
 	case IPSET_CMD_FLUSH:
-	case IPSET_CMD_LIST:
 	case IPSET_CMD_SAVE:
 		if (ipset_data_test(data, IPSET_SETNAME))
 			ADDATTR_SETNAME(session, nlh, data);
 		break;
+	case IPSET_CMD_LIST: {
+		uint32_t flags = 0;
+		
+		if (session->envopts & IPSET_ENV_LIST_SETNAME)
+			flags |= IPSET_FLAG_LIST_SETNAME;
+		if (session->envopts & IPSET_ENV_LIST_HEADER)
+			flags |= IPSET_FLAG_LIST_HEADER;
+		if (ipset_data_test(data, IPSET_SETNAME))
+			ADDATTR_SETNAME(session, nlh, data);
+		if (flags) {
+			ipset_data_set(data, IPSET_OPT_FLAGS, &flags);
+			ADDATTR(session, nlh, data, IPSET_ATTR_FLAGS, AF_INET,
+				cmd_attrs);
+		}
+		break;
+	}
 	case IPSET_CMD_RENAME:
 	case IPSET_CMD_SWAP:
 		if (!ipset_data_test(data, IPSET_SETNAME))

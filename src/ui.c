@@ -188,6 +188,19 @@ const struct ipset_envopts ipset_envopts[] = {
 	          "        when adding already existing elements\n"
 		  "        or when deleting non-existing elements.",
 	},
+	{ .name = { "-n", "-name" },
+	  .parse = ipset_envopt_parse,
+	  .has_arg = IPSET_NO_ARG,	.flag = IPSET_ENV_LIST_SETNAME,
+	  .help = "\n"
+	          "        When listing, list just setnames from kernel.\n",
+	},
+	{ .name = { "-t", "-terse" },
+	  .parse = ipset_envopt_parse,
+	  .has_arg = IPSET_NO_ARG,	.flag = IPSET_ENV_LIST_HEADER,
+	  .help = "\n"
+	          "        When listing, list setnames and set headers\n"
+		  "        from kernel only.",
+	},
 	{ },
 };
 
