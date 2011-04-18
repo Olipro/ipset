@@ -58,4 +58,26 @@
 1 ipset test ipport 10.255.255.64,icmp:host-prohibited
 # Destroy sets and rules
 0 ./iptables.sh inet stop
+# Create set and rules to check --exist and --timeout flags of SET target
+0 ./iptables.sh inet timeout
+# Add 10.255.255.64,icmp:host-prohibited to the set
+0 ipset add test 10.255.255.64,icmp:host-prohibited 
+# Check that 10.255.255.64,icmp:3/10 is in ipport set
+0 ipset test test 10.255.255.64,icmp:host-prohibited
+# Sleep 3s so that entry can time out
+0 sleep 3s
+# Check that 10.255.255.64,icmp:3/10 is not in ipport set
+1 ipset test test 10.255.255.64,icmp:host-prohibited
+# Add 10.255.255.64,icmp:host-prohibited to the set again
+0 ipset add test 10.255.255.64,icmp:host-prohibited
+# Sleep 1s
+0 sleep 1s
+# Send probe packet 10.255.255.64,icmp:host-prohibited
+0 sendip -d r10 -p ipv4 -id 127.0.0.1 -is 10.255.255.64 -p icmp -ct 3 -cd 10 127.0.0.1
+# Sleep 5s, so original entry could time out
+0 sleep 5s
+# Check that 10.255.255.64,icmp:3/10 is not in ipport set
+0 ipset test test 10.255.255.64,icmp:host-prohibited
+# Destroy sets and rules
+0 ./iptables.sh inet stop
 # eof
