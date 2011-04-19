@@ -1,3 +1,8 @@
+6.4
+ - Support listing setnames and headers too
+ - Fix the order of listing of sets
+ - Options and flags support added to the kernel API
+
 6.3
  - ipset/Kconfig was a mixed up kernel config file, fixed (Michael Tokarev)
  - bitmap:ip,mac type requires "src" for MAC, enforce it

@@ -1,3 +1,10 @@
+6.4
+ - Get rid of the trailing empty line at listing sets
+ - Fix XML listing, remove broken unused "elements" tag
+ - Support listing setnames and headers too
+ - Sorting is dependent on the locale settings, use LC_ALL=C
+ - Use unified diff output in tests
+
 6.3
  - Testsuite changes: keep temporary files
  - bitmap:ip,mac type requires "src" for MAC: manpage is updated to reflect
