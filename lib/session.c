@@ -35,6 +35,7 @@ struct ipset_session {
 	/* Command state */
 	enum ipset_cmd cmd;			/* Current command */
 	uint32_t lineno;			/* Current lineno in restore mode */
+	uint32_t printed_set;			/* Printed sets so far */
 	char saved_setname[IPSET_MAXNAMELEN];	/* Saved setname */
 	const struct ipset_type *saved_type;	/* Saved type */
 	struct nlattr *nested[IPSET_NEST_MAX];	/* Pointer to nest levels */
@@ -829,8 +830,9 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 			      type->name);
 		break;
 	case IPSET_LIST_PLAIN:
-		safe_snprintf(session, "Name: %s\n"
+		safe_snprintf(session, "%sName: %s\n"
 			      "Type: %s\nHeader: ",
+			      session->printed_set ? "\n" : "",
 			      ipset_data_setname(data),
 			      type->name);
 		break;
@@ -896,11 +898,15 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 		safe_dprintf(session, ipset_print_number, IPSET_OPT_MEMSIZE);
 		safe_snprintf(session, "</memsize>\n    <references>");
 		safe_dprintf(session, ipset_print_number, IPSET_OPT_REFERENCES);
-		safe_snprintf(session, "</references>\n  </header>\n  <members>\n");
+		safe_snprintf(session,
+			session->envopts & IPSET_ENV_LIST_HEADER ?
+			"</references>\n  </header>\n" :
+			"</references>\n  </header>\n  <members>\n");
 		break;
 	default:
 		break;
 	}
+	session->printed_set++;
 
 	return MNL_CB_OK;
 }
@@ -912,16 +918,17 @@ print_set_done(struct ipset_session *session)
 		? "NONE" : session->saved_setname);
 	switch (session->mode) {
 	case IPSET_LIST_XML:
-		if (session->saved_setname[0] == '\0')
-			safe_snprintf(session, "\n");
-		else
+		if (session->envopts & IPSET_ENV_LIST_SETNAME)
+			break;
+		if (session->envopts & IPSET_ENV_LIST_HEADER) {
+			if (session->saved_setname[0] != '\0')
+				safe_snprintf(session, "</ipset>\n");
+			break;
+		}
+		if (session->saved_setname[0] != '\0')
 			safe_snprintf(session, "  </members>\n</ipset>\n");
 		break;
-	case IPSET_LIST_SAVE:
-		/* No empty lines between the sets */
-		break;
 	default:
-		safe_snprintf(session, "\n");
 		break;
 	}
 	return call_outfn(session) ? MNL_CB_ERROR : MNL_CB_STOP;
@@ -933,8 +940,11 @@ callback_list(struct ipset_session *session, struct nlattr *nla[],
 {
 	struct ipset_data *data = session->data;
 
-	if (setjmp(printf_failure))
+	if (setjmp(printf_failure)) {
+		session->saved_setname[0] = '\0';
+		session->printed_set = 0;
 		return MNL_CB_ERROR;
+	}
 
 	if (!nla[IPSET_ATTR_SETNAME])
 		FAILURE("Broken %s kernel message: missing setname!",
@@ -1629,7 +1639,7 @@ build_msg(struct ipset_session *session, bool aggregate)
 			flags |= IPSET_FLAG_LIST_HEADER;
 		if (ipset_data_test(data, IPSET_SETNAME))
 			ADDATTR_SETNAME(session, nlh, data);
-		if (flags) {
+		if (flags && session->mode != IPSET_LIST_SAVE) {
 			ipset_data_set(data, IPSET_OPT_FLAGS, &flags);
 			ADDATTR(session, nlh, data, IPSET_ATTR_FLAGS, AF_INET,
 				cmd_attrs);
@@ -1756,6 +1766,7 @@ ipset_commit(struct ipset_session *session)
 
 	/* Reset saved data and nested state */
 	session->saved_setname[0] = '\0';
+	session->printed_set = 0;
 	for (i = session->nestid - 1; i >= 0; i--)
 		session->nested[i] = NULL;
 	session->nestid = 0;
