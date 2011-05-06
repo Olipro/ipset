@@ -60,6 +60,14 @@
 0 n=`ipset -S test | wc -l` && test $n -eq 8161
 # IP: Destroy sets
 0 ipset -X
+# IP: Create set to add a range
+0 ipset new test hash:ip hashsize 64
+# IP: Add a range which forces a resizing
+0 ipset add test 10.0.0.0-10.0.3.255
+# IP: Check that correct number of elements are added
+0 n=`ipset list test|grep 10.0|wc -l` && test $n -eq 1024
+# IP: Destroy sets
+0 ipset -X
 # Network: Create a set with timeout
 0 ipset -N test iphash --hashsize 128 --netmask 24 timeout 5
 # Network: Add zero valued element
