@@ -952,7 +952,8 @@ callback_list(struct ipset_session *session, struct nlattr *nla[],
 
 	ATTR2DATA(session, nla, IPSET_ATTR_SETNAME, cmd_attrs);
 	D("setname %s", ipset_data_setname(data));
-	if (session->envopts & IPSET_ENV_LIST_SETNAME) {
+	if (session->envopts & IPSET_ENV_LIST_SETNAME &&
+	    session->mode != IPSET_LIST_SAVE) {
 		if (session->mode == IPSET_LIST_XML)
 			safe_snprintf(session, "<ipset name=\"%s\"/>\n",
 				      ipset_data_setname(data));
