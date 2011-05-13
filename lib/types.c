@@ -267,6 +267,19 @@ create_type_get(struct ipset_session *session)
 				kmax, tmin);
 	}
 	
+	/* Disable unsupported revisions */
+	for (match = NULL, t = typelist; t != NULL; t = t->next) {
+		/* Skip revisions which are unsupported by the kernel */
+		if (t->kernel_check == IPSET_KERNEL_MISMATCH)
+			continue;
+		if (ipset_match_typename(typename, t)
+		    && MATCH_FAMILY(t, family)) {
+		    	if (t->revision < kmin || t->revision > kmax)
+		    		t->kernel_check = IPSET_KERNEL_MISMATCH;
+			else if (match == NULL)
+		    		match = t;
+		}	
+	}
 	match->kernel_check = IPSET_KERNEL_OK;
 found:
 	ipset_data_set(data, IPSET_OPT_TYPE, match);
