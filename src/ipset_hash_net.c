@@ -57,7 +57,7 @@ static const struct ipset_arg hash_net_add_args[] = {
 	{ },
 }; 
 
-static const char hash_net_usage[] =
+static const char hash_net0_usage[] =
 "create SETNAME hash:net\n"
 "		[family inet|inet6]\n"
 "               [hashsize VALUE] [maxelem VALUE]\n"
@@ -105,5 +105,60 @@ struct ipset_type ipset_hash_net0 = {
 			| IPSET_FLAG(IPSET_OPT_CIDR),
 	},
 
-	.usage = hash_net_usage,
+	.usage = hash_net0_usage,
 };
+
+static const char hash_net1_usage[] =
+"create SETNAME hash:net\n"
+"		[family inet|inet6]\n"
+"               [hashsize VALUE] [maxelem VALUE]\n"
+"               [timeout VALUE]\n"
+"add    SETNAME IP[/CIDR]|FROM-TO [timeout VALUE]\n"
+"del    SETNAME IP[/CIDR]|FROM-TO\n"
+"test   SETNAME IP[/CIDR]\n\n"
+"where depending on the INET family\n"
+"      IP is an IPv4 or IPv6 address (or hostname),\n"
+"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
+"      IP range is not supported with IPv6.\n";
+
+struct ipset_type ipset_hash_net1 = {
+	.name = "hash:net",
+	.alias = { "nethash", NULL },
+	.revision = 1,
+	.family = AF_INET46,
+	.dimension = IPSET_DIM_ONE,
+	.elem = { 
+		[IPSET_DIM_ONE] = { 
+			.parse = ipset_parse_ip4_net6,
+			.print = ipset_print_ip,
+			.opt = IPSET_OPT_IP
+		},
+	},
+	.args = {
+		[IPSET_CREATE] = hash_net_create_args,
+		[IPSET_ADD] = hash_net_add_args,
+	},
+	.mandatory = {
+		[IPSET_CREATE] = 0,
+		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP),
+		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP),
+		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP),
+	},
+	.full = {
+		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
+			| IPSET_FLAG(IPSET_OPT_MAXELEM)
+			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
+		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_CIDR)
+			| IPSET_FLAG(IPSET_OPT_IP_TO)
+			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
+		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_CIDR)
+			| IPSET_FLAG(IPSET_OPT_IP_TO),
+		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_CIDR),
+	},
+
+	.usage = hash_net1_usage,
+};
+

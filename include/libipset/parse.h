@@ -60,6 +60,8 @@ extern int ipset_parse_ipnet(struct ipset_session *session,
 			     enum ipset_opt opt, const char *str);
 extern int ipset_parse_ip4_single6(struct ipset_session *session,
 				enum ipset_opt opt, const char *str);
+extern int ipset_parse_ip4_net6(struct ipset_session *session,
+				enum ipset_opt opt, const char *str);
 extern int ipset_parse_name(struct ipset_session *session,
                             enum ipset_opt opt, const char *str);
 extern int ipset_parse_before(struct ipset_session *session,

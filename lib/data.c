@@ -66,6 +66,7 @@ struct ipset_data {
 		/* ADT/LIST/SAVE */
 		struct {
 			union nf_inet_addr ip2;
+			union nf_inet_addr ip2_to;
 			uint8_t cidr2;
 			uint8_t proto;
 			char ether[ETH_ALEN];
@@ -289,6 +290,11 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 			return -1;
 		copy_addr(data->family, &data->adt.ip2, value);
 		break;
+	case IPSET_OPT_IP2_TO:
+		if (!(data->family == AF_INET || data->family == AF_INET6))
+			return -1;
+		copy_addr(data->family, &data->adt.ip2_to, value);
+		break;
 	case IPSET_OPT_CIDR2:
 		data->adt.cidr2 = *(const uint8_t *) value;
 		break;
@@ -401,6 +407,8 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 		return data->adt.nameref;
 	case IPSET_OPT_IP2:
 		return &data->adt.ip2;
+	case IPSET_OPT_IP2_TO:
+		return &data->adt.ip2_to;
 	case IPSET_OPT_CIDR2:
 		return &data->adt.cidr2;
 	case IPSET_OPT_PROTO:
@@ -436,6 +444,7 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 	case IPSET_OPT_IP:
 	case IPSET_OPT_IP_TO:
 	case IPSET_OPT_IP2:
+	case IPSET_OPT_IP2_TO:
 		return family == AF_INET ? sizeof(uint32_t)
 					 : sizeof(struct in6_addr);
 	case IPSET_OPT_PORT:

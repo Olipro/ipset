@@ -44,6 +44,7 @@ enum ipset_opt {
 	IPSET_OPT_NAMEREF,
 	IPSET_OPT_IP2,
 	IPSET_OPT_CIDR2,
+	IPSET_OPT_IP2_TO,
 	IPSET_OPT_PROTO,
 	/* Swap/rename to */
 	IPSET_OPT_SETNAME2,

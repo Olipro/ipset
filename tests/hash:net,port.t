@@ -62,4 +62,12 @@
 0 n=`ipset list test|grep 10.0|wc -l` && test $n -eq 1026
 # Destroy set
 0 ipset -X test
+# Create set to add a range and with range notation in the network
+0 ipset new test hash:net,port hashsize 64
+# Add a range which forces a resizing
+0 ipset add test 10.0.0.0-10.0.2.255,tcp:80-1105
+# Check that correct number of elements are added
+0 n=`ipset list test|grep 10.0|wc -l` && test $n -eq 2052
+# Destroy set
+0 ipset -X test
 # eof

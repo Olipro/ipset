@@ -49,7 +49,7 @@ static const struct ipset_arg hash_netport_add_args[] = {
 	{ },
 }; 
 
-static const char hash_netport_usage[] =
+static const char hash_netport1_usage[] =
 "create SETNAME hash:net,port\n"
 "		[family inet|inet6]\n"
 "               [hashsize VALUE] [maxelem VALUE]\n"
@@ -63,7 +63,7 @@ static const char hash_netport_usage[] =
 "      Adding/deleting multiple elements with TCP/SCTP/UDP/UDPLITE\n"
 "      port range is supported both for IPv4 and IPv6.\n";
 
-struct ipset_type ipset_hash_netport0 = {
+struct ipset_type ipset_hash_netport1 = {
 	.name = "hash:net,port",
 	.alias = { "netporthash", NULL },
 	.revision = 1,
@@ -118,6 +118,82 @@ struct ipset_type ipset_hash_netport0 = {
 			| IPSET_FLAG(IPSET_OPT_CIDR),
 	},
 
-	.usage = hash_netport_usage,
+	.usage = hash_netport1_usage,
+	.usagefn = ipset_port_usage,
+};
+
+static const char hash_netport2_usage[] =
+"create SETNAME hash:net,port\n"
+"		[family inet|inet6]\n"
+"               [hashsize VALUE] [maxelem VALUE]\n"
+"               [timeout VALUE]\n"
+"add    SETNAME IP[/CIDR]|FROM-TO,PROTO:PORT [timeout VALUE]\n"
+"del    SETNAME IP[/CIDR]|FROM-TO,PROTO:PORT\n"
+"test   SETNAME IP[/CIDR],PROTO:PORT\n\n"
+"where depending on the INET family\n"
+"      IP is a valid IPv4 or IPv6 address (or hostname),\n"
+"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
+"      Adding/deleting multiple elements with IPv4 is supported.\n"
+"      Adding/deleting multiple elements with TCP/SCTP/UDP/UDPLITE\n"
+"      port range is supported both for IPv4 and IPv6.\n";
+
+struct ipset_type ipset_hash_netport2 = {
+	.name = "hash:net,port",
+	.alias = { "netporthash", NULL },
+	.revision = 2,
+	.family = AF_INET46,
+	.dimension = IPSET_DIM_TWO,
+	.elem = { 
+		[IPSET_DIM_ONE] = { 
+			.parse = ipset_parse_ip4_net6,
+			.print = ipset_print_ip,
+			.opt = IPSET_OPT_IP
+		},
+		[IPSET_DIM_TWO] = { 
+			.parse = ipset_parse_proto_port,
+			.print = ipset_print_proto_port,
+			.opt = IPSET_OPT_PORT
+		},
+	},
+	.args = {
+		[IPSET_CREATE] = hash_netport_create_args,
+		[IPSET_ADD] = hash_netport_add_args,
+	},
+	.mandatory = {
+		[IPSET_CREATE] = 0,
+		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
+			| IPSET_FLAG(IPSET_OPT_PORT),
+		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
+			| IPSET_FLAG(IPSET_OPT_PORT),
+		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
+			| IPSET_FLAG(IPSET_OPT_PORT),
+	},
+	.full = {
+		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
+			| IPSET_FLAG(IPSET_OPT_MAXELEM)
+			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
+		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_CIDR)
+			| IPSET_FLAG(IPSET_OPT_IP_TO)
+			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PORT_TO)
+			| IPSET_FLAG(IPSET_OPT_PROTO)
+			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
+		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_CIDR)
+			| IPSET_FLAG(IPSET_OPT_IP_TO)
+			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PORT_TO)
+			| IPSET_FLAG(IPSET_OPT_PROTO),
+		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_CIDR)
+			| IPSET_FLAG(IPSET_OPT_PORT)
+			| IPSET_FLAG(IPSET_OPT_PROTO),
+	},
+
+	.usage = hash_netport2_usage,
 	.usagefn = ipset_port_usage,
 };

@@ -70,7 +70,7 @@ static const struct ipset_arg hash_ipportip_add_args[] = {
 	{ },
 }; 
 
-static const char hash_ipportip_usage[] =
+static const char hash_ipportip1_usage[] =
 "create SETNAME hash:ip,port,ip\n"
 "		[family inet|inet6]\n"
 "               [hashsize VALUE] [maxelem VALUE]\n"
@@ -85,7 +85,7 @@ static const char hash_ipportip_usage[] =
 "      Adding/deleting multiple elements with TCP/SCTP/UDP/UDPLITE\n"
 "      port range is supported both for IPv4 and IPv6.\n";
 
-struct ipset_type ipset_hash_ipportip0 = {
+struct ipset_type ipset_hash_ipportip1 = {
 	.name = "hash:ip,port,ip",
 	.alias = { "ipportiphash", NULL },
 	.revision = 1,
@@ -150,6 +150,6 @@ struct ipset_type ipset_hash_ipportip0 = {
 			| IPSET_FLAG(IPSET_OPT_IP2),
 	},
 
-	.usage = hash_ipportip_usage,
+	.usage = hash_ipportip1_usage,
 	.usagefn = ipset_port_usage,
 };

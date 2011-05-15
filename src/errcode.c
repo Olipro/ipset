@@ -113,6 +113,10 @@ static const struct ipset_errcode_table hash_errcode_table[] = {
 	  "Invalid protocol specified" },
 	{ IPSET_ERR_MISSING_PROTO, 0,
 	  "Protocol missing, but must be specified" },
+	{ IPSET_ERR_HASH_RANGE_UNSUPPORTED, 0,
+	  "Range is not supported in the \"net\" component of the element" },
+	{ IPSET_ERR_HASH_RANGE, 0,
+	  "Invalid range, covers the whole address space" },
 	{ },
 };
 

@@ -469,6 +469,10 @@ static const struct ipset_attr_policy adt_attrs[] = {
 		.type = MNL_TYPE_U8,
 		.opt = IPSET_OPT_CIDR2,
 	},
+	[IPSET_ATTR_IP2_TO] = {
+		.type = MNL_TYPE_NESTED,
+		.opt = IPSET_OPT_IP2_TO,
+	},
 };
 
 static const struct ipset_attr_policy ipaddr_attrs[] = {
