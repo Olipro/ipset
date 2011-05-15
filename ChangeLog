@@ -1,3 +1,10 @@
+6.5
+ - Support range for IPv4 at adding/deleting elements for hash:*net* types
+ - Disable type revisions which are not supported both by the kernel and
+   ipset
+ - Update ipset help text to reflect SCTP and UDPLITE support
+ - Ignore -n flag (list just setnames) when sets are to be saved
+
 6.4
  - Get rid of the trailing empty line at listing sets
  - Fix XML listing, remove broken unused "elements" tag

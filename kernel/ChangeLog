@@ -1,3 +1,8 @@
+6.5
+ - Support range for IPv4 at adding/deleting elements for hash:*net* types
+ - Set type support with multiple revisions added
+ - Fix adding ranges to hash types
+ 
 6.4
  - Support listing setnames and headers too
  - Fix the order of listing of sets
