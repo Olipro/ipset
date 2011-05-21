@@ -148,9 +148,9 @@ build_argv(char *buffer)
 		newargv[i] = NULL;
 	newargc = 1;
 
-	ptr = strtok(buffer, " \t\n");
+	ptr = strtok(buffer, " \t\r\n");
 	newargv[newargc++] = ptr;
-	while ((ptr = strtok(NULL, " \t\n")) != NULL) {
+	while ((ptr = strtok(NULL, " \t\r\n")) != NULL) {
 		if ((newargc + 1) < (int)(sizeof(newargv)/sizeof(char *)))
 			newargv[newargc++] = ptr;
 		else {
