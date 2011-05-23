@@ -49,7 +49,7 @@
 # Network: Try to create a set from an invalid network
 1 ipset -N test macipmap --network 2.0.0.0/15
 # Network: Create a set from a valid network
-0 ipset -N test macipmap --network 2.0.0.0/16
+0 ipset -N test macipmap --network 2.0.0.1/16
 # Network: Add lower boundary
 0 ipset -A test 2.0.0.0
 # Network: Add upper boundary

@@ -51,7 +51,7 @@
 # Network: Try to create a set from an invalid network with timeout
 1 ipset create test bitmap:ip range 2.0.0.0/15 timeout 5
 # Network: Create a set from a valid network with timeout
-0 ipset create test bitmap:ip range 2.0.0.0/16 timeout 5
+0 ipset create test bitmap:ip range 2.0.0.1/16 timeout 5
 # Network: Add lower boundary
 0 ipset add test 2.0.0.0 timeout 0
 # Network: Add upper boundary
