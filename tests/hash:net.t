@@ -56,4 +56,10 @@
 0 diff -u -I 'Size in memory.*' .foo hash:net.t.list2
 # Delete test set
 0 ipset destroy test
+# Stress test with range notation
+0 ./netgen.sh | ipset restore
+# List set and check the number of elements
+0 n=`ipset -L test|grep '10.'|wc -l` && test $n -eq 43520
+# Delete test set
+0 ipset destroy test
 # eof
