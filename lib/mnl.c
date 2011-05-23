@@ -104,7 +104,7 @@ ipset_mnl_query(struct ipset_handle *handle, void *buffer, size_t len)
 				  handle->cb_ctl[NLMSG_MIN_TYPE],
 				  handle->data,
 				  handle->cb_ctl, NLMSG_MIN_TYPE);
-		D("nfln_cb_run2, ret: %d", ret);
+		D("nfln_cb_run2, ret: %d, errno %d", ret, errno);
 		if (ret <= 0)
 			break;
 		ret = mnl_socket_recvfrom(handle->h, buffer, len);
