@@ -81,7 +81,7 @@ static const char hash_ip_usage[] =
 
 struct ipset_type ipset_hash_ip0 = {
 	.name = "hash:ip",
-	.alias = { "iphash", "iptree", "iptreemap", NULL },
+	.alias = { "iphash", NULL },
 	.revision = 0,
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_ONE,
