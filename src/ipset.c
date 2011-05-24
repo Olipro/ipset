@@ -184,7 +184,7 @@ restore(char *argv0)
 			c++;
 		if (c[0] == '\0' || c[0] == '#')
 			continue;
-		else if (strcmp(c, "COMMIT\n") == 0) {
+		else if (STREQ(c, "COMMIT\n") || STREQ(c, "COMMIT\r\n")) {
 			ret = ipset_commit(session);
 			if (ret < 0)
 				handle_error();
