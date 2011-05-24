@@ -1,3 +1,12 @@
+6.6
+ - Use unified from/to address masking and check the usage
+ - ip_set_flush returned -EPROTO instead of -IPSET_ERR_PROTOCOL, fixed
+ - Take into account cidr value for the from address when creating the set
+ - Adding ranges to hash types with timeout could still fail, fixed
+ - Removed old, not used hashing method ip_set_chash
+ - Remove variable 'ret' in type_pf_tdel(), which is set but not used
+ - Use proper timeout parameter to jiffies conversion
+
 6.5
  - Support range for IPv4 at adding/deleting elements for hash:*net* types
  - Set type support with multiple revisions added

@@ -1,3 +1,14 @@
+6.6
+ - Restore with bitmap:port and list:set types did not work, fixed
+ - Accept "\r\n" terminated COMMIT command in restore files
+ - Fix the message sequence number book-keeping
+ - Protocol-level debugging support added
+ - hash:net stress test in range notation added
+ - ipset_mnl_query: in debug mode print the errno returned by the cb
+   function
+ - Accept "\r\n" terminated lines in restore files
+ - Remove outdated checking of IPv6 support from configure.ac
+
 6.5
  - Support range for IPv4 at adding/deleting elements for hash:*net* types
  - Disable type revisions which are not supported both by the kernel and
