@@ -1623,7 +1623,12 @@ build_msg(struct ipset_session *session, bool aggregate)
 			    IPSET_ATTR_REVISION, cmd_attrs);
 		D("family: %u, type family %u",
 		  ipset_data_family(data), type->family);
-		ADDATTR(session, nlh, data, IPSET_ATTR_FAMILY, AF_INET, cmd_attrs);
+		if (ipset_data_test(data, IPSET_OPT_FAMILY))
+			ADDATTR(session, nlh, data, IPSET_ATTR_FAMILY,
+				AF_INET, cmd_attrs);
+		else
+			/* bitmap:port and list:set types */
+			mnl_attr_put_u8(nlh, IPSET_ATTR_FAMILY, AF_UNSPEC);
 
 		/* Type-specific create attributes */
 		D("call open_nested");
