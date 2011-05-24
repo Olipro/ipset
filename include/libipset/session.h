@@ -96,4 +96,6 @@ typedef int (*ipset_outfn)(const char *fmt, ...)
 extern struct ipset_session * ipset_session_init(ipset_outfn outfn);
 extern int ipset_session_fini(struct ipset_session *session);
 
+extern void ipset_debug_msg(const char *dir, void *buffer, int len);
+
 #endif /* LIBIPSET_SESSION_H */

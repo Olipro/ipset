@@ -485,6 +485,10 @@ static const struct ipset_attr_policy ipaddr_attrs[] = {
 	},
 };
 
+#ifdef IPSET_DEBUG
+static int debug = 1;
+#endif
+
 static int
 generic_data_attr_cb(const struct nlattr *attr, void *data,
 		     int attr_max, const struct ipset_attr_policy *policy)
@@ -492,14 +496,14 @@ generic_data_attr_cb(const struct nlattr *attr, void *data,
 	const struct nlattr **tb = data;
 	int type = mnl_attr_get_type(attr);
 	
-	D("attr type: %u, len %u", type, attr->nla_len);
+	IF_D(debug, "attr type: %u, len %u", type, attr->nla_len);
 	if (mnl_attr_type_valid(attr, attr_max) < 0) {
-		D("attr type: %u INVALID", type);
+		IF_D(debug, "attr type: %u INVALID", type);
 		return MNL_CB_ERROR;
 	}
 	if (mnl_attr_validate(attr, policy[type].type) < 0) {
-		D("attr type: %u POLICY, attrlen %u", type,
-		  mnl_attr_get_payload_len(attr));
+		IF_D(debug, "attr type: %u POLICY, attrlen %u", type,
+		     mnl_attr_get_payload_len(attr));
 		return MNL_CB_ERROR;
 	}
 	if (policy[type].type == MNL_TYPE_NUL_STRING
@@ -1969,3 +1973,7 @@ ipset_session_fini(struct ipset_session *session)
 	free(session);
 	return 0;
 }
+
+#ifdef IPSET_DEBUG
+#include "debug.c"
+#endif

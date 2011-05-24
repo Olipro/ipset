@@ -92,12 +92,16 @@ ipset_mnl_query(struct ipset_handle *handle, void *buffer, size_t len)
 	assert(handle);
 	assert(buffer);
 
+#ifdef IPSET_DEBUG
+	ipset_debug_msg("sent", nlh, nlh->nlmsg_len);
+#endif
 	if (mnl_socket_sendto(handle->h, nlh, nlh->nlmsg_len) < 0)
 		return -ECOMM;
 
-	D("message sent");
 	ret = mnl_socket_recvfrom(handle->h, buffer, len);
-	D("message received, ret: %d", ret);
+#ifdef IPSET_DEBUG
+	ipset_debug_msg("received", buffer, ret);
+#endif
 	while (ret > 0) {
 		ret = mnl_cb_run2(buffer, ret,
 				  handle->seq, handle->portid,
