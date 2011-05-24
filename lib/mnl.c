@@ -75,7 +75,6 @@ ipset_mnl_fill_hdr(struct ipset_handle *handle, enum ipset_cmd cmd,
 	nlh->nlmsg_flags = cmdflags[cmd - 1];
 	if (envflags & IPSET_ENV_EXIST)
 	    	nlh->nlmsg_flags &=  ~NLM_F_EXCL;
-	nlh->nlmsg_seq = ++handle->seq;
 
 	nfg = mnl_nlmsg_put_extra_header(nlh, sizeof(struct nfgenmsg));
 	nfg->nfgen_family = AF_INET;
@@ -92,6 +91,7 @@ ipset_mnl_query(struct ipset_handle *handle, void *buffer, size_t len)
 	assert(handle);
 	assert(buffer);
 
+	nlh->nlmsg_seq = ++handle->seq;
 #ifdef IPSET_DEBUG
 	ipset_debug_msg("sent", nlh, nlh->nlmsg_len);
 #endif
