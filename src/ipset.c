@@ -718,6 +718,8 @@ parse_commandline(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
+	int ret;
+
 	/* Register types */
 	ipset_type_add(&ipset_bitmap_ip0);
 	ipset_type_add(&ipset_bitmap_ipmac0);
@@ -739,5 +741,9 @@ main(int argc, char *argv[])
 		return exit_error(OTHER_PROBLEM,
 			"Cannot initialize ipset session, aborting.");
 
-	return parse_commandline(argc, argv);
+	ret = parse_commandline(argc, argv);
+	
+	ipset_session_fini(session);
+	
+	return ret;
 }

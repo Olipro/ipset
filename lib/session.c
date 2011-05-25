@@ -1528,7 +1528,7 @@ addattr_adt(struct ipset_session *session,
 static int
 build_send_private_msg(struct ipset_session *session, enum ipset_cmd cmd)
 {
-	char buffer[PRIVATE_MSG_BUFLEN] __attribute__ ((aligned));
+	char buffer[PRIVATE_MSG_BUFLEN] __attribute__ ((aligned)) = {};
 	struct nlmsghdr *nlh = (void *)buffer;
 	struct ipset_data *data = session->data;
 	int len = PRIVATE_MSG_BUFLEN, ret;
