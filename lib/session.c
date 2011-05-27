@@ -1453,6 +1453,9 @@ rawdata2attr(struct ipset_session *session, struct nlmsghdr *nlh,
 		return 1;
 
 	switch (attr->type) {
+	case MNL_TYPE_NUL_STRING:
+		alen = strlen((const char *)d) + 1;
+		break;
 	case MNL_TYPE_U32: {
 		uint32_t value = htonl(*(const uint32_t *)d);
 		
