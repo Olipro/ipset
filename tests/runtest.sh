@@ -11,7 +11,7 @@ tests="$tests ipportiphash hash:ip,port,ip hash:ip6,port,ip6"
 tests="$tests nethash hash:net hash:net6 hash:net,port hash:net6,port"
 tests="$tests hash:ip,port,net hash:ip6,port,net6"
 tests="$tests setlist restore"
-tests="$tests iptree iptreemap"
+# tests="$tests iptree iptreemap"
 
 # For correct sorting:
 LC_ALL=C
