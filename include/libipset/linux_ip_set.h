@@ -105,6 +105,7 @@ enum {
 	IPSET_ATTR_IP2,
 	IPSET_ATTR_CIDR2,
 	IPSET_ATTR_IP2_TO,
+	IPSET_ATTR_IFACE,
 	__IPSET_ATTR_ADT_MAX,
 };
 #define IPSET_ATTR_ADT_MAX	(__IPSET_ATTR_ADT_MAX - 1)
@@ -153,6 +154,8 @@ enum ipset_cmd_flags {
 enum ipset_cadt_flags {
 	IPSET_FLAG_BIT_BEFORE	= 0,
 	IPSET_FLAG_BEFORE	= (1 << IPSET_FLAG_BIT_BEFORE),
+	IPSET_FLAG_BIT_PHYSDEV	= 1,
+	IPSET_FLAG_PHYSDEV	= (1 << IPSET_FLAG_BIT_PHYSDEV),
 };
 
 /* Commands with settype-specific attributes */

@@ -12,6 +12,7 @@
 #include <sys/socket.h>				/* inet_ntop */
 #include <arpa/inet.h>				/* inet_ntop */
 #include <net/ethernet.h>			/* ETH_ALEN */
+#include <net/if.h>				/* IFNAMSIZ */
 
 #include <libipset/debug.h>			/* D() */
 #include <libipset/data.h>			/* ipset_data_* */
@@ -444,6 +445,45 @@ ipset_print_port(char *buf, unsigned int len,
 }
 
 /**
+ * ipset_print_iface - print interface element string
+ * @buf: printing buffer
+ * @len: length of available buffer space
+ * @data: data blob
+ * @opt: the option kind
+ * @env: environment flags
+ *
+ * Print interface element string to output buffer.
+ *
+ * Return lenght of printed string or error size.
+ */
+int
+ipset_print_iface(char *buf, unsigned int len,
+		  const struct ipset_data *data, enum ipset_opt opt,
+		  uint8_t env UNUSED)
+{
+	const char *name;
+	int size, offset = 0;
+
+	assert(buf);
+	assert(len > 0);
+	assert(data);
+	assert(opt == IPSET_OPT_IFACE);
+
+	if (len < IFNAMSIZ + strlen("physdev:"))
+		return -1;
+
+	if (ipset_data_test(data, IPSET_OPT_PHYSDEV)) {
+		size = snprintf(buf, len, "physdev:");
+		SNPRINTF_FAILURE(size, len, offset);
+	}
+	name = ipset_data_get(data, opt);
+	assert(name);
+	size = snprintf(buf, len, "%s", name);
+	SNPRINTF_FAILURE(size, len, offset);	
+	return offset;
+}
+
+/**
  * ipset_print_proto - print protocol name
  * @buf: printing buffer
  * @len: length of available buffer space
@@ -730,6 +770,9 @@ ipset_print_data(char *buf, unsigned int len,
 		break;
 	case IPSET_OPT_PORT:
 		size = ipset_print_port(buf, len, data, opt, env);
+		break;
+	case IPSET_OPT_IFACE:
+		size = ipset_print_iface(buf, len, data, opt, env);
 		break;
 	case IPSET_OPT_GC:
 	case IPSET_OPT_HASHSIZE:

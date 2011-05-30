@@ -7,6 +7,7 @@
 #include <assert.h>				/* assert */
 #include <arpa/inet.h>				/* ntoh* */
 #include <net/ethernet.h>			/* ETH_ALEN */
+#include <net/if.h>				/* IFNAMSIZ */
 #include <sys/socket.h>				/* AF_ */
 #include <stdlib.h>				/* malloc, free */
 #include <string.h>				/* memset */
@@ -72,6 +73,7 @@ struct ipset_data {
 			char ether[ETH_ALEN];
 			char name[IPSET_MAXNAMELEN];
 			char nameref[IPSET_MAXNAMELEN];
+			char iface[IFNAMSIZ];
 		} adt;
 	};
 };
@@ -301,6 +303,9 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	case IPSET_OPT_PROTO:
 		data->adt.proto = *(const uint8_t *) value;
 		break;
+	case IPSET_OPT_IFACE:
+		ipset_strlcpy(data->adt.iface, value, IFNAMSIZ);
+		break;
 	/* Swap/rename */
 	case IPSET_OPT_SETNAME2:
 		ipset_strlcpy(data->setname2, value, IPSET_MAXNAMELEN);
@@ -311,6 +316,9 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		break;
 	case IPSET_OPT_BEFORE:
 		cadt_flag_type_attr(data, opt, IPSET_FLAG_BEFORE);
+		break;
+	case IPSET_OPT_PHYSDEV:
+		cadt_flag_type_attr(data, opt, IPSET_FLAG_PHYSDEV);
 		break;
 	case IPSET_OPT_FLAGS:
 		data->flags = *(const uint32_t *)value;
@@ -413,6 +421,8 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 		return &data->adt.cidr2;
 	case IPSET_OPT_PROTO:
 		return &data->adt.proto;
+	case IPSET_OPT_IFACE:
+		return &data->adt.iface;
 	/* Swap/rename */
 	case IPSET_OPT_SETNAME2:
 		return data->setname2;
@@ -422,6 +432,7 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 		return &data->flags;
 	case IPSET_OPT_CADT_FLAGS:
 	case IPSET_OPT_BEFORE:
+	case IPSET_OPT_PHYSDEV:
 		return &data->cadt_flags;
 	default:
 		return NULL;
@@ -472,8 +483,9 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 		return sizeof(uint8_t);
 	case IPSET_OPT_ETHER:
 		return ETH_ALEN;
-	/* Flags counted once */
+	/* Flags doesn't counted once :-( */
 	case IPSET_OPT_BEFORE:
+	case IPSET_OPT_PHYSDEV:
 		return sizeof(uint32_t);
 	default:
 		return 0;

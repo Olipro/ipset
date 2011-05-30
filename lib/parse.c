@@ -12,6 +12,7 @@
 #include <sys/types.h>				/* getaddrinfo */
 #include <sys/socket.h>				/* getaddrinfo, AF_ */
 #include <net/ethernet.h>			/* ETH_ALEN */
+#include <net/if.h>				/* IFNAMSIZ */
 #include <netinet/in.h>				/* IPPROTO_ */
 
 #include <libipset/debug.h>			/* D() */
@@ -1392,6 +1393,40 @@ ipset_parse_typename(struct ipset_session *session,
 		return -1;
 	
 	return ipset_session_data_set(session, IPSET_OPT_TYPE, type);
+}
+
+/**
+ * ipset_parse_iface - parse string as an interface name
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string as an interface name, optionally with 'physdev:' prefix.
+ * The value is stored in the data blob of the session.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_parse_iface(struct ipset_session *session,
+		  enum ipset_opt opt, const char *str)
+{
+	struct ipset_data *data;
+	int offset = 0, err = 0;
+
+	assert(session);
+	assert(opt == IPSET_OPT_IFACE);
+	assert(str);
+
+	data = ipset_session_data(session);
+	if (STREQ(str, "physdev:")) {
+		offset = 8;
+		err = ipset_data_set(data, IPSET_OPT_PHYSDEV, str);
+	}
+	if (strlen(str + offset) > IFNAMSIZ - 1)
+		return syntax_err("interface name '%s' is longer than %u characters",
+				  str + offset, IFNAMSIZ - 1);
+
+	return ipset_data_set(data, opt, str + offset);
 }
 
 /**

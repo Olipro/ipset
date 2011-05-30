@@ -37,6 +37,9 @@ extern int ipset_print_name(char *buf, unsigned int len,
 extern int ipset_print_port(char *buf, unsigned int len,
 			    const struct ipset_data *data,
 			    enum ipset_opt opt, uint8_t env);
+extern int ipset_print_iface(char *buf, unsigned int len,
+			     const struct ipset_data *data,
+			     enum ipset_opt opt, uint8_t env);
 extern int ipset_print_proto(char *buf, unsigned int len,
 			     const struct ipset_data *data,
 			     enum ipset_opt opt, uint8_t env);

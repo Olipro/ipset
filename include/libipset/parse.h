@@ -80,6 +80,8 @@ extern int ipset_parse_flag(struct ipset_session *session,
                             enum ipset_opt opt, const char *str);
 extern int ipset_parse_typename(struct ipset_session *session,
 				enum ipset_opt opt, const char *str);
+extern int ipset_parse_iface(struct ipset_session *session,
+			     enum ipset_opt opt, const char *str);
 extern int ipset_parse_output(struct ipset_session *session,
                               int opt, const char *str);
 extern int ipset_parse_ignored(struct ipset_session *session,
@@ -87,8 +89,8 @@ extern int ipset_parse_ignored(struct ipset_session *session,
 extern int ipset_parse_elem(struct ipset_session *session,
                             enum ipset_opt opt, const char *str);
 extern int ipset_call_parser(struct ipset_session *session,
-							 const struct ipset_arg *arg,
-							 const char *str);
+			     const struct ipset_arg *arg,
+			     const char *str);
 
 /* Compatibility parser functions */
 extern int ipset_parse_iptimeout(struct ipset_session *session,

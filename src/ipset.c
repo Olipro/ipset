@@ -42,6 +42,7 @@ extern struct ipset_type ipset_hash_net0;
 extern struct ipset_type ipset_hash_net1;
 extern struct ipset_type ipset_hash_netport1;
 extern struct ipset_type ipset_hash_netport2;
+extern struct ipset_type ipset_hash_netiface0;
 extern struct ipset_type ipset_hash_ipport1;
 extern struct ipset_type ipset_hash_ipportip1;
 extern struct ipset_type ipset_hash_ipportnet1;
@@ -729,6 +730,7 @@ main(int argc, char *argv[])
 	ipset_type_add(&ipset_hash_net1);
 	ipset_type_add(&ipset_hash_netport1);
 	ipset_type_add(&ipset_hash_netport2);
+	ipset_type_add(&ipset_hash_netiface0);
 	ipset_type_add(&ipset_hash_ipport1);
 	ipset_type_add(&ipset_hash_ipportip1);
 	ipset_type_add(&ipset_hash_ipportnet1);

@@ -13,6 +13,7 @@
 #include <string.h>				/* str* */
 #include <unistd.h>				/* getpagesize */
 #include <net/ethernet.h>			/* ETH_ALEN */
+#include <net/if.h>				/* IFNAMSIZ */
 
 #include <libipset/debug.h>			/* D() */
 #include <libipset/data.h>			/* IPSET_OPT_* */
@@ -472,6 +473,11 @@ static const struct ipset_attr_policy adt_attrs[] = {
 	[IPSET_ATTR_IP2_TO] = {
 		.type = MNL_TYPE_NESTED,
 		.opt = IPSET_OPT_IP2_TO,
+	},
+	[IPSET_ATTR_IFACE] = {
+		.type = MNL_TYPE_NUL_STRING,
+		.opt = IPSET_OPT_IFACE,
+		.len  = IFNAMSIZ,
 	},
 };
 

@@ -12,6 +12,7 @@ ipset_SOURCES	= ipset.c \
 	ipset_hash_ipportnet.c \
 	ipset_hash_net.c \
 	ipset_hash_netport.c \
+	ipset_hash_netiface.c \
 	ipset_list_set.c \
 	ui.c
 ipset_LDADD	= ../lib/libipset.la

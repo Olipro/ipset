@@ -214,8 +214,8 @@ command follows the syntax
 
 where the current list of the methods are
 \fBbitmap\fR, \fBhash\fR, and \fBlist\fR and the possible data types
-are \fBip\fR, \fBnet\fR, \fBmac\fR and \fBport\fR. The dimension of a set
-is equal to the number of data types in its type name.
+are \fBip\fR, \fBnet\fR, \fBmac\fR, \fBport\fR and \fBiface\fR.
+The dimension of a set is equal to the number of data types in its type name.
 
 When adding, deleting or testing entries in a set, the same comma separated
 data syntax must be used for the entry parameter of the commands, i.e
@@ -711,6 +711,73 @@ ipset add foo 192.168.1,80,10.0.0/24
 ipset add foo 192.168.2,25,10.1.0.0/16
 .IP 
 ipset test foo 192.168.1,80.10.0.0/24
+.SS hash:net,iface
+The \fBhash:net,iface\fR set type uses a hash to store different sized IP network
+address and interface name pairs. Network address with zero prefix size is not
+accepted.
+.PP 
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
+.PP 
+\fIADD\-ENTRY\fR := \fInetaddr\fR,[\fBphysdev\fR:]\fIiface\fR
+.PP 
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
+.PP 
+\fIDEL\-ENTRY\fR := \fInetaddr\fR,[\fBphysdev\fR:]\fIiface\fR
+.PP 
+\fITEST\-ENTRY\fR := \fInetaddr\fR,[\fBphysdev\fR:]\fIiface\fR
+.PP 
+where
+\fInetaddr\fR := \fIip\fR[/\fIcidr\fR]
+.PP 
+Optional \fBcreate\fR options:
+.TP 
+\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
+The protocol family of the IP addresses to be stored in the set. The default is
+\fBinet\fR, i.e IPv4.
+.TP 
+\fBhashsize\fR \fIvalue\fR
+The initial hash size for the set, default is 1024. The hash size must be a power
+of two, the kernel automatically rounds up non power of two hash sizes to the first
+correct value.
+.TP 
+\fBmaxelem\fR \fIvalue\fR
+The maximal number of elements which can be stored in the set, default 65536.
+.PP 
+For the \fInetaddr\fR part of the elements
+see the description at the \fBhash:net\fR set type.
+.PP 
+When adding/deleting/testing entries, if the cidr prefix parameter is not specified,
+then the host prefix value is assumed. When adding/deleting entries, the exact
+element is added/deleted and overlapping elements are not checked by the kernel.
+When testing entries, if a host address is tested, then the kernel tries to match
+the host address in the networks added to the set and reports the result accordingly.
+.PP 
+From the \fBset\fR netfilter match point of view the searching for a  match
+always  starts  from  the smallest  size  of netblock (most specific
+prefix) to the largest one (least specific prefix) added to the set.
+When  adding/deleting IP
+addresses  to the set by the \fBSET\fR netfilter target, it  will  be
+added/deleted by the most specific prefix which can be found in  the
+set, or by the host prefix value if the set is empty.
+.PP 
+The second direction parameter of the \fBset\fR match and
+\fBSET\fR target modules corresponds to the incoming/outgoing interface
+: \fBsrc\fR to the incoming, while \fBdst\fR to the outgoing. When
+the interface is flagged with \fBphysdev:\fR, the interface is interpreted
+as the incoming/outgoing bridge port.
+.PP 
+The lookup time grows linearly with the number of the different prefix
+values added to the set. 
+.PP 
+Examples:
+.IP 
+ipset create foo hash:net,iface
+.IP 
+ipset add foo 192.168.0/24,eth0
+.IP 
+ipset add foo 10.1.0.0/16,eth1
+.IP 
+ipset test foo 192.168.0/24,eth0
 .SS list:set
 The \fBlist:set\fR type uses a simple list in which you can store
 set names.
