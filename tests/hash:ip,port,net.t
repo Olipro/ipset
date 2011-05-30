@@ -43,7 +43,7 @@
 # Add a range which forces a resizing
 0 ipset add test 10.0.0.0-10.0.3.255,tcp:80-82,192.168.0.1/24
 # Check that correct number of elements are added
-0 n=`ipset list test|grep 10.0|wc -l` && test $n -eq 3072
+0 n=`ipset list test|grep '^10.0'|wc -l` && test $n -eq 3072
 # Destroy set
 0 ipset -X test
 # Create set to add a range and with range notation in the network
@@ -51,7 +51,7 @@
 # Add a range which forces a resizing
 0 ipset add test 10.0.0.0-10.0.3.255,tcp:80-82,192.168.0.0-192.168.2.255
 # Check that correct number of elements are added
-0 n=`ipset list test|grep 10.0|wc -l` && test $n -eq 6144
+0 n=`ipset list test|grep '^10.0'|wc -l` && test $n -eq 6144
 # Destroy set
 0 ipset -X test
 # eof

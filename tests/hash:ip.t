@@ -65,7 +65,7 @@
 # IP: Add a range which forces a resizing
 0 ipset add test 10.0.0.0-10.0.3.255
 # IP: Check that correct number of elements are added
-0 n=`ipset list test|grep 10.0|wc -l` && test $n -eq 1024
+0 n=`ipset list test|grep '^10.0'|wc -l` && test $n -eq 1024
 # IP: Destroy sets
 0 ipset -X
 # Network: Create a set with timeout

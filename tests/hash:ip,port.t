@@ -79,7 +79,7 @@
 # Add a range which forces a resizing
 0 ipset add test 10.0.0.0-10.0.3.255,tcp:80-82
 # Check that correct number of elements are added
-0 n=`ipset list test|grep 10.0|wc -l` && test $n -eq 3072
+0 n=`ipset list test|grep '^10.0'|wc -l` && test $n -eq 3072
 # Destroy set
 0 ipset -X test
 # eof
