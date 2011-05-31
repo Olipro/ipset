@@ -1,3 +1,14 @@
+6.7
+ - Whitespace and coding fixes, detected by checkpatch.pl
+ - hash:net,iface type introduced
+ - hash:* tests may seem to fail due to the too wide grep pattern, fix them
+ - Remove iptree tests and compatibility element parsing
+ - hash:net test may seem to fail due to the too wide grep pattern, fix it
+ - Fix long time uncovered bug at adding string attributes to the netlink
+   messages
+ - Fix warnings reported by valgrind
+ - Remove supporting set types iptree and iptreemap
+
 6.6
  - Restore with bitmap:port and list:set types did not work, fixed
  - Accept "\r\n" terminated COMMIT command in restore files

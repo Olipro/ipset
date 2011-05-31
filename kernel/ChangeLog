@@ -1,3 +1,11 @@
+6.7
+ - Whitespace and coding fixes, detected by checkpatch.pl
+ - hash:net,iface type introduced
+ - Use the stored first cidr value instead of '1'
+ - Fix return code for destroy when sets are in use
+ - Add xt_action_param to the variant level kadt functions, ipset API change
+ - Drop supporting kernel versions below 2.6.35
+
 6.6
  - Use unified from/to address masking and check the usage
  - ip_set_flush returned -EPROTO instead of -IPSET_ERR_PROTOCOL, fixed
