@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #include <libipset/data.h>			/* IPSET_OPT_* */
@@ -33,7 +33,7 @@ static const struct ipset_arg bitmap_ipmac_create_args[] = {
 	  .parse = ipset_parse_net,
 	},
 	{ },
-}; 
+};
 
 static const struct ipset_arg bitmap_ipmac_add_args[] = {
 	{ .name = { "timeout", NULL },
@@ -41,7 +41,7 @@ static const struct ipset_arg bitmap_ipmac_add_args[] = {
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	{ },
-}; 
+};
 
 static const char bitmap_ipmac_usage[] =
 "create SETNAME bitmap:ip,mac range IP/CIDR|FROM-TO\n"
@@ -60,13 +60,13 @@ struct ipset_type ipset_bitmap_ipmac0 = {
 	.family = AF_INET,
 	.dimension = IPSET_DIM_TWO,
 	.last_elem_optional = true,
-	.elem = { 
-		[IPSET_DIM_ONE] = { 
+	.elem = {
+		[IPSET_DIM_ONE] = {
 			.parse = ipset_parse_single_ip,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP
 		},
-		[IPSET_DIM_TWO] = { 
+		[IPSET_DIM_TWO] = {
 			.parse = ipset_parse_ether,
 			.print = ipset_print_ether,
 			.opt = IPSET_OPT_ETHER

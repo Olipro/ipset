@@ -12,7 +12,7 @@
 	{.ip6 = { \
 		__constant_htonl(a), __constant_htonl(b), \
 		__constant_htonl(c), __constant_htonl(d), \
-	}}
+	} }
 
 /*
  * This table works for both IPv4 and IPv6;

@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #ifndef LIBIPSET_DATA_H
@@ -68,7 +68,7 @@ enum ipset_opt {
 #define IPSET_FLAGS_ALL		(~0LL)
 
 #define IPSET_CREATE_FLAGS		\
-	( IPSET_FLAG(IPSET_OPT_FAMILY)	\
+	(IPSET_FLAG(IPSET_OPT_FAMILY)	\
 	| IPSET_FLAG(IPSET_OPT_TYPENAME)\
 	| IPSET_FLAG(IPSET_OPT_TYPE)	\
 	| IPSET_FLAG(IPSET_OPT_IP)	\
@@ -86,7 +86,7 @@ enum ipset_opt {
 	| IPSET_FLAG(IPSET_OPT_SIZE))
 
 #define IPSET_ADT_FLAGS			\
-	( IPSET_FLAG(IPSET_OPT_IP)	\
+	(IPSET_FLAG(IPSET_OPT_IP)	\
 	| IPSET_FLAG(IPSET_OPT_IP_TO)	\
 	| IPSET_FLAG(IPSET_OPT_CIDR)	\
 	| IPSET_FLAG(IPSET_OPT_PORT)	\
@@ -114,8 +114,8 @@ extern bool ipset_data_ignored(struct ipset_data *data, enum ipset_opt opt);
 
 extern int ipset_data_set(struct ipset_data *data, enum ipset_opt opt,
 			  const void *value);
-extern const void * ipset_data_get(const struct ipset_data *data,
-				   enum ipset_opt opt);
+extern const void *ipset_data_get(const struct ipset_data *data,
+				  enum ipset_opt opt);
 
 static inline bool
 ipset_data_test(const struct ipset_data *data, enum ipset_opt opt)
@@ -124,13 +124,13 @@ ipset_data_test(const struct ipset_data *data, enum ipset_opt opt)
 }
 
 /* Shortcuts */
-extern const char * ipset_data_setname(const struct ipset_data *data);
+extern const char *ipset_data_setname(const struct ipset_data *data);
 extern uint8_t ipset_data_family(const struct ipset_data *data);
 extern uint8_t ipset_data_cidr(const struct ipset_data *data);
 extern uint64_t ipset_data_flags(const struct ipset_data *data);
 
 extern void ipset_data_reset(struct ipset_data *data);
-extern struct ipset_data * ipset_data_init(void);
+extern struct ipset_data *ipset_data_init(void);
 extern void ipset_data_fini(struct ipset_data *data);
 
 extern size_t ipset_data_sizeof(enum ipset_opt opt, uint8_t family);

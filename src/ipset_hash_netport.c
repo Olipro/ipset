@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #include <libipset/data.h>			/* IPSET_OPT_* */
@@ -39,7 +39,7 @@ static const struct ipset_arg hash_netport_create_args[] = {
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	{ },
-}; 
+};
 
 static const struct ipset_arg hash_netport_add_args[] = {
 	{ .name = { "timeout", NULL },
@@ -47,7 +47,7 @@ static const struct ipset_arg hash_netport_add_args[] = {
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	{ },
-}; 
+};
 
 static const char hash_netport1_usage[] =
 "create SETNAME hash:net,port\n"
@@ -69,13 +69,13 @@ struct ipset_type ipset_hash_netport1 = {
 	.revision = 1,
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_TWO,
-	.elem = { 
-		[IPSET_DIM_ONE] = { 
+	.elem = {
+		[IPSET_DIM_ONE] = {
 			.parse = ipset_parse_ipnet,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP
 		},
-		[IPSET_DIM_TWO] = { 
+		[IPSET_DIM_TWO] = {
 			.parse = ipset_parse_proto_port,
 			.print = ipset_print_proto_port,
 			.opt = IPSET_OPT_PORT
@@ -143,13 +143,13 @@ struct ipset_type ipset_hash_netport2 = {
 	.revision = 2,
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_TWO,
-	.elem = { 
-		[IPSET_DIM_ONE] = { 
+	.elem = {
+		[IPSET_DIM_ONE] = {
 			.parse = ipset_parse_ip4_net6,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP
 		},
-		[IPSET_DIM_TWO] = { 
+		[IPSET_DIM_TWO] = {
 			.parse = ipset_parse_proto_port,
 			.print = ipset_print_proto_port,
 			.opt = IPSET_OPT_PORT

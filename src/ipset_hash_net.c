@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #include <libipset/data.h>			/* IPSET_OPT_* */
@@ -47,7 +47,7 @@ static const struct ipset_arg hash_net_create_args[] = {
 	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
 	},
 	{ },
-}; 
+};
 
 static const struct ipset_arg hash_net_add_args[] = {
 	{ .name = { "timeout", NULL },
@@ -55,7 +55,7 @@ static const struct ipset_arg hash_net_add_args[] = {
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	{ },
-}; 
+};
 
 static const char hash_net0_usage[] =
 "create SETNAME hash:net\n"
@@ -75,8 +75,8 @@ struct ipset_type ipset_hash_net0 = {
 	.revision = 0,
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_ONE,
-	.elem = { 
-		[IPSET_DIM_ONE] = { 
+	.elem = {
+		[IPSET_DIM_ONE] = {
 			.parse = ipset_parse_ipnet,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP
@@ -127,8 +127,8 @@ struct ipset_type ipset_hash_net1 = {
 	.revision = 1,
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_ONE,
-	.elem = { 
-		[IPSET_DIM_ONE] = { 
+	.elem = {
+		[IPSET_DIM_ONE] = {
 			.parse = ipset_parse_ip4_net6,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP

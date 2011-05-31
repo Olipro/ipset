@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #ifndef LIBIPSET_TYPES_H
@@ -97,13 +97,14 @@ extern int ipset_cache_swap(const char *from, const char *to);
 extern int ipset_cache_init(void);
 extern void ipset_cache_fini(void);
 
-extern const struct ipset_type * ipset_type_get(struct ipset_session *session,
-						enum ipset_cmd cmd);
-extern const struct ipset_type * ipset_type_check(struct ipset_session *session);
+extern const struct ipset_type *
+	ipset_type_get(struct ipset_session *session, enum ipset_cmd cmd);
+extern const struct ipset_type *
+	ipset_type_check(struct ipset_session *session);
 
 extern int ipset_type_add(struct ipset_type *type);
-extern const struct ipset_type * ipset_types(void);
-extern const char * ipset_typename_resolve(const char *str);
+extern const struct ipset_type *ipset_types(void);
+extern const char *ipset_typename_resolve(const char *str);
 extern bool ipset_match_typename(const char *str,
 				 const struct ipset_type *t);
 

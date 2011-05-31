@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #ifndef LIBIPSET_SESSION_H
@@ -21,10 +21,14 @@ struct ipset_session;
 struct ipset_data;
 struct ipset_handle;
 
-extern struct ipset_data * ipset_session_data(const struct ipset_session *session);
-extern struct ipset_handle * ipset_session_handle(const struct ipset_session *session);
-extern const struct ipset_type * ipset_saved_type(const struct ipset_session *session);
-extern void ipset_session_lineno(struct ipset_session *session, uint32_t lineno);
+extern struct ipset_data *
+	ipset_session_data(const struct ipset_session *session);
+extern struct ipset_handle *
+	ipset_session_handle(const struct ipset_session *session);
+extern const struct ipset_type *
+	ipset_saved_type(const struct ipset_session *session);
+extern void ipset_session_lineno(struct ipset_session *session,
+				 uint32_t lineno);
 
 enum ipset_err_type {
 	IPSET_ERROR,
@@ -47,8 +51,8 @@ extern int ipset_session_report(struct ipset_session *session,
 })
 
 extern void ipset_session_report_reset(struct ipset_session *session);
-extern const char * ipset_session_error(const struct ipset_session *session);
-extern const char * ipset_session_warning(const struct ipset_session *session);
+extern const char *ipset_session_error(const struct ipset_session *session);
+extern const char *ipset_session_warning(const struct ipset_session *session);
 
 #define ipset_session_data_set(session, opt, value)	\
 	ipset_data_set(ipset_session_data(session), opt, value)
@@ -93,7 +97,7 @@ extern int ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd,
 typedef int (*ipset_outfn)(const char *fmt, ...)
 	__attribute__ ((format (printf, 1, 2)));
 
-extern struct ipset_session * ipset_session_init(ipset_outfn outfn);
+extern struct ipset_session *ipset_session_init(ipset_outfn outfn);
 extern int ipset_session_fini(struct ipset_session *session);
 
 extern void ipset_debug_msg(const char *dir, void *buffer, int len);

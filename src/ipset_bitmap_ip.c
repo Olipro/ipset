@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #include <libipset/data.h>			/* IPSET_OPT_* */
@@ -37,7 +37,7 @@ static const struct ipset_arg bitmap_ip_create_args[] = {
 	  .parse = ipset_parse_net,
 	},
 	{ },
-}; 
+};
 
 static const struct ipset_arg bitmap_ip_add_args[] = {
 	{ .name = { "timeout", NULL },
@@ -45,7 +45,7 @@ static const struct ipset_arg bitmap_ip_add_args[] = {
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	{ },
-}; 
+};
 
 static const char bitmap_ip_usage[] =
 "create SETNAME bitmap:ip range IP/CIDR|FROM-TO\n"
@@ -62,8 +62,8 @@ struct ipset_type ipset_bitmap_ip0 = {
 	.revision = 0,
 	.family = AF_INET,
 	.dimension = IPSET_DIM_ONE,
-	.elem = { 
-		[IPSET_DIM_ONE] = { 
+	.elem = {
+		[IPSET_DIM_ONE] = {
 			.parse = ipset_parse_ip,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP

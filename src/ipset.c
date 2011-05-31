@@ -2,8 +2,8 @@
  *                     Patrick Schaaf (bof@bof.de)
  * Copyright 2003-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #include <ctype.h>			/* isspace */
@@ -26,12 +26,12 @@
 static char program_name[] = PACKAGE;
 static char program_version[] = PACKAGE_VERSION;
 
-static struct ipset_session *session = NULL;
-static uint32_t restore_line = 0;
-static bool interactive = false;
+static struct ipset_session *session;
+static uint32_t restore_line;
+static bool interactive;
 static char cmdline[1024];
 static char *newargv[255];
-static int newargc = 0;
+static int newargc;
 
 /* The known set types: (typename, revision, family) is unique */
 extern struct ipset_type ipset_bitmap_ip0;
@@ -57,12 +57,12 @@ enum exittype {
 	SESSION_PROBLEM,
 };
 
-static int __attribute__((format(printf,2,3)))
+static int __attribute__((format(printf, 2, 3)))
 exit_error(int status, const char *msg, ...)
 {
-	bool quiet = !interactive
-		     && session
-		     && ipset_envopt_test(session, IPSET_ENV_QUIET);
+	bool quiet = !interactive &&
+		     session &&
+		     ipset_envopt_test(session, IPSET_ENV_QUIET);
 
 	if (status && msg && !quiet) {
 		va_list args;
@@ -98,8 +98,8 @@ exit_error(int status, const char *msg, ...)
 static int
 handle_error(void)
 {
-	if (ipset_session_warning(session)
-	    && !ipset_envopt_test(session, IPSET_ENV_QUIET))
+	if (ipset_session_warning(session) &&
+	    !ipset_envopt_test(session, IPSET_ENV_QUIET))
 		fprintf(stderr, "Warning: %s\n",
 			ipset_session_warning(session));
 	if (ipset_session_error(session))
@@ -111,7 +111,7 @@ handle_error(void)
 		exit(OTHER_PROBLEM);
 	}
 
-	ipset_session_report_reset(session);	
+	ipset_session_report_reset(session);
 	return -1;
 }
 
@@ -120,16 +120,15 @@ help(void)
 {
 	const struct ipset_commands *c;
 	const struct ipset_envopts *opt = ipset_envopts;
-	
+
 	printf("%s v%s\n\n"
 	       "Usage: %s [options] COMMAND\n\nCommands:\n",
 	       program_name, program_version, program_name);
 
-	for (c = ipset_commands; c->cmd; c++) {
+	for (c = ipset_commands; c->cmd; c++)
 		printf("%s %s\n", c->name[0], c->help);
-	}
 	printf("\nOptions:\n");
-	
+
 	while (opt->flag) {
 		if (opt->help)
 			printf("%s %s\n", opt->name[0], opt->help);
@@ -144,7 +143,7 @@ build_argv(char *buffer)
 	char *ptr;
 	int i;
 
-	/* Reset */	
+	/* Reset */
 	for (i = 1; i < newargc; i++)
 		newargv[i] = NULL;
 	newargc = 1;
@@ -173,7 +172,7 @@ restore(char *argv0)
 {
 	int ret = 0;
 	char *c;
-	
+
 	/* Initialize newargv/newargc */
 	newargc = 0;
 	newargv[newargc++] = argv0;
@@ -193,7 +192,7 @@ restore(char *argv0)
 		}
 		/* Build faked argv, argc */
 		build_argv(c);
-		
+
 		/* Execute line */
 		ret = parse_commandline(newargc, newargv);
 		if (ret < 0)
@@ -213,7 +212,7 @@ call_parser(int *argc, char *argv[], const struct ipset_arg *args)
 	int ret = 0;
 	const struct ipset_arg *arg;
 	const char *optstr;
-	
+
 	/* Currently CREATE and ADT may have got additional arguments */
 	if (!args && *argc > 1)
 		goto err_unknown;
@@ -237,7 +236,8 @@ call_parser(int *argc, char *argv[], const struct ipset_arg *args)
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
 				if (*argc >= 2) {
-					ret = ipset_call_parser(session, arg, argv[1]);
+					ret = ipset_call_parser(session,
+						arg, argv[1]);
 					if (ret < 0)
 						return ret;
 					ipset_shift_argv(argc, argv, 1);
@@ -263,7 +263,7 @@ err_unknown:
 static enum ipset_adt
 cmd2cmd(int cmd)
 {
-	switch(cmd) {
+	switch (cmd) {
 	case IPSET_CMD_ADD:
 		return IPSET_ADD;
 	case IPSET_CMD_DEL:
@@ -343,15 +343,15 @@ check_allowed(const struct ipset_type *type, enum ipset_cmd command)
 				? IPSET_CREATE_FLAGS : IPSET_ADT_FLAGS;
 	const struct ipset_arg *arg = type->args[cmd];
 	enum ipset_opt i;
-	
+
 	/* Range can be expressed by ip/cidr or from-to */
 	if (allowed & IPSET_FLAG(IPSET_OPT_IP_TO))
 		allowed |= IPSET_FLAG(IPSET_OPT_CIDR);
 
 	for (i = IPSET_OPT_IP; i < IPSET_OPT_FLAGS; i++) {
-		if (!(cmdflags & IPSET_FLAG(i))
-		    || (allowed & IPSET_FLAG(i))
-		    || !(flags & IPSET_FLAG(i)))
+		if (!(cmdflags & IPSET_FLAG(i)) ||
+		    (allowed & IPSET_FLAG(i)) ||
+		    !(flags & IPSET_FLAG(i)))
 			continue;
 		/* Not allowed element-expressions */
 		switch (i) {
@@ -359,19 +359,22 @@ check_allowed(const struct ipset_type *type, enum ipset_cmd command)
 			exit_error(OTHER_PROBLEM,
 				"IP/CIDR range is not allowed in command %s "
 				"with set type %s and family %s",
-				cmd2name(command), type->name, session_family());
+				cmd2name(command), type->name,
+				session_family());
 			return;
 		case IPSET_OPT_IP_TO:
 			exit_error(OTHER_PROBLEM,
 				"FROM-TO IP range is not allowed in command %s "
 				"with set type %s and family %s",
-				cmd2name(command), type->name, session_family());
+				cmd2name(command), type->name,
+				session_family());
 			return;
 		case IPSET_OPT_PORT_TO:
 			exit_error(OTHER_PROBLEM,
 				"FROM-TO port range is not allowed in command %s "
 				"with set type %s and family %s",
-				cmd2name(command), type->name, session_family());
+				cmd2name(command), type->name,
+				session_family());
 			return;
 		default:
 			break;
@@ -391,7 +394,8 @@ check_allowed(const struct ipset_type *type, enum ipset_cmd command)
 				"%s parameter is not allowed in command %s "
 				"with set type %s and family %s",
 				arg->name[0],
-				cmd2name(command), type->name, session_family());
+				cmd2name(command), type->name,
+				session_family());
 			return;
 		}
 		exit_error(OTHER_PROBLEM,
@@ -406,7 +410,7 @@ static const struct ipset_type *
 type_find(const char *name)
 {
 	const struct ipset_type *t = ipset_types();
-	
+
 	while (t) {
 		if (ipset_match_typename(name, t))
 			return t;
@@ -477,10 +481,10 @@ parse_commandline(int argc, char *argv[])
 		if (!ipset_match_cmd(argv[1], command->name))
 			continue;
 
-		if (restore_line != 0
-		    && (command->cmd == IPSET_CMD_RESTORE
-		    	|| command->cmd == IPSET_CMD_VERSION
-		    	|| command->cmd == IPSET_CMD_HELP))
+		if (restore_line != 0 &&
+		    (command->cmd == IPSET_CMD_RESTORE ||
+		     command->cmd == IPSET_CMD_VERSION ||
+		     command->cmd == IPSET_CMD_HELP))
 			return exit_error(PARAMETER_PROBLEM,
 				"Command `%s' is invalid "
 				"in restore mode.",
@@ -565,9 +569,9 @@ parse_commandline(int argc, char *argv[])
 	case IPSET_CMD_HELP:
 		help();
 
-		if (interactive
-		    || !ipset_envopt_test(session, IPSET_ENV_QUIET)) {
-		    	if (arg0) {
+		if (interactive ||
+		    !ipset_envopt_test(session, IPSET_ENV_QUIET)) {
+			if (arg0) {
 				/* Type-specific help, without kernel checking */
 				type = type_find(arg0);
 				if (!type)
@@ -597,7 +601,7 @@ parse_commandline(int argc, char *argv[])
 					printf("    %s\n", type->name);
 					type = type->next;
 				}
-			} 
+			}
 		}
 		if (interactive)
 			return 0;
@@ -607,7 +611,7 @@ parse_commandline(int argc, char *argv[])
 	default:
 		break;
 	}
-	
+
 	/* Forth: parse command args and issue the command */
 	switch (cmd) {
 	case IPSET_CMD_CREATE:
@@ -630,11 +634,11 @@ parse_commandline(int argc, char *argv[])
 			return handle_error();
 		else if (ret)
 			return ret;
-		
+
 		/* Check mandatory, then allowed options */
 		check_mandatory(type, cmd);
 		check_allowed(type, cmd);
-		
+
 		break;
 	case IPSET_CMD_DESTROY:
 	case IPSET_CMD_FLUSH:
@@ -678,22 +682,22 @@ parse_commandline(int argc, char *argv[])
 		type = ipset_type_get(session, cmd);
 		if (type == NULL)
 			return handle_error();
-		
+
 		ret = ipset_parse_elem(session, type->last_elem_optional, arg1);
 		if (ret < 0)
 			return handle_error();
-		
+
 		/* Parse additional ADT options */
 		ret = call_parser(&argc, argv, type->args[cmd2cmd(cmd)]);
 		if (ret < 0)
 			return handle_error();
 		else if (ret)
 			return ret;
-		
+
 		/* Check mandatory, then allowed options */
 		check_mandatory(type, cmd);
 		check_allowed(type, cmd);
-		
+
 		break;
 	default:
 		break;
@@ -744,8 +748,8 @@ main(int argc, char *argv[])
 			"Cannot initialize ipset session, aborting.");
 
 	ret = parse_commandline(argc, argv);
-	
+
 	ipset_session_fini(session);
-	
+
 	return ret;
 }

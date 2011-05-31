@@ -1,7 +1,7 @@
 /* Copyright 2011 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #include <libipset/data.h>			/* IPSET_OPT_* */
@@ -39,7 +39,7 @@ static const struct ipset_arg hash_netiface_create_args[] = {
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	{ },
-}; 
+};
 
 static const struct ipset_arg hash_netiface_add_args[] = {
 	{ .name = { "timeout", NULL },
@@ -47,7 +47,7 @@ static const struct ipset_arg hash_netiface_add_args[] = {
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
 	},
 	{ },
-}; 
+};
 
 static const char hash_netiface_usage[] =
 "create SETNAME hash:net,iface\n"
@@ -68,13 +68,13 @@ struct ipset_type ipset_hash_netiface0 = {
 	.revision = 0,
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_TWO,
-	.elem = { 
-		[IPSET_DIM_ONE] = { 
+	.elem = {
+		[IPSET_DIM_ONE] = {
 			.parse = ipset_parse_ip4_net6,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP
 		},
-		[IPSET_DIM_TWO] = { 
+		[IPSET_DIM_TWO] = {
 			.parse = ipset_parse_iface,
 			.print = ipset_print_iface,
 			.opt = IPSET_OPT_IFACE

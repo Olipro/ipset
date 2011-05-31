@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #ifndef LIBIPSET_UTILS_H
@@ -11,10 +11,10 @@
 #include <netinet/in.h>				/* struct in[6]_addr */
 
 /* String equality tests */
-#define STREQ(a,b)		(strcmp(a,b) == 0)
-#define STRNEQ(a,b,n)		(strncmp(a,b,n) == 0)
-#define STRCASEQ(a,b)		(strcasecmp(a,b) == 0)
-#define STRNCASEQ(a,b,n)	(strncasecmp(a,b,n) == 0)
+#define STREQ(a, b)		(strcmp(a, b) == 0)
+#define STRNEQ(a, b, n)		(strncmp(a, b, n) == 0)
+#define STRCASEQ(a, b)		(strcasecmp(a, b) == 0)
+#define STRNCASEQ(a, b, n)	(strncasecmp(a, b, n) == 0)
 
 /* Stringify tokens */
 #define _STR(c)			#c

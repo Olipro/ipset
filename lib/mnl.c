@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #include <assert.h>				/* assert */
@@ -32,13 +32,16 @@ struct ipset_handle {
 
 /* Netlink flags of the commands */
 static const uint16_t cmdflags[] = {
-	[IPSET_CMD_CREATE-1]	= NLM_F_REQUEST|NLM_F_ACK|NLM_F_CREATE|NLM_F_EXCL,
+	[IPSET_CMD_CREATE-1]	= NLM_F_REQUEST|NLM_F_ACK|
+					NLM_F_CREATE|NLM_F_EXCL,
 	[IPSET_CMD_DESTROY-1]	= NLM_F_REQUEST|NLM_F_ACK,
 	[IPSET_CMD_FLUSH-1]	= NLM_F_REQUEST|NLM_F_ACK,
 	[IPSET_CMD_RENAME-1]	= NLM_F_REQUEST|NLM_F_ACK,
 	[IPSET_CMD_SWAP-1]	= NLM_F_REQUEST|NLM_F_ACK,
-	[IPSET_CMD_LIST-1]	= NLM_F_REQUEST|NLM_F_ACK|NLM_F_ROOT|NLM_F_MATCH|NLM_F_DUMP,
-	[IPSET_CMD_SAVE-1]	= NLM_F_REQUEST|NLM_F_ACK|NLM_F_ROOT|NLM_F_MATCH|NLM_F_DUMP,
+	[IPSET_CMD_LIST-1]	= NLM_F_REQUEST|NLM_F_ACK|
+					NLM_F_ROOT|NLM_F_MATCH|NLM_F_DUMP,
+	[IPSET_CMD_SAVE-1]	= NLM_F_REQUEST|NLM_F_ACK|
+					NLM_F_ROOT|NLM_F_MATCH|NLM_F_DUMP,
 	[IPSET_CMD_ADD-1]	= NLM_F_REQUEST|NLM_F_ACK|NLM_F_EXCL,
 	[IPSET_CMD_DEL-1]	= NLM_F_REQUEST|NLM_F_ACK|NLM_F_EXCL,
 	[IPSET_CMD_TEST-1]	= NLM_F_REQUEST|NLM_F_ACK,
@@ -74,7 +77,7 @@ ipset_mnl_fill_hdr(struct ipset_handle *handle, enum ipset_cmd cmd,
 	nlh->nlmsg_type = cmd | (NFNL_SUBSYS_IPSET << 8);
 	nlh->nlmsg_flags = cmdflags[cmd - 1];
 	if (envflags & IPSET_ENV_EXIST)
-	    	nlh->nlmsg_flags &=  ~NLM_F_EXCL;
+		nlh->nlmsg_flags &=  ~NLM_F_EXCL;
 
 	nfg = mnl_nlmsg_put_extra_header(nlh, sizeof(struct nfgenmsg));
 	nfg->nfgen_family = AF_INET;
@@ -119,28 +122,28 @@ ipset_mnl_query(struct ipset_handle *handle, void *buffer, size_t len)
 
 static struct ipset_handle *
 ipset_mnl_init(mnl_cb_t *cb_ctl, void *data)
-{	
+{
 	struct ipset_handle *handle;
-	
+
 	assert(cb_ctl);
 	assert(data);
 
 	handle = calloc(1, sizeof(*handle));
 	if (!handle)
 		return NULL;
-		
+
 	handle->h = mnl_socket_open(NETLINK_NETFILTER);
 	if (!handle->h)
 		goto free_handle;
-	
+
 	if (mnl_socket_bind(handle->h, 0, MNL_SOCKET_AUTOPID) < 0)
 		goto close_nl;
-	
+
 	handle->portid = mnl_socket_get_portid(handle->h);
 	handle->cb_ctl = cb_ctl;
 	handle->data = data;
 	handle->seq = time(NULL);
-	
+
 	return handle;
 
 close_nl:
@@ -148,7 +151,7 @@ close_nl:
 free_handle:
 	free(handle);
 
-   	return NULL;
+	return NULL;
 }
 
 static int

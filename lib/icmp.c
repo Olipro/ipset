@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #include <libipset/utils.h>			/* STRNEQ */
@@ -49,19 +49,20 @@ static const struct icmp_names icmp_typecodes[] = {
 	{ "address-mask-reply", 18, 0 },
 };
 
-const char * id_to_icmp(uint8_t id)
+const char *id_to_icmp(uint8_t id)
 {
 	return id < ARRAY_SIZE(icmp_typecodes) ? icmp_typecodes[id].name : NULL;
 }
 
-const char * icmp_to_name(uint8_t type, uint8_t code)
+const char *icmp_to_name(uint8_t type, uint8_t code)
 {
 	unsigned int i;
-	
+
 	for (i = 0; i < ARRAY_SIZE(icmp_typecodes); i++)
-		if (icmp_typecodes[i].type == type && icmp_typecodes[i].code == code)
+		if (icmp_typecodes[i].type == type &&
+		    icmp_typecodes[i].code == code)
 			return icmp_typecodes[i].name;
-	
+
 	return NULL;
 }
 
@@ -71,9 +72,10 @@ int name_to_icmp(const char *str, uint16_t *typecode)
 
 	for (i = 0; i < ARRAY_SIZE(icmp_typecodes); i++)
 		if (STRNCASEQ(icmp_typecodes[i].name, str, strlen(str))) {
-			*typecode = (icmp_typecodes[i].type << 8) | icmp_typecodes[i].code;
+			*typecode = (icmp_typecodes[i].type << 8) |
+				    icmp_typecodes[i].code;
 			return 0;
 		}
-	
+
 	return -1;
 }

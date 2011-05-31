@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #ifndef LIBIPSET_TRANSPORT_H
@@ -12,7 +12,7 @@
 
 #include <libmnl/libmnl.h>			/* mnl_cb_t */
 
-#include <libipset/linux_ip_set.h> 		/* enum ipset_cmd */
+#include <libipset/linux_ip_set.h>		/* enum ipset_cmd */
 
 struct ipset_handle;
 

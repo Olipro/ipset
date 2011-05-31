@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #include <assert.h>				/* assert */
@@ -54,15 +54,15 @@ ipset_print_ether(char *buf, unsigned int len,
 {
 	const unsigned char *ether;
 	int i, size, offset = 0;
-	
+
 	assert(buf);
 	assert(len > 0);
 	assert(data);
 	assert(opt == IPSET_OPT_ETHER);
-	
+
 	if (len < ETH_ALEN*3)
 		return -1;
-	
+
 	ether = ipset_data_get(data, opt);
 	assert(ether);
 
@@ -72,7 +72,7 @@ ipset_print_ether(char *buf, unsigned int len,
 		size = snprintf(buf + offset, len, ":%02X", ether[i]);
 		SNPRINTF_FAILURE(size, len, offset);
 	}
-	
+
 	return offset;
 }
 
@@ -139,35 +139,60 @@ ipset_print_type(char *buf, unsigned int len,
 	assert(type);
 	if (len < strlen(type->name) + 1)
 		return -1;
-		
+
 	return snprintf(buf, len, "%s", type->name);
 }
 
-#define GETNAMEINFO(family, f, n)					\
-static inline int							\
-__getnameinfo##f(char *buf, unsigned int len,				\
-		 int flags, const union nf_inet_addr *addr)		\
-{									\
-	struct sockaddr_in##n saddr;					\
-	int err;							\
-									\
-	memset(&saddr, 0, sizeof(saddr));				\
-	in##f##cpy(&saddr.sin##n##_addr, &addr->in##n);			\
-	saddr.sin##n##_family = family;					\
-									\
-	err = getnameinfo((const struct sockaddr *)&saddr, 		\
-			  sizeof(saddr),				\
-			  buf, len, NULL, 0, flags);			\
-									\
-	if (!(flags & NI_NUMERICHOST) &&				\
-	    (err == EAI_AGAIN || (err == 0 && strchr(buf, '-') != NULL))) \
-		err = getnameinfo((const struct sockaddr *)&saddr, 	\
-				  sizeof(saddr),			\
-				  buf, len, NULL, 0, 			\
-				  flags | NI_NUMERICHOST);		\
-	D("getnameinfo err: %i, errno %i", err, errno);			\
-	return (err == 0 ? (int)strlen(buf) :				\
-	       (err == EAI_OVERFLOW || err == EAI_SYSTEM) ? (int)len : -1);\
+static inline int
+__getnameinfo4(char *buf, unsigned int len,
+	       int flags, const union nf_inet_addr *addr)
+{
+	struct sockaddr_in saddr;
+	int err;
+
+	memset(&saddr, 0, sizeof(saddr));
+	in4cpy(&saddr.sin_addr, &addr->in);
+	saddr.sin_family = AF_INET;
+
+	err = getnameinfo((const struct sockaddr *)&saddr,
+			  sizeof(saddr),
+			  buf, len, NULL, 0, flags);
+
+	if (!(flags & NI_NUMERICHOST) &&
+	    (err == EAI_AGAIN || (err == 0 && strchr(buf, '-') != NULL)))
+		err = getnameinfo((const struct sockaddr *)&saddr,
+				  sizeof(saddr),
+				  buf, len, NULL, 0,
+				  flags | NI_NUMERICHOST);
+	D("getnameinfo err: %i, errno %i", err, errno);
+	return (err == 0 ? (int)strlen(buf) :
+	       (err == EAI_OVERFLOW || err == EAI_SYSTEM) ? (int)len : -1);
+}
+
+static inline int
+__getnameinfo6(char *buf, unsigned int len,
+	       int flags, const union nf_inet_addr *addr)
+{
+	struct sockaddr_in6 saddr;
+	int err;
+
+	memset(&saddr, 0, sizeof(saddr));
+	in6cpy(&saddr.sin6_addr, &addr->in6);
+	saddr.sin6_family = AF_INET6;
+
+	err = getnameinfo((const struct sockaddr *)&saddr,
+			  sizeof(saddr),
+			  buf, len, NULL, 0, flags);
+
+	if (!(flags & NI_NUMERICHOST) &&
+	    (err == EAI_AGAIN || (err == 0 && strchr(buf, '-') != NULL)))
+		err = getnameinfo((const struct sockaddr *)&saddr,
+				  sizeof(saddr),
+				  buf, len, NULL, 0,
+				  flags | NI_NUMERICHOST);
+	D("getnameinfo err: %i, errno %i", err, errno);
+	return (err == 0 ? (int)strlen(buf) :
+	       (err == EAI_OVERFLOW || err == EAI_SYSTEM) ? (int)len : -1);
 }
 
 #define SNPRINTF_IP(mask, f)						\
@@ -190,10 +215,8 @@ snprintf_ipv##f(char *buf, unsigned int len, int flags,			\
 	return offset;							\
 }
 
-GETNAMEINFO(AF_INET, 4, )
 SNPRINTF_IP(32, 4)
 
-GETNAMEINFO(AF_INET6, 6, 6)
 SNPRINTF_IP(128, 6)
 
 /**
@@ -232,7 +255,7 @@ ipset_print_ip(char *buf, unsigned int len,
 	} else
 		cidr = family == AF_INET6 ? 128 : 32;
 	flags = (env & IPSET_ENV_RESOLVE) ? 0 : NI_NUMERICHOST;
-	
+
 	ip = ipset_data_get(data, opt);
 	assert(ip);
 	if (family == AF_INET)
@@ -258,8 +281,8 @@ ipset_print_ip(char *buf, unsigned int len,
 		size = snprintf_ipv6(buf + offset, len, flags, ip, cidr);
 	else
 		return -1;
-	
-	SNPRINTF_FAILURE(size, len, offset);	
+
+	SNPRINTF_FAILURE(size, len, offset);
 	return offset;
 }
 
@@ -288,9 +311,9 @@ ipset_print_ipaddr(char *buf, unsigned int len,
 	assert(buf);
 	assert(len > 0);
 	assert(data);
-	assert(opt == IPSET_OPT_IP
-	       || opt == IPSET_OPT_IP_TO
-	       || opt == IPSET_OPT_IP2);
+	assert(opt == IPSET_OPT_IP ||
+	       opt == IPSET_OPT_IP_TO ||
+	       opt == IPSET_OPT_IP2);
 
 	family = ipset_data_family(data);
 	cidropt = opt == IPSET_OPT_IP ? IPSET_OPT_CIDR : IPSET_OPT_CIDR2;
@@ -333,7 +356,7 @@ ipset_print_number(char *buf, unsigned int len,
 	assert(buf);
 	assert(len > 0);
 	assert(data);
-	
+
 	number = ipset_data_get(data, opt);
 	maxsize = ipset_data_sizeof(opt, AF_INET);
 	D("opt: %u, maxsize %zu", opt, maxsize);
@@ -380,7 +403,7 @@ ipset_print_name(char *buf, unsigned int len,
 	name = ipset_data_get(data, opt);
 	assert(name);
 	size = snprintf(buf, len, "%s", name);
-	SNPRINTF_FAILURE(size, len, offset);	
+	SNPRINTF_FAILURE(size, len, offset);
 
 	if (ipset_data_test(data, IPSET_OPT_NAMEREF)) {
 		bool before = false;
@@ -390,10 +413,10 @@ ipset_print_name(char *buf, unsigned int len,
 			before = (*flags) & IPSET_FLAG_BEFORE;
 		}
 		size = snprintf(buf + offset, len,
-			        " %s %s", before ? "before" : "after",
-			        (const char *) ipset_data_get(data,
-			        	IPSET_OPT_NAMEREF));
-		SNPRINTF_FAILURE(size, len, offset);	
+				" %s %s", before ? "before" : "after",
+				(const char *) ipset_data_get(data,
+							IPSET_OPT_NAMEREF));
+		SNPRINTF_FAILURE(size, len, offset);
 	}
 
 	return offset;
@@ -431,13 +454,13 @@ ipset_print_port(char *buf, unsigned int len,
 	port = ipset_data_get(data, IPSET_OPT_PORT);
 	assert(port);
 	size = snprintf(buf, len, "%u", *port);
-	SNPRINTF_FAILURE(size, len, offset);	
-	
+	SNPRINTF_FAILURE(size, len, offset);
+
 	if (ipset_data_test(data, IPSET_OPT_PORT_TO)) {
 		port = ipset_data_get(data, IPSET_OPT_PORT_TO);
 		size = snprintf(buf + offset, len,
-			        "%s%u",
-			        IPSET_RANGE_SEPARATOR, *port);
+				"%s%u",
+				IPSET_RANGE_SEPARATOR, *port);
 		SNPRINTF_FAILURE(size, len, offset);
 	}
 
@@ -479,7 +502,7 @@ ipset_print_iface(char *buf, unsigned int len,
 	name = ipset_data_get(data, opt);
 	assert(name);
 	size = snprintf(buf, len, "%s", name);
-	SNPRINTF_FAILURE(size, len, offset);	
+	SNPRINTF_FAILURE(size, len, offset);
 	return offset;
 }
 
@@ -511,12 +534,12 @@ ipset_print_proto(char *buf, unsigned int len,
 
 	proto = *(const uint8_t *) ipset_data_get(data, IPSET_OPT_PROTO);
 	assert(proto);
-	
+
 	protoent = getprotobynumber(proto);
 	if (protoent)
 		return snprintf(buf, len, "%s", protoent->p_name);
 
-	/* Should not happen */	
+	/* Should not happen */
 	return snprintf(buf, len, "%u", proto);
 }
 
@@ -551,7 +574,8 @@ ipset_print_icmp(char *buf, unsigned int len,
 	if (name != NULL)
 		return snprintf(buf, len, "%s", name);
 	else
-		return snprintf(buf, len, "%u/%u", typecode >> 8, typecode & 0xFF);
+		return snprintf(buf, len, "%u/%u",
+				typecode >> 8, typecode & 0xFF);
 }
 
 /**
@@ -585,7 +609,8 @@ ipset_print_icmpv6(char *buf, unsigned int len,
 	if (name != NULL)
 		return snprintf(buf, len, "%s", name);
 	else
-		return snprintf(buf, len, "%u/%u", typecode >> 8, typecode & 0xFF);
+		return snprintf(buf, len, "%u/%u",
+				typecode >> 8, typecode & 0xFF);
 }
 
 /**
@@ -614,8 +639,8 @@ ipset_print_proto_port(char *buf, unsigned int len,
 	assert(opt == IPSET_OPT_PORT);
 
 	if (ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_PROTO))) {
-		uint8_t proto = *(const uint8_t *) ipset_data_get(data, 
-								  IPSET_OPT_PROTO);
+		uint8_t proto = *(const uint8_t *) ipset_data_get(data,
+							IPSET_OPT_PROTO);
 		size = ipset_print_proto(buf, len, data, IPSET_OPT_PROTO, env);
 		SNPRINTF_FAILURE(size, len, offset);
 		if (len < 2)
@@ -641,16 +666,16 @@ ipset_print_proto_port(char *buf, unsigned int len,
 	}
 	size = ipset_print_port(buf + offset, len, data, IPSET_OPT_PORT, env);
 	SNPRINTF_FAILURE(size, len, offset);
-	
+
 	return offset;
 }
 
 #define print_second(data)	\
 ipset_data_flags_test(data,	\
-	IPSET_FLAG(IPSET_OPT_PORT)|IPSET_FLAG(IPSET_OPT_ETHER)) 
+	IPSET_FLAG(IPSET_OPT_PORT)|IPSET_FLAG(IPSET_OPT_ETHER))
 
 #define print_third(data)	\
-ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_IP2)) 
+ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_IP2))
 
 /**
  * ipset_print_elem - print ADT elem according to settype
@@ -679,25 +704,25 @@ ipset_print_elem(char *buf, unsigned int len,
 	type = ipset_data_get(data, IPSET_OPT_TYPE);
 	if (!type)
 		return -1;
-	
+
 	size = type->elem[IPSET_DIM_ONE].print(buf, len, data,
 			type->elem[IPSET_DIM_ONE].opt, env);
 	SNPRINTF_FAILURE(size, len, offset);
 	IF_D(ipset_data_test(data, type->elem[IPSET_DIM_TWO].opt),
 	     "print second elem");
-	if (type->dimension == IPSET_DIM_ONE
-	    || (type->last_elem_optional
-	        && !ipset_data_test(data, type->elem[IPSET_DIM_TWO].opt)))
+	if (type->dimension == IPSET_DIM_ONE ||
+	    (type->last_elem_optional &&
+	     !ipset_data_test(data, type->elem[IPSET_DIM_TWO].opt)))
 		return offset;
-	
+
 	size = snprintf(buf + offset, len, IPSET_ELEM_SEPARATOR);
 	SNPRINTF_FAILURE(size, len, offset);
 	size = type->elem[IPSET_DIM_TWO].print(buf + offset, len, data,
 			type->elem[IPSET_DIM_TWO].opt, env);
 	SNPRINTF_FAILURE(size, len, offset);
-	if (type->dimension == IPSET_DIM_TWO
-	    || (type->last_elem_optional
-	        && !ipset_data_test(data, type->elem[IPSET_DIM_THREE].opt)))
+	if (type->dimension == IPSET_DIM_TWO ||
+	    (type->last_elem_optional &&
+	     !ipset_data_test(data, type->elem[IPSET_DIM_THREE].opt)))
 		return offset;
 
 	size = snprintf(buf + offset, len, IPSET_ELEM_SEPARATOR);
@@ -725,7 +750,7 @@ int
 ipset_print_flag(char *buf UNUSED, unsigned int len UNUSED,
 		 const struct ipset_data *data UNUSED,
 		 enum ipset_opt opt UNUSED, uint8_t env UNUSED)
-{	
+{
 	return 0;
 }
 
@@ -790,6 +815,6 @@ ipset_print_data(char *buf, unsigned int len,
 		return -1;
 	}
 	SNPRINTF_FAILURE(size, len, offset);
-	
+
 	return offset;
 }

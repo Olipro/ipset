@@ -1,7 +1,7 @@
 /* Copyright 2007-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
  *
- * This program is free software; you can redistribute it and/or modify   
- * it under the terms of the GNU General Public License version 2 as 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 #include <libipset/utils.h>			/* STRNEQ */
@@ -36,19 +36,21 @@ static const struct icmpv6_names icmpv6_typecodes[] = {
 	{ "redirect", 137, 0 },
 };
 
-const char * id_to_icmpv6(uint8_t id)
+const char *id_to_icmpv6(uint8_t id)
 {
-	return id < ARRAY_SIZE(icmpv6_typecodes) ? icmpv6_typecodes[id].name : NULL;
+	return id < ARRAY_SIZE(icmpv6_typecodes) ?
+	       icmpv6_typecodes[id].name : NULL;
 }
 
-const char * icmpv6_to_name(uint8_t type, uint8_t code)
+const char *icmpv6_to_name(uint8_t type, uint8_t code)
 {
 	unsigned int i;
-	
+
 	for (i = 0; i < ARRAY_SIZE(icmpv6_typecodes); i++)
-		if (icmpv6_typecodes[i].type == type && icmpv6_typecodes[i].code == code)
+		if (icmpv6_typecodes[i].type == type &&
+		    icmpv6_typecodes[i].code == code)
 			return icmpv6_typecodes[i].name;
-	
+
 	return NULL;
 }
 
@@ -58,9 +60,10 @@ int name_to_icmpv6(const char *str, uint16_t *typecode)
 
 	for (i = 0; i < ARRAY_SIZE(icmpv6_typecodes); i++)
 		if (STRNCASEQ(icmpv6_typecodes[i].name, str, strlen(str))) {
-			*typecode = (icmpv6_typecodes[i].type << 8) | icmpv6_typecodes[i].code;
+			*typecode = (icmpv6_typecodes[i].type << 8) |
+				    icmpv6_typecodes[i].code;
 			return 0;
 		}
-	
+
 	return -1;
 }
