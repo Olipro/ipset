@@ -4,8 +4,9 @@ instructions too.
 
 0. You need the source tree of your kernel (version >= 2.6.34)
    and it have to be configured with ip6tables support enabled,
-   modules compiled. Please apply the netlink.patch against your kernel
-   tree, which adds the new subsystem identifier for ipset.
+   modules compiled. For kernel versions <= 2.6.39 please apply
+   the netlink.patch against your kernel tree, which adds the
+   new subsystem identifier for ipset.
 
    Recompile and install the patched kernel and its modules. Please note,
    you have to run the patched kernel for ipset to work.
@@ -16,7 +17,7 @@ instructions too.
 	git://git.netfilter.org/libmnl.git
 
 1. Initialize the compiling environment for ipset. The packages automake,
-   autoconf and libtool are required.
+   autoconf, pkg-config and libtool are required.
 
    % ./autogen.sh
 
