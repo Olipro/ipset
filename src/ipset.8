@@ -767,7 +767,11 @@ the interface is flagged with \fBphysdev:\fR, the interface is interpreted
 as the incoming/outgoing bridge port.
 .PP 
 The lookup time grows linearly with the number of the different prefix
-values added to the set. 
+values added to the set.
+.PP 
+The internal restriction of the \fBhash:net,iface\fR set type is that
+the same network prefix cannot be stored with more than 64 different interfaces
+in a single set.
 .PP 
 Examples:
 .IP 
