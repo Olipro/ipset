@@ -1,3 +1,10 @@
+6.8
+ - Fix compiler warnings "'hash_ip4_data_next' declared inline after being
+   called" (Chris Friesen)
+ - hash:net,iface fixed to handle overlapping nets behind different
+   interfaces
+ - Make possible to hash some part of the data element only.
+
 6.7
  - Whitespace and coding fixes, detected by checkpatch.pl
  - hash:net,iface type introduced

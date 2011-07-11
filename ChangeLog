@@ -1,3 +1,7 @@
+6.8
+ - Update the manpage and document the limits in hash:net,iface.
+ - README file corrections from Richard Lucassen
+
 6.7
  - Whitespace and coding fixes, detected by checkpatch.pl
  - hash:net,iface type introduced
