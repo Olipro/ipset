@@ -324,9 +324,9 @@ static const char *
 session_family(void)
 {
 	switch (ipset_data_family(ipset_session_data(session))) {
-	case AF_INET:
+	case NFPROTO_IPV4:
 		return "inet";
-	case AF_INET6:
+	case NFPROTO_IPV6:
 		return "inet6";
 	default:
 		return "unspec";
@@ -581,10 +581,10 @@ parse_commandline(int argc, char *argv[])
 				       type->name, type->usage);
 				if (type->usagefn)
 					type->usagefn();
-				if (type->family == AF_UNSPEC)
+				if (type->family == NFPROTO_UNSPEC)
 					printf("\nType %s is family neutral.\n",
 					       type->name);
-				else if (type->family == AF_INET46)
+				else if (type->family == NFPROTO_IPSET_IPV46)
 					printf("\nType %s supports INET "
 					       "and INET6.\n",
 					       type->name);
@@ -592,7 +592,7 @@ parse_commandline(int argc, char *argv[])
 					printf("\nType %s supports family "
 					       "%s only.\n",
 					       type->name,
-					       type->family == AF_INET
+					       type->family == NFPROTO_IPV4
 						? "INET" : "INET6");
 			} else {
 				printf("\nSupported set types:\n");

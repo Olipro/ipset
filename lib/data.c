@@ -8,7 +8,6 @@
 #include <arpa/inet.h>				/* ntoh* */
 #include <net/ethernet.h>			/* ETH_ALEN */
 #include <net/if.h>				/* IFNAMSIZ */
-#include <sys/socket.h>				/* AF_ */
 #include <stdlib.h>				/* malloc, free */
 #include <string.h>				/* memset */
 
@@ -81,7 +80,7 @@ struct ipset_data {
 static void
 copy_addr(uint8_t family, union nf_inet_addr *ip, const void *value)
 {
-	if (family == AF_INET)
+	if (family == NFPROTO_IPV4)
 		in4cpy(&ip->in, value);
 	else
 		in6cpy(&ip->in6, value);
@@ -213,12 +212,12 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		break;
 	/* CADT options */
 	case IPSET_OPT_IP:
-		if (!(data->family == AF_INET || data->family == AF_INET6))
+		if (!(data->family == NFPROTO_IPV4 || data->family == NFPROTO_IPV6))
 			return -1;
 		copy_addr(data->family, &data->ip, value);
 		break;
 	case IPSET_OPT_IP_TO:
-		if (!(data->family == AF_INET || data->family == AF_INET6))
+		if (!(data->family == NFPROTO_IPV4 || data->family == NFPROTO_IPV6))
 			return -1;
 		copy_addr(data->family, &data->ip_to, value);
 		break;
@@ -288,12 +287,12 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		ipset_strlcpy(data->adt.nameref, value, IPSET_MAXNAMELEN);
 		break;
 	case IPSET_OPT_IP2:
-		if (!(data->family == AF_INET || data->family == AF_INET6))
+		if (!(data->family == NFPROTO_IPV4 || data->family == NFPROTO_IPV6))
 			return -1;
 		copy_addr(data->family, &data->adt.ip2, value);
 		break;
 	case IPSET_OPT_IP2_TO:
-		if (!(data->family == AF_INET || data->family == AF_INET6))
+		if (!(data->family == NFPROTO_IPV4 || data->family == NFPROTO_IPV6))
 			return -1;
 		copy_addr(data->family, &data->adt.ip2_to, value);
 		break;
@@ -456,7 +455,7 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 	case IPSET_OPT_IP_TO:
 	case IPSET_OPT_IP2:
 	case IPSET_OPT_IP2_TO:
-		return family == AF_INET ? sizeof(uint32_t)
+		return family == NFPROTO_IPV4 ? sizeof(uint32_t)
 					 : sizeof(struct in6_addr);
 	case IPSET_OPT_PORT:
 	case IPSET_OPT_PORT_TO:
@@ -511,14 +510,14 @@ ipset_data_setname(const struct ipset_data *data)
  * @data: data blob
  *
  * Return the INET family supported by the set from the data blob.
- * If the family is not set yet, AF_UNSPEC is returned.
+ * If the family is not set yet, NFPROTO_UNSPEC is returned.
  */
 uint8_t
 ipset_data_family(const struct ipset_data *data)
 {
 	assert(data);
 	return ipset_data_test(data, IPSET_OPT_FAMILY)
-		? data->family : AF_UNSPEC;
+		? data->family : NFPROTO_UNSPEC;
 }
 
 /**
@@ -534,8 +533,8 @@ ipset_data_cidr(const struct ipset_data *data)
 {
 	assert(data);
 	return ipset_data_test(data, IPSET_OPT_CIDR) ? data->cidr :
-	       data->family == AF_INET ? 32 :
-	       data->family == AF_INET6 ? 128 : 0;
+	       data->family == NFPROTO_IPV4 ? 32 :
+	       data->family == NFPROTO_IPV6 ? 128 : 0;
 }
 
 /**

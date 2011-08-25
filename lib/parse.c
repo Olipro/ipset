@@ -511,7 +511,7 @@ ipset_parse_proto_port(struct ipset_session *session,
 			tmp = a;
 			goto parse_port;
 		case IPPROTO_ICMP:
-			if (family != AF_INET) {
+			if (family != NFPROTO_IPV4) {
 				syntax_err("Protocol ICMP can be used "
 					   "with family INET only");
 				goto error;
@@ -519,7 +519,7 @@ ipset_parse_proto_port(struct ipset_session *session,
 			err = ipset_parse_icmp(session, opt, a);
 			break;
 		case IPPROTO_ICMPV6:
-			if (family != AF_INET6) {
+			if (family != NFPROTO_IPV6) {
 				syntax_err("Protocol ICMPv6 can be used "
 					   "with family INET6 only");
 				goto error;
@@ -577,11 +577,11 @@ ipset_parse_family(struct ipset_session *session,
 			   "multiple times");
 
 	if (STREQ(str, "inet") || STREQ(str, "ipv4") || STREQ(str, "-4"))
-		family = AF_INET;
+		family = NFPROTO_IPV4;
 	else if (STREQ(str, "inet6") || STREQ(str, "ipv6") || STREQ(str, "-6"))
-		family = AF_INET6;
+		family = NFPROTO_IPV6;
 	else if (STREQ(str, "any") || STREQ(str, "unspec"))
-		family = AF_UNSPEC;
+		family = NFPROTO_UNSPEC;
 	else
 		return syntax_err("unknown INET family %s", str);
 
@@ -610,7 +610,7 @@ call_getaddrinfo(struct ipset_session *session, const char *str,
 
 	if ((err = getaddrinfo(str, NULL, &hints, &res)) != 0) {
 		syntax_err("cannot resolve '%s' to an %s address: %s",
-			   str, family == AF_INET6 ? "IPv6" : "IPv4",
+			   str, family == NFPROTO_IPV6 ? "IPv6" : "IPv4",
 			   gai_strerror(err));
 		return NULL;
 	} else
@@ -625,13 +625,13 @@ get_addrinfo(struct ipset_session *session,
 	     uint8_t family)
 {
 	struct addrinfo *i;
-	size_t addrlen = family == AF_INET ? sizeof(struct sockaddr_in)
+	size_t addrlen = family == NFPROTO_IPV4 ? sizeof(struct sockaddr_in)
 					   : sizeof(struct sockaddr_in6);
 	int found, err = 0;
 
 	if ((*info = call_getaddrinfo(session, str, family)) == NULL) {
 		syntax_err("cannot parse %s: resolving to %s address failed",
-			   str, family == AF_INET ? "IPv4" : "IPv6");
+			   str, family == NFPROTO_IPV4 ? "IPv4" : "IPv6");
 		return EINVAL;
 	}
 
@@ -639,7 +639,7 @@ get_addrinfo(struct ipset_session *session,
 		if (i->ai_family != family || i->ai_addrlen != addrlen)
 			continue;
 		if (found == 0) {
-			if (family == AF_INET) {
+			if (family == NFPROTO_IPV4) {
 				/* Workaround: direct cast increases
 				 * required alignment on Sparc
 				 */
@@ -668,7 +668,7 @@ get_addrinfo(struct ipset_session *session,
 	if (found == 0)
 		return syntax_err("cannot parse %s: "
 				  "%s address could not be resolved",
-				  str, family == AF_INET ? "IPv4" : "IPv6");
+				  str, family == NFPROTO_IPV4 ? "IPv4" : "IPv6");
 	return err;
 }
 
@@ -677,7 +677,7 @@ parse_ipaddr(struct ipset_session *session,
 	     enum ipset_opt opt, const char *str,
 	     uint8_t family)
 {
-	uint8_t m = family == AF_INET ? 32 : 128;
+	uint8_t m = family == NFPROTO_IPV4 ? 32 : 128;
 	int aerr = EINVAL, err = 0, range = 0;
 	char *saved = strdup(str);
 	char *a, *tmp = saved;
@@ -737,7 +737,7 @@ cidr_hostaddr(const char *str, uint8_t family)
 {
 	char *a = cidr_separator(str);
 
-	return family == AF_INET ? STREQ(a, "/32") : STREQ(a, "/128");
+	return family == NFPROTO_IPV4 ? STREQ(a, "/32") : STREQ(a, "/128");
 }
 
 static int
@@ -747,8 +747,8 @@ parse_ip(struct ipset_session *session,
 	struct ipset_data *data = ipset_session_data(session);
 	uint8_t family = ipset_data_family(data);
 
-	if (family == AF_UNSPEC) {
-		family = AF_INET;
+	if (family == NFPROTO_UNSPEC) {
+		family = NFPROTO_IPV4;
 		ipset_data_set(data, IPSET_OPT_FAMILY, &family);
 	}
 
@@ -985,12 +985,12 @@ ipset_parse_ip4_single6(struct ipset_session *session,
 	data = ipset_session_data(session);
 	family = ipset_data_family(data);
 
-	if (family == AF_UNSPEC) {
-		family = AF_INET;
+	if (family == NFPROTO_UNSPEC) {
+		family = NFPROTO_IPV4;
 		ipset_data_set(data, IPSET_OPT_FAMILY, &family);
 	}
 
-	return family == AF_INET ? ipset_parse_ip(session, opt, str)
+	return family == NFPROTO_IPV4 ? ipset_parse_ip(session, opt, str)
 				 : ipset_parse_single_ip(session, opt, str);
 
 }
@@ -1025,12 +1025,12 @@ ipset_parse_ip4_net6(struct ipset_session *session,
 	data = ipset_session_data(session);
 	family = ipset_data_family(data);
 
-	if (family == AF_UNSPEC) {
-		family = AF_INET;
+	if (family == NFPROTO_UNSPEC) {
+		family = NFPROTO_IPV4;
 		ipset_data_set(data, IPSET_OPT_FAMILY, &family);
 	}
 
-	return family == AF_INET ? parse_ip(session, opt, str, IPADDR_ANY)
+	return family == NFPROTO_IPV4 ? parse_ip(session, opt, str, IPADDR_ANY)
 				 : ipset_parse_ipnet(session, opt, str);
 
 }
@@ -1330,21 +1330,21 @@ ipset_parse_netmask(struct ipset_session *session,
 
 	data = ipset_session_data(session);
 	family = ipset_data_family(data);
-	if (family == AF_UNSPEC) {
-		family = AF_INET;
+	if (family == NFPROTO_UNSPEC) {
+		family = NFPROTO_IPV4;
 		ipset_data_set(data, IPSET_OPT_FAMILY, &family);
 	}
 
 	err = string_to_cidr(session, str,
-			     family == AF_INET ? 1 : 4,
-			     family == AF_INET ? 31 : 124,
+			     family == NFPROTO_IPV4 ? 1 : 4,
+			     family == NFPROTO_IPV4 ? 31 : 124,
 			     &cidr);
 
 	if (err)
 		return syntax_err("netmask is out of the inclusive range "
 				  "of %u-%u",
-				  family == AF_INET ? 1 : 4,
-				  family == AF_INET ? 31 : 124);
+				  family == NFPROTO_IPV4 ? 1 : 4,
+				  family == NFPROTO_IPV4 ? 31 : 124);
 
 	return ipset_data_set(data, opt, &cidr);
 }
