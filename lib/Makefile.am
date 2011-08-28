@@ -8,6 +8,7 @@ libipset_la_LDFLAGS = -version-info $(LIBVERSION)
 libipset_la_LIBADD  = ${libmnl_LIBS}
 libipset_la_SOURCES = \
 	data.c \
+	errcode.c \
 	icmp.c \
 	icmpv6.c \
 	mnl.c \
