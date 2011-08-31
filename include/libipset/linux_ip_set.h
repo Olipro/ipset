@@ -11,6 +11,8 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/types.h>
+
 /* The protocol version */
 #define IPSET_PROTOCOL		6
 
@@ -166,6 +168,32 @@ enum ipset_adt {
 	IPSET_ADT_MAX,
 	IPSET_CREATE = IPSET_ADT_MAX,
 	IPSET_CADT_MAX,
+};
+
+/* Sets are identified by an index in kernel space. Tweak with ip_set_id_t
+ * and IPSET_INVALID_ID if you want to increase the max number of sets.
+ */
+typedef __u16 ip_set_id_t;
+
+#define IPSET_INVALID_ID		65535
+
+enum ip_set_dim {
+	IPSET_DIM_ZERO = 0,
+	IPSET_DIM_ONE,
+	IPSET_DIM_TWO,
+	IPSET_DIM_THREE,
+	/* Max dimension in elements.
+	 * If changed, new revision of iptables match/target is required.
+	 */
+	IPSET_DIM_MAX = 6,
+};
+
+/* Option flags for kernel operations */
+enum ip_set_kopt {
+	IPSET_INV_MATCH = (1 << IPSET_DIM_ZERO),
+	IPSET_DIM_ONE_SRC = (1 << IPSET_DIM_ONE),
+	IPSET_DIM_TWO_SRC = (1 << IPSET_DIM_TWO),
+	IPSET_DIM_THREE_SRC = (1 << IPSET_DIM_THREE),
 };
 
 #endif /* __IP_SET_H */

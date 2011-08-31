@@ -1525,9 +1525,9 @@ ipset_call_parser(struct ipset_session *session,
 
 #define parse_elem(s, t, d, str)					\
 do {									\
-	if (!(t)->elem[d].parse)					\
+	if (!(t)->elem[d - 1].parse)					\
 		goto internal;						\
-	ret = (t)->elem[d].parse(s, (t)->elem[d].opt, str);		\
+	ret = (t)->elem[d - 1].parse(s, (t)->elem[d - 1].opt, str);	\
 	if (ret)							\
 		goto out;						\
 } while (0)
@@ -1582,7 +1582,7 @@ ipset_parse_elem(struct ipset_session *session,
 	} else if (a != NULL) {
 		if (type->compat_parse_elem) {
 			ret = type->compat_parse_elem(session,
-					type->elem[IPSET_DIM_ONE].opt,
+					type->elem[IPSET_DIM_ONE - 1].opt,
 					saved);
 			goto out;
 		}

@@ -61,12 +61,12 @@ struct ipset_type ipset_bitmap_ipmac0 = {
 	.dimension = IPSET_DIM_TWO,
 	.last_elem_optional = true,
 	.elem = {
-		[IPSET_DIM_ONE] = {
+		[IPSET_DIM_ONE - 1] = {
 			.parse = ipset_parse_single_ip,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP
 		},
-		[IPSET_DIM_TWO] = {
+		[IPSET_DIM_TWO - 1] = {
 			.parse = ipset_parse_ether,
 			.print = ipset_print_ether,
 			.opt = IPSET_OPT_ETHER

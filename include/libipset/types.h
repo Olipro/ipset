@@ -24,13 +24,8 @@
  * - AF_INET46:	type supports both IPv4 and IPv6
  */
 
-/* Set dimensions */
-enum {
-	IPSET_DIM_ONE,			/* foo */
-	IPSET_DIM_TWO,			/* foo,bar */
-	IPSET_DIM_THREE,		/* foo,bar,fie */
-	IPSET_DIM_MAX,
-};
+/* The maximal type dimension userspace supports */
+#define IPSET_DIM_UMAX		3
 
 /* Parser options */
 enum {
@@ -76,7 +71,7 @@ struct ipset_type {
 	uint8_t dimension;			/* elem dimension */
 	int8_t kernel_check;			/* kernel check */
 	bool last_elem_optional;		/* last element optional */
-	struct ipset_elem elem[IPSET_DIM_MAX];	/* parse elem */
+	struct ipset_elem elem[IPSET_DIM_UMAX];	/* parse elem */
 	ipset_parsefn compat_parse_elem;	/* compatibility parser */
 	const struct ipset_arg *args[IPSET_CADT_MAX]; /* create/ADT args besides elem */
 	uint64_t mandatory[IPSET_CADT_MAX];	/* create/ADT mandatory flags */

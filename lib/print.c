@@ -705,30 +705,30 @@ ipset_print_elem(char *buf, unsigned int len,
 	if (!type)
 		return -1;
 
-	size = type->elem[IPSET_DIM_ONE].print(buf, len, data,
-			type->elem[IPSET_DIM_ONE].opt, env);
+	size = type->elem[IPSET_DIM_ONE - 1].print(buf, len, data,
+			type->elem[IPSET_DIM_ONE - 1].opt, env);
 	SNPRINTF_FAILURE(size, len, offset);
-	IF_D(ipset_data_test(data, type->elem[IPSET_DIM_TWO].opt),
+	IF_D(ipset_data_test(data, type->elem[IPSET_DIM_TWO - 1].opt),
 	     "print second elem");
 	if (type->dimension == IPSET_DIM_ONE ||
 	    (type->last_elem_optional &&
-	     !ipset_data_test(data, type->elem[IPSET_DIM_TWO].opt)))
+	     !ipset_data_test(data, type->elem[IPSET_DIM_TWO - 1].opt)))
 		return offset;
 
 	size = snprintf(buf + offset, len, IPSET_ELEM_SEPARATOR);
 	SNPRINTF_FAILURE(size, len, offset);
-	size = type->elem[IPSET_DIM_TWO].print(buf + offset, len, data,
-			type->elem[IPSET_DIM_TWO].opt, env);
+	size = type->elem[IPSET_DIM_TWO - 1].print(buf + offset, len, data,
+			type->elem[IPSET_DIM_TWO - 1].opt, env);
 	SNPRINTF_FAILURE(size, len, offset);
 	if (type->dimension == IPSET_DIM_TWO ||
 	    (type->last_elem_optional &&
-	     !ipset_data_test(data, type->elem[IPSET_DIM_THREE].opt)))
+	     !ipset_data_test(data, type->elem[IPSET_DIM_THREE - 1].opt)))
 		return offset;
 
 	size = snprintf(buf + offset, len, IPSET_ELEM_SEPARATOR);
 	SNPRINTF_FAILURE(size, len, offset);
-	size = type->elem[IPSET_DIM_THREE].print(buf + offset, len, data,
-			type->elem[IPSET_DIM_THREE].opt, env);
+	size = type->elem[IPSET_DIM_THREE - 1].print(buf + offset, len, data,
+			type->elem[IPSET_DIM_THREE - 1].opt, env);
 	SNPRINTF_FAILURE(size, len, offset);
 
 	return offset;

@@ -69,12 +69,12 @@ struct ipset_type ipset_hash_netiface0 = {
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_TWO,
 	.elem = {
-		[IPSET_DIM_ONE] = {
+		[IPSET_DIM_ONE - 1] = {
 			.parse = ipset_parse_ip4_net6,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP
 		},
-		[IPSET_DIM_TWO] = {
+		[IPSET_DIM_TWO - 1] = {
 			.parse = ipset_parse_iface,
 			.print = ipset_print_iface,
 			.opt = IPSET_OPT_IFACE

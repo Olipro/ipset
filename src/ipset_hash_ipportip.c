@@ -92,17 +92,17 @@ struct ipset_type ipset_hash_ipportip1 = {
 	.family = AF_INET46,
 	.dimension = IPSET_DIM_THREE,
 	.elem = {
-		[IPSET_DIM_ONE] = {
+		[IPSET_DIM_ONE - 1] = {
 			.parse = ipset_parse_ip4_single6,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP
 		},
-		[IPSET_DIM_TWO] = {
+		[IPSET_DIM_TWO - 1] = {
 			.parse = ipset_parse_proto_port,
 			.print = ipset_print_proto_port,
 			.opt = IPSET_OPT_PORT
 		},
-		[IPSET_DIM_THREE] = {
+		[IPSET_DIM_THREE - 1] = {
 			.parse = ipset_parse_single_ip,
 			.print = ipset_print_ip,
 			.opt = IPSET_OPT_IP2
