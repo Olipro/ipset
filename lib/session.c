@@ -568,7 +568,7 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 
 		/* Validate by hand */
 		switch (family) {
-		case AF_INET:
+		case NFPROTO_IPV4:
 			atype = IPSET_ATTR_IPADDR_IPV4;
 			if (!ipattr[atype])
 				FAILURE("Broken kernel message: IPv4 address "
@@ -578,7 +578,7 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 					"cannot validate IPv4 "
 					"address attribute!");
 			break;
-		case AF_INET6:
+		case NFPROTO_IPV6:
 			atype = IPSET_ATTR_IPADDR_IPV6;
 			if (!ipattr[atype])
 				FAILURE("Broken kernel message: IPv6 address "
@@ -814,8 +814,8 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 }
 
 #define FAMILY_TO_STR(f)		\
-	((f) == AF_INET ? "inet" :	\
-	 (f) == AF_INET6 ? "inet6" : "any")
+	((f) == NFPROTO_IPV4 ? "inet" :	\
+	 (f) == NFPROTO_IPV6 ? "inet6" : "any")
 
 static int
 list_create(struct ipset_session *session, struct nlattr *nla[])
@@ -1413,7 +1413,7 @@ attr_len(const struct ipset_attr_policy *attr, uint8_t family, uint16_t *flags)
 			return attr->len;
 
 		*flags = NLA_F_NET_BYTEORDER;
-		return family == AF_INET ? sizeof(uint32_t)
+		return family == NFPROTO_IPV4 ? sizeof(uint32_t)
 					 : sizeof(struct in6_addr);
 	case MNL_TYPE_U32:
 		*flags = NLA_F_NET_BYTEORDER;
@@ -1446,7 +1446,7 @@ rawdata2attr(struct ipset_session *session, struct nlmsghdr *nlh,
 	if (attr->type == MNL_TYPE_NESTED) {
 		/* IP addresses */
 		struct nlattr *nested;
-		int atype = family == AF_INET ? IPSET_ATTR_IPADDR_IPV4
+		int atype = family == NFPROTO_IPV4 ? IPSET_ATTR_IPADDR_IPV4
 					      : IPSET_ATTR_IPADDR_IPV6;
 
 		alen = attr_len(attr, family, &flags);
@@ -1454,8 +1454,8 @@ rawdata2attr(struct ipset_session *session, struct nlmsghdr *nlh,
 				MNL_ATTR_HDRLEN, alen))
 			return 1;
 		nested = mnl_attr_nest_start(nlh, type);
-		D("family: %s", family == AF_INET ? "INET" :
-				family == AF_INET6 ? "INET6" : "UNSPEC");
+		D("family: %s", family == NFPROTO_IPV4 ? "INET" :
+				family == NFPROTO_IPV6 ? "INET6" : "UNSPEC");
 		mnl_attr_put(nlh, atype | flags, alen, d);
 		mnl_attr_nest_end(nlh, nested);
 
@@ -1509,14 +1509,14 @@ data2attr(struct ipset_session *session, struct nlmsghdr *nlh,
 	data2attr(session, nlh, data, type, family, attrs)
 
 #define ADDATTR_SETNAME(session, nlh, data)				\
-	data2attr(session, nlh, data, IPSET_ATTR_SETNAME, AF_INET, cmd_attrs)
+	data2attr(session, nlh, data, IPSET_ATTR_SETNAME, NFPROTO_IPV4, cmd_attrs)
 
 #define ADDATTR_IF(session, nlh, data, type, family, attrs)		\
 	ipset_data_test(data, attrs[type].opt) ?			\
 		data2attr(session, nlh, data, type, family, attrs) : 0
 
 #define ADDATTR_RAW(session, nlh, data, type, attrs)			\
-	rawdata2attr(session, nlh, data, type, AF_INET, attrs)
+	rawdata2attr(session, nlh, data, type, NFPROTO_IPV4, attrs)
 
 static void
 addattr_create(struct ipset_session *session,
@@ -1572,13 +1572,13 @@ build_send_private_msg(struct ipset_session *session, enum ipset_cmd cmd)
 				"Invalid internal TYPE command: "
 				"missing settype");
 		ADDATTR(session, nlh, data, IPSET_ATTR_TYPENAME,
-			AF_INET, cmd_attrs);
+			NFPROTO_IPV4, cmd_attrs);
 		if (ipset_data_test(data, IPSET_OPT_FAMILY))
 			ADDATTR(session, nlh, data, IPSET_ATTR_FAMILY,
-				AF_INET, cmd_attrs);
+				NFPROTO_IPV4, cmd_attrs);
 		else
 			/* bitmap:port and list:set types */
-			mnl_attr_put_u8(nlh, IPSET_ATTR_FAMILY, AF_UNSPEC);
+			mnl_attr_put_u8(nlh, IPSET_ATTR_FAMILY, NFPROTO_UNSPEC);
 		break;
 	default:
 		return ipset_err(session, "Internal error: "
@@ -1638,17 +1638,17 @@ build_msg(struct ipset_session *session, bool aggregate)
 		 * setname, typename, revision, family, flags (optional) */
 		ADDATTR_SETNAME(session, nlh, data);
 		ADDATTR(session, nlh, data, IPSET_ATTR_TYPENAME,
-			AF_INET, cmd_attrs);
+			NFPROTO_IPV4, cmd_attrs);
 		ADDATTR_RAW(session, nlh, &type->revision,
 			    IPSET_ATTR_REVISION, cmd_attrs);
 		D("family: %u, type family %u",
 		  ipset_data_family(data), type->family);
 		if (ipset_data_test(data, IPSET_OPT_FAMILY))
 			ADDATTR(session, nlh, data, IPSET_ATTR_FAMILY,
-				AF_INET, cmd_attrs);
+				NFPROTO_IPV4, cmd_attrs);
 		else
 			/* bitmap:port and list:set types */
-			mnl_attr_put_u8(nlh, IPSET_ATTR_FAMILY, AF_UNSPEC);
+			mnl_attr_put_u8(nlh, IPSET_ATTR_FAMILY, NFPROTO_UNSPEC);
 
 		/* Type-specific create attributes */
 		D("call open_nested");
@@ -1675,7 +1675,7 @@ build_msg(struct ipset_session *session, bool aggregate)
 			ADDATTR_SETNAME(session, nlh, data);
 		if (flags && session->mode != IPSET_LIST_SAVE) {
 			ipset_data_set(data, IPSET_OPT_FLAGS, &flags);
-			ADDATTR(session, nlh, data, IPSET_ATTR_FLAGS, AF_INET,
+			ADDATTR(session, nlh, data, IPSET_ATTR_FLAGS, NFPROTO_IPV4,
 				cmd_attrs);
 		}
 		break;

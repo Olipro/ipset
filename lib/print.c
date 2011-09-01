@@ -152,7 +152,7 @@ __getnameinfo4(char *buf, unsigned int len,
 
 	memset(&saddr, 0, sizeof(saddr));
 	in4cpy(&saddr.sin_addr, &addr->in);
-	saddr.sin_family = AF_INET;
+	saddr.sin_family = NFPROTO_IPV4;
 
 	err = getnameinfo((const struct sockaddr *)&saddr,
 			  sizeof(saddr),
@@ -178,7 +178,7 @@ __getnameinfo6(char *buf, unsigned int len,
 
 	memset(&saddr, 0, sizeof(saddr));
 	in6cpy(&saddr.sin6_addr, &addr->in6);
-	saddr.sin6_family = AF_INET6;
+	saddr.sin6_family = NFPROTO_IPV6;
 
 	err = getnameinfo((const struct sockaddr *)&saddr,
 			  sizeof(saddr),
@@ -253,14 +253,14 @@ ipset_print_ip(char *buf, unsigned int len,
 		cidr = *(const uint8_t *) ipset_data_get(data, cidropt);
 		D("CIDR: %u", cidr);
 	} else
-		cidr = family == AF_INET6 ? 128 : 32;
+		cidr = family == NFPROTO_IPV6 ? 128 : 32;
 	flags = (env & IPSET_ENV_RESOLVE) ? 0 : NI_NUMERICHOST;
 
 	ip = ipset_data_get(data, opt);
 	assert(ip);
-	if (family == AF_INET)
+	if (family == NFPROTO_IPV4)
 		size = snprintf_ipv4(buf, len, flags, ip, cidr);
-	else if (family == AF_INET6)
+	else if (family == NFPROTO_IPV6)
 		size = snprintf_ipv6(buf, len, flags, ip, cidr);
 	else
 		return -1;
@@ -275,9 +275,9 @@ ipset_print_ip(char *buf, unsigned int len,
 	SNPRINTF_FAILURE(size, len, offset);
 
 	ip = ipset_data_get(data, IPSET_OPT_IP_TO);
-	if (family == AF_INET)
+	if (family == NFPROTO_IPV4)
 		size = snprintf_ipv4(buf + offset, len, flags, ip, cidr);
-	else if (family == AF_INET6)
+	else if (family == NFPROTO_IPV6)
 		size = snprintf_ipv6(buf + offset, len, flags, ip, cidr);
 	else
 		return -1;
@@ -320,14 +320,14 @@ ipset_print_ipaddr(char *buf, unsigned int len,
 	if (ipset_data_test(data, cidropt))
 		cidr = *(const uint8_t *) ipset_data_get(data, cidropt);
 	else
-		cidr = family == AF_INET6 ? 128 : 32;
+		cidr = family == NFPROTO_IPV6 ? 128 : 32;
 	flags = (env & IPSET_ENV_RESOLVE) ? 0 : NI_NUMERICHOST;
 
 	ip = ipset_data_get(data, opt);
 	assert(ip);
-	if (family == AF_INET)
+	if (family == NFPROTO_IPV4)
 		return snprintf_ipv4(buf, len, flags, ip, cidr);
-	else if (family == AF_INET6)
+	else if (family == NFPROTO_IPV6)
 		return snprintf_ipv6(buf, len, flags, ip, cidr);
 
 	return -1;

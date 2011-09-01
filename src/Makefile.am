@@ -2,7 +2,6 @@ include $(top_srcdir)/Make_global.am
 
 sbin_PROGRAMS	= ipset
 ipset_SOURCES	= ipset.c \
-	errcode.c \
 	ipset_bitmap_ip.c \
 	ipset_bitmap_ipmac.c \
 	ipset_bitmap_port.c \
