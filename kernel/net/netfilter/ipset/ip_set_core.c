@@ -1172,7 +1172,11 @@ ip_set_dump(struct sock *ctnl, struct sk_buff *skb,
 
 	return netlink_dump_start(ctnl, skb, nlh,
 				  ip_set_dump_start,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 1, 0)
 				  ip_set_dump_done);
+#else
+				  ip_set_dump_done, 0);
+#endif
 }
 
 /* Add, del and test */
