@@ -56,5 +56,6 @@ tidy: distclean modules_clean
 	rm -rf config.* configure compile depcomp install-sh libtool ltmain.sh
 	rm -rf Makefile Makefile.in lib/Makefile lib/Makefile.in src/Makefile src/Makefile.in
 	rm -rf missing stamp-h1 m4/libtool.m4 m4/lt*.m4
+	find . -name '*~' -delete
 
 .PHONY: modules modules_instal modules_clean update_includes tests
