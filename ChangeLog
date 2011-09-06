@@ -1,3 +1,9 @@
+6.9
+ - build: move ipset_errcode into library (Jan Engelhardt)
+ - build: abort autogen on subcommand failure (Jan Engelhardt)
+ - ipset: use NFPROTO_ constants (Jan Engelhardt)
+ - Propagate "expose userspace-relevant parts in ip_set.h" to ipset source
+
 6.8
  - Update the manpage and document the limits in hash:net,iface.
  - README file corrections from Richard Lucassen
