@@ -17,7 +17,7 @@
 #include <linux/spinlock.h>
 #include <linux/netlink.h>
 #include <linux/rculist.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(99, 99, 99)
+#ifdef IPSET_EXTERNAL_MODULE
 #include <linux/version.h>
 #endif
 #include <net/netlink.h>
