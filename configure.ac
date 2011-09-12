@@ -11,6 +11,14 @@ case "$host" in
 *) AC_MSG_ERROR([Linux systems supported exclusively!]);;
 esac
 
+dnl Optionnally disable building the kernel module
+AC_ARG_WITH([kmod],
+            AS_HELP_STRING([--with-kmod=yes/no],
+                           [Build the kernel module (default: yes)]),
+            [BUILDKMOD="$withval";],
+            [BUILDKMOD="yes";])
+AM_CONDITIONAL(WITH_KMOD, test "$BUILDKMOD" == "yes")
+
 dnl Additional arguments
 dnl Kernel build directory or source tree
 AC_ARG_WITH([kbuild],
@@ -24,6 +32,8 @@ AC_ARG_WITH([ksource],
 AM_CONDITIONAL(WITH_KBUILDDIR, test "$KBUILDDIR" != "")
 AC_SUBST(KBUILDDIR)
 
+if test "$BUILDKMOD" == "yes"
+then
 dnl Sigh: check kernel version dependencies
 if test "$KBUILDDIR" != ""
 then
@@ -54,6 +64,7 @@ AC_PROG_GREP
 if test "X`$GREP 'NFNL_SUBSYS_IPSET' $ksourcedir/include/linux/netfilter/nfnetlink.h`" = "X"
 then
 	AC_MSG_ERROR([The kernel source directory $ksourcedir is not patched with netlink.patch to support ipset])
+fi
 fi
 
 dnl Maximal number of sets supported by the kernel, default 256
