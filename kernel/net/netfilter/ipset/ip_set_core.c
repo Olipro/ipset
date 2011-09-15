@@ -17,7 +17,7 @@
 #include <linux/spinlock.h>
 #include <linux/netlink.h>
 #include <linux/rculist.h>
-#ifdef IPSET_EXTERNAL_MODULE
+#ifndef IPSET_IN_KERNEL_TREE
 #include <linux/version.h>
 #endif
 #include <net/netlink.h>
