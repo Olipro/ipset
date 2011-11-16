@@ -391,8 +391,8 @@ parse_icmp_typecode(struct ipset_session *session,
 				 str, family);
 	}
 	*a++ = '\0';
-	if ((err = string_to_u8(session, a, &type)) != 0 ||
-	    (err = string_to_u8(session, tmp, &code)) != 0)
+	if ((err = string_to_u8(session, tmp, &type)) != 0 ||
+	    (err = string_to_u8(session, a, &code)) != 0)
 		goto error;
 
 	typecode = (type << 8) | code;
