@@ -34,6 +34,12 @@
 1 ipset test test 3:0:0::1,tcp:8
 # Try to add IP address
 0 ipset add test 3:0:0::1,tcp:8
+# Add ICMPv6 by type/code
+0 ipset add test 192:168:68::95,icmpv6:1/4
+# Test ICMPv6 by type/code
+0 ipset test test 192:168:68::95,icmpv6:1/4
+# Test ICMPv6 by name
+0 ipset test test 192:168:68::95,icmpv6:port-unreachable
 # List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Save set

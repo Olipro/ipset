@@ -34,6 +34,12 @@
 1 ipset test test 2.0.1.0,icmp:ping
 # Try to add IP address
 0 ipset add test 2.0.0.1,icmp:ping timeout 3
+# Add ICMP by type/code
+0 ipset add test 2.0.0.255,icmp:3/10
+# Test ICMP by type/code
+0 ipset test test 2.0.0.255,icmp:3/10
+# Test ICMP by name
+0 ipset test test 2.0.0.255,icmp:host-prohibited
 # List set
 0 ipset list test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Check listing

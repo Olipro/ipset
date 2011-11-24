@@ -8,3 +8,4 @@ Members:
 192.168.68.64/27,tcp:8 timeout x
 2.0.0.0/24,icmp:echo-request timeout x
 2.0.0.1,icmp:echo-request timeout x
+2.0.0.255,icmp:host-prohibited timeout x
