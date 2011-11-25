@@ -1,3 +1,10 @@
+6.10
+ - Tests added to check ICMP/ICMPv6 type/code parsing
+ - ICMP/ICMPv6 type/code parser bug fixed (bug reported by Sabitov)
+ - ipset: fix lookup of tcp port names (Stephen Hemminger)
+ - Optionally disable building the kernel module (Mathieu Bridon)
+ - Make tidy complete
+
 6.9
  - build: move ipset_errcode into library (Jan Engelhardt)
  - build: abort autogen on subcommand failure (Jan Engelhardt)
