@@ -6,6 +6,7 @@ pkginclude_HEADERS = \
 	linux_ip_set_hash.h \
 	mnl.h \
 	nf_inet_addr.h \
+	nfproto.h \
 	parse.h \
 	pfxlen.h \
 	print.h \
