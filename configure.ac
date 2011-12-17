@@ -161,5 +161,5 @@ fi
 dnl Checks for library functions.
 
 dnl Generate output
-AC_CONFIG_FILES([Makefile lib/Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile include/libipset/Makefile lib/Makefile src/Makefile])
 AC_OUTPUT

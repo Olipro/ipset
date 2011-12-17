@@ -20,7 +20,7 @@ else
 V=0
 endif
 
-SUBDIRS		= lib src
+SUBDIRS		= include/libipset lib src
 
 modules_sparse:
 if WITH_KMOD

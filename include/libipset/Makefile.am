@@ -6,11 +6,10 @@ pkginclude_HEADERS = \
 	linux_ip_set_hash.h \
 	mnl.h \
 	nf_inet_addr.h \
-	nlattr.h \
 	parse.h \
 	pfxlen.h \
 	print.h \
-	session.h
+	session.h \
 	transport.h \
 	types.h \
 	ui.h \
