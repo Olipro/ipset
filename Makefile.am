@@ -75,3 +75,5 @@ tidy: distclean modules_clean
 	find . -name '*~' -delete
 
 .PHONY: modules modules_instal modules_clean update_includes tests
+
+DISTCHECK_CONFIGURE_FLAGS = --with-kmod=no

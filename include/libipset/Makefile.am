@@ -16,3 +16,5 @@ pkginclude_HEADERS = \
 	types.h \
 	ui.h \
 	utils.h
+
+EXTRA_DIST = debug.h icmp.h icmpv6.h
