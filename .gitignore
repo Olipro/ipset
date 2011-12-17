@@ -2,8 +2,8 @@
 *.la
 *.lo
 *.o
-.deps
-.libs
+.deps/
+.libs/
 Makefile
 Makefile.in
 
@@ -17,7 +17,7 @@ Module.symvers
 modules.order
 
 /aclocal.m4
-/autom4te.cache
+/autom4te.cache/
 /compile
 /config.*
 /configure
