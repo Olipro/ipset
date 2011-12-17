@@ -4,6 +4,7 @@ pkginclude_HEADERS = \
 	linux_ip_set_bitmap.h \
 	linux_ip_set.h \
 	linux_ip_set_hash.h \
+	linux_ip_set_list.h \
 	mnl.h \
 	nf_inet_addr.h \
 	nfproto.h \
