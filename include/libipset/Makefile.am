@@ -1,3 +1,4 @@
+pkgincludedir = ${includedir}/libipset
 pkginclude_HEADERS = \
 	data.h \
 	errcode.h \
