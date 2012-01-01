@@ -4,7 +4,7 @@ instructions too.
 
 0. You need the source tree of your kernel (version >= 2.6.34)
    and it have to be configured with ip6tables support enabled,
-   modules compiled. For kernel versions <= 2.6.39 please apply
+   modules compiled. For kernel versions < 2.6.39 please apply
    the netlink.patch against your kernel tree, which adds the
    new subsystem identifier for ipset.
 
