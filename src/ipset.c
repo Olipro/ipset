@@ -33,22 +33,6 @@ static char cmdline[1024];
 static char *newargv[255];
 static int newargc;
 
-/* The known set types: (typename, revision, family) is unique */
-extern struct ipset_type ipset_bitmap_ip0;
-extern struct ipset_type ipset_bitmap_ipmac0;
-extern struct ipset_type ipset_bitmap_port0;
-extern struct ipset_type ipset_hash_ip0;
-extern struct ipset_type ipset_hash_net0;
-extern struct ipset_type ipset_hash_net1;
-extern struct ipset_type ipset_hash_netport1;
-extern struct ipset_type ipset_hash_netport2;
-extern struct ipset_type ipset_hash_netiface0;
-extern struct ipset_type ipset_hash_ipport1;
-extern struct ipset_type ipset_hash_ipportip1;
-extern struct ipset_type ipset_hash_ipportnet1;
-extern struct ipset_type ipset_hash_ipportnet2;
-extern struct ipset_type ipset_list_set0;
-
 enum exittype {
 	NO_PROBLEM = 0,
 	OTHER_PROBLEM,
@@ -725,21 +709,8 @@ main(int argc, char *argv[])
 {
 	int ret;
 
-	/* Register types */
-	ipset_type_add(&ipset_bitmap_ip0);
-	ipset_type_add(&ipset_bitmap_ipmac0);
-	ipset_type_add(&ipset_bitmap_port0);
-	ipset_type_add(&ipset_hash_ip0);
-	ipset_type_add(&ipset_hash_net0);
-	ipset_type_add(&ipset_hash_net1);
-	ipset_type_add(&ipset_hash_netport1);
-	ipset_type_add(&ipset_hash_netport2);
-	ipset_type_add(&ipset_hash_netiface0);
-	ipset_type_add(&ipset_hash_ipport1);
-	ipset_type_add(&ipset_hash_ipportip1);
-	ipset_type_add(&ipset_hash_ipportnet1);
-	ipset_type_add(&ipset_hash_ipportnet2);
-	ipset_type_add(&ipset_list_set0);
+	/* Load set types */
+	ipset_load_types();
 
 	/* Initialize session */
 	session = ipset_session_init(printf);

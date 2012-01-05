@@ -105,5 +105,6 @@ extern const struct ipset_type *ipset_types(void);
 extern const char *ipset_typename_resolve(const char *str);
 extern bool ipset_match_typename(const char *str,
 				 const struct ipset_type *t);
+extern void ipset_load_types(void);
 
 #endif /* LIBIPSET_TYPES_H */

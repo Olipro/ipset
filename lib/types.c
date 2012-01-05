@@ -19,6 +19,22 @@
 #include <libipset/utils.h>			/* STREQ */
 #include <libipset/types.h>			/* prototypes */
 
+/* The known set types: (typename, revision, family) is unique */
+extern struct ipset_type ipset_bitmap_ip0;
+extern struct ipset_type ipset_bitmap_ipmac0;
+extern struct ipset_type ipset_bitmap_port0;
+extern struct ipset_type ipset_hash_ip0;
+extern struct ipset_type ipset_hash_net0;
+extern struct ipset_type ipset_hash_net1;
+extern struct ipset_type ipset_hash_netport1;
+extern struct ipset_type ipset_hash_netport2;
+extern struct ipset_type ipset_hash_netiface0;
+extern struct ipset_type ipset_hash_ipport1;
+extern struct ipset_type ipset_hash_ipportip1;
+extern struct ipset_type ipset_hash_ipportnet1;
+extern struct ipset_type ipset_hash_ipportnet2;
+extern struct ipset_type ipset_list_set0;
+
 /* Userspace cache of sets which exists in the kernel */
 
 struct ipset {
@@ -554,3 +570,31 @@ ipset_cache_fini(void)
 		free(set);
 	}
 }
+
+/**
+ * ipset_load_types - load known set types
+ *
+ * Load in (register) all known set types for the system
+ */
+ void
+ ipset_load_types(void)
+ {
+ 	if (typelist != NULL)
+ 		return;
+
+	ipset_type_add(&ipset_bitmap_ip0);
+	ipset_type_add(&ipset_bitmap_ipmac0);
+	ipset_type_add(&ipset_bitmap_port0);
+	ipset_type_add(&ipset_hash_ip0);
+	ipset_type_add(&ipset_hash_net0);
+	ipset_type_add(&ipset_hash_net1);
+	ipset_type_add(&ipset_hash_netport1);
+	ipset_type_add(&ipset_hash_netport2);
+	ipset_type_add(&ipset_hash_netiface0);
+	ipset_type_add(&ipset_hash_ipport1);
+	ipset_type_add(&ipset_hash_ipportip1);
+	ipset_type_add(&ipset_hash_ipportnet1);
+	ipset_type_add(&ipset_hash_ipportnet2);
+	ipset_type_add(&ipset_list_set0);
+}
+ 

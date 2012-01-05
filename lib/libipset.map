@@ -110,3 +110,8 @@ global:
   
 local: *;
 };
+
+LIBIPSET_2.0 {
+global:
+  ipset_load_types;
+} LIBIPSET_1.0;
