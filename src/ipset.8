@@ -245,6 +245,17 @@ for new entries. If a set is created with timeout support, then the same
 when adding entries. Zero timeout value means the entry is added permanent to the set.
 The timeout value of already added elements can be changed by readding the element
 using the \fB\-exist\fR option.
+
+The \fBhash\fR set types which can store \fBnet\fR type of data (i.e. hash:*net*)
+support the optional
+
+\fBnomatch\fR
+
+option when adding entries. When matching elements in the set, entries marked
+as \fBnomatch\fR are skipped as if those were no added to the set, which makes
+possible to build up sets with exceptions. See the example at hash type
+\fBhash:net\fR below.
+
 .SS bitmap:ip
 The \fBbitmap:ip\fR set type uses a memory range to store either IPv4 host
 (default) or IPv4 network addresses. A \fBbitmap:ip\fR type of set can store up
@@ -411,7 +422,7 @@ Network address with zero prefix size cannot be stored in this type of sets.
 .PP 
 \fIADD\-ENTRY\fR := \fInetaddr\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBnomatch\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fInetaddr\fR
 .PP 
@@ -455,7 +466,7 @@ set, or by the host prefix value if the set is empty.
 The lookup time grows linearly with the number of the different prefix
 values added to the set. 
 .PP 
-Examples:
+Example:
 .IP 
 ipset create foo hash:net
 .IP 
@@ -463,7 +474,13 @@ ipset add foo 192.168.0.0/24
 .IP 
 ipset add foo 10.1.0.0/16
 .IP 
-ipset test foo 192.168.0/24
+ipset add foo 192.168.0/24
+.IP 
+ipset add foo 192.168.0/30 nomatch
+.PP 
+When matching the elements in the set above, all IP addresses will match
+from the networks 192.168.0.0/24, 10.1.0.0/16 and 192.168.0/24 except
+192.168.0/30.
 .SS hash:ip,port
 The \fBhash:ip,port\fR set type uses a hash to store IP address and port number pairs.
 The port number is interpreted together with a protocol (default TCP) and zero
@@ -549,7 +566,7 @@ address with zero prefix size is not accepted either.
 .PP 
 \fIADD\-ENTRY\fR := \fInetaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]  [ \fBnomatch\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fInetaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP 
@@ -659,7 +676,7 @@ address with zero prefix size cannot be stored either.
 .PP 
 \fIADD\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fInetaddr\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]  [ \fBnomatch\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fInetaddr\fR
 .PP 
@@ -720,7 +737,7 @@ accepted.
 .PP 
 \fIADD\-ENTRY\fR := \fInetaddr\fR,[\fBphysdev\fR:]\fIiface\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]  [ \fBnomatch\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fInetaddr\fR,[\fBphysdev\fR:]\fIiface\fR
 .PP 

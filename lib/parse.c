@@ -1362,11 +1362,11 @@ ipset_parse_netmask(struct ipset_session *session,
  */
 int
 ipset_parse_flag(struct ipset_session *session,
-		 enum ipset_opt opt, const char *str UNUSED)
+		 enum ipset_opt opt, const char *str)
 {
 	assert(session);
 
-	return ipset_session_data_set(session, opt, NULL);
+	return ipset_session_data_set(session, opt, str);
 }
 
 /**

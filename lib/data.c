@@ -319,11 +319,20 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	case IPSET_OPT_PHYSDEV:
 		cadt_flag_type_attr(data, opt, IPSET_FLAG_PHYSDEV);
 		break;
+	case IPSET_OPT_NOMATCH:
+		cadt_flag_type_attr(data, opt, IPSET_FLAG_NOMATCH);
+		break;
 	case IPSET_OPT_FLAGS:
 		data->flags = *(const uint32_t *)value;
 		break;
 	case IPSET_OPT_CADT_FLAGS:
 		data->cadt_flags = *(const uint32_t *)value;
+		if (data->cadt_flags & IPSET_FLAG_BEFORE)
+			ipset_data_flags_set(data, IPSET_FLAG(IPSET_OPT_BEFORE));
+		if (data->cadt_flags & IPSET_FLAG_PHYSDEV)
+			ipset_data_flags_set(data, IPSET_FLAG(IPSET_OPT_PHYSDEV));
+		if (data->cadt_flags & IPSET_FLAG_NOMATCH)
+			ipset_data_flags_set(data, IPSET_FLAG(IPSET_OPT_NOMATCH));
 		break;
 	default:
 		return -1;
@@ -432,6 +441,7 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 	case IPSET_OPT_CADT_FLAGS:
 	case IPSET_OPT_BEFORE:
 	case IPSET_OPT_PHYSDEV:
+	case IPSET_OPT_NOMATCH:
 		return &data->cadt_flags;
 	default:
 		return NULL;
@@ -485,6 +495,7 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 	/* Flags doesn't counted once :-( */
 	case IPSET_OPT_BEFORE:
 	case IPSET_OPT_PHYSDEV:
+	case IPSET_OPT_NOMATCH:
 		return sizeof(uint32_t);
 	default:
 		return 0;

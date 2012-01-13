@@ -26,13 +26,17 @@ extern struct ipset_type ipset_bitmap_port0;
 extern struct ipset_type ipset_hash_ip0;
 extern struct ipset_type ipset_hash_net0;
 extern struct ipset_type ipset_hash_net1;
+extern struct ipset_type ipset_hash_net2;
 extern struct ipset_type ipset_hash_netport1;
 extern struct ipset_type ipset_hash_netport2;
+extern struct ipset_type ipset_hash_netport3;
 extern struct ipset_type ipset_hash_netiface0;
+extern struct ipset_type ipset_hash_netiface1;
 extern struct ipset_type ipset_hash_ipport1;
 extern struct ipset_type ipset_hash_ipportip1;
 extern struct ipset_type ipset_hash_ipportnet1;
 extern struct ipset_type ipset_hash_ipportnet2;
+extern struct ipset_type ipset_hash_ipportnet3;
 extern struct ipset_type ipset_list_set0;
 
 /* Userspace cache of sets which exists in the kernel */
@@ -588,13 +592,16 @@ ipset_cache_fini(void)
 	ipset_type_add(&ipset_hash_ip0);
 	ipset_type_add(&ipset_hash_net0);
 	ipset_type_add(&ipset_hash_net1);
+	ipset_type_add(&ipset_hash_net2);
 	ipset_type_add(&ipset_hash_netport1);
 	ipset_type_add(&ipset_hash_netport2);
+	ipset_type_add(&ipset_hash_netport3);
 	ipset_type_add(&ipset_hash_netiface0);
+	ipset_type_add(&ipset_hash_netiface1);
 	ipset_type_add(&ipset_hash_ipport1);
 	ipset_type_add(&ipset_hash_ipportip1);
 	ipset_type_add(&ipset_hash_ipportnet1);
 	ipset_type_add(&ipset_hash_ipportnet2);
+	ipset_type_add(&ipset_hash_ipportnet3);
 	ipset_type_add(&ipset_list_set0);
 }
- 

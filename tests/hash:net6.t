@@ -46,4 +46,42 @@
 0 ipset flush test
 # Delete test set
 0 ipset destroy test
+# Create test set with timeout support
+0 ipset create test hash:net family inet6 timeout 30
+# Add a non-matching IP address entry
+0 ipset -A test 1:1:1::1 nomatch
+# Add an overlapping matching small net
+0 ipset -A test 1:1:1::/124 
+# Add an overlapping non-matching larger net
+0 ipset -A test 1:1:1::/120 nomatch
+# Add an even larger matching net
+0 ipset -A test 1:1:1::/116
+# Check non-matching IP
+1 ipset -T test 1:1:1::1
+# Check matching IP from non-matchin small net
+0 ipset -T test 1:1:1::F
+# Check non-matching IP from larger net
+1 ipset -T test 1:1:1::10
+# Check matching IP from even larger net
+0 ipset -T test 1:1:1::100
+# Update non-matching IP to matching one
+0 ipset -! -A test 1:1:1::1
+# Delete overlapping small net
+0 ipset -D test 1:1:1::/124
+# Check matching IP
+0 ipset -T test 1:1:1::1
+# Add overlapping small net
+0 ipset -A test 1:1:1::/124
+# Update matching IP as a non-matching one, with shorter timeout
+0 ipset -! -A test 1:1:1::1 nomatch timeout 2
+# Check non-matching IP
+1 ipset -T test 1:1:1::1
+# Sleep 3s so that element can time out
+0 sleep 3
+# Check non-matching IP
+0 ipset -T test 1:1:1::1
+# Check matching IP
+0 ipset -T test 1:1:1::F
+# Delete test set
+0 ipset destroy test
 # eof

@@ -102,4 +102,42 @@
 0 n=`ipset list test | wc -l` && test $n -eq 70
 # Delete test set
 0 ipset destroy test
+# Create test set with timeout support
+0 ipset create test hash:net,iface timeout 30
+# Add a non-matching IP address entry
+0 ipset -A test 1.1.1.1,eth0 nomatch
+# Add an overlapping matching small net
+0 ipset -A test 1.1.1.0/30,eth0
+# Add an overlapping non-matching larger net
+0 ipset -A test 1.1.1.0/28,eth0 nomatch
+# Add an even larger matching net
+0 ipset -A test 1.1.1.0/26,eth0
+# Check non-matching IP
+1 ipset -T test 1.1.1.1,eth0
+# Check matching IP from non-matchin small net
+0 ipset -T test 1.1.1.3,eth0
+# Check non-matching IP from larger net
+1 ipset -T test 1.1.1.4,eth0
+# Check matching IP from even larger net
+0 ipset -T test 1.1.1.16,eth0
+# Update non-matching IP to matching one
+0 ipset -! -A test 1.1.1.1,eth0
+# Delete overlapping small net
+0 ipset -D test 1.1.1.0/30,eth0
+# Check matching IP
+0 ipset -T test 1.1.1.1,eth0
+# Add overlapping small net
+0 ipset -A test 1.1.1.0/30,eth0
+# Update matching IP as a non-matching one, with shorter timeout
+0 ipset -! -A test 1.1.1.1,eth0 nomatch timeout 2
+# Check non-matching IP
+1 ipset -T test 1.1.1.1,eth0
+# Sleep 3s so that element can time out
+0 sleep 3
+# Check non-matching IP
+0 ipset -T test 1.1.1.1,eth0
+# Check matching IP
+0 ipset -T test 1.1.1.3,eth0
+# Delete test set
+0 ipset destroy test
 # eof

@@ -550,6 +550,8 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 	struct ipset_data *data = session->data;
 	const struct ipset_attr_policy *attr;
 	const void *d;
+	uint32_t v32;
+	uint16_t v16;
 	int ret;
 
 	attr = &attrs[type];
@@ -560,7 +562,7 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 		struct nlattr *ipattr[IPSET_ATTR_IPADDR_MAX+1] = {};
 		uint8_t family = ipset_data_family(data);
 		int atype;
-		D("attr type %u", type);
+		D("IP attr type %u", type);
 		if (mnl_attr_parse_nested(nla[type],
 					  ipaddr_attr_cb, ipattr) < 0)
 			FAILURE("Broken kernel message, cannot validate "
@@ -595,21 +597,16 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 		}
 		d = mnl_attr_get_payload(ipattr[atype]);
 	} else if (nla[type]->nla_type & NLA_F_NET_BYTEORDER) {
+		D("netorder attr type %u", type);
 		switch (attr->type) {
 		case MNL_TYPE_U32: {
-			uint32_t value;
-
-			value  = ntohl(*(const uint32_t *)d);
-
-			d = &value;
+			v32  = ntohl(*(const uint32_t *)d);
+			d = &v32;
 			break;
 		}
 		case MNL_TYPE_U16: {
-			uint16_t value;
-
-			value = ntohs(*(const uint16_t *)d);
-
-			d = &value;
+			v16 = ntohs(*(const uint16_t *)d);
+			d = &v16;
 			break;
 		}
 		default:
@@ -617,6 +614,8 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 		}
 	}
 #ifdef IPSET_DEBUG
+	 else
+		D("hostorder attr type %u", type);
 	if (type == IPSET_ATTR_TYPENAME)
 		D("nla typename %s", (const char *) d);
 #endif

@@ -70,6 +70,32 @@
 0 diff -u -I 'Size in memory.*' .foo ipportnethash.t.list1
 # Network: Flush test set
 0 ipset -F test
-# Network: Delete test set
+# Add a non-matching IP address entry
+0 ipset -A test 2.1.0.0,80,1.1.1.1 nomatch
+# Add an overlapping matching small net
+0 ipset -A test 2.1.0.0,80,1.1.1.0/30 
+# Add an overlapping non-matching larger net
+0 ipset -A test 2.1.0.0,80,1.1.1.0/28 nomatch
+# Add an even larger matching net
+0 ipset -A test 2.1.0.0,80,1.1.1.0/26
+# Check non-matching IP
+1 ipset -T test 2.1.0.0,80,1.1.1.1
+# Check matching IP from non-matchin small net
+0 ipset -T test 2.1.0.0,80,1.1.1.3
+# Check non-matching IP from larger net
+1 ipset -T test 2.1.0.0,80,1.1.1.4
+# Check matching IP from even larger net
+0 ipset -T test 2.1.0.0,80,1.1.1.16
+# Update non-matching IP to matching one
+0 ipset -! -A test 2.1.0.0,80,1.1.1.1
+# Delete overlapping small net
+0 ipset -D test 2.1.0.0,80,1.1.1.0/30
+# Check matching IP
+0 ipset -T test 2.1.0.0,80,1.1.1.1
+# Update matching IP as a non-matching one
+0 ipset -! -A test 2.1.0.0,80,1.1.1.1 nomatch
+# Check non-matching IP
+1 ipset -T test 2.1.0.0,80,1.1.1.1
+# Delete test set
 0 ipset -X test
 # eof

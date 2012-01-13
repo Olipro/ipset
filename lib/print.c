@@ -501,7 +501,7 @@ ipset_print_iface(char *buf, unsigned int len,
 	}
 	name = ipset_data_get(data, opt);
 	assert(name);
-	size = snprintf(buf, len, "%s", name);
+	size = snprintf(buf + offset, len, "%s", name);
 	SNPRINTF_FAILURE(size, len, offset);
 	return offset;
 }
