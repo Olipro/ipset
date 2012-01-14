@@ -256,6 +256,12 @@ as \fBnomatch\fR are skipped as if those were no added to the set, which makes
 possible to build up sets with exceptions. See the example at hash type
 \fBhash:net\fR below.
 
+If host names or service names with dash in the name are used instead of IP
+addresses or service numbers, then the host name or service name must be enclosed
+in square brackets. Example:
+
+.IP 
+ipset add foo [test\-hostname],[ftp\-data]
 .SS bitmap:ip
 The \fBbitmap:ip\fR set type uses a memory range to store either IPv4 host
 (default) or IPv4 network addresses. A \fBbitmap:ip\fR type of set can store up

@@ -59,6 +59,20 @@ ipset_strchr(const char *str, const char *sep)
 	return NULL;
 }
 
+static char *
+escape_range_separator(const char *str)
+{
+	const char *tmp = NULL;
+	
+	if (STRNEQ(str, IPSET_ESCAPE_START, 1)) {
+		tmp = strstr(str, IPSET_ESCAPE_END);
+		if (tmp == NULL)
+			return NULL;
+	}
+	
+	return range_separator(tmp == NULL ? str : tmp);
+}
+
 /*
  * Parser functions, shamelessly taken from iptables.c, ip6tables.c
  * and parser.c from libnetfilter_conntrack.
@@ -194,6 +208,60 @@ error:
 	return syntax_err("cannot parse '%s' as ethernet address", str);
 }
 
+static char *
+ipset_strdup(struct ipset_session *session, const char *str)
+{
+	char *tmp = strdup(str);
+
+	if (tmp == NULL)
+		ipset_err(session,
+			  "Cannot allocate memory to duplicate %s.",
+			  str);
+	return tmp;
+}
+
+static char *
+find_range_separator(struct ipset_session *session, char *str)
+{
+	char *esc;
+
+	if (STRNEQ(str, IPSET_ESCAPE_START, 1)) {
+		esc = strstr(str, IPSET_ESCAPE_END);
+		if (esc == NULL) {
+			syntax_err("cannot find closing escape character "
+				   "'%s' in %s", IPSET_ESCAPE_END, str);
+			return str;
+		}
+		if (esc[1] == '\0')
+			/* No range separator, just a single escaped elem */
+			return NULL;
+		esc++;
+		if (!STRNEQ(esc, IPSET_RANGE_SEPARATOR, 1)) {
+			*esc = '\0';
+			syntax_err("range separator expected after "
+				   "'%s'", str);
+			return str;
+		}
+		return esc;
+	}
+	return range_separator(str);
+}
+
+static char *
+strip_escape(struct ipset_session *session, char * str)
+{
+	if (STRNEQ(str, IPSET_ESCAPE_START, 1)) {
+		if (!STREQ(str + strlen(str) - 1, IPSET_ESCAPE_END)) {
+			syntax_err("cannot find closing escape character "
+				   "'%s' in %s", IPSET_ESCAPE_END, str);
+			return NULL;
+		}
+		str++;
+		str[strlen(str) - 1] = '\0';
+	}
+	return str;
+}
+
 /*
  * Parse TCP service names or port numbers
  */
@@ -201,13 +269,25 @@ static int
 parse_portname(struct ipset_session *session, const char *str,
 	       uint16_t *port, const char *proto)
 {
-	struct servent *service = getservbyname(str, proto);
+	char *saved, *tmp;
+	struct servent *service;
 
+	saved = tmp = ipset_strdup(session, str);
+	if (tmp == NULL)
+		return -1;
+	tmp = strip_escape(session, tmp);
+	if (tmp == NULL)
+		goto error;
+
+	service = getservbyname(tmp, proto);	
 	if (service != NULL) {
 		*port = ntohs((uint16_t) service->s_port);
+		free(saved);
 		return 0;
 	}
 
+error:
+	free(saved);
 	return syntax_err("cannot parse '%s' as a %s port", str, proto);
 }
 
@@ -270,13 +350,16 @@ ipset_parse_tcpudp_port(struct ipset_session *session,
 	assert(opt == IPSET_OPT_PORT);
 	assert(str);
 
-	saved = tmp = strdup(str);
+	saved = tmp = ipset_strdup(session, str);
 	if (tmp == NULL)
-		return ipset_err(session,
-				 "Cannot allocate memory to duplicate %s.",
-				 str);
+		return -1;
 
-	a = range_separator(tmp);
+	a = find_range_separator(session, tmp);
+	if (a == tmp) {
+		err = -1;
+		goto error;
+	}
+
 	if (a != NULL) {
 		/* port-port */
 		*a++ = '\0';
@@ -378,11 +461,9 @@ parse_icmp_typecode(struct ipset_session *session,
 	char *a, *saved, *tmp;
 	int err;
 
-	saved = tmp = strdup(str);
+	saved = tmp = ipset_strdup(session, str);
 	if (tmp == NULL)
-		return ipset_err(session,
-				 "Cannot allocate memory to duplicate %s.",
-				 str);
+		return -1;
 	a = cidr_separator(tmp);
 	if (a == NULL) {
 		free(saved);
@@ -485,11 +566,9 @@ ipset_parse_proto_port(struct ipset_session *session,
 	assert(str);
 
 	data = ipset_session_data(session);
-	saved = tmp = strdup(str);
+	saved = tmp = ipset_strdup(session, str);
 	if (tmp == NULL)
-		return ipset_err(session,
-				 "Cannot allocate memory to duplicate %s.",
-				 str);
+		return -1;
 
 	a = proto_separator(tmp);
 	if (a != NULL) {
@@ -536,7 +615,7 @@ ipset_parse_proto_port(struct ipset_session *session,
 		}
 		goto error;
 	} else {
-		proto = "TCP";
+		proto = "tcp";
 		err = ipset_data_set(data, IPSET_OPT_PROTO, &p);
 		if (err)
 			goto error;
@@ -679,7 +758,7 @@ parse_ipaddr(struct ipset_session *session,
 {
 	uint8_t m = family == NFPROTO_IPV4 ? 32 : 128;
 	int aerr = EINVAL, err = 0, range = 0;
-	char *saved = strdup(str);
+	char *saved = ipset_strdup(session, str);
 	char *a, *tmp = saved;
 	struct addrinfo *info;
 	enum ipset_opt copt, opt2;
@@ -693,9 +772,7 @@ parse_ipaddr(struct ipset_session *session,
 	}
 
 	if (tmp == NULL)
-		return ipset_err(session,
-				 "Cannot allocate memory to duplicate %s.",
-				 str);
+		return -1;
 	if ((a = cidr_separator(tmp)) != NULL) {
 		/* IP/mask */
 		*a++ = '\0';
@@ -703,16 +780,33 @@ parse_ipaddr(struct ipset_session *session,
 		if ((err = string_to_cidr(session, a, 0, m, &m)) != 0 ||
 		    (err = ipset_session_data_set(session, copt, &m)) != 0)
 			goto out;
-	} else if ((a = range_separator(tmp)) != NULL) {
-		/* IP-IP */
-		*a++ = '\0';
-		D("range %s", a);
-		range++;
+	} else {
+		a = find_range_separator(session, tmp);
+		if (a == tmp) {
+			err = -1;
+			goto out;
+		}
+		if (a != NULL) {
+			/* IP-IP */
+			*a++ = '\0';
+			D("range %s", a);
+			range++;
+		}
+	}
+	tmp = strip_escape(session, tmp);
+	if (tmp == NULL) {
+		err = -1;
+		goto out;
 	}
 	if ((aerr = get_addrinfo(session, opt, tmp, &info, family)) != 0 ||
 	    !range)
 		goto out;
 	freeaddrinfo(info);
+	a = strip_escape(session, a);
+	if (a == NULL) {
+		err = -1;
+		goto out;
+	}
 	aerr = get_addrinfo(session, opt2, a, &info, family);
 
 out:
@@ -754,18 +848,18 @@ parse_ip(struct ipset_session *session,
 
 	switch (addrtype) {
 	case IPADDR_PLAIN:
-		if (range_separator(str) ||
+		if (escape_range_separator(str) ||
 		    (cidr_separator(str) && !cidr_hostaddr(str, family)))
 			return syntax_err("plain IP address must be supplied: "
 					  "%s", str);
 		break;
 	case IPADDR_NET:
-		if (!cidr_separator(str) || range_separator(str))
+		if (!cidr_separator(str) || escape_range_separator(str))
 			return syntax_err("IP/netblock must be supplied: %s",
 					  str);
 		break;
 	case IPADDR_RANGE:
-		if (!range_separator(str) || cidr_separator(str))
+		if (!escape_range_separator(str) || cidr_separator(str))
 			return syntax_err("IP-IP range must supplied: %s",
 					  str);
 		break;
@@ -896,7 +990,7 @@ ipset_parse_netrange(struct ipset_session *session,
 	assert(opt == IPSET_OPT_IP || opt == IPSET_OPT_IP2);
 	assert(str);
 
-	if (!(range_separator(str) || cidr_separator(str)))
+	if (!(escape_range_separator(str) || cidr_separator(str)))
 		return syntax_err("IP/cidr or IP-IP range must be specified: "
 				  "%s", str);
 	return parse_ip(session, opt, str, IPADDR_ANY);
@@ -949,7 +1043,7 @@ ipset_parse_ipnet(struct ipset_session *session,
 	assert(opt == IPSET_OPT_IP || opt == IPSET_OPT_IP2);
 	assert(str);
 
-	if (range_separator(str))
+	if (escape_range_separator(str))
 		return syntax_err("IP address or IP/cidr must be specified: %s",
 				  str);
 	return parse_ip(session, opt, str, IPADDR_ANY);
@@ -1065,11 +1159,9 @@ ipset_parse_iptimeout(struct ipset_session *session,
 				  IPSET_FLAG(IPSET_OPT_TIMEOUT)))
 		return syntax_err("mixed syntax, timeout already specified");
 
-	tmp = saved = strdup(str);
+	tmp = saved = ipset_strdup(session, str);
 	if (saved == NULL)
-		return ipset_err(session,
-				 "Cannot allocate memory to duplicate %s.",
-				 str);
+		return 1;
 
 	a = elem_separator(tmp);
 	if (a == NULL) {
@@ -1127,11 +1219,9 @@ ipset_parse_name_compat(struct ipset_session *session,
 	if (ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_NAMEREF)))
 		syntax_err("mixed syntax, before|after option already used");
 
-	tmp = saved = strdup(str);
+	tmp = saved = ipset_strdup(session, str);
 	if (saved == NULL)
-		return ipset_err(session,
-				 "Cannot allocate memory to duplicate %s.",
-				 str);
+		return -1;
 	if ((a = elem_separator(tmp)) != NULL) {
 		/* setname,[before|after,setname */
 		*a++ = '\0';
@@ -1565,11 +1655,9 @@ ipset_parse_elem(struct ipset_session *session,
 		return ipset_err(session,
 				 "Internal error: set type is unknown!");
 
-	saved = tmp = strdup(str);
+	saved = tmp = ipset_strdup(session, str);
 	if (tmp == NULL)
-		return ipset_err(session,
-				 "Cannot allocate memory to duplicate %s.",
-				 str);
+		return -1;
 
 	a = elem_separator(tmp);
 	if (type->dimension > IPSET_DIM_ONE) {

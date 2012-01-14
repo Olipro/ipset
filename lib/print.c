@@ -158,13 +158,23 @@ __getnameinfo4(char *buf, unsigned int len,
 			  sizeof(saddr),
 			  buf, len, NULL, 0, flags);
 
-	if (!(flags & NI_NUMERICHOST) &&
-	    (err == EAI_AGAIN || (err == 0 && strchr(buf, '-') != NULL)))
+	if (!(flags & NI_NUMERICHOST) && (err == EAI_AGAIN))
 		err = getnameinfo((const struct sockaddr *)&saddr,
 				  sizeof(saddr),
 				  buf, len, NULL, 0,
 				  flags | NI_NUMERICHOST);
 	D("getnameinfo err: %i, errno %i", err, errno);
+	if (err == 0 && strstr(buf, IPSET_RANGE_SEPARATOR) != NULL) {
+		const char escape[] = IPSET_ESCAPE_START;
+		/* Escape hostname */
+		if (strlen(buf) + 2 > len) {
+			err = EAI_OVERFLOW;
+			return -1;
+		}
+		memmove(buf + 1, buf, strlen(buf) + 1);
+		buf[0] = escape[0];
+		strcat(buf, IPSET_ESCAPE_END);
+	}	
 	return (err == 0 ? (int)strlen(buf) :
 	       (err == EAI_OVERFLOW || err == EAI_SYSTEM) ? (int)len : -1);
 }
@@ -184,13 +194,23 @@ __getnameinfo6(char *buf, unsigned int len,
 			  sizeof(saddr),
 			  buf, len, NULL, 0, flags);
 
-	if (!(flags & NI_NUMERICHOST) &&
-	    (err == EAI_AGAIN || (err == 0 && strchr(buf, '-') != NULL)))
+	if (!(flags & NI_NUMERICHOST) && (err == EAI_AGAIN))
 		err = getnameinfo((const struct sockaddr *)&saddr,
 				  sizeof(saddr),
 				  buf, len, NULL, 0,
 				  flags | NI_NUMERICHOST);
 	D("getnameinfo err: %i, errno %i", err, errno);
+	if (err == 0 && strstr(buf, IPSET_RANGE_SEPARATOR) != NULL) {
+		const char escape[] = IPSET_ESCAPE_START;
+		/* Escape hostname */
+		if (strlen(buf) + 2 > len) {
+			err = EAI_OVERFLOW;
+			return -1;
+		}
+		memmove(buf + 1, buf, strlen(buf) + 1);
+		buf[0] = escape[0];
+		strcat(buf, IPSET_ESCAPE_END);
+	}	
 	return (err == 0 ? (int)strlen(buf) :
 	       (err == EAI_OVERFLOW || err == EAI_SYSTEM) ? (int)len : -1);
 }

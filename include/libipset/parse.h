@@ -15,6 +15,8 @@
 #define IPSET_ELEM_SEPARATOR	","
 #define IPSET_NAME_SEPARATOR	","
 #define IPSET_PROTO_SEPARATOR	":"
+#define IPSET_ESCAPE_START	"["
+#define IPSET_ESCAPE_END	"]"
 
 struct ipset_session;
 struct ipset_arg;
