@@ -1,3 +1,9 @@
+6.11
+ - hash:net,iface timeout bug fixed
+ - Exceptions support added to hash:*net* types
+ - net: Add export.h for EXPORT_SYMBOL/THIS_MODULE to non-modules
+ - Log warning when a hash type of set gets ful
+
 6.10
  - Invert the logic to include version.h in ip_set_core.c
  - Suppress false compile-time warnings about uninitialized variable ip_to

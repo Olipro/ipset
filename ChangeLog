@@ -1,3 +1,20 @@
+6.11
+ - Support hostnames and service names with dash
+ - Exceptions support added to hash:*net* types
+ - Log warning when a hash type of set gets full
+ - Set types moved into libipset library
+ - Library map file added in order to support library versioning
+ - doc: Linux 2.6.39 already has the defs (Jan Engelhardt)
+ - build: install libipset in the right place (Jan Engelhardt)
+ - Provide a pkgconfig file (Jan Engelhardt)
+ - build: make distcheck work and use POSIX mode for tarball generation
+   (Jan Engelhardt)
+ - build: install libipset/linux_ip_set_list.h (Jan Engelhardt)
+ - build: include libipset/nfproto.h (Jan Engelhardt)
+ - build: process include/libipset/ (Jan Engelhardt)
+ - build: use AC_CONFIG_AUX_DIR and stash away tools (Jan Engelhardt)
+ - Update .gitignore (Jan Engelhardt)
+
 6.10
  - Tests added to check ICMP/ICMPv6 type/code parsing
  - ICMP/ICMPv6 type/code parser bug fixed (bug reported by Sabitov)
