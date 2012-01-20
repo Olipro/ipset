@@ -1,5 +1,5 @@
 #include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,2,0)
 #include <linux/export.h>
 #endif
 #include <linux/netfilter/ipset/pfxlen.h>
