@@ -185,15 +185,15 @@ const struct ipset_envopts ipset_envopts[] = {
 	  .parse = ipset_envopt_parse,
 	  .has_arg = IPSET_NO_ARG,	.flag = IPSET_ENV_EXIST,
 	  .help = "\n"
-		  "        Ignore errors when creating already created sets,\n"
-		  "        when adding already existing elements\n"
-		  "        or when deleting non-existing elements.",
+		  "        Ignore errors when creating or adding sets or\n"
+		  "        elements that do exist or when deleting elements\n"
+		  "        that don't exist.",
 	},
 	{ .name = { "-n", "-name" },
 	  .parse = ipset_envopt_parse,
 	  .has_arg = IPSET_NO_ARG,	.flag = IPSET_ENV_LIST_SETNAME,
 	  .help = "\n"
-		  "        When listing, list just setnames from kernel.\n",
+		  "        When listing, just list setnames from the kernel.\n",
 	},
 	{ .name = { "-t", "-terse" },
 	  .parse = ipset_envopt_parse,
