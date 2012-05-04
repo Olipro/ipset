@@ -1130,6 +1130,35 @@ ipset_parse_ip4_net6(struct ipset_session *session,
 }
 
 /**
+ * ipset_parse_timeout - parse timeout parameter
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string as a timeout parameter. We have to take into account
+ * the jiffies storage in kernel.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_parse_timeout(struct ipset_session *session,
+		    enum ipset_opt opt, const char *str)
+{
+	int err;
+	unsigned long long num = 0;
+
+	assert(session);
+	assert(opt == IPSET_OPT_TIMEOUT);
+	assert(str);
+
+	err = string_to_number_ll(session, str, 0, UINT_MAX/1000, &num);
+	if (err == 0)
+		return ipset_session_data_set(session, opt, &num);
+
+	return err;
+}
+
+/**
  * ipset_parse_iptimeout - parse IPv4|IPv6 address and timeout
  * @session: session structure
  * @opt: option kind of the data
@@ -1171,7 +1200,7 @@ ipset_parse_iptimeout(struct ipset_session *session,
 	*a++ = '\0';
 	err = parse_ip(session, opt, tmp, IPADDR_ANY);
 	if (!err)
-		err = ipset_parse_uint32(session, IPSET_OPT_TIMEOUT, a);
+		err = ipset_parse_timeout(session, IPSET_OPT_TIMEOUT, a);
 
 	free(saved);
 	return err;
