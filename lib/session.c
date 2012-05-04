@@ -738,7 +738,6 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 	const struct ipset_data *data = session->data;
 	const struct ipset_type *type;
 	const struct ipset_arg *arg;
-	uint8_t family;
 	int i, found = 0;
 
 	D("enter");
@@ -750,7 +749,6 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 
 	if (type == NULL)
 		return MNL_CB_ERROR;
-	family = ipset_data_family(data);
 
 	for (i = IPSET_ATTR_UNSPEC + 1; i <= IPSET_ATTR_ADT_MAX; i++)
 		if (nla[i]) {

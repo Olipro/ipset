@@ -1554,6 +1554,8 @@ ipset_parse_iface(struct ipset_session *session,
 	if (STREQ(str, "physdev:")) {
 		offset = 8;
 		err = ipset_data_set(data, IPSET_OPT_PHYSDEV, str);
+		if (err < 0)
+			return err;
 	}
 	if (strlen(str + offset) > IFNAMSIZ - 1)
 		return syntax_err("interface name '%s' is longer "
