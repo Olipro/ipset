@@ -106,7 +106,6 @@ global:
   ipset_match_option;
   ipset_match_envopt;
   ipset_shift_argv;
-  ipset_port_usage;
   
 local: *;
 };
@@ -114,4 +113,5 @@ local: *;
 LIBIPSET_2.0 {
 global:
   ipset_load_types;
+  ipset_port_usage;
 } LIBIPSET_1.0;

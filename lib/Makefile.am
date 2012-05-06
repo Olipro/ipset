@@ -16,6 +16,7 @@ libipset_la_SOURCES = \
 	print.c \
 	session.c \
 	types.c \
+	ui.c \
 	ipset_bitmap_ip.c \
 	ipset_bitmap_ipmac.c \
 	ipset_bitmap_port.c \

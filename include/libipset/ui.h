@@ -7,6 +7,7 @@
 #ifndef LIBIPSET_UI_H
 #define LIBIPSET_UI_H
 
+#include <stdbool.h>				/* bool */
 #include <libipset/linux_ip_set.h>		/* enum ipset_cmd */
 
 /* Commands in userspace */
