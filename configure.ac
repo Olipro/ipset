@@ -206,3 +206,39 @@ dnl Generate output
 AC_CONFIG_FILES([Makefile include/libipset/Makefile
 	lib/Makefile lib/libipset.pc src/Makefile])
 AC_OUTPUT
+
+dnl Summary
+AC_MSG_RESULT([])
+AC_MSG_RESULT([$PACKAGE userspace tool configuration:])
+if test "x$enable_settype_modules" != "xyes"; then
+	AC_MSG_RESULT([    Dynamic module loading: disabled])
+else
+	AC_MSG_RESULT([    Dynamic module loading: enabled])
+fi
+IPSET_ALL_MODULES="`ls lib/ipset_*.c|sed -e 's/lib\///' -e 's/\.c$//'`"
+AC_MSG_RESULT([    Static modules:])
+if test "x$SETTYPE_MODLIST" = "x"; then
+	for mod in $IPSET_ALL_MODULES; do
+		AC_MSG_RESULT([        ${mod}])
+	done
+	AC_MSG_RESULT([    Dynamic modules:])
+elif echo $SETTYPE_MODLIST | grep "all" >/dev/null; then
+	AC_MSG_RESULT([    Dynamic modules:])
+	for mod in $IPSET_ALL_MODULES; do
+		AC_MSG_RESULT([        ${mod}])
+	done
+else
+	for mod in $IPSET_ALL_MODULES; do
+		if echo $SETTYPE_MODLIST | grep $mod >/dev/null; then
+			:
+		else
+			AC_MSG_RESULT([        ${mod}])
+		fi
+	done
+	AC_MSG_RESULT([    Dynamic modules:])
+	for mod in $IPSET_ALL_MODULES; do
+		if echo $SETTYPE_MODLIST | grep $mod >/dev/null; then
+			AC_MSG_RESULT([        ${mod}])
+		fi
+	done
+fi
