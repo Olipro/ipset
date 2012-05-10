@@ -287,6 +287,7 @@ static struct ipset_type ipset_hash_netport3 = {
 	.usagefn = ipset_port_usage,
 };
 
+void _init(void);
 void _init(void)
 {
 	ipset_type_add(&ipset_hash_netport1);

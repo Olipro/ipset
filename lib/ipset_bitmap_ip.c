@@ -96,6 +96,7 @@ static struct ipset_type ipset_bitmap_ip0 = {
 	.usage = bitmap_ip_usage,
 };
 
+void _init(void);
 void _init(void)
 {
 	ipset_type_add(&ipset_bitmap_ip0);

@@ -172,6 +172,7 @@ dnl Check extra warning flags except
 dnl	-Wconversion		-> we need it
 dnl	-Wunreachable-code	-> fails with ntoh*
 dnl	-Wpointer-arith		-> limbnl uses it
+dnl	-Wsign-conversion	-> libmnl
 if test "x$enable_debug" = "xyes"
 then
 AX_CFLAGS_GCC_OPTION(-Waggregate-return)
@@ -182,22 +183,28 @@ AX_CFLAGS_GCC_OPTION(-Werror)
 AX_CFLAGS_GCC_OPTION(-Wextra)
 AX_CFLAGS_GCC_OPTION(-Wfloat-equal)
 AX_CFLAGS_GCC_OPTION(-Wformat=2)
+AX_CFLAGS_GCC_OPTION(-Wjump-misses-init)
 AX_CFLAGS_GCC_OPTION(-Winit-self)
 AX_CFLAGS_GCC_OPTION(-Winline)
+AX_CFLAGS_GCC_OPTION(-Wlogical-op)
 AX_CFLAGS_GCC_OPTION(-Wmissing-declarations)
 AX_CFLAGS_GCC_OPTION(-Wmissing-format-attribute)
 AX_CFLAGS_GCC_OPTION(-Wmissing-prototypes)
 AX_CFLAGS_GCC_OPTION(-Wnested-externs)
 AX_CFLAGS_GCC_OPTION(-Wno-missing-field-initializers)
+AX_CFLAGS_GCC_OPTION(-Wold-style-definition)
 AX_CFLAGS_GCC_OPTION(-Woverlength-strings)
 AX_CFLAGS_GCC_OPTION(-Wpacked)
 AX_CFLAGS_GCC_OPTION(-Wredundant-decls)
+AX_CFLAGS_GCC_OPTION(-Wrwrite-strings)
 AX_CFLAGS_GCC_OPTION(-Wshadow)
 AX_CFLAGS_GCC_OPTION(-Wsign-compare)
 AX_CFLAGS_GCC_OPTION(-Wstrict-prototypes)
 AX_CFLAGS_GCC_OPTION(-Wswitch-default)
 AX_CFLAGS_GCC_OPTION(-Wundef)
+AX_CFLAGS_GCC_OPTION(-Wuninitialized)
 AX_CFLAGS_GCC_OPTION(-Wunused)
+AX_CFLAGS_GCC_OPTION(-Wvla)
 AX_CFLAGS_GCC_OPTION(-Wwrite-strings)
 fi
 dnl Checks for library functions.

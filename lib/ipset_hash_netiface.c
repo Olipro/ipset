@@ -200,6 +200,7 @@ static struct ipset_type ipset_hash_netiface1 = {
 	.usage = hash_netiface1_usage,
 };
 
+void _init(void);
 void _init(void)
 {
 	ipset_type_add(&ipset_hash_netiface0);

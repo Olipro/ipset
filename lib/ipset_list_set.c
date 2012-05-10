@@ -90,6 +90,7 @@ static struct ipset_type ipset_list_set0 = {
 	.usage = list_set_usage,
 };
 
+void _init(void);
 void _init(void)
 {
 	ipset_type_add(&ipset_list_set0);

@@ -65,8 +65,8 @@ enum ipset_opt {
 	IPSET_OPT_MAX,
 };
 
-#define IPSET_FLAG(opt)		(1LL << (opt))
-#define IPSET_FLAGS_ALL		(~0LL)
+#define IPSET_FLAG(opt)		(1ULL << (opt))
+#define IPSET_FLAGS_ALL		(~0ULL)
 
 #define IPSET_CREATE_FLAGS		\
 	(IPSET_FLAG(IPSET_OPT_FAMILY)	\
