@@ -35,6 +35,3 @@ libipset_la_SOURCES = \
 	types_init.c
 
 EXTRA_DIST = $(IPSET_SETTYPE_LIST) libipset.map
-
-#%.o: %.c
-#	${AM_VERBOSE_CC} ${CC} ${AM_DEPFLAGS} ${AM_CFLAGS} ${CFLAGS} -o $@ -c $<

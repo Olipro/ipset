@@ -13,6 +13,3 @@ endif
 endif
 
 dist_man_MANS = ipset.8
-
-#%.o: %.c
-#	${AM_VERBOSE_CC} ${CC} ${AM_DEPFLAGS} ${AM_CFLAGS} ${CFLAGS} -o $@ -c $<

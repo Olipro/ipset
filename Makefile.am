@@ -14,11 +14,6 @@ IP_SET_MAX=256
 else
 IP_SET_MAX=$(MAXSETS)
 endif
-if ENABLE_VERBOSE
-V=1
-else
-V=0
-endif
 
 SUBDIRS		= include/libipset lib src
 

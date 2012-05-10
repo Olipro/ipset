@@ -80,9 +80,3 @@ AM_CFLAGS += -g -g3 -ggdb -gdwarf-2 -DIPSET_DEBUG -Wall -Werror
 else
 AM_CFLAGS += -O2 -DNDEBUG
 endif
-
-if ! ENABLE_VERBOSE
-AM_LIBTOOL_SILENT = --silent
-AM_VERBOSE_CC     = @echo "  CC      " $@;
-AM_VERBOSE_CCLD   = @echo "  CCLD    " $@;
-endif

@@ -26,26 +26,25 @@ BUILT_SOURCES = ipset_settype_check types_init.c ipset_settype_modules
 CLEANFILES = ipset_settype_check types_init.c $(IPSET_SETTYPE_ALL_MODULES)
 
 ipset_%.lo: ipset_%.c
-@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`; \
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`; \
 @am__fastdepCC_TRUE@	$(LTCOMPILE) -D_INIT=ipset_$*_init \
 		$(if $(findstring ipset_$*.c,$(IPSET_SETTYPE_STATIC)), -DTYPE_INCLUSIVE,)\
 		-MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< && \
 @am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -D_INIT=ipset_$*_init \
 		$(if $(findstring ipset_$*.c,$(IPSET_SETTYPE_STATIC)), -DTYPE_INCLUSIVE,)\
 		-c -o $@ $<
 
 ipset_%.la: $(lib_LTLIBRARIES) ipset_%.lo
-	lobj="$(patsubst %.la, %.lo, $@)"; \
-	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_V_CCLD)lobj="$(patsubst %.la, %.lo, $@)"; \
+	$(LIBTOOL) --silent --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 		$(CFLAGS) $(IPSET_SETTYPE_DYNAMIC_LTFLAGS) $(LDFLAGS) -o $@ \
 		-rpath $(IPSET_MODSDIR) $$lobj $(LIBS) $(top_builddir)/lib/libipset.la
 
 types_init.c: $(IPSET_SETTYPE_STATIC_OBJECTS)
-	@( \
-	static_list=`echo $(patsubst %.c,%,$(IPSET_SETTYPE_STATIC))`; \
+	$(AM_V_GEN)static_list=`echo $(patsubst %.c,%,$(IPSET_SETTYPE_STATIC))`; \
 	echo -n "" > $@; \
 	for i in $$static_list; do \
 		echo "extern void $${i}_init(void);" >> $@; \
@@ -56,8 +55,7 @@ types_init.c: $(IPSET_SETTYPE_STATIC_OBJECTS)
 	for i in $$static_list; do \
 		echo "	""$${i}_init();" >> $@; \
 	done; \
-	echo "}" >> $@; \
-	);
+	echo "}" >> $@;
 
 ipset_settype_check:
 	@list="$(IPSET_SETTYPE_MODULES) $(IPSET_SETTYPE_STATIC_OBJECTS)"; \
