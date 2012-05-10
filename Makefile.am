@@ -75,6 +75,13 @@ tidy: distclean modules_clean
 	rm -rf lib/ipset_settype_check lib/types_init.c
 	find . -name '*~' -delete
 
-.PHONY: modules modules_instal modules_clean update_includes tests
+tarball:
+	rm -Rf /tmp/ipset-${PACKAGE_VERSION};
+	pushd ${top_srcdir} && git archive --prefix=ipset-${PACKAGE_VERSION}/ HEAD | tar -C /tmp -x && popd;
+	pushd /tmp/ipset-${PACKAGE_VERSION} && ./autogen.sh && popd;
+	tar -C /tmp -cjf ipset-${PACKAGE_VERSION}.tar.bz2 --owner=root --group=root ipset-${PACKAGE_VERSION}/;
+	rm -Rf /tmp/ipset-${PACKAGE_VERSION};
+
+.PHONY: modules modules_instal modules_clean update_includes tests tarball
 
 DISTCHECK_CONFIGURE_FLAGS = --with-kmod=no
