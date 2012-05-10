@@ -1643,7 +1643,7 @@ ipset_call_parser(struct ipset_session *session,
 	if (ipset_data_flags_test(data, IPSET_FLAG(arg->opt))
 	    && !(arg->opt == IPSET_OPT_FAMILY
 	         && ipset_data_test_ignored(data, IPSET_OPT_FAMILY)))
-		syntax_err("%s already specified", arg->name[0]);
+		return syntax_err("%s already specified", arg->name[0]);
 
 	return arg->parse(session, arg->opt, str);
 }
