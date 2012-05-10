@@ -222,7 +222,7 @@ if test "x$enable_settype_modules" != "xyes"; then
 else
 	AC_MSG_RESULT([    Dynamic module loading: enabled])
 fi
-IPSET_ALL_MODULES="`ls lib/ipset_*.c|sed -e 's/lib\///' -e 's/\.c$//'`"
+IPSET_ALL_MODULES="`ls ${srcdir}/lib/ipset_*.c|sed -e 's/^.*lib\///' -e 's/\.c$//'`"
 AC_MSG_RESULT([    Static modules:])
 if test "x$SETTYPE_MODLIST" = "x"; then
 	for mod in $IPSET_ALL_MODULES; do
