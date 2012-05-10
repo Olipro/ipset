@@ -1,3 +1,17 @@
+6.12
+ - Backport nla_put_net* functions as NLA_PUT* were removed
+ - netlink: add netlink_dump_control structure for netlink_dump_start()
+ - ipset: Stop using NLA_PUT*().
+ - Fix hash size checking in kernel (bug reported by Seblu)
+ - Correct README file about minimal required iptables version
+   (Oskar Berggren)
+ - Sparse warnings "incorrect type in assignment" fixed
+ - Fix timeout value overflow bug at large timeout parameters
+   (bug reported by Andreas Herz)
+ - ipv6: Add fragment reporting to ipv6_skip_exthdr().
+ - net: remove ipv6_addr_copy()
+ - Fix the inclusion of linux/export.h (Henry Culver)
+
 6.11
  - hash:net,iface timeout bug fixed
  - Exceptions support added to hash:*net* types

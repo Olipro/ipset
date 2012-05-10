@@ -1,3 +1,18 @@
+6.12
+ - Cleanup generated files by make tidy
+ - Add more CC warning option to debug mode
+ - Report syntax error messages immediately
+ - Suppress false syntax error messages
+ - Add configure summary for the ipset userspace tool
+ - Add dynamic module support to ipset userspace tool
+   (Neutron Soutmun)
+ - Move ipset_port_usage() into lib (Neutron Soutmun)
+ - Fix invalid assignment to const void pointer (bug reported by Seblu)
+ - Remove unused variables (warnings fixed)
+ - Fix timeout value overflow bug at large timeout parameters
+   (bug reported by Andreas Herz)
+ - Improve ipset help text messages (Mr Dash Four)
+
 6.11
  - Support hostnames and service names with dash
  - Exceptions support added to hash:*net* types
