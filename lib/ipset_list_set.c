@@ -46,7 +46,7 @@ static const char list_set_usage[] =
 "test   SETNAME NAME [before|after NAME]\n\n"
 "where NAME are existing set names.\n";
 
-struct ipset_type ipset_list_set0 = {
+static struct ipset_type ipset_list_set0 = {
 	.name = "list:set",
 	.alias = { "setlist", NULL },
 	.revision = 0,
@@ -89,3 +89,8 @@ struct ipset_type ipset_list_set0 = {
 
 	.usage = list_set_usage,
 };
+
+void _init(void)
+{
+	ipset_type_add(&ipset_list_set0);
+}

@@ -24,3 +24,5 @@ modules.order
 /configure
 /libtool
 /stamp-h1
+
+/libltdl/

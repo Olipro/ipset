@@ -19,25 +19,11 @@
 #include <libipset/utils.h>			/* STREQ */
 #include <libipset/types.h>			/* prototypes */
 
-/* The known set types: (typename, revision, family) is unique */
-extern struct ipset_type ipset_bitmap_ip0;
-extern struct ipset_type ipset_bitmap_ipmac0;
-extern struct ipset_type ipset_bitmap_port0;
-extern struct ipset_type ipset_hash_ip0;
-extern struct ipset_type ipset_hash_net0;
-extern struct ipset_type ipset_hash_net1;
-extern struct ipset_type ipset_hash_net2;
-extern struct ipset_type ipset_hash_netport1;
-extern struct ipset_type ipset_hash_netport2;
-extern struct ipset_type ipset_hash_netport3;
-extern struct ipset_type ipset_hash_netiface0;
-extern struct ipset_type ipset_hash_netiface1;
-extern struct ipset_type ipset_hash_ipport1;
-extern struct ipset_type ipset_hash_ipportip1;
-extern struct ipset_type ipset_hash_ipportnet1;
-extern struct ipset_type ipset_hash_ipportnet2;
-extern struct ipset_type ipset_hash_ipportnet3;
-extern struct ipset_type ipset_list_set0;
+#ifdef ENABLE_SETTYPE_MODULES
+#include <dlfcn.h>
+#include <sys/types.h>
+#include <dirent.h>
+#endif
 
 /* Userspace cache of sets which exists in the kernel */
 
@@ -583,25 +569,58 @@ ipset_cache_fini(void)
  void
  ipset_load_types(void)
  {
+#ifdef ENABLE_SETTYPE_MODULES
+	const char *dir  = IPSET_MODSDIR;
+	const char *next = NULL;
+	char   path[256];
+	char   file[256];
+	struct dirent **list = NULL;
+	int    n;
+	int    len;
+#endif
+
  	if (typelist != NULL)
  		return;
 
-	ipset_type_add(&ipset_bitmap_ip0);
-	ipset_type_add(&ipset_bitmap_ipmac0);
-	ipset_type_add(&ipset_bitmap_port0);
-	ipset_type_add(&ipset_hash_ip0);
-	ipset_type_add(&ipset_hash_net0);
-	ipset_type_add(&ipset_hash_net1);
-	ipset_type_add(&ipset_hash_net2);
-	ipset_type_add(&ipset_hash_netport1);
-	ipset_type_add(&ipset_hash_netport2);
-	ipset_type_add(&ipset_hash_netport3);
-	ipset_type_add(&ipset_hash_netiface0);
-	ipset_type_add(&ipset_hash_netiface1);
-	ipset_type_add(&ipset_hash_ipport1);
-	ipset_type_add(&ipset_hash_ipportip1);
-	ipset_type_add(&ipset_hash_ipportnet1);
-	ipset_type_add(&ipset_hash_ipportnet2);
-	ipset_type_add(&ipset_hash_ipportnet3);
-	ipset_type_add(&ipset_list_set0);
+	/* Initialize static types */
+	ipset_types_init();
+
+#ifdef ENABLE_SETTYPE_MODULES
+	/* Initialize dynamic types */
+	do {
+		next = strchr(dir, ':');
+		if (next == NULL)
+			next = dir + strlen(dir);
+
+		len = snprintf(path, sizeof(path), "%.*s",
+		               (unsigned int)(next - dir), dir);
+
+		if (len >= sizeof(path) || len < 0)
+			continue;
+
+		n = scandir(path, &list, NULL, alphasort);
+		if (n < 0)
+			continue;
+
+		while (n--) {
+			if (strstr(list[n]->d_name, ".so") == NULL)
+				goto nextf;
+
+			len = snprintf(file, sizeof(file), "%s/%s", path, list[n]->d_name);
+			if (len >= sizeof(file) || len < 0)
+				goto nextf;
+
+			if (dlopen(file, RTLD_NOW) == NULL) {
+				fprintf(stderr, "%s: %s\n", file, dlerror());
+			}
+
+nextf:
+			free(list[n]);
+		}
+
+		free(list);
+
+		dir = next + 1;
+	} while (*next != '\0');
+#endif // ENABLE_SETTYPE_MODULES
 }

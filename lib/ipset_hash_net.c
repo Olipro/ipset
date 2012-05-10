@@ -69,7 +69,7 @@ static const char hash_net0_usage[] =
 "      IP is an IPv4 or IPv6 address (or hostname),\n"
 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n";
 
-struct ipset_type ipset_hash_net0 = {
+static struct ipset_type ipset_hash_net0 = {
 	.name = "hash:net",
 	.alias = { "nethash", NULL },
 	.revision = 0,
@@ -121,7 +121,7 @@ static const char hash_net1_usage[] =
 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
 "      IP range is not supported with IPv6.\n";
 
-struct ipset_type ipset_hash_net1 = {
+static struct ipset_type ipset_hash_net1 = {
 	.name = "hash:net",
 	.alias = { "nethash", NULL },
 	.revision = 1,
@@ -187,7 +187,7 @@ static const char hash_net2_usage[] =
 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
 "      IP range is not supported with IPv6.\n";
 
-struct ipset_type ipset_hash_net2 = {
+static struct ipset_type ipset_hash_net2 = {
 	.name = "hash:net",
 	.alias = { "nethash", NULL },
 	.revision = 2,
@@ -229,3 +229,9 @@ struct ipset_type ipset_hash_net2 = {
 	.usage = hash_net2_usage,
 };
 
+void _init(void)
+{
+	ipset_type_add(&ipset_hash_net0);
+	ipset_type_add(&ipset_hash_net1);
+	ipset_type_add(&ipset_hash_net2);
+}

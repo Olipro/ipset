@@ -6,6 +6,11 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([foreign subdir-objects tar-pax])
 
+AC_ENABLE_STATIC
+LT_INIT([dlopen])
+LT_CONFIG_LTDL_DIR([libltdl])
+LTDL_INIT([nonrecursive])
+
 dnl Shortcut: Linux supported alone
 case "$host" in
 *-*-linux*) ;;
@@ -99,6 +104,43 @@ AC_ARG_ENABLE([debug],
 	       esac], [enable_debug=no])
 	      
 AM_CONDITIONAL([ENABLE_DEBUG], [test "x$enable_debug" = xyes])
+
+dnl Enable type modules
+AC_ARG_ENABLE([settype_modules],
+	          AS_HELP_STRING([--enable-settype-modules],
+	          [Enable set type modules support]),
+	          [enable_settype_modules="$enableval"],
+	          [enable_settype_modules="no"])
+
+AC_ARG_WITH([settype_modules_list],
+	        AS_HELP_STRING([--with-settype-modules-list="mod1 mod2 ..."],
+	                       [List of dynamic loading modules, ignored if settype-modules is disabled. It could be "all" to build all available settypes as modules]),
+	                       [SETTYPE_MODLIST_RAW="$withval";])
+
+SETTYPE_MODLIST=
+if test "x$enable_settype_modules" = "xyes"; then
+	for mod in $SETTYPE_MODLIST_RAW; do
+		if echo $mod | grep "all"; then
+			m="${mod}"
+		else
+			if echo $mod | grep "ipset_"; then
+				m="${mod}.c"
+			else
+				m="ipset_${mod}.c"
+			fi
+		fi
+
+		SETTYPE_MODLIST="${SETTYPE_MODLIST} $m"
+	done
+
+	AC_MSG_RESULT([checking for configuration with dynamic loading modules... $SETTYPE_MODLIST_RAW])
+fi
+AC_SUBST(SETTYPE_MODLIST)
+
+AM_CONDITIONAL([ENABLE_SETTYPE_MODULES], [test "x$enable_settype_modules" = xyes])
+
+AM_CONDITIONAL([ENABLE_STATIC], [test "x$enable_static" = xyes])
+AM_CONDITIONAL([ENABLE_SHARED], [test "x$enable_shared" = xyes])
 
 dnl Checks for programs
 : ${CFLAGS=""}

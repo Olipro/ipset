@@ -62,7 +62,7 @@ static const char hash_netiface_usage[] =
 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
 "      Adding/deleting multiple elements with IPv4 is supported.\n";
 
-struct ipset_type ipset_hash_netiface0 = {
+static struct ipset_type ipset_hash_netiface0 = {
 	.name = "hash:net,iface",
 	.alias = { "netifacehash", NULL },
 	.revision = 0,
@@ -143,7 +143,7 @@ static const char hash_netiface1_usage[] =
 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
 "      Adding/deleting multiple elements with IPv4 is supported.\n";
 
-struct ipset_type ipset_hash_netiface1 = {
+static struct ipset_type ipset_hash_netiface1 = {
 	.name = "hash:net,iface",
 	.alias = { "netifacehash", NULL },
 	.revision = 1,
@@ -200,3 +200,8 @@ struct ipset_type ipset_hash_netiface1 = {
 	.usage = hash_netiface1_usage,
 };
 
+void _init(void)
+{
+	ipset_type_add(&ipset_hash_netiface0);
+	ipset_type_add(&ipset_hash_netiface1);
+}

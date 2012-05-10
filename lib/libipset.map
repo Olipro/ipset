@@ -114,4 +114,5 @@ LIBIPSET_2.0 {
 global:
   ipset_load_types;
   ipset_port_usage;
+  ipset_parse_timeout;
 } LIBIPSET_1.0;

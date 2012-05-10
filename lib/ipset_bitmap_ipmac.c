@@ -53,7 +53,7 @@ static const char bitmap_ipmac_usage[] =
 "      CIDR is a valid IPv4 CIDR prefix,\n"
 "      MAC is a valid MAC address.\n";
 
-struct ipset_type ipset_bitmap_ipmac0 = {
+static struct ipset_type ipset_bitmap_ipmac0 = {
 	.name = "bitmap:ip,mac",
 	.alias = { "macipmap", NULL },
 	.revision = 0,
@@ -98,3 +98,8 @@ struct ipset_type ipset_bitmap_ipmac0 = {
 
 	.usage = bitmap_ipmac_usage,
 };
+
+void _init(void)
+{
+	ipset_type_add(&ipset_bitmap_ipmac0);
+}
