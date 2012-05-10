@@ -166,7 +166,7 @@ do {						\
  * @data: data blob
  * @flags: the option flag to be ignored
  *
- * Returns true if the option was not already ignored.
+ * Returns true if the option was already ignored.
  */
 bool
 ipset_data_ignored(struct ipset_data *data, enum ipset_opt opt)
@@ -178,6 +178,21 @@ ipset_data_ignored(struct ipset_data *data, enum ipset_opt opt)
 	data->ignored |= IPSET_FLAG(opt);
 
 	return ignored;
+}
+
+/**
+ * ipset_data_test_ignored - test ignored bits in the data blob
+ * @data: data blob
+ * @flags: the option flag to be tested
+ *
+ * Returns true if the option is ignored.
+ */
+bool
+ipset_data_test_ignored(struct ipset_data *data, enum ipset_opt opt)
+{
+	assert(data);
+
+	return data->ignored & IPSET_FLAG(opt);
 }
 
 /**
@@ -208,6 +223,7 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		break;
 	case IPSET_OPT_FAMILY:
 		data->family = *(const uint8_t *) value;
+		data->ignored &= ~IPSET_FLAG(IPSET_OPT_FAMILY);
 		D("family set to %u", data->family);
 		break;
 	/* CADT options */

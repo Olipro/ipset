@@ -651,7 +651,8 @@ ipset_parse_family(struct ipset_session *session,
 	assert(str);
 
 	data = ipset_session_data(session);
-	if (ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_FAMILY)))
+	if (ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_FAMILY))
+	    && !ipset_data_test_ignored(data, IPSET_OPT_FAMILY))
 		syntax_err("protocol family may not be specified "
 			   "multiple times");
 
@@ -1637,8 +1638,11 @@ ipset_call_parser(struct ipset_session *session,
 				  const struct ipset_arg *arg,
 				  const char *str)
 {
-	if (ipset_data_flags_test(ipset_session_data(session),
-				  IPSET_FLAG(arg->opt)))
+	struct ipset_data *data = ipset_session_data(session);
+
+	if (ipset_data_flags_test(data, IPSET_FLAG(arg->opt))
+	    && !(arg->opt == IPSET_OPT_FAMILY
+	         && ipset_data_test_ignored(data, IPSET_OPT_FAMILY)))
 		syntax_err("%s already specified", arg->name[0]);
 
 	return arg->parse(session, arg->opt, str);

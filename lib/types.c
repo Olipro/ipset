@@ -207,6 +207,7 @@ create_type_get(struct ipset_session *session)
 	uint8_t family, tmin = 0, tmax = 0;
 	uint8_t kmin, kmax;
 	int ret;
+	bool ignore_family = false;
 
 	data = ipset_session_data(session);
 	assert(data);
@@ -238,6 +239,8 @@ create_type_get(struct ipset_session *session)
 		family = match->family == NFPROTO_IPSET_IPV46 ?
 			 NFPROTO_IPV4 : match->family;
 		ipset_data_set(data, IPSET_OPT_FAMILY, &family);
+		if (match->family == NFPROTO_IPSET_IPV46)
+			ignore_family = true;
 	}
 
 	if (match->kernel_check == IPSET_KERNEL_OK)
@@ -294,6 +297,11 @@ create_type_get(struct ipset_session *session)
 found:
 	ipset_data_set(data, IPSET_OPT_TYPE, match);
 
+	if (ignore_family) {
+		/* Overload ignored flag */
+		D("set ignored flag to FAMILY");
+		ipset_data_ignored(data, IPSET_OPT_FAMILY);
+	}
 	return match;
 }
 
@@ -390,7 +398,11 @@ ipset_type_get(struct ipset_session *session, enum ipset_cmd cmd)
 
 	switch (cmd) {
 	case IPSET_CMD_CREATE:
-		return create_type_get(session);
+		return ipset_data_test(ipset_session_data(session),
+				       IPSET_OPT_TYPE)
+			? ipset_data_get(ipset_session_data(session),
+					 IPSET_OPT_TYPE)
+			: create_type_get(session);
 	case IPSET_CMD_ADD:
 	case IPSET_CMD_DEL:
 	case IPSET_CMD_TEST:
