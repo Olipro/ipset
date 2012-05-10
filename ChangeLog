@@ -1,3 +1,9 @@
+6.12.1
+ - Enable silent (kernel style) compile messages
+ - Fix build failed on --disable-dependency-tracking
+   (Neutron Soutmun)
+ - Add tarball target to Makefile
+
 6.12
  - Cleanup generated files by make tidy
  - Add more CC warning option to debug mode
