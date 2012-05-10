@@ -1172,12 +1172,22 @@ ip_set_dump(struct sock *ctnl, struct sk_buff *skb,
 	if (unlikely(protocol_failed(attr)))
 		return -IPSET_ERR_PROTOCOL;
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 1, 0)
 	return netlink_dump_start(ctnl, skb, nlh,
 				  ip_set_dump_start,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 1, 0)
 				  ip_set_dump_done);
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0)
+	return netlink_dump_start(ctnl, skb, nlh,
+				  ip_set_dump_start,
 				  ip_set_dump_done, 0);
+#else
+	{
+		struct netlink_dump_control c = {
+			.dump = ip_set_dump_start,
+			.done = ip_set_dump_done,
+		};
+		return netlink_dump_start(ctnl, skb, nlh, &c);
+	}
 #endif
 }
 
