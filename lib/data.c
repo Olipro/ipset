@@ -364,7 +364,7 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
  * @opt: option kind of the requested data
  *
  * Returns the pointer to the requested kind of data from the data blob
- * if it is set. If the option kind is not set or is an unkown type,
+ * if it is set. If the option kind is not set or is an unknown type,
  * NULL is returned.
  */
 const void *

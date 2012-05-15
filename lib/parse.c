@@ -1519,7 +1519,7 @@ ipset_parse_typename(struct ipset_session *session,
 	/* Find the corresponding type */
 	typename = ipset_typename_resolve(str);
 	if (typename == NULL)
-		return syntax_err("typename '%s' is unkown", str);
+		return syntax_err("typename '%s' is unknown", str);
 	ipset_session_data_set(session, IPSET_OPT_TYPENAME, typename);
 	type = ipset_type_get(session, IPSET_CMD_CREATE);
 
@@ -1591,7 +1591,7 @@ ipset_parse_output(struct ipset_session *session,
 	else if (STREQ(str, "save"))
 		return ipset_session_output(session, IPSET_LIST_SAVE);
 
-	return syntax_err("unkown output mode '%s'", str);
+	return syntax_err("unknown output mode '%s'", str);
 }
 
 /**
