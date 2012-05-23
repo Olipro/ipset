@@ -154,6 +154,37 @@ ipset_match_cmd(const char *arg, const char * const name[])
 		       (name[1] != NULL && tolower(arg[0]) == name[1][0]);
 }
 
+/* Used up so far
+ *
+ *	-A		add
+ *	-D		del
+ *	-E		rename
+ *	-f		-file
+ *	-F		flush
+ *	-h		help
+ *	-H		help
+ *	-L		list
+ *	-n		-name
+ *	-N		create
+ *	-o		-output
+ *	-r		-resolve
+ *	-R		restore
+ *	-s		-sorted
+ *	-S		save
+ *	-t		-terse
+ *	-T		test
+ *	-q		-quiet
+ *	-X		destroy
+ *	-v		version
+ *	-V		version
+ *	-W		swap
+ *	-!		-exist
+ */
+
+int
+ipset_parse_file(struct ipset_session *session,
+                 int opt, const char *str);
+
 const struct ipset_envopts ipset_envopts[] = {
 	{ .name = { "-o", "-output" },
 	  .has_arg = IPSET_MANDATORY_ARG,	.flag = IPSET_OPT_MAX,
@@ -201,6 +232,14 @@ const struct ipset_envopts ipset_envopts[] = {
 	  .help = "\n"
 		  "        When listing, list setnames and set headers\n"
 		  "        from kernel only.",
+	},
+	{ .name = { "-f", "-file" },
+	  .parse = ipset_parse_file,
+	  .has_arg = IPSET_MANDATORY_ARG,	.flag = IPSET_OPT_MAX,
+	  .help = "\n"
+		  "        Read from the given file instead of standard\n"
+		  "        input (restore) or write to given file instead\n"
+		  "        of standard output (list/save).",
 	},
 	{ },
 };

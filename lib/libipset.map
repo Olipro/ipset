@@ -117,3 +117,8 @@ global:
   ipset_parse_timeout;
   ipset_data_test_ignored;
 } LIBIPSET_1.0;
+
+LIBIPSET_3.0 {
+global:
+  ipset_session_outfn;
+} LIBIPSET_2.0;

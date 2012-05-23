@@ -6,7 +6,9 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+#include <assert.h>			/* assert */
 #include <ctype.h>			/* isspace */
+#include <errno.h>			/* errno */
 #include <stdarg.h>			/* va_* */
 #include <stdbool.h>			/* bool */
 #include <stdio.h>			/* fprintf, fgets */
@@ -32,6 +34,8 @@ static bool interactive;
 static char cmdline[1024];
 static char *newargv[255];
 static int newargc;
+static FILE *fd = NULL;
+static const char *filename = NULL;
 
 enum exittype {
 	NO_PROBLEM = 0,
@@ -74,6 +78,8 @@ exit_error(int status, const char *msg, ...)
 		ipset_session_fini(session);
 
 	D("status: %u", status);
+	if (fd)
+		fclose(fd);
 	exit(status > VERSION_PROBLEM ? OTHER_PROBLEM : status);
 	/* Unreached */
 	return -1;
@@ -92,6 +98,8 @@ handle_error(void)
 
 	if (!interactive) {
 		ipset_session_fini(session);
+		if (fd)
+			fclose(fd);
 		exit(OTHER_PROBLEM);
 	}
 
@@ -118,6 +126,32 @@ help(void)
 			printf("%s %s\n", opt->name[0], opt->help);
 		opt++;
 	}
+}
+
+int
+ipset_parse_file(struct ipset_session *session UNUSED,
+		 int opt UNUSED, const char *str)
+{
+	if (filename != NULL)
+		return exit_error(PARAMETER_PROBLEM,
+				  "-file option can be specified once");
+	filename = str;
+	
+	return 0;
+}
+
+int __attribute__ ((format (printf, 1, 2)))
+ipset_print_file(const char *fmt, ...)
+{
+	int len;
+	va_list args;
+
+	assert(fd != NULL);
+	va_start(args, fmt);
+	len = vfprintf(fd, fmt, args);
+	va_end(args); 
+
+	return len;
 }
 
 /* Build faked argv from parsed line */
@@ -156,12 +190,22 @@ restore(char *argv0)
 {
 	int ret = 0;
 	char *c;
+	FILE *fread = stdin;
 
 	/* Initialize newargv/newargc */
 	newargc = 0;
 	newargv[newargc++] = argv0;
+	if (filename) {
+		fd = fopen(filename, "r");
+		if (!fd) {
+			return exit_error(OTHER_PROBLEM,
+					  "Cannot open %s for reading: %s",
+					  filename, strerror(errno));
+		}
+		fread = fd;
+	}
 
-	while (fgets(cmdline, sizeof(cmdline), stdin)) {
+	while (fgets(cmdline, sizeof(cmdline), fread)) {
 		restore_line++;
 		c = cmdline;
 		while (isspace(c[0]))
@@ -624,10 +668,19 @@ parse_commandline(int argc, char *argv[])
 		check_allowed(type, cmd);
 
 		break;
-	case IPSET_CMD_DESTROY:
-	case IPSET_CMD_FLUSH:
 	case IPSET_CMD_LIST:
 	case IPSET_CMD_SAVE:
+		if (filename != NULL) {
+			fd = fopen(filename, "w");
+			if (!fd)
+				return exit_error(OTHER_PROBLEM,
+						  "Cannot open %s for writing: "
+						  "%s", filename,
+						  strerror(errno));
+			ipset_session_outfn(session, ipset_print_file);
+		}
+	case IPSET_CMD_DESTROY:
+	case IPSET_CMD_FLUSH:
 		/* Args: [setname] */
 		if (arg0) {
 			ret = ipset_parse_setname(session,
@@ -721,6 +774,8 @@ main(int argc, char *argv[])
 	ret = parse_commandline(argc, argv);
 
 	ipset_session_fini(session);
+	if (fd)
+		fclose(fd);
 
 	return ret;
 }

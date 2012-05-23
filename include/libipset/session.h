@@ -97,6 +97,8 @@ extern int ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd,
 typedef int (*ipset_outfn)(const char *fmt, ...)
 	__attribute__ ((format (printf, 1, 2)));
 
+extern int ipset_session_outfn(struct ipset_session *session,
+			       ipset_outfn outfn);
 extern struct ipset_session *ipset_session_init(ipset_outfn outfn);
 extern int ipset_session_fini(struct ipset_session *session);
 

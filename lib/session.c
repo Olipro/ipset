@@ -1941,6 +1941,19 @@ cleanup:
 }
 
 /**
+ * ipset_session_outfn - set session output printing function
+ *
+ * Set the session printing function.
+ *
+ */
+int
+ipset_session_outfn(struct ipset_session *session, ipset_outfn outfn)
+{
+	session->outfn = outfn ? outfn : printf;
+	return 0;
+}
+
+/**
  * ipset_session_init - initialize an ipset session
  *
  * Initialize an ipset session by allocating a session structure
