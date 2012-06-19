@@ -10,11 +10,13 @@
 #include <stdbool.h>				/* bool */
 #include <libipset/linux_ip_set.h>		/* enum ipset_cmd */
 
+#define IPSET_CMD_ALIASES	3
+
 /* Commands in userspace */
 struct ipset_commands {
 	enum ipset_cmd cmd;
 	int has_arg;
-	const char *name[2];
+	const char *name[IPSET_CMD_ALIASES];
 	const char *help;
 };
 

@@ -132,5 +132,5 @@
 # Flush all sets
 0 ipset flush
 # Delete all sets
-0 ipset -x
+0 ipset -X
 # eof
