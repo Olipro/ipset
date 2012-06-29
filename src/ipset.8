@@ -799,8 +799,9 @@ added/deleted by the most specific prefix which can be found in  the
 set, or by the host prefix value if the set is empty.
 .PP 
 The second direction parameter of the \fBset\fR match and
-\fBSET\fR target modules corresponds to the incoming/outgoing interface
-: \fBsrc\fR to the incoming, while \fBdst\fR to the outgoing. When
+\fBSET\fR target modules corresponds to the incoming/outgoing interface:
+\fBsrc\fR to the incoming one (similar to the \fB\-i\fR flag of iptables), while
+\fBdst\fR to the outgoing one (similar to the \fB\-o\fR flag of iptables). When
 the interface is flagged with \fBphysdev:\fR, the interface is interpreted
 as the incoming/outgoing bridge port.
 .PP 
