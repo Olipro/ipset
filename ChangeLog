@@ -1,3 +1,11 @@
+6.13
+ - Explain in more detail src/dst for hash:net,iface
+ - ipset help lists set types multiple times, fixed 
+   (reported by Mr Dash Four)
+ - The commandline parser was too permissive, make it more strict
+ - Allow saving to/restoring from a file without shell redirection
+ - Fix typo of word "unkown" to "unknown" (Neutron Soutmun)
+
 6.12.1
  - Enable silent (kernel style) compile messages
  - Fix build failed on --disable-dependency-tracking

@@ -1,3 +1,10 @@
+6.13
+ - ipset: Handle properly an IPSET_CMD_NONE (Tomasz Bursztyka)
+ - netfilter: ipset: hash:net,iface: fix interface comparison (Florian
+   Westphal)
+ - Timeout fixing bug broke SET target special timeout value, fixed
+ - Use MSEC_PER_SEC instead of harcoded value
+
 6.12
  - Backport nla_put_net* functions as NLA_PUT* were removed
  - netlink: add netlink_dump_control structure for netlink_dump_start()
