@@ -19,7 +19,7 @@ lib_LTLIBRARIES = libipset.la
 
 include $(top_srcdir)/lib/Make_extra.am
 
-libipset_la_LDFLAGS = -Wl,--version-script=$(top_srcdir)/lib/libipset.map -version-number $(LIBVERSION)
+libipset_la_LDFLAGS = -Wl,--version-script=$(top_srcdir)/lib/libipset.map -version-info $(LIBVERSION)
 libipset_la_LIBADD  = ${libmnl_LIBS} $(IPSET_SETTYPE_STATIC_OBJECTS)
 libipset_la_SOURCES = \
 	data.c \
