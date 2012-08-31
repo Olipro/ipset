@@ -9,6 +9,9 @@
 
 #include <string.h>				/* strcmp */
 #include <netinet/in.h>				/* struct in[6]_addr */
+#ifndef IPPROTO_UDPLITE
+#define IPPROTO_UDPLITE		136
+#endif
 
 /* String equality tests */
 #define STREQ(a, b)		(strcmp(a, b) == 0)
