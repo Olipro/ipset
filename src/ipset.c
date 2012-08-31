@@ -129,7 +129,7 @@ help(void)
 }
 
 int
-ipset_parse_file(struct ipset_session *session UNUSED,
+ipset_parse_file(struct ipset_session *s UNUSED,
 		 int opt UNUSED, const char *str)
 {
 	if (filename != NULL)
@@ -140,6 +140,7 @@ ipset_parse_file(struct ipset_session *session UNUSED,
 	return 0;
 }
 
+static 
 int __attribute__ ((format (printf, 1, 2)))
 ipset_print_file(const char *fmt, ...)
 {
@@ -190,7 +191,7 @@ restore(char *argv0)
 {
 	int ret = 0;
 	char *c;
-	FILE *fread = stdin;
+	FILE *rfd = stdin;
 
 	/* Initialize newargv/newargc */
 	newargc = 0;
@@ -202,10 +203,10 @@ restore(char *argv0)
 					  "Cannot open %s for reading: %s",
 					  filename, strerror(errno));
 		}
-		fread = fd;
+		rfd = fd;
 	}
 
-	while (fgets(cmdline, sizeof(cmdline), fread)) {
+	while (fgets(cmdline, sizeof(cmdline), rfd)) {
 		restore_line++;
 		c = cmdline;
 		while (isspace(c[0]))

@@ -179,10 +179,6 @@ ipset_match_cmd(const char *arg, const char * const name[])
  *	-!		-exist
  */
 
-int
-ipset_parse_file(struct ipset_session *session,
-                 int opt, const char *str);
-
 const struct ipset_envopts ipset_envopts[] = {
 	{ .name = { "-o", "-output" },
 	  .has_arg = IPSET_MANDATORY_ARG,	.flag = IPSET_OPT_MAX,
