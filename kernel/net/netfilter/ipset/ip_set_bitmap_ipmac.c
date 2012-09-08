@@ -19,6 +19,7 @@
 #include <linux/netlink.h>
 #include <linux/jiffies.h>
 #include <linux/timer.h>
+#include <linux/version.h>
 #include <net/netlink.h>
 
 #include <linux/netfilter/ipset/pfxlen.h>
@@ -30,6 +31,14 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
 MODULE_DESCRIPTION("bitmap:ip,mac type of IP sets");
 MODULE_ALIAS("ip_set_bitmap:ip,mac");
+
+/* Backport ether_addr_equal */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 5, 0)
+static inline bool ether_addr_equal(const u8 *addr1, const u8 *addr2)
+{
+	return !compare_ether_addr(addr1, addr2);
+}
+#endif
 
 enum {
 	MAC_EMPTY,		/* element is not set */
@@ -111,7 +120,7 @@ bitmap_ipmac_test(struct ip_set *set, void *value, u32 timeout, u32 flags)
 		return -EAGAIN;
 	case MAC_FILLED:
 		return data->ether == NULL ||
-		       compare_ether_addr(data->ether, elem->ether) == 0;
+		       ether_addr_equal(data->ether, elem->ether);
 	}
 	return 0;
 }
@@ -225,7 +234,7 @@ bitmap_ipmac_ttest(struct ip_set *set, void *value, u32 timeout, u32 flags)
 		return -EAGAIN;
 	case MAC_FILLED:
 		return (data->ether == NULL ||
-			compare_ether_addr(data->ether, elem->ether) == 0) &&
+			ether_addr_equal(data->ether, elem->ether)) &&
 		       !bitmap_expired(map, data->id);
 	}
 	return 0;
