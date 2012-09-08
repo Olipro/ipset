@@ -81,6 +81,7 @@ struct ipset_type {
 	uint64_t full[IPSET_CADT_MAX];		/* full args flags */
 	const char *usage;			/* terse usage */
 	void (*usagefn)(void);			/* additional usage */
+	const char *description;		/* short revision description */
 
 	struct ipset_type *next;
 	const char *alias[];			/* name alias(es) */

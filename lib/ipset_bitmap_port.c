@@ -84,6 +84,7 @@ static struct ipset_type ipset_bitmap_port0 = {
 	},
 
 	.usage = bitmap_port_usage,
+	.description = "Initial revision",
 };
 
 void _init(void);

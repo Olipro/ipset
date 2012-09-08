@@ -106,6 +106,7 @@ static struct ipset_type ipset_hash_net0 = {
 	},
 
 	.usage = hash_net0_usage,
+	.description = "Initial revision",
 };
 
 static const char hash_net1_usage[] =
@@ -160,6 +161,7 @@ static struct ipset_type ipset_hash_net1 = {
 	},
 
 	.usage = hash_net1_usage,
+	.description = "Add/del range support",
 };
 
 static const struct ipset_arg hash_net2_add_args[] = {
@@ -227,6 +229,7 @@ static struct ipset_type ipset_hash_net2 = {
 	},
 
 	.usage = hash_net2_usage,
+	.description = "nomatch flag support",
 };
 
 void _init(void);

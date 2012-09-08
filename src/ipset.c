@@ -624,14 +624,14 @@ parse_commandline(int argc, char *argv[])
 					       type->family == NFPROTO_IPV4
 						? "INET" : "INET6");
 			} else {
-				const char *name = NULL;
-
 				printf("\nSupported set types:\n");
 				type = ipset_types();
 				while (type) {
-					if (!(name && STREQ(name, type->name)))
-						printf("    %s\n", type->name);
-					name = type->name;
+					printf("    %s\t%s%u\t%s\n",
+					       type->name,
+					       strlen(type->name) < 12 ? "\t" : "",
+					       type->revision,
+					       type->description);
 					type = type->next;
 				}
 			}

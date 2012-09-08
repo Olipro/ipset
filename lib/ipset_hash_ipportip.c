@@ -152,6 +152,7 @@ static struct ipset_type ipset_hash_ipportip1 = {
 
 	.usage = hash_ipportip1_usage,
 	.usagefn = ipset_port_usage,
+	.description = "SCTP and UDPLITE support",
 };
 
 void _init(void);

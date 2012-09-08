@@ -88,6 +88,7 @@ static struct ipset_type ipset_list_set0 = {
 	},
 
 	.usage = list_set_usage,
+	.description = "Initial revision",
 };
 
 void _init(void);

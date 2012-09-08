@@ -120,6 +120,7 @@ static struct ipset_type ipset_hash_netport1 = {
 
 	.usage = hash_netport1_usage,
 	.usagefn = ipset_port_usage,
+	.description = "SCTP and UDPLITE support",
 };
 
 static const char hash_netport2_usage[] =
@@ -196,6 +197,7 @@ static struct ipset_type ipset_hash_netport2 = {
 
 	.usage = hash_netport2_usage,
 	.usagefn = ipset_port_usage,
+	.description = "Add/del range support",
 };
 
 static const struct ipset_arg hash_netport3_add_args[] = {
@@ -285,6 +287,7 @@ static struct ipset_type ipset_hash_netport3 = {
 
 	.usage = hash_netport3_usage,
 	.usagefn = ipset_port_usage,
+	.description = "nomatch flag support",
 };
 
 void _init(void);

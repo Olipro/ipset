@@ -116,6 +116,7 @@ static struct ipset_type ipset_hash_ip0 = {
 	},
 
 	.usage = hash_ip_usage,
+	.description = "Initial revision",
 };
 
 void _init(void);

@@ -116,6 +116,7 @@ static struct ipset_type ipset_hash_netiface0 = {
 	},
 
 	.usage = hash_netiface_usage,
+	.description = "Initial revision",
 };
 
 static const struct ipset_arg hash_netiface1_add_args[] = {
@@ -198,6 +199,7 @@ static struct ipset_type ipset_hash_netiface1 = {
 	},
 
 	.usage = hash_netiface1_usage,
+	.description = "nomatch flag support",
 };
 
 static struct ipset_type ipset_hash_netiface2 = {
@@ -255,6 +257,7 @@ static struct ipset_type ipset_hash_netiface2 = {
 	},
 
 	.usage = hash_netiface1_usage,
+	.description = "/0 network support",
 };
 
 void _init(void);

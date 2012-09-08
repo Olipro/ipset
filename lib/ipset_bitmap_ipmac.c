@@ -97,6 +97,7 @@ static struct ipset_type ipset_bitmap_ipmac0 = {
 	},
 
 	.usage = bitmap_ipmac_usage,
+	.description = "Initial revision",
 };
 
 void _init(void);
