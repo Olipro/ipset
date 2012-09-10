@@ -751,8 +751,7 @@ ipset add foo 192.168.2,25,10.1.0.0/16
 ipset test foo 192.168.1,80.10.0.0/24
 .SS hash:net,iface
 The \fBhash:net,iface\fR set type uses a hash to store different sized IP network
-address and interface name pairs. Network address with zero prefix size is not
-accepted.
+address and interface name pairs.
 .PP 
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ]
 .PP 

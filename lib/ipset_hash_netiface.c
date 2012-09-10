@@ -200,9 +200,67 @@ static struct ipset_type ipset_hash_netiface1 = {
 	.usage = hash_netiface1_usage,
 };
 
+static struct ipset_type ipset_hash_netiface2 = {
+	.name = "hash:net,iface",
+	.alias = { "netifacehash", NULL },
+	.revision = 2,
+	.family = NFPROTO_IPSET_IPV46,
+	.dimension = IPSET_DIM_TWO,
+	.elem = {
+		[IPSET_DIM_ONE - 1] = {
+			.parse = ipset_parse_ip4_net6,
+			.print = ipset_print_ip,
+			.opt = IPSET_OPT_IP
+		},
+		[IPSET_DIM_TWO - 1] = {
+			.parse = ipset_parse_iface,
+			.print = ipset_print_iface,
+			.opt = IPSET_OPT_IFACE
+		},
+	},
+	.args = {
+		[IPSET_CREATE] = hash_netiface_create_args,
+		[IPSET_ADD] = hash_netiface1_add_args,
+	},
+	.mandatory = {
+		[IPSET_CREATE] = 0,
+		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_IFACE),
+		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_IFACE),
+		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_IFACE),
+	},
+	.full = {
+		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
+			| IPSET_FLAG(IPSET_OPT_MAXELEM)
+			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
+		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_CIDR)
+			| IPSET_FLAG(IPSET_OPT_IP_TO)
+			| IPSET_FLAG(IPSET_OPT_IFACE)
+			| IPSET_FLAG(IPSET_OPT_PHYSDEV)
+			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
+			| IPSET_FLAG(IPSET_OPT_NOMATCH),
+		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_CIDR)
+			| IPSET_FLAG(IPSET_OPT_IP_TO)
+			| IPSET_FLAG(IPSET_OPT_IFACE)
+			| IPSET_FLAG(IPSET_OPT_PHYSDEV),
+		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
+			| IPSET_FLAG(IPSET_OPT_CIDR)
+			| IPSET_FLAG(IPSET_OPT_IP_TO)
+			| IPSET_FLAG(IPSET_OPT_IFACE)
+			| IPSET_FLAG(IPSET_OPT_PHYSDEV),
+	},
+
+	.usage = hash_netiface1_usage,
+};
+
 void _init(void);
 void _init(void)
 {
 	ipset_type_add(&ipset_hash_netiface0);
 	ipset_type_add(&ipset_hash_netiface1);
+	ipset_type_add(&ipset_hash_netiface2);
 }
