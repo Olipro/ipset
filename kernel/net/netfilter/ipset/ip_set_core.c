@@ -72,7 +72,8 @@ find_set_type(const char *name, u8 family, u8 revision)
 
 	list_for_each_entry_rcu(type, &ip_set_type_list, list)
 		if (STREQ(type->name, name) &&
-		    (type->family == family || type->family == NFPROTO_UNSPEC) &&
+		    (type->family == family ||
+		     type->family == NFPROTO_UNSPEC) &&
 		    revision >= type->revision_min &&
 		    revision <= type->revision_max)
 			return type;
@@ -152,7 +153,8 @@ __find_set_type_minmax(const char *name, u8 family, u8 *min, u8 *max,
 	rcu_read_lock();
 	list_for_each_entry_rcu(type, &ip_set_type_list, list)
 		if (STREQ(type->name, name) &&
-		    (type->family == family || type->family == NFPROTO_UNSPEC)) {
+		    (type->family == family ||
+		     type->family == NFPROTO_UNSPEC)) {
 			found = true;
 			if (type->revision_min < *min)
 				*min = type->revision_min;
@@ -729,7 +731,8 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 	 * by the nfnl mutex. Find the first free index in ip_set_list
 	 * and check clashing.
 	 */
-	if ((ret = find_free_id(set->name, &index, &clash)) != 0) {
+	ret = find_free_id(set->name, &index, &clash);
+	if (ret != 0) {
 		/* If this is the same set and requested, ignore error */
 		if (ret == -EEXIST &&
 		    (flags & IPSET_FLAG_EXIST) &&

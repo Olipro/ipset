@@ -228,12 +228,14 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		break;
 	/* CADT options */
 	case IPSET_OPT_IP:
-		if (!(data->family == NFPROTO_IPV4 || data->family == NFPROTO_IPV6))
+		if (!(data->family == NFPROTO_IPV4 ||
+		      data->family == NFPROTO_IPV6))
 			return -1;
 		copy_addr(data->family, &data->ip, value);
 		break;
 	case IPSET_OPT_IP_TO:
-		if (!(data->family == NFPROTO_IPV4 || data->family == NFPROTO_IPV6))
+		if (!(data->family == NFPROTO_IPV4 ||
+		      data->family == NFPROTO_IPV6))
 			return -1;
 		copy_addr(data->family, &data->ip_to, value);
 		break;
@@ -303,12 +305,14 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		ipset_strlcpy(data->adt.nameref, value, IPSET_MAXNAMELEN);
 		break;
 	case IPSET_OPT_IP2:
-		if (!(data->family == NFPROTO_IPV4 || data->family == NFPROTO_IPV6))
+		if (!(data->family == NFPROTO_IPV4 ||
+		      data->family == NFPROTO_IPV6))
 			return -1;
 		copy_addr(data->family, &data->adt.ip2, value);
 		break;
 	case IPSET_OPT_IP2_TO:
-		if (!(data->family == NFPROTO_IPV4 || data->family == NFPROTO_IPV6))
+		if (!(data->family == NFPROTO_IPV4 ||
+		      data->family == NFPROTO_IPV6))
 			return -1;
 		copy_addr(data->family, &data->adt.ip2_to, value);
 		break;
@@ -344,11 +348,14 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	case IPSET_OPT_CADT_FLAGS:
 		data->cadt_flags = *(const uint32_t *)value;
 		if (data->cadt_flags & IPSET_FLAG_BEFORE)
-			ipset_data_flags_set(data, IPSET_FLAG(IPSET_OPT_BEFORE));
+			ipset_data_flags_set(data,
+					     IPSET_FLAG(IPSET_OPT_BEFORE));
 		if (data->cadt_flags & IPSET_FLAG_PHYSDEV)
-			ipset_data_flags_set(data, IPSET_FLAG(IPSET_OPT_PHYSDEV));
+			ipset_data_flags_set(data,
+					     IPSET_FLAG(IPSET_OPT_PHYSDEV));
 		if (data->cadt_flags & IPSET_FLAG_NOMATCH)
-			ipset_data_flags_set(data, IPSET_FLAG(IPSET_OPT_NOMATCH));
+			ipset_data_flags_set(data,
+					     IPSET_FLAG(IPSET_OPT_NOMATCH));
 		break;
 	default:
 		return -1;

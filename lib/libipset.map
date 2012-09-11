@@ -106,7 +106,7 @@ global:
   ipset_match_option;
   ipset_match_envopt;
   ipset_shift_argv;
-  
+
 local: *;
 };
 

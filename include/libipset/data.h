@@ -113,7 +113,8 @@ extern bool ipset_data_flags_test(const struct ipset_data *data,
 extern void ipset_data_flags_set(struct ipset_data *data, uint64_t flags);
 extern void ipset_data_flags_unset(struct ipset_data *data, uint64_t flags);
 extern bool ipset_data_ignored(struct ipset_data *data, enum ipset_opt opt);
-extern bool ipset_data_test_ignored(struct ipset_data *data, enum ipset_opt opt);
+extern bool ipset_data_test_ignored(struct ipset_data *data,
+				    enum ipset_opt opt);
 
 extern int ipset_data_set(struct ipset_data *data, enum ipset_opt opt,
 			  const void *value);

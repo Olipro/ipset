@@ -306,7 +306,7 @@ found:
 }
 
 #define set_family_and_type(data, match, family) do {		\
-	if (family == NFPROTO_UNSPEC && match->family != NFPROTO_UNSPEC)	\
+	if (family == NFPROTO_UNSPEC && match->family != NFPROTO_UNSPEC) \
 		family = match->family == NFPROTO_IPSET_IPV46 ? \
 			 NFPROTO_IPV4 : match->family;\
 	ipset_data_set(data, IPSET_OPT_FAMILY, &family);	\
@@ -578,9 +578,9 @@ ipset_cache_fini(void)
  *
  * Load in (register) all known set types for the system
  */
- void
- ipset_load_types(void)
- {
+void
+ipset_load_types(void)
+{
 #ifdef ENABLE_SETTYPE_MODULES
 	const char *dir  = IPSET_MODSDIR;
 	const char *next = NULL;
@@ -591,8 +591,8 @@ ipset_cache_fini(void)
 	int    len;
 #endif
 
- 	if (typelist != NULL)
- 		return;
+	if (typelist != NULL)
+		return;
 
 	/* Initialize static types */
 	ipset_types_init();
@@ -605,7 +605,7 @@ ipset_cache_fini(void)
 			next = dir + strlen(dir);
 
 		len = snprintf(path, sizeof(path), "%.*s",
-		               (unsigned int)(next - dir), dir);
+			       (unsigned int)(next - dir), dir);
 
 		if (len >= sizeof(path) || len < 0)
 			continue;
@@ -618,13 +618,13 @@ ipset_cache_fini(void)
 			if (strstr(list[n]->d_name, ".so") == NULL)
 				goto nextf;
 
-			len = snprintf(file, sizeof(file), "%s/%s", path, list[n]->d_name);
+			len = snprintf(file, sizeof(file), "%s/%s",
+				       path, list[n]->d_name);
 			if (len >= sizeof(file) || len < 0)
 				goto nextf;
 
-			if (dlopen(file, RTLD_NOW) == NULL) {
+			if (dlopen(file, RTLD_NOW) == NULL)
 				fprintf(stderr, "%s: %s\n", file, dlerror());
-			}
 
 nextf:
 			free(list[n]);
@@ -634,5 +634,5 @@ nextf:
 
 		dir = next + 1;
 	} while (*next != '\0');
-#endif // ENABLE_SETTYPE_MODULES
+#endif /* ENABLE_SETTYPE_MODULES */
 }

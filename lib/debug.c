@@ -116,14 +116,16 @@ debug_cadt_attrs(int max, const struct ipset_attr_policy *policy,
 				d = mnl_attr_get_payload(
 					ipattr[IPSET_ATTR_IPADDR_IPV4]);
 
-				inet_ntop(NFPROTO_IPV4, d, addr, INET6_ADDRSTRLEN);
+				inet_ntop(NFPROTO_IPV4, d, addr,
+					  INET6_ADDRSTRLEN);
 				fprintf(stderr, "\t\t%s: %s\n",
 					attr2name[i].name, addr);
 			} else if (ipattr[IPSET_ATTR_IPADDR_IPV6]) {
 				d = mnl_attr_get_payload(
 					ipattr[IPSET_ATTR_IPADDR_IPV6]);
 
-				inet_ntop(NFPROTO_IPV6, d, addr, INET6_ADDRSTRLEN);
+				inet_ntop(NFPROTO_IPV6, d, addr,
+					  INET6_ADDRSTRLEN);
 				fprintf(stderr, "\t\t%s: %s\n",
 					attr2name[i].name, addr);
 			}

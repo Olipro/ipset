@@ -63,13 +63,13 @@ static char *
 escape_range_separator(const char *str)
 {
 	const char *tmp = NULL;
-	
+
 	if (STRNEQ(str, IPSET_ESCAPE_START, 1)) {
 		tmp = strstr(str, IPSET_ESCAPE_END);
 		if (tmp == NULL)
 			return NULL;
 	}
-	
+
 	return range_separator(tmp == NULL ? str : tmp);
 }
 
@@ -248,7 +248,7 @@ find_range_separator(struct ipset_session *session, char *str)
 }
 
 static char *
-strip_escape(struct ipset_session *session, char * str)
+strip_escape(struct ipset_session *session, char *str)
 {
 	if (STRNEQ(str, IPSET_ESCAPE_START, 1)) {
 		if (!STREQ(str + strlen(str) - 1, IPSET_ESCAPE_END)) {
@@ -279,7 +279,7 @@ parse_portname(struct ipset_session *session, const char *str,
 	if (tmp == NULL)
 		goto error;
 
-	service = getservbyname(tmp, proto);	
+	service = getservbyname(tmp, proto);
 	if (service != NULL) {
 		*port = ntohs((uint16_t) service->s_port);
 		free(saved);
@@ -748,7 +748,8 @@ get_addrinfo(struct ipset_session *session,
 	if (found == 0)
 		return syntax_err("cannot parse %s: "
 				  "%s address could not be resolved",
-				  str, family == NFPROTO_IPV4 ? "IPv4" : "IPv6");
+				  str,
+				  family == NFPROTO_IPV4 ? "IPv4" : "IPv6");
 	return err;
 }
 
@@ -1642,7 +1643,7 @@ ipset_call_parser(struct ipset_session *session,
 
 	if (ipset_data_flags_test(data, IPSET_FLAG(arg->opt))
 	    && !(arg->opt == IPSET_OPT_FAMILY
-	         && ipset_data_test_ignored(data, IPSET_OPT_FAMILY)))
+		 && ipset_data_test_ignored(data, IPSET_OPT_FAMILY)))
 		return syntax_err("%s already specified", arg->name[0]);
 
 	return arg->parse(session, arg->opt, str);

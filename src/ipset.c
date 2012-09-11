@@ -136,11 +136,11 @@ ipset_parse_file(struct ipset_session *s UNUSED,
 		return exit_error(PARAMETER_PROBLEM,
 				  "-file option can be specified once");
 	filename = str;
-	
+
 	return 0;
 }
 
-static 
+static
 int __attribute__ ((format (printf, 1, 2)))
 ipset_print_file(const char *fmt, ...)
 {
@@ -150,7 +150,7 @@ ipset_print_file(const char *fmt, ...)
 	assert(fd != NULL);
 	va_start(args, fmt);
 	len = vfprintf(fd, fmt, args);
-	va_end(args); 
+	va_end(args);
 
 	return len;
 }

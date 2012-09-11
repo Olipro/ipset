@@ -174,7 +174,7 @@ __getnameinfo4(char *buf, unsigned int len,
 		memmove(buf + 1, buf, strlen(buf) + 1);
 		buf[0] = escape[0];
 		strcat(buf, IPSET_ESCAPE_END);
-	}	
+	}
 	return (err == 0 ? (int)strlen(buf) :
 	       (err == EAI_OVERFLOW || err == EAI_SYSTEM) ? (int)len : -1);
 }
@@ -210,7 +210,7 @@ __getnameinfo6(char *buf, unsigned int len,
 		memmove(buf + 1, buf, strlen(buf) + 1);
 		buf[0] = escape[0];
 		strcat(buf, IPSET_ESCAPE_END);
-	}	
+	}
 	return (err == 0 ? (int)strlen(buf) :
 	       (err == EAI_OVERFLOW || err == EAI_SYSTEM) ? (int)len : -1);
 }
