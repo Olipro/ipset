@@ -35,7 +35,7 @@
 # Range: Try to add value after second random value
 0 ipset -A test 2:1:0::1,128,2:2:2::2/12
 # Range: List set
-0 ipset -L test > .foo0 && ./sort.sh .foo0
+0 ipset -L test | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # Range: Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip6,port,net6.t.list0
 # Range: Flush test set

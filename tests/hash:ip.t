@@ -19,13 +19,13 @@
 # IP: Delete the same value
 0 ipset -D test 200.100.0.12
 # IP: List set
-0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
+0 ipset -L test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # IP: Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip.t.list2
 # Sleep 5s so that element can time out
 0 sleep 5
 # IP: List set
-0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
+0 ipset -L test 2>/dev/null | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # IP: Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip.t.list0
 # IP: Flush test set
@@ -93,13 +93,13 @@
 # Network: Delete the same network
 0 ipset -D test 200.100.0.12
 # Network: List set
-0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
+0 ipset -L test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Network: Check listing
 0 diff -u -I 'Size in memory.*' -I 'Size in memory.*' .foo hash:ip.t.list3
 # Sleep 5s so that elements can time out
 0 sleep 5
 # Network: List set
-0 ipset -L test > .foo
+0 ipset -L test | grep -v Revision: > .foo
 # Network: Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip.t.list1
 # Network: Flush test set

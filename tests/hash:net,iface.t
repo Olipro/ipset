@@ -41,7 +41,7 @@
 # Try to add IP address
 0 ipset add test 2.0.0.1,eth0
 # List set
-0 ipset list test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
+0 ipset list test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:net,iface.t.list0
 # Flush test set
@@ -53,7 +53,7 @@
 # Add networks in range notation
 0 ipset add test 10.2.0.0-10.2.1.12,eth0
 # List set
-0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
+0 ipset -L test 2>/dev/null | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:net,iface.t.list2
 # Flush test set
@@ -117,7 +117,7 @@
 # Add overlapping networks from /4 to /30
 0 (set -e; for x in `seq 4 30`; do ipset add test 192.0.0.0/$x,eth$x; done)
 # List test set
-0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
+0 ipset -L test 2>/dev/null | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:net,iface.t.list1
 # Test matching elements in all added networks from /30 to /24
@@ -131,7 +131,7 @@
 # Add clashing elements
 0 (set -e; for x in `seq 0 63`; do ipset add test 10.0.0.0/16,eth$x; done)
 # Check listing
-0 n=`ipset list test | wc -l` && test $n -eq 70
+0 n=`ipset list test | grep -v Revision: | wc -l` && test $n -eq 70
 # Delete test set
 0 ipset destroy test
 # Create test set with timeout support

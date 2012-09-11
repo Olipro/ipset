@@ -39,7 +39,7 @@
 # Range: Delete the same element
 0 ipset -D test 2.0.200.214
 # Range: List set
-0 ipset -L test > .foo
+0 ipset -L test | grep -v Revision: > .foo
 # Range: Check listing
 0 diff -u -I 'Size in memory.*' .foo macipmap.t.list0
 # Range: Flush test set
@@ -79,7 +79,7 @@
 # Network: Add MAC to already added element
 0 ipset -A test 2.0.255.255,00:11:22:33:44:56
 # Network: List set
-0 ipset -L test > .foo
+0 ipset -L test | grep -v Revision: > .foo
 # Network: Check listing
 0 diff -u -I 'Size in memory.*' .foo macipmap.t.list1
 # Network: Flush test set
@@ -119,13 +119,13 @@
 # Range: Delete the same element
 0 ipset -D test 2.0.200.214
 # Range: List set
-0 ipset -L test | sed 's/timeout ./timeout x/' > .foo
+0 ipset -L test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo
 # Range: Check listing
 0 diff -u -I 'Size in memory.*' .foo macipmap.t.list3
 # Range: sleep 5s so that elements can timeout
 0 sleep 5
 # Range: List set
-0 ipset -L test | sed 's/timeout ./timeout x/' > .foo
+0 ipset -L test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo
 # Range: Check listing
 0 diff -u -I 'Size in memory.*' .foo macipmap.t.list2
 # Range: Flush test set

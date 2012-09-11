@@ -27,13 +27,13 @@
 # Try to add value after second random value
 0 ipset add test 2.1.0.1,128
 # List set
-0 ipset list test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
+0 ipset list test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip,port.t.list0
 # Sleep 5s so that elements can time out
 0 sleep 5
 # List set
-0 ipset list test > .foo0 && ./sort.sh .foo0
+0 ipset list test | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip,port.t.list1
 # Flush test set
@@ -69,7 +69,7 @@
 # Delete element with sctp
 0 ipset del test 2.0.0.1,sctp:80
 # List set
-0 ipset list test > .foo0 && ./sort.sh .foo0
+0 ipset list test | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip,port.t.list2
 # Delete set

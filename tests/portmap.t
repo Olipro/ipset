@@ -25,7 +25,7 @@
 # Range: Delete the same element
 0 ipset -D test 567
 # Range: List set
-0 ipset -L test > .foo
+0 ipset -L test | grep -v Revision: > .foo
 # Range: Check listing
 0 diff -u -I 'Size in memory.*' .foo portmap.t.list0
 # Range: Flush test set
@@ -45,7 +45,7 @@
 # Full: Test value not added to the set
 1 ipset -T test 1
 # Full: List set
-0 ipset -L test > .foo
+0 ipset -L test | grep -v Revision: > .foo
 # Full: Check listing
 0 diff -u -I 'Size in memory.*' .foo portmap.t.list1
 # Full: Flush test set
@@ -69,13 +69,13 @@
 # Full: Delete the same element
 0 ipset -D test 567
 # Full: List set
-0 ipset -L test | sed 's/timeout ./timeout x/' > .foo
+0 ipset -L test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo
 # Full: Check listing
 0 diff -u -I 'Size in memory.*' .foo portmap.t.list3
 # Full: sleep 5s so that elements can timeout
 0 sleep 5
 # Full: List set
-0 ipset -L test > .foo
+0 ipset -L test | grep -v Revision: > .foo
 # Full: Check listing
 # 0 diff -u -I 'Size in memory.*' .foo portmap.t.list2
 # Full: Flush test set

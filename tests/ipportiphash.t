@@ -39,7 +39,7 @@
 # Try to add value after second random value
 0 ipset -A test 2.1.0.1,128,2.2.2.2
 # List set
-0 ipset -L test > .foo0 && ./sort.sh .foo0
+0 ipset -L test | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo ipportiphash.t.list0
 # Flush test set
@@ -71,7 +71,7 @@
 # Try to del value before first random value
 0 ipset -D test 1.255.255.255,5,1.1.1.1
 # List set
-0 ipset -L test > .foo0 && ./sort.sh .foo0
+0 ipset -L test | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # Check listing
 0 diff -u -I 'Size in memory.*' .foo ipportiphash.t.list1
 # Flush test set

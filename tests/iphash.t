@@ -23,7 +23,7 @@
 # IP: Delete element not added to the set, ignoring error
 0 ipset -! -D test 200.100.0.12
 # IP: List set
-0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
+0 ipset -L test 2>/dev/null | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # IP: Check listing
 0 diff -u -I 'Size in memory.*' .foo iphash.t.list0
 # IP: Flush test set
@@ -77,7 +77,7 @@
 # Network: Delete element not added to the set
 1 ipset -D test 200.100.0.12
 # Network: List set
-0 ipset -L test > .foo0 && ./sort.sh .foo0
+0 ipset -L test | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # Network: Check listing
 0 diff -u -I 'Size in memory.*' .foo iphash.t.list1
 # Network: Flush test set

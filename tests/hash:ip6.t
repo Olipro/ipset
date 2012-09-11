@@ -21,7 +21,7 @@
 # IP: Delete the same value
 0 ipset -D test 200:100:0::12
 # IP: List set
-0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
+0 ipset -L test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # IP: Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip6.t.list2
 # IP: Save set
@@ -29,7 +29,7 @@
 # Sleep 5s so that element can time out
 0 sleep 5
 # IP: List set
-0 ipset -L test 2>/dev/null > .foo0 && ./sort.sh .foo0
+0 ipset -L test 2>/dev/null | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # IP: Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip6.t.list0
 # IP: Destroy set
@@ -37,7 +37,7 @@
 # IP: Restore saved set
 0 ipset restore < hash:ip6.t.restore && rm hash:ip6.t.restore
 # IP: List set
-0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
+0 ipset -L test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # IP: Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip6.t.list2
 # IP: Flush test set
@@ -73,13 +73,13 @@
 # Network: Test the deleted network
 1 ipset -T test 200:101:0::12
 # Network: List set
-0 ipset -L test | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
+0 ipset -L test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo0 && ./sort.sh .foo0
 # Network: Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip6.t.list3
 # Sleep 5s so that elements can time out
 0 sleep 5
 # Network: List set
-0 ipset -L test > .foo
+0 ipset -L test | grep -v Revision: > .foo
 # Network: Check listing
 0 diff -u -I 'Size in memory.*' .foo hash:ip6.t.list1
 # Network: Flush test set
@@ -89,11 +89,11 @@
 # Check more complex restore commands
 0 ipset restore < restore.t.restore
 # List restored set a
-0 ipset l a > .foo0 && ./sort.sh .foo0
+0 ipset l a | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # Check listing of set a
 0 diff -u -I 'Size in memory.*' .foo restore.t.list0
 # List restored set b
-0 ipset l b > .foo0 && ./sort.sh .foo0
+0 ipset l b | grep -v Revision: > .foo0 && ./sort.sh .foo0
 # Check listing of set b
 0 diff -u -I 'Size in memory.*' .foo restore.t.list1
 # Destroy by restore

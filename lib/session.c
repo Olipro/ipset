@@ -842,18 +842,19 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 		break;
 	case IPSET_LIST_PLAIN:
 		safe_snprintf(session, "%sName: %s\n"
-			      "Type: %s\nHeader: ",
+			      "Type: %s\nRevision: %u\nHeader: ",
 			      session->printed_set ? "\n" : "",
 			      ipset_data_setname(data),
-			      type->name);
+			      type->name, type->revision);
 		break;
 	case IPSET_LIST_XML:
 		safe_snprintf(session,
 			      "<ipset name=\"%s\">\n"
 			      "  <type>%s</type>\n"
+			      "  <revision%u</revision\n"
 			      "  <header>\n",
 			      ipset_data_setname(data),
-			      type->name);
+			      type->name, type->revision);
 		break;
 	default:
 		break;
