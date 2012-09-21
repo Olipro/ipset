@@ -1,3 +1,14 @@
+6.14
+ - Support to match elements marked with "nomatch" in hash:*net* sets
+ - Coding style fixes
+ - Include supported revisions in module description
+ - Add /0 network support to hash:net,iface type
+ - Fix cidr book keeping for hash:*net* types
+ - Check and reject crazy /0 input parameters
+ - Backport ether_addr_equal
+ - Coding style fix, backport from kernel
+ - net: cleanup unsigned to unsigned int (Eric Dumazet)
+
 6.13
  - ipset: Handle properly an IPSET_CMD_NONE (Tomasz Bursztyka)
  - netfilter: ipset: hash:net,iface: fix interface comparison (Florian

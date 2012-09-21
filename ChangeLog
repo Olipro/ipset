@@ -1,3 +1,13 @@
+6.14
+ - Support to match elements marked with "nomatch" in hash:*net* sets
+ - Coding style fixes
+ - The set type revision number is added to the header part of listing
+ - Help prints list type revision and terse description
+ - Add /0 network support to hash:net,iface type
+ - Fix errors when compiling in debug mode (Krunal Patel)
+ - Make sure IPPROTO_UDPLITE is defined
+ - build: restore -version-info (Jan Engelhardt)
+
 6.13
  - Explain in more detail src/dst for hash:net,iface
  - ipset help lists set types multiple times, fixed 
