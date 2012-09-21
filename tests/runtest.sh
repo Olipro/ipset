@@ -22,7 +22,7 @@ add_tests() {
 	# inet|inet6 network
 	if [ $1 = "inet" ]; then
 		cmd=iptables-save
-		add=match_target
+		add="match_target match_flags"
 	else
 		cmd=ip6tables-save
 		add=match_target6

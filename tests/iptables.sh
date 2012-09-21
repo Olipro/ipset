@@ -59,6 +59,35 @@ start)
 		      -j LOG --log-prefix "in set list: "
 	$cmd -A OUTPUT -d $NET -j DROP
 	cat /dev/null > .foo.err
+	cat /dev/null > /var/log/kern.log
+	;;
+start_flags)
+	../src/ipset n test hash:net $family 2>/dev/null
+	../src/ipset a test 10.0.0.0/16 2>/dev/null
+	../src/ipset a test 10.0.0.0/24 nomatch 2>/dev/null
+	../src/ipset a test 10.0.0.1 2>/dev/null
+	$cmd -A INPUT ! -s 10.0.0.0/16 -j ACCEPT
+	$cmd -A INPUT -m set --match-set test src \
+		      -j LOG --log-prefix "in set test: "
+	$cmd -A INPUT -m set --match-set test src --return-nomatch \
+		      -j LOG --log-prefix "in set test-nomatch: "
+	$cmd -A INPUT -s 10.0.0.0/16 -j DROP
+	cat /dev/null > .foo.err
+	cat /dev/null > /var/log/kern.log
+	;;
+start_flags_reversed)
+	../src/ipset n test hash:net $family 2>/dev/null
+	../src/ipset a test 10.0.0.0/16 2>/dev/null
+	../src/ipset a test 10.0.0.0/24 nomatch 2>/dev/null
+	../src/ipset a test 10.0.0.1 2>/dev/null
+	$cmd -A INPUT ! -s 10.0.0.0/16 -j ACCEPT
+	$cmd -A INPUT -m set --match-set test src --return-nomatch \
+		      -j LOG --log-prefix "in set test-nomatch: "
+	$cmd -A INPUT -m set --match-set test src \
+		      -j LOG --log-prefix "in set test: "
+	$cmd -A INPUT -s 10.0.0.0/16 -j DROP
+	cat /dev/null > .foo.err
+	cat /dev/null > /var/log/kern.log
 	;;
 del)
 	$cmd -F INPUT
