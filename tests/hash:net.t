@@ -100,4 +100,6 @@
 0 ipset -T test 1.1.1.3
 # Delete test set
 0 ipset destroy test
+# Check CIDR book-keeping
+0 ./check_cidrs.sh
 # eof
