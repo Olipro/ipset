@@ -138,15 +138,12 @@ ipset_match_cmd(const char *arg, const char * const name[])
 		skip = 2;
 
 	len = strlen(arg);
-	if (len <= skip)
+	if (len <= skip || (len == 1 && arg[0] == '-'))
 		return false;
 
 	for (i = 0; i < IPSET_CMD_ALIASES && name[i] != NULL; i++) {
-		/* Old compatibility command flags */
-		if (name[i][0] == '-' && STREQ(arg, name[i]))
-			return true;
 		/* New command name options */
-		if (strncmp(arg + skip, name[i], len - skip) == 0)
+		if (STRNEQ(arg + skip, name[i], len - skip))
 			return true;
 	}
 	return false;
