@@ -62,4 +62,40 @@
 0 n=`ipset list test|grep '^10.0'|wc -l` && test $n -eq 3072
 # Destroy set
 0 ipset -X test
+# Create set
+0 ipset create test hash:ip,port,ip
+# Add a single element
+0 ipset add test 10.0.0.1,tcp:80,2.2.2.1
+# Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 2
+# Delete the single element
+0 ipset del test 10.0.0.1,tcp:80,2.2.2.1
+# Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 1
+# Add an IP range
+0 ipset add test 10.0.0.1-10.0.0.10,tcp:80,2.2.2.1
+# Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 11
+# Delete the IP range
+0 ipset del test 10.0.0.1-10.0.0.10,tcp:80,2.2.2.1
+# Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 1
+# Add a port range
+0 ipset add test 10.0.0.1,tcp:80-89,2.2.2.1
+# Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 11
+# Delete the port range
+0 ipset del test 10.0.0.1,tcp:80-89,2.2.2.1
+# Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 1
+# Add an IP and port range
+0 ipset add test 10.0.0.1-10.0.0.10,tcp:80-89,2.2.2.1
+# Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 101
+# Delete the IP and port range
+0 ipset del test 10.0.0.1-10.0.0.10,tcp:80-89,2.2.2.1
+# Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 1
+# Destroy set
+0 ipset -X test
 # eof

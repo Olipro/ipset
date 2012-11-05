@@ -114,4 +114,24 @@
 0 ipset test test 200.100.0.12
 # Network: Delete test set
 0 ipset -X test
+# Range: Create set
+0 ipset create test hash:ip
+# Range: Add a single element
+0 ipset add test 10.0.0.1
+# Range: Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 2
+# Range: Delete the element
+0 ipset del test 10.0.0.1
+# Range: Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 1
+# Range: Add a range
+0 ipset add test 10.0.0.1-10.0.0.10
+# Range: Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 11
+# Range: Delete a range
+0 ipset del test 10.0.0.1-10.0.0.10
+# Range: Check number of elements
+0 n=`ipset save test|wc -l` && test $n -eq 1
+# Range: Delete test set
+0 ipset destroy test
 # eof
