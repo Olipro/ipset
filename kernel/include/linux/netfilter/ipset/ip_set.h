@@ -210,7 +210,12 @@ enum ip_set_kopt {
 #include <linux/netfilter/x_tables.h>
 #include <linux/stringify.h>
 #include <linux/vmalloc.h>
+#include <linux/version.h>
 #include <net/netlink.h>
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
+#define xt_action_param	xt_match_param
+#endif
 
 #define _IP_SET_MODULE_DESC(a, b, c)		\
 	MODULE_DESCRIPTION(a " type of IP sets, revisions " b "-" c)

@@ -2,7 +2,7 @@ This is the ipset source tree. Follow the next steps to install ipset.
 If you upgrade from an earlier 5.x release, please read the UPGRADE
 instructions too.
 
-0. You need the source tree of your kernel (version >= 2.6.34)
+0. You need the source tree of your kernel (version >= 2.6.32)
    and it have to be configured with ip6tables support enabled,
    modules compiled. For kernel versions < 2.6.39 please apply
    the netlink.patch against your kernel tree, which adds the

@@ -4,6 +4,9 @@
 #include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <linux/netfilter/ipset/ip_set_timeout.h>
+#ifndef rcu_dereference_bh
+#define rcu_dereference_bh(p)	rcu_dereference(p)
+#endif
 
 #define CONCAT(a, b, c)		a##b##c
 #define TOKEN(a, b, c)		CONCAT(a, b, c)

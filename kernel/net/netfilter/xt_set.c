@@ -27,6 +27,18 @@ MODULE_ALIAS("ip6t_set");
 MODULE_ALIAS("ipt_SET");
 MODULE_ALIAS("ip6t_SET");
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
+#define CHECK_OK	1
+#define CHECK_FAIL(err)	0
+#define	CONST		const
+#define FTYPE		bool
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
+#define CHECK_OK	0
+#define CHECK_FAIL(err)	(err)
+#define	CONST
+#define	FTYPE		int
+#endif
+
 static inline int
 match_set(ip_set_id_t index, const struct sk_buff *skb,
 	  const struct xt_action_param *par,
@@ -57,7 +69,7 @@ struct ip_set_adt_opt n = {		\
 /* Revision 0 interface: backward compatible with netfilter/iptables */
 
 static bool
-set_match_v0(const struct sk_buff *skb, struct xt_action_param *par)
+set_match_v0(const struct sk_buff *skb, CONST struct xt_action_param *par)
 {
 	const struct xt_set_info_match_v0 *info = par->matchinfo;
 	ADT_OPT(opt, par->family, info->match_set.u.compat.dim,
@@ -83,7 +95,7 @@ compat_flags(struct xt_set_info_v0 *info)
 	}
 }
 
-static int
+static FTYPE
 set_match_v0_checkentry(const struct xt_mtchk_param *par)
 {
 	struct xt_set_info_match_v0 *info = par->matchinfo;
@@ -94,19 +106,19 @@ set_match_v0_checkentry(const struct xt_mtchk_param *par)
 	if (index == IPSET_INVALID_ID) {
 		pr_warning("Cannot find set indentified by id %u to match\n",
 			   info->match_set.index);
-		return -ENOENT;
+		return CHECK_FAIL(-ENOENT);
 	}
 	if (info->match_set.u.flags[IPSET_DIM_MAX-1] != 0) {
 		pr_warning("Protocol error: set match dimension "
 			   "is over the limit!\n");
 		ip_set_nfnl_put(info->match_set.index);
-		return -ERANGE;
+		return CHECK_FAIL(-ERANGE);
 	}
 
 	/* Fill out compatibility data */
 	compat_flags(&info->match_set);
 
-	return 0;
+	return CHECK_OK;
 }
 
 static void
@@ -116,6 +128,60 @@ set_match_v0_destroy(const struct xt_mtdtor_param *par)
 
 	ip_set_nfnl_put(info->match_set.index);
 }
+
+/* Revision 1 */
+
+static bool
+set_match_v1(const struct sk_buff *skb, CONST struct xt_action_param *par)
+{
+	const struct xt_set_info_match_v1 *info = par->matchinfo;
+	ADT_OPT(opt, par->family, info->match_set.dim,
+		info->match_set.flags, 0, UINT_MAX);
+
+	return match_set(info->match_set.index, skb, par, &opt,
+			 info->match_set.flags & IPSET_INV_MATCH);
+}
+
+static FTYPE
+set_match_v1_checkentry(const struct xt_mtchk_param *par)
+{
+	struct xt_set_info_match_v1 *info = par->matchinfo;
+	ip_set_id_t index;
+
+	index = ip_set_nfnl_get_byindex(info->match_set.index);
+
+	if (index == IPSET_INVALID_ID) {
+		pr_warning("Cannot find set indentified by id %u to match\n",
+			   info->match_set.index);
+		return CHECK_FAIL(-ENOENT);
+	}
+	if (info->match_set.dim > IPSET_DIM_MAX) {
+		pr_warning("Protocol error: set match dimension "
+			   "is over the limit!\n");
+		ip_set_nfnl_put(info->match_set.index);
+		return CHECK_FAIL(-ERANGE);
+	}
+
+	return CHECK_OK;
+}
+
+static void
+set_match_v1_destroy(const struct xt_mtdtor_param *par)
+{
+	struct xt_set_info_match_v1 *info = par->matchinfo;
+
+	ip_set_nfnl_put(info->match_set.index);
+}
+
+/* Revision 0 interface: backward compatible with netfilter/iptables */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
+#undef xt_action_param
+#define xt_action_param	xt_target_param
+#define CAST_TO_MATCH	(const struct xt_match_param *)
+#else
+#define	CAST_TO_MATCH
+#endif
 
 static unsigned int
 set_target_v0(struct sk_buff *skb, const struct xt_action_param *par)
@@ -127,14 +193,14 @@ set_target_v0(struct sk_buff *skb, const struct xt_action_param *par)
 		info->del_set.u.compat.flags, 0, UINT_MAX);
 
 	if (info->add_set.index != IPSET_INVALID_ID)
-		ip_set_add(info->add_set.index, skb, par, &add_opt);
+		ip_set_add(info->add_set.index, skb, CAST_TO_MATCH par, &add_opt);
 	if (info->del_set.index != IPSET_INVALID_ID)
-		ip_set_del(info->del_set.index, skb, par, &del_opt);
+		ip_set_del(info->del_set.index, skb, CAST_TO_MATCH par, &del_opt);
 
 	return XT_CONTINUE;
 }
 
-static int
+static FTYPE
 set_target_v0_checkentry(const struct xt_tgchk_param *par)
 {
 	struct xt_set_info_target_v0 *info = par->targinfo;
@@ -145,7 +211,7 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find add_set index %u as target\n",
 				   info->add_set.index);
-			return -ENOENT;
+			return CHECK_FAIL(-ENOENT);
 		}
 	}
 
@@ -156,7 +222,7 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 				   info->del_set.index);
 			if (info->add_set.index != IPSET_INVALID_ID)
 				ip_set_nfnl_put(info->add_set.index);
-			return -ENOENT;
+			return CHECK_FAIL(-ENOENT);
 		}
 	}
 	if (info->add_set.u.flags[IPSET_DIM_MAX-1] != 0 ||
@@ -167,14 +233,14 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 			ip_set_nfnl_put(info->add_set.index);
 		if (info->del_set.index != IPSET_INVALID_ID)
 			ip_set_nfnl_put(info->del_set.index);
-		return -ERANGE;
+		return CHECK_FAIL(-ERANGE);
 	}
 
 	/* Fill out compatibility data */
 	compat_flags(&info->add_set);
 	compat_flags(&info->del_set);
 
-	return 0;
+	return CHECK_OK;
 }
 
 static void
@@ -188,49 +254,7 @@ set_target_v0_destroy(const struct xt_tgdtor_param *par)
 		ip_set_nfnl_put(info->del_set.index);
 }
 
-/* Revision 1 match and target */
-
-static bool
-set_match_v1(const struct sk_buff *skb, struct xt_action_param *par)
-{
-	const struct xt_set_info_match_v1 *info = par->matchinfo;
-	ADT_OPT(opt, par->family, info->match_set.dim,
-		info->match_set.flags, 0, UINT_MAX);
-
-	return match_set(info->match_set.index, skb, par, &opt,
-			 info->match_set.flags & IPSET_INV_MATCH);
-}
-
-static int
-set_match_v1_checkentry(const struct xt_mtchk_param *par)
-{
-	struct xt_set_info_match_v1 *info = par->matchinfo;
-	ip_set_id_t index;
-
-	index = ip_set_nfnl_get_byindex(info->match_set.index);
-
-	if (index == IPSET_INVALID_ID) {
-		pr_warning("Cannot find set indentified by id %u to match\n",
-			   info->match_set.index);
-		return -ENOENT;
-	}
-	if (info->match_set.dim > IPSET_DIM_MAX) {
-		pr_warning("Protocol error: set match dimension "
-			   "is over the limit!\n");
-		ip_set_nfnl_put(info->match_set.index);
-		return -ERANGE;
-	}
-
-	return 0;
-}
-
-static void
-set_match_v1_destroy(const struct xt_mtdtor_param *par)
-{
-	struct xt_set_info_match_v1 *info = par->matchinfo;
-
-	ip_set_nfnl_put(info->match_set.index);
-}
+/* Revision 1 target */
 
 static unsigned int
 set_target_v1(struct sk_buff *skb, const struct xt_action_param *par)
@@ -242,14 +266,14 @@ set_target_v1(struct sk_buff *skb, const struct xt_action_param *par)
 		info->del_set.flags, 0, UINT_MAX);
 
 	if (info->add_set.index != IPSET_INVALID_ID)
-		ip_set_add(info->add_set.index, skb, par, &add_opt);
+		ip_set_add(info->add_set.index, skb, CAST_TO_MATCH par, &add_opt);
 	if (info->del_set.index != IPSET_INVALID_ID)
-		ip_set_del(info->del_set.index, skb, par, &del_opt);
+		ip_set_del(info->del_set.index, skb, CAST_TO_MATCH par, &del_opt);
 
 	return XT_CONTINUE;
 }
 
-static int
+static FTYPE
 set_target_v1_checkentry(const struct xt_tgchk_param *par)
 {
 	const struct xt_set_info_target_v1 *info = par->targinfo;
@@ -260,7 +284,7 @@ set_target_v1_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find add_set index %u as target\n",
 				   info->add_set.index);
-			return -ENOENT;
+			return CHECK_FAIL(-ENOENT);
 		}
 	}
 
@@ -271,7 +295,7 @@ set_target_v1_checkentry(const struct xt_tgchk_param *par)
 				   info->del_set.index);
 			if (info->add_set.index != IPSET_INVALID_ID)
 				ip_set_nfnl_put(info->add_set.index);
-			return -ENOENT;
+			return CHECK_FAIL(-ENOENT);
 		}
 	}
 	if (info->add_set.dim > IPSET_DIM_MAX ||
@@ -282,10 +306,10 @@ set_target_v1_checkentry(const struct xt_tgchk_param *par)
 			ip_set_nfnl_put(info->add_set.index);
 		if (info->del_set.index != IPSET_INVALID_ID)
 			ip_set_nfnl_put(info->del_set.index);
-		return -ERANGE;
+		return CHECK_FAIL(-ERANGE);
 	}
 
-	return 0;
+	return CHECK_OK;
 }
 
 static void
@@ -315,9 +339,9 @@ set_target_v2(struct sk_buff *skb, const struct xt_action_param *par)
 	    add_opt.timeout > UINT_MAX/MSEC_PER_SEC)
 		add_opt.timeout = UINT_MAX/MSEC_PER_SEC;
 	if (info->add_set.index != IPSET_INVALID_ID)
-		ip_set_add(info->add_set.index, skb, par, &add_opt);
+		ip_set_add(info->add_set.index, skb, CAST_TO_MATCH par, &add_opt);
 	if (info->del_set.index != IPSET_INVALID_ID)
-		ip_set_del(info->del_set.index, skb, par, &del_opt);
+		ip_set_del(info->del_set.index, skb, CAST_TO_MATCH par, &del_opt);
 
 	return XT_CONTINUE;
 }
