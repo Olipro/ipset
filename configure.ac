@@ -162,6 +162,9 @@ AC_CHECK_TYPES([union nf_inet_addr],,,[#include <linux/types.h>
 #include <netinet/in.h>
 #include <linux/netfilter.h>])
 
+dnl Checks for functions
+AC_CHECK_FUNCS(gethostbyname2)
+
 dnl Checks for  compiler characteristics.
 dnl Check extra warning flags except
 dnl	-Wconversion		-> we need it

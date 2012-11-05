@@ -24,6 +24,7 @@
 #include <libipset/types.h>			/* ipset_type_get */
 #include <libipset/utils.h>			/* string utilities */
 #include <libipset/parse.h>			/* prototypes */
+#include "../config.h"
 
 #ifndef ULLONG_MAX
 #define ULLONG_MAX	18446744073709551615ULL
@@ -679,6 +680,103 @@ ipset_parse_family(struct ipset_session *session,
  * We resolve hostnames but just the first IP address is used.
  */
 
+static void
+print_warn(struct ipset_session *session)
+{
+	if (!ipset_envopt_test(session, IPSET_ENV_QUIET))
+		fprintf(stderr, "Warning: %s",
+			ipset_session_warning(session));
+	ipset_session_report_reset(session);
+}
+
+#ifdef HAVE_GETHOSTBYNAME2
+static int
+get_hostbyname2(struct ipset_session *session,
+		enum ipset_opt opt,
+		const char *str,
+		int af)
+{
+	struct hostent *h = gethostbyname2(str, af);
+
+	if (h == NULL) {
+		syntax_err("cannot parse %s: resolving to %s address failed",
+			   str, af == AF_INET ? "IPv4" : "IPv6");
+		return -1;
+	}
+	if (h->h_addr_list[1] != NULL) {
+		ipset_warn(session,
+			   "%s resolves to multiple addresses: "
+			   "using only the first one returned "
+			   "by the resolver.",
+			   str);
+		print_warn(session);
+	}
+
+	return ipset_session_data_set(session, opt, h->h_addr_list[0]);
+}
+
+static int
+parse_ipaddr(struct ipset_session *session,
+	     enum ipset_opt opt, const char *str,
+	     uint8_t family)
+{
+	uint8_t m = family == NFPROTO_IPV4 ? 32 : 128;
+	int af = family == NFPROTO_IPV4 ? AF_INET : AF_INET6;
+	int err = 0, range = 0;
+	char *saved = ipset_strdup(session, str);
+	char *a, *tmp = saved;
+	enum ipset_opt copt, opt2;
+
+	if (opt == IPSET_OPT_IP) {
+		copt = IPSET_OPT_CIDR;
+		opt2 = IPSET_OPT_IP_TO;
+	} else {
+		copt = IPSET_OPT_CIDR2;
+		opt2 = IPSET_OPT_IP2_TO;
+	}
+
+	if (tmp == NULL)
+		return -1;
+	if ((a = cidr_separator(tmp)) != NULL) {
+		/* IP/mask */
+		*a++ = '\0';
+
+		if ((err = string_to_cidr(session, a, 0, m, &m)) != 0 ||
+		    (err = ipset_session_data_set(session, copt, &m)) != 0)
+			goto out;
+	} else {
+		a = find_range_separator(session, tmp);
+		if (a == tmp) {
+			err = -1;
+			goto out;
+		}
+		if (a != NULL) {
+			/* IP-IP */
+			*a++ = '\0';
+			D("range %s", a);
+			range++;
+		}
+	}
+	tmp = strip_escape(session, tmp);
+	if (tmp == NULL) {
+		err = -1;
+		goto out;
+	}
+	if ((err = get_hostbyname2(session, opt, tmp, af)) != 0 ||
+	    !range)
+		goto out;
+	a = strip_escape(session, a);
+	if (a == NULL) {
+		err = -1;
+		goto out;
+	}
+	err = get_hostbyname2(session, opt2, a, af);
+
+out:
+	free(saved);
+	return err;
+}
+#else
 static struct addrinfo *
 call_getaddrinfo(struct ipset_session *session, const char *str,
 		 uint8_t family)
@@ -746,8 +844,9 @@ get_addrinfo(struct ipset_session *session,
 			ipset_warn(session,
 				   "%s resolves to multiple addresses: "
 				   "using only the first one returned "
-				   "by the resolver",
+				   "by the resolver.",
 				   str);
+			print_warn(session);
 		}
 		found++;
 	}
@@ -826,6 +925,7 @@ out:
 	free(saved);
 	return err;
 }
+#endif
 
 enum ipaddr_type {
 	IPADDR_ANY,
