@@ -34,6 +34,7 @@ static DEFINE_RWLOCK(ip_set_ref_lock);		/* protects the set refs */
 static struct ip_set **ip_set_list;		/* all individual sets */
 static ip_set_id_t ip_set_max = CONFIG_IP_SET_MAX; /* max number of sets */
 
+#define IP_SET_INC	64
 #define STREQ(a, b)	(strncmp(a, b, IPSET_MAXNAMELEN) == 0)
 
 static unsigned int max_sets;
@@ -352,12 +353,26 @@ __ip_set_put(ip_set_id_t index)
  * so it can't be destroyed (or changed) under our foot.
  */
 
+static inline struct ip_set *
+ip_set_rcu_get(ip_set_id_t index)
+{
+	struct ip_set *set, **list;
+
+	rcu_read_lock();
+	/* ip_set_list itself needs to be protected */
+	list = rcu_dereference(ip_set_list);
+	set = list[index];
+	rcu_read_unlock();
+
+	return set;
+}
+
 int
 ip_set_test(ip_set_id_t index, const struct sk_buff *skb,
 	    const struct xt_action_param *par,
 	    const struct ip_set_adt_opt *opt)
 {
-	struct ip_set *set = ip_set_list[index];
+	struct ip_set *set = ip_set_rcu_get(index);
 	int ret = 0;
 
 	BUG_ON(set == NULL);
@@ -396,7 +411,7 @@ ip_set_add(ip_set_id_t index, const struct sk_buff *skb,
 	   const struct xt_action_param *par,
 	   const struct ip_set_adt_opt *opt)
 {
-	struct ip_set *set = ip_set_list[index];
+	struct ip_set *set = ip_set_rcu_get(index);
 	int ret;
 
 	BUG_ON(set == NULL);
@@ -419,7 +434,7 @@ ip_set_del(ip_set_id_t index, const struct sk_buff *skb,
 	   const struct xt_action_param *par,
 	   const struct ip_set_adt_opt *opt)
 {
-	struct ip_set *set = ip_set_list[index];
+	struct ip_set *set = ip_set_rcu_get(index);
 	int ret = 0;
 
 	BUG_ON(set == NULL);
@@ -448,6 +463,7 @@ ip_set_get_byname(const char *name, struct ip_set **set)
 	ip_set_id_t i, index = IPSET_INVALID_ID;
 	struct ip_set *s;
 
+	rcu_read_lock();
 	for (i = 0; i < ip_set_max; i++) {
 		s = ip_set_list[i];
 		if (s != NULL && STREQ(s->name, name)) {
@@ -456,6 +472,7 @@ ip_set_get_byname(const char *name, struct ip_set **set)
 			*set = s;
 		}
 	}
+	rcu_read_unlock();
 
 	return index;
 }
@@ -470,8 +487,10 @@ EXPORT_SYMBOL_GPL(ip_set_get_byname);
 void
 ip_set_put_byindex(ip_set_id_t index)
 {
+	rcu_read_lock();
 	if (ip_set_list[index] != NULL)
 		__ip_set_put(index);
+	rcu_read_unlock();
 }
 EXPORT_SYMBOL_GPL(ip_set_put_byindex);
 
@@ -485,7 +504,7 @@ EXPORT_SYMBOL_GPL(ip_set_put_byindex);
 const char *
 ip_set_name_byindex(ip_set_id_t index)
 {
-	const struct ip_set *set = ip_set_list[index];
+	const struct ip_set *set = ip_set_rcu_get(index);
 
 	BUG_ON(set == NULL);
 	BUG_ON(set->ref == 0);
@@ -533,10 +552,12 @@ ip_set_nfnl_get_byindex(ip_set_id_t index)
 		return IPSET_INVALID_ID;
 
 	nfnl_lock();
+	rcu_read_lock();
 	if (ip_set_list[index])
 		__ip_set_get(index);
 	else
 		index = IPSET_INVALID_ID;
+	rcu_read_unlock();
 	nfnl_unlock();
 
 	return index;
@@ -738,10 +759,9 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 	 * and check clashing.
 	 */
 	ret = find_free_id(set->name, &index, &clash);
-	if (ret != 0) {
+	if (ret == -EEXIST) {
 		/* If this is the same set and requested, ignore error */
-		if (ret == -EEXIST &&
-		    (flags & IPSET_FLAG_EXIST) &&
+		if ((flags & IPSET_FLAG_EXIST) &&
 		    STREQ(set->type->name, clash->type->name) &&
 		    set->type->family == clash->type->family &&
 		    set->type->revision_min == clash->type->revision_min &&
@@ -749,7 +769,30 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 		    set->variant->same_set(set, clash))
 			ret = 0;
 		goto cleanup;
-	}
+	} else if (ret == -IPSET_ERR_MAX_SETS) {
+		struct ip_set **list, **tmp;
+		ip_set_id_t i = ip_set_max + IP_SET_INC;
+
+		if (i < ip_set_max)
+			/* Wraparound */
+			goto cleanup;
+
+		list = kzalloc(sizeof(struct ip_set *) * i, GFP_KERNEL);
+		if (!list)
+			goto cleanup;
+		memcpy(list, ip_set_list, sizeof(struct ip_set *) * ip_set_max);
+		/* Both lists are valid */
+		tmp = rcu_dereference(ip_set_list);
+		rcu_assign_pointer(ip_set_list, list);
+		/* Make sure all current packets have passed through */
+		synchronize_net();
+		/* Use new list */
+		index = ip_set_max;
+		ip_set_max = i;
+		kfree(tmp);
+		ret = 0;
+	} else if (ret)
+		goto cleanup;
 
 	/*
 	 * Finally! Add our shiny new set to the list, and be done.
