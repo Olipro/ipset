@@ -1,3 +1,9 @@
+6.15
+ - Increase the number of maximal sets automatically as needed
+ - Restore the support of kernel versions between 2.6.32 and 2.6.35
+ - Fix range bug in hash:ip,port,net
+ - Revert, then reapply cidr book keeping patch to handle /0
+
 6.14
  - Support to match elements marked with "nomatch" in hash:*net* sets
  - Coding style fixes

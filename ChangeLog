@@ -1,3 +1,13 @@
+6.15
+ - Fix interactive mode (Fredrik Eriksson)
+ - Use gethostbyname2 instead of getaddrinfo
+ - Make tests/check_cidrs.sh script executable
+ - Add tests to check completely ranges with hash types
+ - Make easier to apply the netlink.patch
+ - Support protocol numbers as well, not only protocol names
+ - Add (back) the debug flag to configure
+ - Add simple test to check cidr book-keeping
+
 6.14
  - Support to match elements marked with "nomatch" in hash:*net* sets
  - Coding style fixes
