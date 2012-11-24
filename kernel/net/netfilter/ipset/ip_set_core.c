@@ -1130,13 +1130,19 @@ dump_init(struct netlink_callback *cb)
 	return 0;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 7, 0)
+#define NETLINK_PORTID(skb)	NETLINK_CB(skb).pid
+#else
+#define NETLINK_PORTID(skb)	NETLINK_CB(skb).portid
+#endif
+
 static int
 ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
 {
 	ip_set_id_t index = IPSET_INVALID_ID, max;
 	struct ip_set *set = NULL;
 	struct nlmsghdr *nlh = NULL;
-	unsigned int flags = NETLINK_CB(cb->skb).pid ? NLM_F_MULTI : 0;
+	unsigned int flags = NETLINK_PORTID(cb->skb) ? NLM_F_MULTI : 0;
 	u32 dump_type, dump_flags;
 	int ret = 0;
 
@@ -1184,7 +1190,7 @@ dump_last:
 			pr_debug("reference set\n");
 			__ip_set_get(set);
 		}
-		nlh = start_msg(skb, NETLINK_CB(cb->skb).pid,
+		nlh = start_msg(skb, NETLINK_PORTID(cb->skb),
 				cb->nlh->nlmsg_seq, flags,
 				IPSET_CMD_LIST);
 		if (!nlh) {
@@ -1327,7 +1333,7 @@ call_ad(struct sock *ctnl, struct sk_buff *skb, struct ip_set *set,
 		skb2 = nlmsg_new(payload, GFP_KERNEL);
 		if (skb2 == NULL)
 			return -ENOMEM;
-		rep = __nlmsg_put(skb2, NETLINK_CB(skb).pid,
+		rep = __nlmsg_put(skb2, NETLINK_PORTID(skb),
 				  nlh->nlmsg_seq, NLMSG_ERROR, payload, 0);
 		errmsg = nlmsg_data(rep);
 		errmsg->error = ret;
@@ -1342,7 +1348,7 @@ call_ad(struct sock *ctnl, struct sk_buff *skb, struct ip_set *set,
 
 		*errline = lineno;
 
-		netlink_unicast(ctnl, skb2, NETLINK_CB(skb).pid, MSG_DONTWAIT);
+		netlink_unicast(ctnl, skb2, NETLINK_PORTID(skb), MSG_DONTWAIT);
 		/* Signal netlink not to send its ACK/errmsg.  */
 		return -EINTR;
 	}
@@ -1515,7 +1521,7 @@ ip_set_header(struct sock *ctnl, struct sk_buff *skb,
 	if (skb2 == NULL)
 		return -ENOMEM;
 
-	nlh2 = start_msg(skb2, NETLINK_CB(skb).pid, nlh->nlmsg_seq, 0,
+	nlh2 = start_msg(skb2, NETLINK_PORTID(skb), nlh->nlmsg_seq, 0,
 			 IPSET_CMD_HEADER);
 	if (!nlh2)
 		goto nlmsg_failure;
@@ -1527,7 +1533,7 @@ ip_set_header(struct sock *ctnl, struct sk_buff *skb,
 		goto nla_put_failure;
 	nlmsg_end(skb2, nlh2);
 
-	ret = netlink_unicast(ctnl, skb2, NETLINK_CB(skb).pid, MSG_DONTWAIT);
+	ret = netlink_unicast(ctnl, skb2, NETLINK_PORTID(skb), MSG_DONTWAIT);
 	if (ret < 0)
 		return ret;
 
@@ -1575,7 +1581,7 @@ ip_set_type(struct sock *ctnl, struct sk_buff *skb,
 	if (skb2 == NULL)
 		return -ENOMEM;
 
-	nlh2 = start_msg(skb2, NETLINK_CB(skb).pid, nlh->nlmsg_seq, 0,
+	nlh2 = start_msg(skb2, NETLINK_PORTID(skb), nlh->nlmsg_seq, 0,
 			 IPSET_CMD_TYPE);
 	if (!nlh2)
 		goto nlmsg_failure;
@@ -1588,7 +1594,7 @@ ip_set_type(struct sock *ctnl, struct sk_buff *skb,
 	nlmsg_end(skb2, nlh2);
 
 	pr_debug("Send TYPE, nlmsg_len: %u\n", nlh2->nlmsg_len);
-	ret = netlink_unicast(ctnl, skb2, NETLINK_CB(skb).pid, MSG_DONTWAIT);
+	ret = netlink_unicast(ctnl, skb2, NETLINK_PORTID(skb), MSG_DONTWAIT);
 	if (ret < 0)
 		return ret;
 
@@ -1624,7 +1630,7 @@ ip_set_protocol(struct sock *ctnl, struct sk_buff *skb,
 	if (skb2 == NULL)
 		return -ENOMEM;
 
-	nlh2 = start_msg(skb2, NETLINK_CB(skb).pid, nlh->nlmsg_seq, 0,
+	nlh2 = start_msg(skb2, NETLINK_PORTID(skb), nlh->nlmsg_seq, 0,
 			 IPSET_CMD_PROTOCOL);
 	if (!nlh2)
 		goto nlmsg_failure;
@@ -1632,7 +1638,7 @@ ip_set_protocol(struct sock *ctnl, struct sk_buff *skb,
 		goto nla_put_failure;
 	nlmsg_end(skb2, nlh2);
 
-	ret = netlink_unicast(ctnl, skb2, NETLINK_CB(skb).pid, MSG_DONTWAIT);
+	ret = netlink_unicast(ctnl, skb2, NETLINK_PORTID(skb), MSG_DONTWAIT);
 	if (ret < 0)
 		return ret;
 
