@@ -1,3 +1,7 @@
+6.16
+ - Remove all modules before testing resize
+ - build: support for Linux 3.7 UAPI (Jan Engelhardt)
+
 6.15
  - Fix interactive mode (Fredrik Eriksson)
  - Use gethostbyname2 instead of getaddrinfo

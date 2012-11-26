@@ -1,3 +1,8 @@
+6.16
+ - Netlink pid is renamed to portid in kernel 3.7.0
+ - Fix RCU handling when the number of maximal sets are increased
+ - netfilter: ipset: fix netiface set name overflow (Florian Westphal)
+
 6.15
  - Increase the number of maximal sets automatically as needed
  - Restore the support of kernel versions between 2.6.32 and 2.6.35
