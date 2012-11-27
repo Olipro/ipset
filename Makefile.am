@@ -21,6 +21,7 @@ modules_sparse:
 if WITH_KMOD
 	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter \
 			V=$V C=2 CF=-D__CHECK_ENDIAN__ \
+			KCFLAGS="-DPACKAGE_VERSION=$(PACKAGE_VERSION)" \
 			IP_SET_MAX=$(IP_SET_MAX) KDIR=$$PWD/kernel modules
 else
 	@echo Skipping kernel modules due to --with-kmod=no
@@ -29,6 +30,7 @@ endif
 modules:
 if WITH_KMOD
 	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter V=$V \
+			KCFLAGS="-DPACKAGE_VERSION=$(PACKAGE_VERSION)" \
 			IP_SET_MAX=$(IP_SET_MAX) KDIR=$$PWD/kernel modules
 else
 	@echo Skipping kernel modules due to --with-kmod=no

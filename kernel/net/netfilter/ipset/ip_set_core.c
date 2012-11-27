@@ -43,11 +43,16 @@ static ip_set_id_t ip_set_max = CONFIG_IP_SET_MAX; /* max number of sets */
 
 static unsigned int max_sets;
 
+#define _IP_SET_CORE_MODULE_DESC(a)	\
+	MODULE_DESCRIPTION("core IP set support (v" a ")")
+#define IP_SET_CORE_MODULE_DESC(a)	\
+	_IP_SET_CORE_MODULE_DESC(__stringify(a))
+
 module_param(max_sets, int, 0600);
 MODULE_PARM_DESC(max_sets, "maximal number of sets");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
-MODULE_DESCRIPTION("core IP set support");
+IP_SET_CORE_MODULE_DESC(PACKAGE_VERSION);
 MODULE_ALIAS_NFNL_SUBSYS(NFNL_SUBSYS_IPSET);
 
 #ifndef rcu_dereference_protected
