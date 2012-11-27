@@ -811,7 +811,7 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 		struct ip_set **list, **tmp;
 		ip_set_id_t i = ip_set_max + IP_SET_INC;
 
-		if (i < ip_set_max)
+		if (i < ip_set_max || i == IPSET_INVALID_ID)
 			/* Wraparound */
 			goto cleanup;
 
