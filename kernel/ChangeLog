@@ -1,3 +1,7 @@
+6.16.1
+ - Add ipset package version to external module description
+ - Backport RCU handling up to 2.6.32.x
+
 6.16
  - Netlink pid is renamed to portid in kernel 3.7.0
  - Fix RCU handling when the number of maximal sets are increased
