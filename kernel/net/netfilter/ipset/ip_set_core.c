@@ -31,7 +31,11 @@ static LIST_HEAD(ip_set_type_list);		/* all registered set types */
 static DEFINE_MUTEX(ip_set_type_mutex);		/* protects ip_set_type_list */
 static DEFINE_RWLOCK(ip_set_ref_lock);		/* protects the set refs */
 
+#ifdef __rcu
 static struct ip_set * __rcu *ip_set_list;	/* all individual sets */
+#else
+static struct ip_set **ip_set_list;		/* all individual sets */
+#endif
 static ip_set_id_t ip_set_max = CONFIG_IP_SET_MAX; /* max number of sets */
 
 #define IP_SET_INC	64
@@ -45,6 +49,10 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
 MODULE_DESCRIPTION("core IP set support");
 MODULE_ALIAS_NFNL_SUBSYS(NFNL_SUBSYS_IPSET);
+
+#ifndef rcu_dereference_protected
+#define rcu_dereference_protected(p, c)	rcu_dereference(p)
+#endif
 
 /* When the nfnl mutex is held: */
 #define nfnl_dereference(p)		\
