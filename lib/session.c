@@ -851,7 +851,7 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 		safe_snprintf(session,
 			      "<ipset name=\"%s\">\n"
 			      "  <type>%s</type>\n"
-			      "  <revision%u</revision\n"
+			      "  <revision>%u</revision\n"
 			      "  <header>\n",
 			      ipset_data_setname(data),
 			      type->name, type->revision);
