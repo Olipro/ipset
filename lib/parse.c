@@ -614,7 +614,9 @@ ipset_parse_proto_port(struct ipset_session *session,
 		default:
 			if (!STREQ(a, "0")) {
 				syntax_err("Protocol %s can be used "
-					   "with pseudo port value 0 only.");
+					   "with pseudo port value 0 only.",
+					   tmp);
+				err = -1;
 				goto error;
 			}
 			ipset_data_flags_set(data, IPSET_FLAG(opt));
