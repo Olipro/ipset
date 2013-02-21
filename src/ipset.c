@@ -563,6 +563,8 @@ parse_commandline(int argc, char *argv[])
 	case IPSET_CMD_NONE:
 		if (interactive) {
 			printf("No command specified\n");
+			if (session)
+				ipset_envopt_parse(session, 0, "reset");
 			return 0;
 		}
 		if (argc > 1 && STREQ(argv[1], "-")) {
@@ -574,12 +576,15 @@ parse_commandline(int argc, char *argv[])
 				c = cmdline;
 				while (isspace(c[0]))
 					c++;
-				if (c[0] == '\0' || c[0] == '#')
+				if (c[0] == '\0' || c[0] == '#') {
+					printf("%s> ", program_name);
 					continue;
+				}
 				/* Build fake argv, argc */
 				build_argv(c);
-				/* Execute line: ignore errors */
-				parse_commandline(newargc, newargv);
+				/* Execute line: ignore soft errors */
+				if (parse_commandline(newargc, newargv) < 0)
+					handle_error();
 				printf("%s> ", program_name);
 			}
 			return exit_error(NO_PROBLEM, NULL);
