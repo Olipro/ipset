@@ -58,6 +58,14 @@ update_includes:
 	./update ip_set_hash.h
 	./update ip_set_list.h
 
+update_utils:
+	wget -O /tmp/ipset-bash-completion.tar.gz http://sourceforge.net/projects/ipset-bashcompl/files/latest/download
+	cd utils/ipset_bash_completion; tar xz --strip-components=1 -f /tmp/ipset-bash-completion.tar.gz
+	rm -f /tmp/ipset-bash-completion.tar.gz
+	wget -O /tmp/ipset-list.tar.gz http://sourceforge.net/projects/ipset-list/files/latest/download
+	cd utils/ipset_list; tar xz --strip-components=1 -f /tmp/ipset-list.tar.gz
+	rm -f /tmp/ipset-list.tar.gz
+
 tests:
 	cd tests; ./runtest.sh
 

@@ -1,3 +1,8 @@
+6.17
+  - Make sure ip_set_max isn't set to IPSET_INVALID_ID
+  - netfilter: ipset: timeout values corrupted on set resize (Josh Hunt)
+  - "Directory not empty" error message (reported by John Brendler)
+
 6.16.1
  - Add ipset package version to external module description
  - Backport RCU handling up to 2.6.32.x

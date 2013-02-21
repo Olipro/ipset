@@ -1,3 +1,11 @@
+6.17
+ - Fix revision printing in XML mode (reported by Mart Frauenlob)
+ - Correct "Suspicious condition (assignment + comparison)" (Thomas Jarosch)
+ - Fix error path when protocol number is used with port range
+ - Interactive mode error after syntax error (reported by Mart Frauenlob)
+ - The ipset_bash_completion tool is added
+ - The ipset_list tool is added
+
 6.16
  - Remove all modules before testing resize
  - build: support for Linux 3.7 UAPI (Jan Engelhardt)
