@@ -19,7 +19,6 @@
 #include <linux/netlink.h>
 #include <linux/jiffies.h>
 #include <linux/timer.h>
-#include <linux/version.h>
 #include <net/netlink.h>
 
 #include <linux/netfilter/ipset/pfxlen.h>
@@ -34,14 +33,6 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
 IP_SET_MODULE_DESC("bitmap:ip,mac", REVISION_MIN, REVISION_MAX);
 MODULE_ALIAS("ip_set_bitmap:ip,mac");
-
-/* Backport ether_addr_equal */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 5, 0)
-static inline bool ether_addr_equal(const u8 *addr1, const u8 *addr2)
-{
-	return !compare_ether_addr(addr1, addr2);
-}
-#endif
 
 enum {
 	MAC_EMPTY,		/* element is not set */

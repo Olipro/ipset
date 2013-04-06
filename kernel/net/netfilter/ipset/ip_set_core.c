@@ -17,9 +17,6 @@
 #include <linux/spinlock.h>
 #include <linux/netlink.h>
 #include <linux/rculist.h>
-#ifndef IPSET_IN_KERNEL_TREE
-#include <linux/version.h>
-#endif
 #include <net/netlink.h>
 
 #include <linux/netfilter.h>
@@ -31,11 +28,7 @@ static LIST_HEAD(ip_set_type_list);		/* all registered set types */
 static DEFINE_MUTEX(ip_set_type_mutex);		/* protects ip_set_type_list */
 static DEFINE_RWLOCK(ip_set_ref_lock);		/* protects the set refs */
 
-#ifdef __rcu
 static struct ip_set * __rcu *ip_set_list;	/* all individual sets */
-#else
-static struct ip_set **ip_set_list;		/* all individual sets */
-#endif
 static ip_set_id_t ip_set_max = CONFIG_IP_SET_MAX; /* max number of sets */
 
 #define IP_SET_INC	64
@@ -54,10 +47,6 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
 IP_SET_CORE_MODULE_DESC(PACKAGE_VERSION);
 MODULE_ALIAS_NFNL_SUBSYS(NFNL_SUBSYS_IPSET);
-
-#ifndef rcu_dereference_protected
-#define rcu_dereference_protected(p, c)	rcu_dereference(p)
-#endif
 
 /* When the nfnl mutex is held: */
 #define nfnl_dereference(p)		\
@@ -104,14 +93,14 @@ find_set_type(const char *name, u8 family, u8 revision)
 static bool
 load_settype(const char *name)
 {
-	nfnl_unlock();
+	unlock_nfnl();
 	pr_debug("try to load ip_set_%s\n", name);
 	if (request_module("ip_set_%s", name) < 0) {
 		pr_warning("Can't find ip_set type %s\n", name);
-		nfnl_lock();
+		lock_nfnl();
 		return false;
 	}
-	nfnl_lock();
+	lock_nfnl();
 	return true;
 }
 
@@ -263,12 +252,7 @@ ip_set_alloc(size_t size)
 		return members;
 	}
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 37)
-	members = __vmalloc(size, GFP_KERNEL | __GFP_ZERO | __GFP_HIGHMEM,
-			    PAGE_KERNEL);
-#else
 	members = vzalloc(size);
-#endif
 	if (!members)
 		return NULL;
 	pr_debug("%p: allocated with vmalloc\n", members);
@@ -553,7 +537,7 @@ ip_set_nfnl_get(const char *name)
 	ip_set_id_t i, index = IPSET_INVALID_ID;
 	struct ip_set *s;
 
-	nfnl_lock();
+	lock_nfnl();
 	for (i = 0; i < ip_set_max; i++) {
 		s = nfnl_set(i);
 		if (s != NULL && STREQ(s->name, name)) {
@@ -562,7 +546,7 @@ ip_set_nfnl_get(const char *name)
 			break;
 		}
 	}
-	nfnl_unlock();
+	unlock_nfnl();
 
 	return index;
 }
@@ -582,13 +566,13 @@ ip_set_nfnl_get_byindex(ip_set_id_t index)
 	if (index > ip_set_max)
 		return IPSET_INVALID_ID;
 
-	nfnl_lock();
+	lock_nfnl();
 	set = nfnl_set(index);
 	if (set)
 		__ip_set_get(set);
 	else
 		index = IPSET_INVALID_ID;
-	nfnl_unlock();
+	unlock_nfnl();
 
 	return index;
 }
@@ -605,11 +589,11 @@ void
 ip_set_nfnl_put(ip_set_id_t index)
 {
 	struct ip_set *set;
-	nfnl_lock();
+	lock_nfnl();
 	set = nfnl_set(index);
 	if (set != NULL)
 		__ip_set_put(set);
-	nfnl_unlock();
+	unlock_nfnl();
 }
 EXPORT_SYMBOL_GPL(ip_set_nfnl_put);
 
@@ -633,13 +617,13 @@ flag_exist(const struct nlmsghdr *nlh)
 }
 
 static struct nlmsghdr *
-start_msg(struct sk_buff *skb, u32 pid, u32 seq, unsigned int flags,
+start_msg(struct sk_buff *skb, u32 portid, u32 seq, unsigned int flags,
 	  enum ipset_cmd cmd)
 {
 	struct nlmsghdr *nlh;
 	struct nfgenmsg *nfmsg;
 
-	nlh = nlmsg_put(skb, pid, seq, cmd | (NFNL_SUBSYS_IPSET << 8),
+	nlh = nlmsg_put(skb, portid, seq, cmd | (NFNL_SUBSYS_IPSET << 8),
 			sizeof(*nfmsg), flags);
 	if (nlh == NULL)
 		return NULL;
@@ -1142,12 +1126,6 @@ dump_init(struct netlink_callback *cb)
 
 	return 0;
 }
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 7, 0)
-#define NETLINK_PORTID(skb)	NETLINK_CB(skb).pid
-#else
-#define NETLINK_PORTID(skb)	NETLINK_CB(skb).portid
-#endif
 
 static int
 ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
@@ -1753,7 +1731,7 @@ ip_set_sockfn_get(struct sock *sk, int optval, void __user *user, int *len)
 	void *data;
 	int copylen = *len, ret = 0;
 
-	if (!capable(CAP_NET_ADMIN))
+	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
 		return -EPERM;
 	if (optval != SO_IP_SET)
 		return -EBADF;
@@ -1801,10 +1779,10 @@ ip_set_sockfn_get(struct sock *sk, int optval, void __user *user, int *len)
 			goto done;
 		}
 		req_get->set.name[IPSET_MAXNAMELEN - 1] = '\0';
-		nfnl_lock();
+		lock_nfnl();
 		find_set_and_id(req_get->set.name, &id);
 		req_get->set.index = id;
-		nfnl_unlock();
+		unlock_nfnl();
 		goto copy;
 	}
 	case IP_SET_OP_GET_BYINDEX: {
@@ -1816,11 +1794,11 @@ ip_set_sockfn_get(struct sock *sk, int optval, void __user *user, int *len)
 			ret = -EINVAL;
 			goto done;
 		}
-		nfnl_lock();
+		lock_nfnl();
 		set = nfnl_set(req_get->set.index);
 		strncpy(req_get->set.name, set ? set->name : "",
 			IPSET_MAXNAMELEN);
-		nfnl_unlock();
+		unlock_nfnl();
 		goto copy;
 	}
 	default:

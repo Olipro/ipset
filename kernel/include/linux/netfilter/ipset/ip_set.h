@@ -17,13 +17,9 @@
 #include <linux/netfilter/x_tables.h>
 #include <linux/stringify.h>
 #include <linux/vmalloc.h>
-#include <linux/version.h>
 #include <net/netlink.h>
 #include <uapi/linux/netfilter/ipset/ip_set.h>
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
-#define xt_action_param	xt_match_param
-#endif
+#include <linux/netfilter/ipset/ip_set_compat.h>
 
 #define _IP_SET_MODULE_DESC(a, b, c)		\
 	MODULE_DESCRIPTION(a " type of IP sets, revisions " b "-" c)
@@ -233,28 +229,6 @@ ip_set_get_h16(const struct nlattr *attr)
 
 #define ipset_nest_start(skb, attr) nla_nest_start(skb, attr | NLA_F_NESTED)
 #define ipset_nest_end(skb, start)  nla_nest_end(skb, start)
-
-#ifdef NLA_PUT_NET16
-static inline int nla_put_be16(struct sk_buff *skb, int attrtype, __be16 value)
-{
-	return nla_put(skb, attrtype, sizeof(__be16), &value);
-}
-
-static inline int nla_put_net16(struct sk_buff *skb, int attrtype, __be16 value)
-{
-	return nla_put_be16(skb, attrtype | NLA_F_NET_BYTEORDER, value);
-}
-
-static inline int nla_put_be32(struct sk_buff *skb, int attrtype, __be32 value)
-{
-	return nla_put(skb, attrtype, sizeof(__be32), &value);
-}
-
-static inline int nla_put_net32(struct sk_buff *skb, int attrtype, __be32 value)
-{
-	return nla_put_be32(skb, attrtype | NLA_F_NET_BYTEORDER, value);
-}
-#endif
 
 static inline int nla_put_ipaddr4(struct sk_buff *skb, int type, __be32 ipaddr)
 {
