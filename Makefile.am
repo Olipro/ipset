@@ -53,10 +53,10 @@ else
 endif
 
 update_includes:
-	./update ip_set.h
-	./update ip_set_bitmap.h
-	./update ip_set_hash.h
-	./update ip_set_list.h
+	for x in ip_set.h ip_set_bitmap.h ip_set_hash.h ip_set_list.h; do \
+	    cp kernel/include/uapi/linux/netfilter/ipset/$$x \
+		include/libipset/linux_$$x; \
+	done
 
 update_utils:
 	wget -O /tmp/ipset-bash-completion.tar.gz http://sourceforge.net/projects/ipset-bashcompl/files/latest/download

@@ -228,4 +228,4 @@ struct ip_set_req_version {
 	unsigned int version;
 };
 
-#endif /*_UAPI_IP_SET_H */
+#endif /* _UAPI_IP_SET_H */
