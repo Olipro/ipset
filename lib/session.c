@@ -5,6 +5,7 @@
  * published by the Free Software Foundation.
  */
 #include <assert.h>				/* assert */
+#include <endian.h>				/* htobe64 */
 #include <errno.h>				/* errno */
 #include <setjmp.h>				/* setjmp, longjmp */
 #include <stdio.h>				/* snprintf */
@@ -479,6 +480,14 @@ static const struct ipset_attr_policy adt_attrs[] = {
 		.opt = IPSET_OPT_IFACE,
 		.len  = IFNAMSIZ,
 	},
+	[IPSET_ATTR_PACKETS] = {
+		.type = MNL_TYPE_U64,
+		.opt = IPSET_OPT_PACKETS,
+	},
+	[IPSET_ATTR_BYTES] = {
+		.type = MNL_TYPE_U64,
+		.opt = IPSET_OPT_BYTES,
+	},
 };
 
 static const struct ipset_attr_policy ipaddr_attrs[] = {
@@ -550,6 +559,7 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 	struct ipset_data *data = session->data;
 	const struct ipset_attr_policy *attr;
 	const void *d;
+	uint64_t v64;
 	uint32_t v32;
 	uint16_t v16;
 	int ret;
@@ -599,6 +609,11 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 	} else if (nla[type]->nla_type & NLA_F_NET_BYTEORDER) {
 		D("netorder attr type %u", type);
 		switch (attr->type) {
+		case MNL_TYPE_U64: {
+			v64  = be64toh(*(const uint64_t *)d);
+			d = &v64;
+			break;
+		}
 		case MNL_TYPE_U32: {
 			v32  = ntohl(*(const uint32_t *)d);
 			d = &v32;
@@ -773,8 +788,10 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 
 	safe_dprintf(session, ipset_print_elem, IPSET_OPT_ELEM);
 
-	for (arg = type->args[IPSET_ADD]; arg != NULL && arg->print; arg++) {
-		if (!ipset_data_test(data, arg->opt))
+	for (arg = type->args[IPSET_ADD]; arg != NULL && arg->opt; arg++) {
+		D("print arg opt %u %s\n", arg->opt,
+		   ipset_data_test(data, arg->opt) ? "(yes)" : "(missing)");
+		if (!(arg->print && ipset_data_test(data, arg->opt)))
 			continue;
 		switch (session->mode) {
 		case IPSET_LIST_SAVE:
@@ -1413,6 +1430,9 @@ attr_len(const struct ipset_attr_policy *attr, uint8_t family, uint16_t *flags)
 		*flags = NLA_F_NET_BYTEORDER;
 		return family == NFPROTO_IPV4 ? sizeof(uint32_t)
 					 : sizeof(struct in6_addr);
+	case MNL_TYPE_U64:
+		*flags = NLA_F_NET_BYTEORDER;
+		return sizeof(uint64_t);
 	case MNL_TYPE_U32:
 		*flags = NLA_F_NET_BYTEORDER;
 		return sizeof(uint32_t);
@@ -1465,6 +1485,12 @@ rawdata2attr(struct ipset_session *session, struct nlmsghdr *nlh,
 		return 1;
 
 	switch (attr->type) {
+	case MNL_TYPE_U64: {
+		uint64_t value = htobe64(*(const uint64_t *)d);
+
+		mnl_attr_put(nlh, type | flags, alen, &value);
+		return 0;
+	}
 	case MNL_TYPE_U32: {
 		uint32_t value = htonl(*(const uint32_t *)d);
 
