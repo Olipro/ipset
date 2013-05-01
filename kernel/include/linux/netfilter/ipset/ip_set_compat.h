@@ -20,6 +20,12 @@
 #define	__rcu
 #endif
 
+#ifdef CHECK_KCONFIG
+#ifndef CONFIG_SPARSE_RCU_POINTER
+#error "CONFIG_SPARSE_RCU_POINTER must be enabled"
+#endif
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
 #define xt_action_param		xt_match_param
 #endif
