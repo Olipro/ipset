@@ -779,7 +779,7 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 		safe_snprintf(session, "add %s ", ipset_data_setname(data));
 		break;
 	case IPSET_LIST_XML:
-		safe_snprintf(session, "    <member>");
+		safe_snprintf(session, "<member><elem>");
 		break;
 	case IPSET_LIST_PLAIN:
 	default:
@@ -787,6 +787,8 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 	}
 
 	safe_dprintf(session, ipset_print_elem, IPSET_OPT_ELEM);
+	if (session->mode == IPSET_LIST_XML)
+		safe_snprintf(session, "</elem>");
 
 	for (arg = type->args[IPSET_ADD]; arg != NULL && arg->opt; arg++) {
 		D("print arg opt %u %s\n", arg->opt,
@@ -796,23 +798,22 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 		switch (session->mode) {
 		case IPSET_LIST_SAVE:
 		case IPSET_LIST_PLAIN:
-			safe_snprintf(session, " %s ", arg->name[0]);
-			if (arg->has_arg == IPSET_NO_ARG)
+			if (arg->has_arg == IPSET_NO_ARG) {
+				safe_snprintf(session, " %s", arg->name[0]);
 				break;
+			}
+			safe_snprintf(session, " %s ", arg->name[0]);
 			safe_dprintf(session, arg->print, arg->opt);
 			break;
 		case IPSET_LIST_XML:
 			if (arg->has_arg == IPSET_NO_ARG) {
 				safe_snprintf(session,
-					      "    <%s/>\n",
-					      arg->name[0]);
+					      "<%s/>", arg->name[0]);
 				break;
 			}
-			safe_snprintf(session, "    <%s>",
-				      arg->name[0]);
+			safe_snprintf(session, "<%s>", arg->name[0]);
 			safe_dprintf(session, arg->print, arg->opt);
-			safe_snprintf(session, "</%s>\n",
-				      arg->name[0]);
+			safe_snprintf(session, "</%s>", arg->name[0]);
 			break;
 		default:
 			break;
@@ -853,13 +854,13 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 
 	switch (session->mode) {
 	case IPSET_LIST_SAVE:
-		safe_snprintf(session, "create %s %s ",
+		safe_snprintf(session, "create %s %s",
 			      ipset_data_setname(data),
 			      type->name);
 		break;
 	case IPSET_LIST_PLAIN:
 		safe_snprintf(session, "%sName: %s\n"
-			      "Type: %s\nRevision: %u\nHeader: ",
+			      "Type: %s\nRevision: %u\nHeader:",
 			      session->printed_set ? "\n" : "",
 			      ipset_data_setname(data),
 			      type->name, type->revision);
@@ -867,9 +868,9 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 	case IPSET_LIST_XML:
 		safe_snprintf(session,
 			      "<ipset name=\"%s\">\n"
-			      "  <type>%s</type>\n"
-			      "  <revision>%u</revision\n"
-			      "  <header>\n",
+			      "<type>%s</type>\n"
+			      "<revision>%u</revision>\n"
+			      "<header>",
 			      ipset_data_setname(data),
 			      type->name, type->revision);
 		break;
@@ -886,24 +887,22 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 		switch (session->mode) {
 		case IPSET_LIST_SAVE:
 		case IPSET_LIST_PLAIN:
-			safe_snprintf(session, "%s ", arg->name[0]);
-			if (arg->has_arg == IPSET_NO_ARG)
+			if (arg->has_arg == IPSET_NO_ARG) {
+				safe_snprintf(session, " %s", arg->name[0]);
 				break;
+			}
+			safe_snprintf(session, " %s ", arg->name[0]);
 			safe_dprintf(session, arg->print, arg->opt);
-			safe_snprintf(session, " ");
 			break;
 		case IPSET_LIST_XML:
 			if (arg->has_arg == IPSET_NO_ARG) {
 				safe_snprintf(session,
-					      "    <%s/>\n",
-					      arg->name[0]);
+					      "<%s/>", arg->name[0]);
 				break;
 			}
-			safe_snprintf(session, "    <%s>",
-				      arg->name[0]);
+			safe_snprintf(session, "<%s>", arg->name[0]);
 			safe_dprintf(session, arg->print, arg->opt);
-			safe_snprintf(session, "</%s>\n",
-				      arg->name[0]);
+			safe_snprintf(session, "</%s>", arg->name[0]);
 			break;
 		default:
 			break;
@@ -923,14 +922,14 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 			"\n" : "\nMembers:\n");
 		break;
 	case IPSET_LIST_XML:
-		safe_snprintf(session, "    <memsize>");
+		safe_snprintf(session, "\n<memsize>");
 		safe_dprintf(session, ipset_print_number, IPSET_OPT_MEMSIZE);
-		safe_snprintf(session, "</memsize>\n    <references>");
+		safe_snprintf(session, "</memsize>\n<references>");
 		safe_dprintf(session, ipset_print_number, IPSET_OPT_REFERENCES);
 		safe_snprintf(session,
 			session->envopts & IPSET_ENV_LIST_HEADER ?
-			"</references>\n  </header>\n" :
-			"</references>\n  </header>\n  <members>\n");
+			"</references>\n</header>\n" :
+			"</references>\n</header>\n<members>\n");
 		break;
 	default:
 		break;
@@ -941,7 +940,7 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 }
 
 static int
-print_set_done(struct ipset_session *session)
+print_set_done(struct ipset_session *session, bool callback_done)
 {
 	D("called for %s", session->saved_setname[0] == '\0'
 		? "NONE" : session->saved_setname);
@@ -955,11 +954,13 @@ print_set_done(struct ipset_session *session)
 			break;
 		}
 		if (session->saved_setname[0] != '\0')
-			safe_snprintf(session, "  </members>\n</ipset>\n");
+			safe_snprintf(session, "</members>\n</ipset>\n");
 		break;
 	default:
 		break;
 	}
+	if (callback_done && session->mode == IPSET_LIST_XML)
+		safe_snprintf(session, "</ipsets>\n");
 	return call_outfn(session) ? MNL_CB_ERROR : MNL_CB_STOP;
 }
 
@@ -1005,7 +1006,7 @@ callback_list(struct ipset_session *session, struct nlattr *nla[],
 
 		/* Close previous set printing */
 		if (session->saved_setname[0] != '\0')
-			print_set_done(session);
+			print_set_done(session, false);
 	}
 
 	if (nla[IPSET_ATTR_DATA] != NULL) {
@@ -1233,7 +1234,7 @@ callback_data(const struct nlmsghdr *nlh, void *data)
 		ret = callback_list(session, nla, cmd);
 		D("flag multi: %u", nlh->nlmsg_flags & NLM_F_MULTI);
 		if (ret >= MNL_CB_STOP && !(nlh->nlmsg_flags & NLM_F_MULTI))
-			ret = print_set_done(session);
+			ret = print_set_done(session, false);
 		break;
 	case IPSET_CMD_PROTOCOL:
 		if (!session->version_checked)
@@ -1261,7 +1262,7 @@ callback_done(const struct nlmsghdr *nlh UNUSED, void *data)
 
 	D(" called");
 	if (session->cmd == IPSET_CMD_LIST || session->cmd == IPSET_CMD_SAVE)
-		return print_set_done(session);
+		return print_set_done(session, true);
 
 	FAILURE("Invalid message received in non LIST or SAVE state.");
 }
@@ -1362,7 +1363,7 @@ callback_error(const struct nlmsghdr *nlh, void *cbdata)
 		case IPSET_CMD_LIST:
 		case IPSET_CMD_SAVE:
 			/* No set in kernel */
-			print_set_done(session);
+			print_set_done(session, true);
 			break;
 		default:
 			FAILURE("ACK message received to command %s[%u], "
@@ -1930,6 +1931,10 @@ ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd, uint32_t lineno)
 		if (session->mode == IPSET_LIST_NONE)
 			session->mode = IPSET_LIST_SAVE;
 	}
+	/* Start the root element in XML mode */
+	if ((cmd == IPSET_CMD_LIST || cmd == IPSET_CMD_SAVE) &&
+	    session->mode == IPSET_LIST_XML)
+		safe_snprintf(session, "<ipsets>\n");
 
 	D("next: build_msg");
 	/* Build new message or append buffered commands */
