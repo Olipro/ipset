@@ -55,7 +55,7 @@
 # Add a non-matching IP address entry
 0 ipset -A test 2:2:2::2,80,1:1:1::1 nomatch
 # Add an overlapping matching small net
-0 ipset -A test 2:2:2::2,80,1:1:1::/124 
+0 ipset -A test 2:2:2::2,80,1:1:1::/124
 # Add an overlapping non-matching larger net
 0 ipset -A test 2:2:2::2,80,1:1:1::/120 nomatch
 # Add an even larger matching net

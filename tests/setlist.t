@@ -177,9 +177,9 @@
 0 ipset x
 # Counters: require sendip
 skip which sendip >/dev/null
-# Counters: create set 
+# Counters: create set
 0 ipset n a hash:ip counters
-# Counters: create list set 
+# Counters: create list set
 0 ipset n test list:set counters
 # Counters: add elemet with zero counters
 0 ipset a a 10.255.255.64
@@ -195,9 +195,9 @@ skip which sendip >/dev/null
 0 ipset f
 # Counters: destroy sets
 0 ipset x
-# Counters and timeout: create set 
+# Counters and timeout: create set
 0 ipset n a hash:ip counters timeout 600
-# Counters and timeout: create list set 
+# Counters and timeout: create list set
 0 ipset n test list:set counters timeout 600
 # Counters and timeout: add elemet with zero counters
 0 ipset a a 10.255.255.64

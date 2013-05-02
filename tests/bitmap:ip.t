@@ -110,11 +110,11 @@
 1 ipset add test 9.255.255.255
 # Subnets: Try to add element after upper boundary
 1 ipset add test 11.0.0.0
-# Subnets: Try to delete element not added to the set                           
-1 ipset -D test 10.2.0.0                                                        
-# Subnets: Add element to the set                                               
-0 ipset -A test 10.2.0.0                                                        
-# Subnets: Delete the same element from the set                                 
+# Subnets: Try to delete element not added to the set
+1 ipset -D test 10.2.0.0
+# Subnets: Add element to the set
+0 ipset -A test 10.2.0.0
+# Subnets: Delete the same element from the set
 0 ipset -D test 10.2.0.0
 # Subnets: Add a subnet of subnets
 0 ipset -A test 10.8.0.0/16 timeout 4
@@ -210,7 +210,7 @@
 0 ipset x test
 # Counters: require sendip
 skip which sendip
-# Counters: create set 
+# Counters: create set
 0 ipset n test bitmap:ip range 10.255.0.0/16 counters
 # Counters: add elemet with zero counters
 0 ipset a test 10.255.255.64
@@ -220,7 +220,7 @@ skip which sendip
 0 ./check_counters test 10.255.255.64 5 $((5*40))
 # Counters: destroy set
 0 ipset x test
-# Counters and timeout: create set 
+# Counters and timeout: create set
 0 ipset n test bitmap:ip range 10.255.0.0/16 counters timeout 600
 # Counters and timeout: add elemet with zero counters
 0 ipset a test 10.255.255.64

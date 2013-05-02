@@ -186,7 +186,7 @@
 0 ipset x test
 # Counters: require sendip
 skip which sendip
-# Counters: create set 
+# Counters: create set
 0 ipset n test hash:ip counters
 # Counters: add elemet with zero counters
 0 ipset a test 10.255.255.64
@@ -196,7 +196,7 @@ skip which sendip
 0 ./check_counters test 10.255.255.64 5 $((5*40))
 # Counters: destroy set
 0 ipset x test
-# Counters and timeout: create set 
+# Counters and timeout: create set
 0 ipset n test hash:ip counters timeout 600
 # Counters and timeout: add elemet with zero counters
 0 ipset a test 10.255.255.64

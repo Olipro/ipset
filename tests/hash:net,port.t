@@ -81,7 +81,7 @@
 # Add a non-matching IP address entry
 0 ipset -A test 1.1.1.1,80 nomatch
 # Add an overlapping matching small net
-0 ipset -A test 1.1.1.0/30,80 
+0 ipset -A test 1.1.1.0/30,80
 # Add an overlapping non-matching larger net
 0 ipset -A test 1.1.1.0/28,80 nomatch
 # Add an even larger matching net
