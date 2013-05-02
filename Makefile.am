@@ -17,11 +17,15 @@ endif
 
 SUBDIRS		= include/libipset lib src
 
+sparse-check:
+	$(MAKE) -C lib sparse-check
+	$(MAKE) -C src sparse-check
+
 modules_sparse:
 if WITH_KMOD
 	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter \
-			V=$V C=2 CF=-D__CHECK_ENDIAN__ \
-			KCFLAGS="-DPACKAGE_VERSION=$(PACKAGE_VERSION)" \
+			V=$V W=1 C=2 CF="-D__CHECK_ENDIAN__ -Wsparse-all" \
+			KCFLAGS="-DPACKAGE_VERSION=$(PACKAGE_VERSION) -DCHECK_KCONFIG -Wextra" \
 			IP_SET_MAX=$(IP_SET_MAX) KDIR=$$PWD/kernel modules
 else
 	@echo Skipping kernel modules due to --with-kmod=no
