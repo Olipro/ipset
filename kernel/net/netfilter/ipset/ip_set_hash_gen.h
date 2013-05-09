@@ -11,8 +11,8 @@
 #include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <linux/netfilter/ipset/ip_set_timeout.h>
-#ifndef rcu_dereference_bh
-#define rcu_dereference_bh(p)	rcu_dereference(p)
+#ifndef rcu_dereference_bh_check
+#define rcu_dereference_bh_check(p,c)	rcu_dereference_bh(p)
 #endif
 
 #define rcu_dereference_bh_nfnl(p)	rcu_dereference_bh_check(p, 1)
