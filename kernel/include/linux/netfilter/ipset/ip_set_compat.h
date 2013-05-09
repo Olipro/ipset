@@ -43,6 +43,16 @@ static inline bool ether_addr_equal(const u8 *addr1, const u8 *addr2)
 {
 	return !compare_ether_addr(addr1, addr2);
 }
+
+static inline int nla_put_be64(struct sk_buff *skb, int attrtype, __be64 value)
+{
+	return nla_put(skb, attrtype, sizeof(__be64), &value);
+}
+
+static inline int nla_put_net64(struct sk_buff *skb, int attrtype, __be64 value)
+{
+	return nla_put_be64(skb, attrtype | NLA_F_NET_BYTEORDER, value);
+}
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 7, 0)
