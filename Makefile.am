@@ -40,10 +40,28 @@ else
 	@echo Skipping kernel modules due to --with-kmod=no
 endif
 
+define DEPMOD_WARNING
+
+!!! WARNING !!! WARNING !!! WARNING !!!
+
+Your distribution seems to ignore the /lib/modules/<kernelrelease>/extra/
+subdirectory, where the ipset kernel modules are installed.
+
+Add the 'extra' directory to the search definition of your depmod
+configuration (/etc/depmod.conf or /etc/depmod.d/) and re-run
+
+	depmod <kernelrelease>
+
+otherwise the ipset kernel modules in the extra subdir will be ignored.
+
+endef
+export DEPMOD_WARNING
+
 modules_install:
 if WITH_KMOD
 	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter \
 			KDIR=$$PWD/kernel modules_install
+	@modinfo ip_set_hash_ip | ${GREP} extra/ipset/ip_set_hash_ip >/dev/null || echo "$$DEPMOD_WARNING"
 else
 	@echo Skipping kernel modules due to --with-kmod=no
 endif
