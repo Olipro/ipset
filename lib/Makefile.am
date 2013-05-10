@@ -36,6 +36,9 @@ libipset_la_SOURCES = \
 
 EXTRA_DIST = $(IPSET_SETTYPE_LIST) libipset.map
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libipset.pc
+
 sparse-check: $(libipset_la_SOURCES:.c=.d)
 
 %.d: %.c
