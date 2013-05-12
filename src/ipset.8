@@ -278,7 +278,7 @@ ipset create test hash:ip timeout 300
 .IP
 ipset add test 192.168.0.1 timeout 60
 .IP
-ipset -exist add test 192.168.0.1 timeout 600
+ipset \-exist add test 192.168.0.1 timeout 600
 .PP 
 .SS nomatch
 The \fBhash\fR set types which can store \fBnet\fR type of data (i.e. hash:*net*)
