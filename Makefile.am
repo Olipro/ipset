@@ -23,7 +23,7 @@ sparse-check:
 
 modules_sparse:
 if WITH_KMOD
-	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter \
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net \
 			V=$V W=1 C=2 CF="-D__CHECK_ENDIAN__ -Wsparse-all" \
 			KCFLAGS="-DPACKAGE_VERSION=$(PACKAGE_VERSION) -DCHECK_KCONFIG -Wextra" \
 			IP_SET_MAX=$(IP_SET_MAX) KDIR=$$PWD/kernel modules
@@ -33,7 +33,7 @@ endif
 
 modules:
 if WITH_KMOD
-	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter V=$V \
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net V=$V \
 			KCFLAGS="-DPACKAGE_VERSION=$(PACKAGE_VERSION)" \
 			IP_SET_MAX=$(IP_SET_MAX) KDIR=$$PWD/kernel modules
 else
@@ -59,7 +59,7 @@ export DEPMOD_WARNING
 
 modules_install:
 if WITH_KMOD
-	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter \
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net \
 			KDIR=$$PWD/kernel modules_install
 	@modinfo ip_set_hash_ip | ${GREP} extra/ipset/ip_set_hash_ip >/dev/null || echo "$$DEPMOD_WARNING"
 else
@@ -68,7 +68,7 @@ endif
 
 modules_clean:
 if WITH_KMOD
-	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net/netfilter \
+	${MAKE} -C $(KBUILD_OUTPUT) M=$$PWD/kernel/net \
 			KDIR=$$PWD/kernel clean
 else
 	@echo Skipping kernel modules due to --with-kmod=no
