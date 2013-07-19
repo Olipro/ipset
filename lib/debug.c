@@ -236,6 +236,19 @@ ipset_debug_msg(const char *dir, void *buffer, int len)
 	int cmd, nfmsglen = MNL_ALIGN(sizeof(struct nfgenmsg));
 
 	debug = 0;
+	if (!mnl_nlmsg_ok(nlh, len)) {
+		fprintf(stderr, "Broken message received!\n");
+		if (len < (int)sizeof(struct nlmsghdr)) {
+			fprintf(stderr, "len (%d) < sizeof(struct nlmsghdr) (%d)\n",
+				len, (int)sizeof(struct nlmsghdr));
+		} else if (nlh->nlmsg_len < sizeof(struct nlmsghdr)) {
+			fprintf(stderr, "nlmsg_len (%u) < sizeof(struct nlmsghdr) (%d)\n",
+				nlh->nlmsg_len, (int)sizeof(struct nlmsghdr));
+		} else if ((int)nlh->nlmsg_len > len) {
+			fprintf(stderr, "nlmsg_len (%u) > len (%d)\n",
+				 nlh->nlmsg_len, len);
+		}
+	}
 	while (mnl_nlmsg_ok(nlh, len)) {
 		switch (nlh->nlmsg_type) {
 		case NLMSG_NOOP:
