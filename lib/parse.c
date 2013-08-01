@@ -1812,7 +1812,7 @@ do {					\
  */
 int
 ipset_parse_elem(struct ipset_session *session,
-		 enum ipset_opt optional, const char *str)
+		 bool optional, const char *str)
 {
 	const struct ipset_type *type;
 	char *a = NULL, *b = NULL, *tmp, *saved;
