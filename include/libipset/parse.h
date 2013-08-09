@@ -44,6 +44,8 @@ extern int ipset_parse_icmpv6(struct ipset_session *session,
 			      enum ipset_opt opt, const char *str);
 extern int ipset_parse_proto_port(struct ipset_session *session,
 				  enum ipset_opt opt, const char *str);
+extern int ipset_parse_tcp_udp_port(struct ipset_session *session,
+				  enum ipset_opt opt, const char *str);
 extern int ipset_parse_family(struct ipset_session *session,
 			      enum ipset_opt opt, const char *str);
 extern int ipset_parse_ip(struct ipset_session *session,

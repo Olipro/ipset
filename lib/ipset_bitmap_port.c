@@ -13,7 +13,7 @@
 static const struct ipset_arg bitmap_port_create_args0[] = {
 	{ .name = { "range", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PORT,
-	  .parse = ipset_parse_tcp_port,	.print = ipset_print_port,
+	  .parse = ipset_parse_tcp_udp_port,	.print = ipset_print_port,
 	},
 	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
@@ -40,12 +40,14 @@ static const struct ipset_arg bitmap_port_add_args0[] = {
 };
 
 static const char bitmap_port_usage0[] =
-"create SETNAME bitmap:port range FROM-TO\n"
+"create SETNAME bitmap:port range [PROTO:]FROM-TO\n"
 "               [timeout VALUE]\n"
-"add    SETNAME PORT|FROM-TO [timeout VALUE]\n"
-"del    SETNAME PORT|FROM-TO\n"
-"test   SETNAME PORT\n\n"
-"where PORT, FROM and TO are port numbers or port names from /etc/services.\n";
+"add    SETNAME [PROTO:]PORT|FROM-TO [timeout VALUE]\n"
+"del    SETNAME [PROTO:]PORT|FROM-TO\n"
+"test   SETNAME [PROTO:]PORT\n\n"
+"where PORT, FROM and TO are port numbers or port names from /etc/services.\n"
+"PROTO is only needed if a service name is used and it does not exist as a TCP service;\n"
+"it isn't used otherwise with the bitmap.\n";
 
 static struct ipset_type ipset_bitmap_port0 = {
 	.name = "bitmap:port",
@@ -55,7 +57,7 @@ static struct ipset_type ipset_bitmap_port0 = {
 	.dimension = IPSET_DIM_ONE,
 	.elem = {
 		[IPSET_DIM_ONE - 1] = {
-			.parse = ipset_parse_tcp_port,
+			.parse = ipset_parse_tcp_udp_port,
 			.print = ipset_print_port,
 			.opt = IPSET_OPT_PORT
 		},
@@ -91,7 +93,7 @@ static struct ipset_type ipset_bitmap_port0 = {
 static const struct ipset_arg bitmap_port_create_args1[] = {
 	{ .name = { "range", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PORT,
-	  .parse = ipset_parse_tcp_port,	.print = ipset_print_port,
+	  .parse = ipset_parse_tcp_udp_port,	.print = ipset_print_port,
 	},
 	{ .name = { "timeout", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
@@ -130,13 +132,15 @@ static const struct ipset_arg bitmap_port_add_args1[] = {
 };
 
 static const char bitmap_port_usage1[] =
-"create SETNAME bitmap:port range FROM-TO\n"
+"create SETNAME bitmap:port range [PROTO:]FROM-TO\n"
 "               [timeout VALUE] [counters]\n"
-"add    SETNAME PORT|FROM-TO [timeout VALUE]\n"
+"add    SETNAME [PROTO:]PORT|FROM-TO [timeout VALUE]\n"
 "               [packets VALUE] [bytes VALUE]\n"
-"del    SETNAME PORT|FROM-TO\n"
-"test   SETNAME PORT\n\n"
-"where PORT, FROM and TO are port numbers or port names from /etc/services.\n";
+"del    SETNAME [PROTO:]PORT|FROM-TO\n"
+"test   SETNAME [PROTO:]PORT\n\n"
+"where PORT, FROM and TO are port numbers or port names from /etc/services.\n"
+"PROTO is only needed if a service name is used and it does not exist as a TCP service;\n"
+"it isn't used otherwise with the bitmap.\n";
 
 static struct ipset_type ipset_bitmap_port1 = {
 	.name = "bitmap:port",
@@ -146,7 +150,7 @@ static struct ipset_type ipset_bitmap_port1 = {
 	.dimension = IPSET_DIM_ONE,
 	.elem = {
 		[IPSET_DIM_ONE - 1] = {
-			.parse = ipset_parse_tcp_port,
+			.parse = ipset_parse_tcp_udp_port,
 			.print = ipset_print_port,
 			.opt = IPSET_OPT_PORT
 		},
