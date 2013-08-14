@@ -1058,7 +1058,7 @@ ip_set_swap(struct sock *ctnl, struct sk_buff *skb,
 	 * Not an artifical restriction anymore, as we must prevent
 	 * possible loops created by swapping in setlist type of sets. */
 	if (!(from->type->features == to->type->features &&
-	      from->type->family == to->type->family))
+	      from->family == to->family))
 		return -IPSET_ERR_TYPE_MISMATCH;
 
 	strncpy(from_name, from->name, IPSET_MAXNAMELEN);
