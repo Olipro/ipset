@@ -163,7 +163,7 @@ must not exist.
 \fBw\fP, \fBswap\fP \fISETNAME\-FROM\fP \fISETNAME\-TO\fP
 Swap the content of two sets, or in another words, 
 exchange the name of two sets. The referred sets must exist and
-identical type of sets can be swapped only.
+compatible type of sets can be swapped only.
 .TP 
 \fBhelp\fP [ \fITYPENAME\fP ]
 Print help and set type specific help if
@@ -247,7 +247,7 @@ addresses or service numbers, then the host name or service name must be enclose
 in square brackets. Example:
 .IP 
 ipset add foo [test\-hostname],[ftp\-data]
-.PP
+.PP 
 In the case of host names the DNS resolver is called internally
 by \fBipset\fR but if it returns multiple IP addresses, only the
 first one is used.
@@ -275,9 +275,9 @@ The timeout value of already added elements can be changed by readding the eleme
 using the \fB\-exist\fR option. Example:
 .IP 
 ipset create test hash:ip timeout 300
-.IP
+.IP 
 ipset add test 192.168.0.1 timeout 60
-.IP
+.IP 
 ipset \-exist add test 192.168.0.1 timeout 600
 .PP 
 .SS nomatch
@@ -301,7 +301,7 @@ unless the packet and byte counter values are explicitly specified by the
 to a set with non\-zero counter values:
 .IP 
 ipset create foo hash:ip counters
-.IP
+.IP 
 ipset add foo 192.168.1.1 packets 42 bytes 1024
 .PP 
 .SH "SET TYPES"
