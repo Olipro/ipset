@@ -235,58 +235,74 @@ restore(char *argv0)
 	return ret;
 }
 
-static int
-call_parser(int *argc, char *argv[], const struct ipset_arg *args)
+static bool do_parse(const struct ipset_arg *arg, bool family)
 {
-	int ret = 0;
+	return !((family == true) ^ (arg->opt == IPSET_OPT_FAMILY));
+}
+
+static int
+call_parser(int *argc, char *argv[], const struct ipset_arg *args, bool family)
+{
+	int ret = 0, i = 1;
 	const struct ipset_arg *arg;
 	const char *optstr;
 
 	/* Currently CREATE and ADT may have got additional arguments */
 	if (!args && *argc > 1)
 		goto err_unknown;
-	while (*argc > 1) {
+	while (*argc > i) {
+		ret = -1;
 		for (arg = args; arg->opt; arg++) {
-			D("argc: %u, %s vs %s", *argc, argv[1], arg->name[0]);
-			if (!(ipset_match_option(argv[1], arg->name)))
+			D("argc: %u, %s vs %s", i, argv[i], arg->name[0]);
+			if (!(ipset_match_option(argv[i], arg->name)))
 				continue;
 
-			optstr = argv[1];
-			/* Shift off matched option */
-			D("match %s", arg->name[0]);
-			ipset_shift_argv(argc, argv, 1);
+			optstr = argv[i];
+			/* Matched option */
+			D("match %s, argc %u, i %u, %s",
+			  arg->name[0], *argc, i + 1,
+			  do_parse(arg, family) ? "parse" : "skip");
+			i++;
+			ret = 0;
 			switch (arg->has_arg) {
 			case IPSET_MANDATORY_ARG:
-				if (*argc < 2)
+				if (*argc - i < 1)
 					return exit_error(PARAMETER_PROBLEM,
 						"Missing mandatory argument "
 						"of option `%s'",
 						arg->name[0]);
 				/* Fall through */
 			case IPSET_OPTIONAL_ARG:
-				if (*argc >= 2) {
-					ret = ipset_call_parser(session,
-						arg, argv[1]);
-					if (ret < 0)
-						return ret;
-					ipset_shift_argv(argc, argv, 1);
+				if (*argc - i >= 1) {
+					if (do_parse(arg, family)) {
+						ret = ipset_call_parser(
+							session, arg, argv[i]);
+						if (ret < 0)
+							return ret;
+					}
+					i++;
 					break;
 				}
 				/* Fall through */
 			default:
-				ret = ipset_call_parser(session, arg, optstr);
-				if (ret < 0)
-					return ret;
+				if (do_parse(arg, family)) {
+					ret = ipset_call_parser(
+						session, arg, optstr);
+					if (ret < 0)
+						return ret;
+				}
 			}
 			break;
 		}
-		if (!arg->opt)
+		if (ret < 0)
 			goto err_unknown;
 	}
+	if (!family)
+		*argc = 0;
 	return ret;
 
 err_unknown:
-	return exit_error(PARAMETER_PROBLEM, "Unknown argument: `%s'", argv[1]);
+	return exit_error(PARAMETER_PROBLEM, "Unknown argument: `%s'", argv[i]);
 }
 
 static enum ipset_adt
@@ -666,8 +682,15 @@ parse_commandline(int argc, char *argv[])
 		if (type == NULL)
 			return handle_error();
 
-		/* Parse create options */
-		ret = call_parser(&argc, argv, type->args[IPSET_CREATE]);
+		/* Parse create options: first check INET family */
+		ret = call_parser(&argc, argv, type->args[IPSET_CREATE], true);
+		if (ret < 0)
+			return handle_error();
+		else if (ret)
+			return ret;
+
+		/* Parse create options: then check all options */
+		ret = call_parser(&argc, argv, type->args[IPSET_CREATE], false);
 		if (ret < 0)
 			return handle_error();
 		else if (ret)
@@ -735,7 +758,7 @@ parse_commandline(int argc, char *argv[])
 			return handle_error();
 
 		/* Parse additional ADT options */
-		ret = call_parser(&argc, argv, type->args[cmd2cmd(cmd)]);
+		ret = call_parser(&argc, argv, type->args[cmd2cmd(cmd)], false);
 		if (ret < 0)
 			return handle_error();
 		else if (ret)
