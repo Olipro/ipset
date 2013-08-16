@@ -59,6 +59,9 @@ else
 	add_tests inet6 1002:1002:1002:1002::
 fi
 
+# Make sure the scripts are executable
+chmod a+x check_* *.sh
+
 for types in $tests; do
     ../src/ipset -X test >/dev/null 2>&1
     if [ -f $types ]; then
