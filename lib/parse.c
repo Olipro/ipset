@@ -1591,16 +1591,14 @@ ipset_parse_netmask(struct ipset_session *session,
 		ipset_data_set(data, IPSET_OPT_FAMILY, &family);
 	}
 
-	err = string_to_cidr(session, str,
-			     family == NFPROTO_IPV4 ? 1 : 4,
-			     family == NFPROTO_IPV4 ? 31 : 124,
+	err = string_to_cidr(session, str, 1,
+			     family == NFPROTO_IPV4 ? 32 : 128,
 			     &cidr);
 
 	if (err)
 		return syntax_err("netmask is out of the inclusive range "
-				  "of %u-%u",
-				  family == NFPROTO_IPV4 ? 1 : 4,
-				  family == NFPROTO_IPV4 ? 31 : 124);
+				  "of 1-%u",
+				  family == NFPROTO_IPV4 ? 32 : 128);
 
 	return ipset_data_set(data, opt, &cidr);
 }
