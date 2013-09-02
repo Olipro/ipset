@@ -1739,6 +1739,35 @@ ipset_parse_iface(struct ipset_session *session,
 }
 
 /**
+ * ipset_parse_comment - parse string as a comment
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string for use as a comment on an ipset entry.
+ * Gets stored in the data blob as usual.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int ipset_parse_comment(struct ipset_session *session,
+		       enum ipset_opt opt, const char *str)
+{
+	struct ipset_data *data;
+
+	assert(session);
+	assert(opt == IPSET_OPT_ADT_COMMENT);
+	assert(str);
+
+	data = ipset_session_data(session);
+	if (strchr(str, '"'))
+		return syntax_err("\" character is not permitted in comments");
+	if (strlen(str) > IPSET_MAX_COMMENT_SIZE)
+		return syntax_err("comment is longer than the maximum allowed "
+				  "%d characters", IPSET_MAX_COMMENT_SIZE);
+	return ipset_data_set(data, opt, str);
+}
+
+/**
  * ipset_parse_output - parse output format name
  * @session: session structure
  * @opt: option kind of the data

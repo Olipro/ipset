@@ -530,6 +530,37 @@ ipset_print_iface(char *buf, unsigned int len,
 }
 
 /**
+ * ipset_print_comment - print arbitrary parameter string
+ * @buf: printing buffer
+ * @len: length of available buffer space
+ * @data: data blob
+ * @opt: the option kind
+ * @env: environment flags
+ *
+ * Print arbitrary string to output buffer.
+ *
+ * Return length of printed string or error size.
+ */
+int ipset_print_comment(char *buf, unsigned int len,
+		       const struct ipset_data *data, enum ipset_opt opt,
+		       uint8_t env UNUSED)
+{
+	const char *comment;
+	int size, offset = 0;
+
+	assert(buf);
+	assert(len > 0);
+	assert(data);
+	assert(opt == IPSET_OPT_ADT_COMMENT);
+
+	comment = ipset_data_get(data, opt);
+	assert(comment);
+	size = snprintf(buf + offset, len, "\"%s\"", comment);
+	SNPRINTF_FAILURE(size, len, offset);
+	return offset;
+}
+
+/**
  * ipset_print_proto - print protocol name
  * @buf: printing buffer
  * @len: length of available buffer space

@@ -90,6 +90,8 @@ extern int ipset_parse_typename(struct ipset_session *session,
 				enum ipset_opt opt, const char *str);
 extern int ipset_parse_iface(struct ipset_session *session,
 			     enum ipset_opt opt, const char *str);
+extern int ipset_parse_comment(struct ipset_session *session,
+			     enum ipset_opt opt, const char *str);
 extern int ipset_parse_output(struct ipset_session *session,
 			      int opt, const char *str);
 extern int ipset_parse_ignored(struct ipset_session *session,
