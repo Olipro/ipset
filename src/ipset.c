@@ -159,25 +159,59 @@ ipset_print_file(const char *fmt, ...)
 static void
 build_argv(char *buffer)
 {
-	char *ptr;
+	char *tmp, *arg;
 	int i;
+	bool quoted = false;
 
 	/* Reset */
-	for (i = 1; i < newargc; i++)
+	for (i = 1; i < newargc; i++) {
+		if (newargv[i])
+			free(newargv[i]);
 		newargv[i] = NULL;
+	}
 	newargc = 1;
 
-	ptr = strtok(buffer, " \t\r\n");
-	newargv[newargc++] = ptr;
-	while ((ptr = strtok(NULL, " \t\r\n")) != NULL) {
-		if ((newargc + 1) < (int)(sizeof(newargv)/sizeof(char *)))
-			newargv[newargc++] = ptr;
-		else {
+	arg = calloc(strlen(buffer) + 1, sizeof(*buffer));
+	for (tmp = buffer, i = 0; *tmp; tmp++) {
+		if ((newargc + 1) == (int)(sizeof(newargv)/sizeof(char *))) {
 			exit_error(PARAMETER_PROBLEM,
 				   "Line is too long to parse.");
 			return;
 		}
+		switch (*tmp) {
+		case '\\':
+			arg[i++] = *++tmp;
+			if (*(tmp+1))
+				continue;
+			break;
+		case '"':
+			quoted = !quoted;
+			if (*(tmp+1))
+				continue;
+			break;
+		case ' ':
+		case '\r':
+		case '\n':
+			if (!quoted)
+				break;
+			arg[i++] = *tmp;
+			continue;
+		default:
+			arg[i++] = *tmp;
+			if (*(tmp+1))
+				continue;
+			break;
+		}
+		if (!*(tmp+1) && quoted) {
+			exit_error(PARAMETER_PROBLEM, "missing close quote");
+			return;
+		}
+		newargv[newargc] = calloc(strlen(arg) + 1, sizeof(*arg));
+		ipset_strlcpy(newargv[newargc++], arg, strlen(arg) + 1);
+		memset(arg, 0, strlen(arg) + 1);
+		i = 0;
 	}
+	free(arg);
 }
 
 /* Main parser function, workhorse */
@@ -195,7 +229,8 @@ restore(char *argv0)
 
 	/* Initialize newargv/newargc */
 	newargc = 0;
-	newargv[newargc++] = argv0;
+	newargv[newargc] = calloc(strlen(argv0) + 1, sizeof(*argv0));
+	ipset_strlcpy(newargv[newargc++], argv0, strlen(argv0) + 1);
 	if (filename) {
 		fd = fopen(filename, "r");
 		if (!fd) {
@@ -232,6 +267,7 @@ restore(char *argv0)
 	if (ret < 0)
 		handle_error();
 
+	free(newargv[0]);
 	return ret;
 }
 
