@@ -92,6 +92,7 @@ mtype_head(struct ip_set *set, struct sk_buff *skb)
 {
 	const struct mtype *map = set->data;
 	struct nlattr *nested;
+	u32 cadt_flags = 0;
 
 	nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 	if (!nested)
@@ -103,10 +104,14 @@ mtype_head(struct ip_set *set, struct sk_buff *skb)
 				map->memsize +
 				set->dsize * map->elements)) ||
 	    (SET_WITH_TIMEOUT(set) &&
-	     nla_put_net32(skb, IPSET_ATTR_TIMEOUT, htonl(set->timeout))) ||
-	    (SET_WITH_COUNTER(set) &&
-	     nla_put_net32(skb, IPSET_ATTR_CADT_FLAGS,
-			   htonl(IPSET_FLAG_WITH_COUNTERS))))
+	     nla_put_net32(skb, IPSET_ATTR_TIMEOUT, htonl(set->timeout))))
+		goto nla_put_failure;
+	if (SET_WITH_COUNTER(set))
+		cadt_flags |= IPSET_FLAG_WITH_COUNTERS;
+	if (SET_WITH_COMMENT(set))
+		cadt_flags |= IPSET_FLAG_WITH_COMMENT;
+	if (cadt_flags && nla_put_net32(skb, IPSET_ATTR_CADT_FLAGS,
+	    htonl(cadt_flags)))
 		goto nla_put_failure;
 	ipset_nest_end(skb, nested);
 
@@ -162,6 +167,8 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 
 	if (SET_WITH_COUNTER(set))
 		ip_set_init_counter(ext_counter(x, set), ext);
+	if (SET_WITH_COMMENT(set))
+		ip_set_init_comment(ext_comment(x, set), ext);
 	return 0;
 }
 
@@ -232,6 +239,9 @@ mtype_list(const struct ip_set *set,
 		}
 		if (SET_WITH_COUNTER(set) &&
 		    ip_set_put_counter(skb, ext_counter(x, set)))
+			goto nla_put_failure;
+		if (SET_WITH_COMMENT(set) &&
+		    ip_set_put_comment(skb, ext_comment(x, set)))
 			goto nla_put_failure;
 		ipset_nest_end(skb, nested);
 	}
