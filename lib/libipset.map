@@ -127,3 +127,10 @@ LIBIPSET_4.0 {
 global:
   ipset_parse_uint64;
 } LIBIPSET_3.0;
+
+LIBIPSET_4.1 {
+global:
+  ipset_parse_comment;
+  ipset_print_comment;
+  ipset_strlcat;
+} LIBIPSET_4.0;

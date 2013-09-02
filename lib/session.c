@@ -488,6 +488,11 @@ static const struct ipset_attr_policy adt_attrs[] = {
 		.type = MNL_TYPE_U64,
 		.opt = IPSET_OPT_BYTES,
 	},
+	[IPSET_ATTR_COMMENT] = {
+		.type = MNL_TYPE_NUL_STRING,
+		.opt = IPSET_OPT_ADT_COMMENT,
+		.len  = IPSET_MAX_COMMENT_SIZE + 1,
+	},
 };
 
 static const struct ipset_attr_policy ipaddr_attrs[] = {
@@ -522,8 +527,9 @@ generic_data_attr_cb(const struct nlattr *attr, void *data,
 		return MNL_CB_ERROR;
 	}
 	if (policy[type].type == MNL_TYPE_NUL_STRING &&
-	    mnl_attr_get_payload_len(attr) > IPSET_MAXNAMELEN)
+	    mnl_attr_get_payload_len(attr) > policy[type].len) {
 		return MNL_CB_ERROR;
+	}
 	tb[type] = attr;
 	return MNL_CB_OK;
 }

@@ -57,6 +57,8 @@ enum ipset_opt {
 	IPSET_OPT_COUNTERS,
 	IPSET_OPT_PACKETS,
 	IPSET_OPT_BYTES,
+	IPSET_OPT_CREATE_COMMENT,
+	IPSET_OPT_ADT_COMMENT,
 	/* Internal options */
 	IPSET_OPT_FLAGS = 48,	/* IPSET_FLAG_EXIST| */
 	IPSET_OPT_CADT_FLAGS,	/* IPSET_FLAG_BEFORE| */
@@ -106,11 +108,13 @@ enum ipset_opt {
 	| IPSET_FLAG(IPSET_OPT_CADT_FLAGS)\
 	| IPSET_FLAG(IPSET_OPT_BEFORE) \
 	| IPSET_FLAG(IPSET_OPT_PHYSDEV) \
-	| IPSET_FLAG(IPSET_OPT_NOMATCH))
+	| IPSET_FLAG(IPSET_OPT_NOMATCH) \
+	| IPSET_FLAG(IPSET_OPT_ADT_COMMENT))
 
 struct ipset_data;
 
 extern void ipset_strlcpy(char *dst, const char *src, size_t len);
+extern void ipset_strlcat(char *dst, const char *src, size_t len);
 extern bool ipset_data_flags_test(const struct ipset_data *data,
 				  uint64_t flags);
 extern void ipset_data_flags_set(struct ipset_data *data, uint64_t flags);
