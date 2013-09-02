@@ -54,6 +54,8 @@ enum ip_set_extension {
 	IPSET_EXT_TIMEOUT = (1 << IPSET_EXT_BIT_TIMEOUT),
 	IPSET_EXT_BIT_COUNTER = 1,
 	IPSET_EXT_COUNTER = (1 << IPSET_EXT_BIT_COUNTER),
+	IPSET_EXT_BIT_COMMENT = 2,
+	IPSET_EXT_COMMENT = (1 << IPSET_EXT_BIT_COMMENT),
 	/* Mark set with an extension which needs to call destroy */
 	IPSET_EXT_BIT_DESTROY = 7,
 	IPSET_EXT_DESTROY = (1 << IPSET_EXT_BIT_DESTROY),
@@ -61,11 +63,13 @@ enum ip_set_extension {
 
 #define SET_WITH_TIMEOUT(s)	((s)->extensions & IPSET_EXT_TIMEOUT)
 #define SET_WITH_COUNTER(s)	((s)->extensions & IPSET_EXT_COUNTER)
+#define SET_WITH_COMMENT(s)	((s)->extensions & IPSET_EXT_COMMENT)
 
 /* Extension id, in size order */
 enum ip_set_ext_id {
 	IPSET_EXT_ID_COUNTER = 0,
 	IPSET_EXT_ID_TIMEOUT,
+	IPSET_EXT_ID_COMMENT,
 	IPSET_EXT_ID_MAX,
 };
 
@@ -86,6 +90,7 @@ struct ip_set_ext {
 	u64 packets;
 	u64 bytes;
 	u32 timeout;
+	char *comment;
 };
 
 struct ip_set_counter {
@@ -93,20 +98,19 @@ struct ip_set_counter {
 	atomic64_t packets;
 };
 
-struct ip_set;
+struct ip_set_comment {
+	char *str;
+};
 
-static inline void
-ip_set_ext_destroy(struct ip_set *set, void *data)
-{
-	/* Check that the extension is enabled for the set and
-	 * call it's destroy function for its extension part in data.
-	 */
-}
+struct ip_set;
 
 #define ext_timeout(e, s)	\
 (unsigned long *)(((void *)(e)) + (s)->offset[IPSET_EXT_ID_TIMEOUT])
 #define ext_counter(e, s)	\
 (struct ip_set_counter *)(((void *)(e)) + (s)->offset[IPSET_EXT_ID_COUNTER])
+#define ext_comment(e, s)	\
+(struct ip_set_comment *)(((void *)(e)) + (s)->offset[IPSET_EXT_ID_COMMENT])
+
 
 typedef int (*ipset_adtfn)(struct ip_set *set, void *value,
 			   const struct ip_set_ext *ext,
@@ -222,6 +226,17 @@ struct ip_set {
 	/* The type specific data */
 	void *data;
 };
+
+static inline void
+ip_set_ext_destroy(struct ip_set *set, void *data)
+{
+	/* Check that the extension is enabled for the set and
+	 * call it's destroy function for its extension part in data.
+	 */
+	if (SET_WITH_COMMENT(set))
+		ip_set_extensions[IPSET_EXT_ID_COMMENT].destroy(
+			ext_comment(data, set));
+}
 
 static inline void
 ip_set_add_bytes(u64 bytes, struct ip_set_counter *counter)
@@ -426,6 +441,7 @@ bitmap_bytes(u32 a, u32 b)
 }
 
 #include <linux/netfilter/ipset/ip_set_timeout.h>
+#include <linux/netfilter/ipset/ip_set_comment.h>
 
 #define IP_SET_INIT_KEXT(skb, opt, set)			\
 	{ .bytes = (skb)->len, .packets = 1,		\
