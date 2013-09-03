@@ -9,6 +9,7 @@ IPSET_SETTYPE_LIST = \
 	ipset_hash_ipportip.c \
 	ipset_hash_ipportnet.c \
 	ipset_hash_net.c \
+	ipset_hash_netnet.c \
 	ipset_hash_netport.c \
 	ipset_hash_netiface.c \
 	ipset_list_set.c
