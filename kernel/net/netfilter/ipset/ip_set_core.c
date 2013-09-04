@@ -1804,6 +1804,23 @@ ip_set_sockfn_get(struct sock *sk, int optval, void __user *user, int *len)
 		unlock_nfnl();
 		goto copy;
 	}
+	case IP_SET_OP_GET_FNAME: {
+		struct ip_set_req_get_set_family *req_get = data;
+		ip_set_id_t id;
+
+		if (*len != sizeof(struct ip_set_req_get_set_family)) {
+			ret = -EINVAL;
+			goto done;
+		}
+		req_get->set.name[IPSET_MAXNAMELEN - 1] = '\0';
+		lock_nfnl();
+		find_set_and_id(req_get->set.name, &id);
+		req_get->set.index = id;
+		if (id != IPSET_INVALID_ID)
+			req_get->family = nfnl_set(id)->family;
+		unlock_nfnl();
+		goto copy;
+	}
 	case IP_SET_OP_GET_BYINDEX: {
 		struct ip_set_req_get_set *req_get = data;
 		struct ip_set *set;
