@@ -14,7 +14,7 @@ LTDL_INIT([nonrecursive])
 
 dnl Shortcut: Linux supported alone
 case "$host" in
-*-*-linux*) ;;
+*-*-linux* | *-*-uclinux*) ;;
 *) AC_MSG_ERROR([Linux systems supported exclusively!]);;
 esac
 
