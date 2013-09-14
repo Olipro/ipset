@@ -307,18 +307,22 @@ mtype_add_cidr(struct htype *h, u8 cidr, u8 nets_length, u8 n)
 static void
 mtype_del_cidr(struct htype *h, u8 cidr, u8 nets_length, u8 n)
 {
-	u8 i, j;
+	u8 i, j, net_end = nets_length - 1;
 
-	for (i = 0; i < nets_length - 1 && h->nets[i].cidr[n] != cidr; i++)
-		;
-	h->nets[i].nets[n]--;
-
-	if (h->nets[i].nets[n] != 0)
+	for (i = 0; i < nets_length; i++) {
+		if (h->nets[i].cidr[n] != cidr)
+			continue;
+		if (h->nets[i].nets[n] > 1 || i == net_end ||
+		    h->nets[i + 1].nets[n] == 0) {
+			h->nets[i].nets[n]--;
+			return;
+		}
+		for (j = i; j < net_end && h->nets[j].nets[n]; j++) {
+			h->nets[j].cidr[n] = h->nets[j + 1].cidr[n];
+			h->nets[j].nets[n] = h->nets[j + 1].nets[n];
+		}
+		h->nets[j].nets[n] = 0;
 		return;
-
-	for (j = i; j < nets_length - 1 && h->nets[j].nets[n]; j++) {
-		h->nets[j].cidr[n] = h->nets[j + 1].cidr[n];
-		h->nets[j].nets[n] = h->nets[j + 1].nets[n];
 	}
 }
 #endif
