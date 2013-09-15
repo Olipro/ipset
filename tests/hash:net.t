@@ -62,6 +62,18 @@
 0 n=`ipset -L test|grep '^10.'|wc -l` && test $n -eq 43520
 # Destroy test set
 0 ipset destroy test
+# Verify keeping track cidrs: create set
+0 ipset n test hash:net
+# Verify keeping track cidrs: add /16 net
+0 ipset a test 1.1.0.0/16
+# Verify keeping track cidrs: add /24 net
+0 ipset a test 2.2.2.0/24
+# Verify keeping track cidrs: del /24 net
+0 ipset d test 2.2.2.0/24
+# Verify keeping track cidrs: check address in /16
+0 ipset t test 1.1.1.1
+# Destroy test set
+0 ipset x test
 # Create test set with timeout support
 0 ipset create test hash:net timeout 30
 # Add a non-matching IP address entry
