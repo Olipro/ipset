@@ -26,6 +26,11 @@
 #endif
 #endif
 
+#if defined(CONFIG_NETFILTER_NETLINK) || defined(CONFIG_NETFILTER_NETLINK_MODULE)
+#else
+#error "NETFILTER_NETLINK must be enabled: select NFACCT/NFQUEUE/LOG over NFNETLINK"
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
 #define xt_action_param		xt_match_param
 #endif
