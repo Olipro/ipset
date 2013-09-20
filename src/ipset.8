@@ -534,6 +534,80 @@ ipset add foo 192.168.0/30 nomatch
 When matching the elements in the set above, all IP addresses will match
 from the networks 192.168.0.0/24, 10.1.0.0/16 and 192.168.0/24 except
 the ones from 192.168.0/30.
+.SS hash:net,net
+The \fBhash:net,net\fR set type uses a hash to store pairs of different sized IP
+network addresses.  Bear  in  mind  that  the  first parameter has precedence
+over the second, so a nomatch entry could be potentially be ineffective if a more specific
+first parameter existed with a suitable second parameter.
+Network address with zero prefix size cannot be stored in this type of set.
+.PP
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+.PP
+\fIADD\-ENTRY\fR := \fInetaddr\fR,\fInetaddr\fR
+.PP
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+.PP
+\fIDEL\-ENTRY\fR := \fInetaddr\fR,\fInetaddr\fR
+.PP
+\fITEST\-ENTRY\fR := \fInetaddr\fR,\fInetaddr,\fR
+.PP
+where
+\fInetaddr\fR := \fIip\fR[/\fIcidr\fR]
+.PP
+Optional \fBcreate\fR options:
+.TP
+\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
+The protocol family of the IP addresses to be stored in the set. The default is
+\fBinet\fR, i.e IPv4.
+.TP
+\fBhashsize\fR \fIvalue\fR
+The initial hash size for the set, default is 1024. The hash size must be a power
+of two, the kernel automatically rounds up non power of two hash sizes to the first
+correct value.
+.TP
+\fBmaxelem\fR \fIvalue\fR
+The maximal number of elements which can be stored in the set, default 65536.
+.PP
+For the \fBinet\fR family one can add or delete multiple entries by specifying
+a range, which is converted internally to network(s) equal to the range:
+.PP
+\fInetaddr\fR := { \fIip\fR[/\fIcidr\fR] | \fIfromaddr\fR\-\fItoaddr\fR }
+.PP
+When adding/deleting/testing entries, if the cidr prefix parameter is not specified,
+then the host prefix value is assumed. When adding/deleting entries, the exact
+element is added/deleted and overlapping elements are not checked by the kernel.
+When testing entries, if a host address is tested, then the kernel tries to match
+the host address in the networks added to the set and reports the result accordingly.
+.PP
+From the \fBset\fR netfilter match point of view the searching for a match
+always  starts  from  the smallest  size  of netblock (most specific
+prefix) to the largest one (least specific prefix) with the first param
+having precedence.
+When  adding/deleting IP addresses  to the set by the \fBSET\fR netfilter target,
+it  will  be  added/deleted  by  the most specific prefix which can be found in
+the set, or by the host prefix value if the set is empty.
+.PP
+The lookup time grows linearly with the number of the different prefix
+values added to the first parameter of the set. The number of secondary prefixes
+further increases this as the list of secondary prefixes is traversed per primary
+prefix.
+.PP
+Example:
+.IP
+ipset create foo hash:net,net
+.IP
+ipset add foo 192.168.0.0/24,10.0.1.0/24
+.IP
+ipset add foo 10.1.0.0/16,10.255.0.0/24
+.IP
+ipset add foo 192.168.0/24,192.168.54.0-192.168.54.255
+.IP
+ipset add foo 192.168.0/30,192.168.64/30 nomatch
+.PP
+When matching the elements in the set above, all IP addresses will match
+from the networks 192.168.0.0/24<->10.0.1.0/24, 10.1.0.0/16<->10.255.0.0/24
+and 192.168.0/24<->192.168.54.0/24 except the ones from
+192.168.0/30<->192.168.64/30.
 .SS hash:ip,port
 The \fBhash:ip,port\fR set type uses a hash to store IP address and port number pairs.
 The port number is interpreted together with a protocol (default TCP) and zero
