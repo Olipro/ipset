@@ -75,6 +75,7 @@ struct ipset_data {
 			char iface[IFNAMSIZ];
 			uint64_t packets;
 			uint64_t bytes;
+			char comment[IPSET_MAX_COMMENT_SIZE+1];
 		} adt;
 	};
 };
@@ -104,6 +105,25 @@ ipset_strlcpy(char *dst, const char *src, size_t len)
 	assert(src);
 
 	strncpy(dst, src, len);
+	dst[len - 1] = '\0';
+}
+
+/**
+ * ipset_strlcat - concatenate the string from src to the end of dst
+ * @dst: the target string buffer
+ * @src: the source string buffer
+ * @len: the length of bytes to concat, including the terminating null byte.
+ *
+ * Cooncatenate the string in src to destination, but at most len bytes are
+ * copied. The target is unconditionally terminated by the null byte.
+ */
+void
+ipset_strlcat(char *dst, const char *src, size_t len)
+{
+	assert(dst);
+	assert(src);
+
+	strncat(dst, src, len);
 	dst[len - 1] = '\0';
 }
 
@@ -278,6 +298,9 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	case IPSET_OPT_COUNTERS:
 		cadt_flag_type_attr(data, opt, IPSET_FLAG_WITH_COUNTERS);
 		break;
+	case IPSET_OPT_CREATE_COMMENT:
+		cadt_flag_type_attr(data, opt, IPSET_FLAG_WITH_COMMENT);
+		break;
 	/* Create-specific options, filled out by the kernel */
 	case IPSET_OPT_ELEMENTS:
 		data->create.elements = *(const uint32_t *) value;
@@ -336,6 +359,10 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	case IPSET_OPT_BYTES:
 		data->adt.bytes = *(const uint64_t *) value;
 		break;
+	case IPSET_OPT_ADT_COMMENT:
+		ipset_strlcpy(data->adt.comment, value,
+			      IPSET_MAX_COMMENT_SIZE + 1);
+		break;
 	/* Swap/rename */
 	case IPSET_OPT_SETNAME2:
 		ipset_strlcpy(data->setname2, value, IPSET_MAXNAMELEN);
@@ -370,6 +397,9 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 		if (data->cadt_flags & IPSET_FLAG_WITH_COUNTERS)
 			ipset_data_flags_set(data,
 					     IPSET_FLAG(IPSET_OPT_COUNTERS));
+		if (data->cadt_flags & IPSET_FLAG_WITH_COMMENT)
+			ipset_data_flags_set(data,
+					  IPSET_FLAG(IPSET_OPT_CREATE_COMMENT));
 		break;
 	default:
 		return -1;
@@ -472,6 +502,8 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 		return &data->adt.packets;
 	case IPSET_OPT_BYTES:
 		return &data->adt.bytes;
+	case IPSET_OPT_ADT_COMMENT:
+		return &data->adt.comment;
 	/* Swap/rename */
 	case IPSET_OPT_SETNAME2:
 		return data->setname2;
@@ -484,6 +516,7 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 	case IPSET_OPT_PHYSDEV:
 	case IPSET_OPT_NOMATCH:
 	case IPSET_OPT_COUNTERS:
+	case IPSET_OPT_CREATE_COMMENT:
 		return &data->cadt_flags;
 	default:
 		return NULL;
@@ -543,6 +576,8 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 	case IPSET_OPT_NOMATCH:
 	case IPSET_OPT_COUNTERS:
 		return sizeof(uint32_t);
+	case IPSET_OPT_ADT_COMMENT:
+		return IPSET_MAX_COMMENT_SIZE + 1;
 	default:
 		return 0;
 	};

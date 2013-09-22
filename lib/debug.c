@@ -64,6 +64,7 @@ static const struct ipset_attrname adtattr2name[] = {
 	[IPSET_ATTR_CIDR2]	= { .name = "CIDR2" },
 	[IPSET_ATTR_IP2_TO]	= { .name = "IP2_TO" },
 	[IPSET_ATTR_IFACE]	= { .name = "IFACE" },
+	[IPSET_ATTR_COMMENT]	= { .name = "COMMENT" },
 };
 
 static void

@@ -19,6 +19,9 @@
 /* The max length of strings including NUL: set and type identifiers */
 #define IPSET_MAXNAMELEN	32
 
+/* The maximum permissible length we will accept over netlink (inc. comments) */
+#define IPSET_MAX_COMMENT_SIZE	255
+
 /* Message types and commands */
 enum ipset_cmd {
 	IPSET_CMD_NONE,
