@@ -42,6 +42,10 @@ static const struct ipset_arg hash_netnet_create_args0[] = {
 	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_COUNTERS,
 	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
 	},
+	{ .name = { "comment", NULL },
+	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_CREATE_COMMENT,
+	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
+	},
 	{ },
 };
 
@@ -61,6 +65,10 @@ static const struct ipset_arg hash_netnet_add_args0[] = {
 	{ .name = { "bytes", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_BYTES,
 	  .parse = ipset_parse_uint64,		.print = ipset_print_number,
+	},
+	{ .name = { "comment", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_ADT_COMMENT,
+	  .parse = ipset_parse_comment,		.print = ipset_print_comment,
 	},
 	{ },
 };
@@ -123,7 +131,8 @@ static struct ipset_type ipset_hash_netnet0 = {
 		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
 			| IPSET_FLAG(IPSET_OPT_MAXELEM)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
-			| IPSET_FLAG(IPSET_OPT_COUNTERS),
+			| IPSET_FLAG(IPSET_OPT_COUNTERS)
+			| IPSET_FLAG(IPSET_OPT_CREATE_COMMENT),
 		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_CIDR)
 			| IPSET_FLAG(IPSET_OPT_IP_TO)
@@ -133,7 +142,8 @@ static struct ipset_type ipset_hash_netnet0 = {
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
 			| IPSET_FLAG(IPSET_OPT_NOMATCH)
 			| IPSET_FLAG(IPSET_OPT_PACKETS)
-			| IPSET_FLAG(IPSET_OPT_BYTES),
+			| IPSET_FLAG(IPSET_OPT_BYTES)
+			| IPSET_FLAG(IPSET_OPT_ADT_COMMENT),
 		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
 			| IPSET_FLAG(IPSET_OPT_CIDR)
 			| IPSET_FLAG(IPSET_OPT_IP_TO)

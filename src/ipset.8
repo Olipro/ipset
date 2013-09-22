@@ -304,17 +304,40 @@ ipset create foo hash:ip counters
 .IP 
 ipset add foo 192.168.1.1 packets 42 bytes 1024
 .PP 
+.SS comment
+All set types support the optional \fBcomment\fR extension.
+Enabling this extension on an ipset enables you to annotate an ipset entry with
+an arbitrary string. This string is completely ignored by both the kernel and ipset
+itself and is purely for providing a convenient means to document the reason for an
+entry's existence. Comments must not contain any quotation marks and the usual escape
+character (\\) has no meaning. For example, the following shell command is illegal:
+.IP
+ipset add foo 1.1.1.1 comment "this comment is \\"bad\\""
+.PP
+In the above, your shell will of course escape the quotation marks and ipset will see
+the quote marks in the argument for the comment, which will result in a parse error.
+If you are writing your own system, you should avoid creating comments containing a
+quotation mark if you do not want to break "ipset save" and "ipset restore",
+nonetheless, the kernel will not stop you from doing so. The following is perfectly
+acceptable:
+.IP
+ipset create foo hash:ip comment
+.IP
+ipset add foo 192.168.1.1/24 comment "allow access to SMB share on \\\\\\\\fileserv\\\\"
+.IP
+the above would appear as: "allow access to SMB share on \\\\fileserv\\"
+.PP
 .SH "SET TYPES"
 .SS bitmap:ip
 The \fBbitmap:ip\fR set type uses a memory range to store either IPv4 host
 (default) or IPv4 network addresses. A \fBbitmap:ip\fR type of set can store up
 to 65536 entries.
 .PP 
-\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfromip\fP\-\fItoip\fR|\fIip\fR/\fIcidr\fR [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfromip\fP\-\fItoip\fR|\fIip\fR/\fIcidr\fR [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := { \fIip\fR | \fIfromip\fR\-\fItoip\fR | \fIip\fR/\fIcidr\fR }
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := { \fIip\fR | \fIfromip\fR\-\fItoip\fR | \fIip\fR/\fIcidr\fR }
 .PP 
@@ -349,11 +372,11 @@ ipset test foo 192.168.1.1
 .SS bitmap:ip,mac
 The \fBbitmap:ip,mac\fR set type uses a memory range to store IPv4 and a MAC address pairs. A \fBbitmap:ip,mac\fR type of set can store up to 65536 entries.
 .PP 
-\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfromip\fP\-\fItoip\fR|\fIip\fR/\fIcidr\fR [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfromip\fP\-\fItoip\fR|\fIip\fR/\fIcidr\fR [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := \fIip\fR[,\fImacaddr\fR]
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fIip\fR[,\fImacaddr\fR]
 .PP 
@@ -389,11 +412,11 @@ ipset test foo 192.168.1.1
 The \fBbitmap:port\fR set type uses a memory range to store port numbers
 and such a set can store up to 65536 ports.
 .PP 
-\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfromport\fP\-\fItoport [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := \fBrange\fP \fIfromport\fP\-\fItoport [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := { \fI[proto:]port\fR | \fI[proto:]fromport\fR\-\fItoport\fR }
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := { \fI[proto:]port\fR | \fI[proto:]fromport\fR\-\fItoport\fR }
 .PP 
@@ -424,11 +447,11 @@ The \fBhash:ip\fR set type uses a hash to store IP host addresses (default) or
 network addresses. Zero valued IP address cannot be stored in a \fBhash:ip\fR
 type of set.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBnetmask\fP \fIcidr\fP ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := \fIipaddr\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fIipaddr\fR
 .PP 
@@ -471,11 +494,11 @@ ipset test foo 192.168.1.2
 The \fBhash:net\fR set type uses a hash to store different sized IP network addresses.
 Network address with zero prefix size cannot be stored in this type of sets.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := \fInetaddr\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fInetaddr\fR
 .PP 
@@ -541,11 +564,11 @@ over the second, so a nomatch entry could be potentially be ineffective if a mor
 first parameter existed with a suitable second parameter.
 Network address with zero prefix size cannot be stored in this type of set.
 .PP
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP
 \fIADD\-ENTRY\fR := \fInetaddr\fR,\fInetaddr\fR
 .PP
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP
 \fIDEL\-ENTRY\fR := \fInetaddr\fR,\fInetaddr\fR
 .PP
@@ -613,11 +636,11 @@ The \fBhash:ip,port\fR set type uses a hash to store IP address and port number 
 The port number is interpreted together with a protocol (default TCP) and zero
 protocol number cannot be used.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP 
@@ -689,11 +712,11 @@ address and port pairs. The port number is interpreted together with a protocol
 (default TCP) and zero protocol number cannot be used. Network
 address with zero prefix size is not accepted either.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := \fInetaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]  [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]  [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fInetaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP 
@@ -753,11 +776,11 @@ The \fBhash:ip,port,ip\fR set type uses a hash to store IP address, port number
 and a second IP address triples. The port number is interpreted together with a
 protocol (default TCP) and zero protocol number cannot be used.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fIip\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fIip\fR
 .PP 
@@ -799,11 +822,11 @@ and IP network address triples. The port number is interpreted together with a
 protocol (default TCP) and zero protocol number cannot be used. Network
 address with zero prefix size cannot be stored either.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fInetaddr\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]  [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]  [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR,\fInetaddr\fR
 .PP 
@@ -859,11 +882,11 @@ ipset test foo 192.168.1,80.10.0.0/24
 The \fBhash:net,iface\fR set type uses a hash to store different sized IP network
 address and interface name pairs.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := \fInetaddr\fR,[\fBphysdev\fR:]\fIiface\fR
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]  [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ]  [ \fBnomatch\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fInetaddr\fR,[\fBphysdev\fR:]\fIiface\fR
 .PP 
@@ -930,11 +953,11 @@ ipset test foo 192.168.0/24,eth0
 The \fBlist:set\fR type uses a simple list in which you can store
 set names.
 .PP 
-\fICREATE\-OPTIONS\fR := [ \fBsize\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ]
+\fICREATE\-OPTIONS\fR := [ \fBsize\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
 .PP 
 \fIADD\-ENTRY\fR := \fIsetname\fR [ { \fBbefore\fR | \fBafter\fR } \fIsetname\fR ]
 .PP 
-\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ]
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
 .PP 
 \fIDEL\-ENTRY\fR := \fIsetname\fR [ { \fBbefore\fR | \fBafter\fR } \fIsetname\fR ]
 .PP 
