@@ -94,7 +94,7 @@ set_match_v0_checkentry(const struct xt_mtchk_param *par)
 	struct xt_set_info_match_v0 *info = par->matchinfo;
 	ip_set_id_t index;
 
-	index = ip_set_nfnl_get_byindex(info->match_set.index);
+	index = ip_set_nfnl_get_byindex(par->net, info->match_set.index);
 
 	if (index == IPSET_INVALID_ID) {
 		pr_warning("Cannot find set indentified by id %u to match\n",
@@ -104,7 +104,7 @@ set_match_v0_checkentry(const struct xt_mtchk_param *par)
 	if (info->match_set.u.flags[IPSET_DIM_MAX-1] != 0) {
 		pr_warning("Protocol error: set match dimension "
 			   "is over the limit!\n");
-		ip_set_nfnl_put(info->match_set.index);
+		ip_set_nfnl_put(par->net, info->match_set.index);
 		return CHECK_FAIL(-ERANGE);
 	}
 
@@ -119,7 +119,7 @@ set_match_v0_destroy(const struct xt_mtdtor_param *par)
 {
 	struct xt_set_info_match_v0 *info = par->matchinfo;
 
-	ip_set_nfnl_put(info->match_set.index);
+	ip_set_nfnl_put(par->net, info->match_set.index);
 }
 
 /* Revision 1 */
@@ -144,7 +144,7 @@ set_match_v1_checkentry(const struct xt_mtchk_param *par)
 	struct xt_set_info_match_v1 *info = par->matchinfo;
 	ip_set_id_t index;
 
-	index = ip_set_nfnl_get_byindex(info->match_set.index);
+	index = ip_set_nfnl_get_byindex(par->net, info->match_set.index);
 
 	if (index == IPSET_INVALID_ID) {
 		pr_warning("Cannot find set indentified by id %u to match\n",
@@ -154,7 +154,7 @@ set_match_v1_checkentry(const struct xt_mtchk_param *par)
 	if (info->match_set.dim > IPSET_DIM_MAX) {
 		pr_warning("Protocol error: set match dimension "
 			   "is over the limit!\n");
-		ip_set_nfnl_put(info->match_set.index);
+		ip_set_nfnl_put(par->net, info->match_set.index);
 		return CHECK_FAIL(-ERANGE);
 	}
 
@@ -166,7 +166,7 @@ set_match_v1_destroy(const struct xt_mtdtor_param *par)
 {
 	struct xt_set_info_match_v1 *info = par->matchinfo;
 
-	ip_set_nfnl_put(info->match_set.index);
+	ip_set_nfnl_put(par->net, info->match_set.index);
 }
 
 /* Revision 3 match */
@@ -249,7 +249,7 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 	ip_set_id_t index;
 
 	if (info->add_set.index != IPSET_INVALID_ID) {
-		index = ip_set_nfnl_get_byindex(info->add_set.index);
+		index = ip_set_nfnl_get_byindex(par->net, info->add_set.index);
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find add_set index %u as target\n",
 				   info->add_set.index);
@@ -258,12 +258,12 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 	}
 
 	if (info->del_set.index != IPSET_INVALID_ID) {
-		index = ip_set_nfnl_get_byindex(info->del_set.index);
+		index = ip_set_nfnl_get_byindex(par->net, info->del_set.index);
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find del_set index %u as target\n",
 				   info->del_set.index);
 			if (info->add_set.index != IPSET_INVALID_ID)
-				ip_set_nfnl_put(info->add_set.index);
+				ip_set_nfnl_put(par->net, info->add_set.index);
 			return CHECK_FAIL(-ENOENT);
 		}
 	}
@@ -272,9 +272,9 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 		pr_warning("Protocol error: SET target dimension "
 			   "is over the limit!\n");
 		if (info->add_set.index != IPSET_INVALID_ID)
-			ip_set_nfnl_put(info->add_set.index);
+			ip_set_nfnl_put(par->net, info->add_set.index);
 		if (info->del_set.index != IPSET_INVALID_ID)
-			ip_set_nfnl_put(info->del_set.index);
+			ip_set_nfnl_put(par->net, info->del_set.index);
 		return CHECK_FAIL(-ERANGE);
 	}
 
@@ -291,9 +291,9 @@ set_target_v0_destroy(const struct xt_tgdtor_param *par)
 	const struct xt_set_info_target_v0 *info = par->targinfo;
 
 	if (info->add_set.index != IPSET_INVALID_ID)
-		ip_set_nfnl_put(info->add_set.index);
+		ip_set_nfnl_put(par->net, info->add_set.index);
 	if (info->del_set.index != IPSET_INVALID_ID)
-		ip_set_nfnl_put(info->del_set.index);
+		ip_set_nfnl_put(par->net, info->del_set.index);
 }
 
 /* Revision 1 target */
@@ -322,7 +322,7 @@ set_target_v1_checkentry(const struct xt_tgchk_param *par)
 	ip_set_id_t index;
 
 	if (info->add_set.index != IPSET_INVALID_ID) {
-		index = ip_set_nfnl_get_byindex(info->add_set.index);
+		index = ip_set_nfnl_get_byindex(par->net, info->add_set.index);
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find add_set index %u as target\n",
 				   info->add_set.index);
@@ -331,12 +331,12 @@ set_target_v1_checkentry(const struct xt_tgchk_param *par)
 	}
 
 	if (info->del_set.index != IPSET_INVALID_ID) {
-		index = ip_set_nfnl_get_byindex(info->del_set.index);
+		index = ip_set_nfnl_get_byindex(par->net, info->del_set.index);
 		if (index == IPSET_INVALID_ID) {
 			pr_warning("Cannot find del_set index %u as target\n",
 				   info->del_set.index);
 			if (info->add_set.index != IPSET_INVALID_ID)
-				ip_set_nfnl_put(info->add_set.index);
+				ip_set_nfnl_put(par->net, info->add_set.index);
 			return CHECK_FAIL(-ENOENT);
 		}
 	}
@@ -345,9 +345,9 @@ set_target_v1_checkentry(const struct xt_tgchk_param *par)
 		pr_warning("Protocol error: SET target dimension "
 			   "is over the limit!\n");
 		if (info->add_set.index != IPSET_INVALID_ID)
-			ip_set_nfnl_put(info->add_set.index);
+			ip_set_nfnl_put(par->net, info->add_set.index);
 		if (info->del_set.index != IPSET_INVALID_ID)
-			ip_set_nfnl_put(info->del_set.index);
+			ip_set_nfnl_put(par->net, info->del_set.index);
 		return CHECK_FAIL(-ERANGE);
 	}
 
@@ -360,9 +360,9 @@ set_target_v1_destroy(const struct xt_tgdtor_param *par)
 	const struct xt_set_info_target_v1 *info = par->targinfo;
 
 	if (info->add_set.index != IPSET_INVALID_ID)
-		ip_set_nfnl_put(info->add_set.index);
+		ip_set_nfnl_put(par->net, info->add_set.index);
 	if (info->del_set.index != IPSET_INVALID_ID)
-		ip_set_nfnl_put(info->del_set.index);
+		ip_set_nfnl_put(par->net, info->del_set.index);
 }
 
 /* Revision 2 target */
