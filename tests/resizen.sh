@@ -34,6 +34,19 @@ case "$2" in
     	    done
     	done
     	;;
+    netportnet)
+    	$ipset n test hash:net,port,net $1 hashsize 64
+    	for x in `seq 0 16`; do
+    	    for y in `seq 0 255`; do
+    	    	$ipset a test $ip$x$sep$y,1023,$ip2/$net nomatch
+    	    done
+    	done
+    	for x in `seq 0 16`; do
+    	    for y in `seq 0 255`; do
+    	    	$ipset t test $ip$x$sep$y,1023,$ip2/$net nomatch 2>/dev/null
+    	    done
+    	done
+    	;;
     net)
     	$ipset n test hash:net $1 hashsize 64
     	for x in `seq 0 16`; do
