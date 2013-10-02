@@ -67,6 +67,7 @@ then
 fi
 
 AC_PROG_GREP
+AC_PROG_AWK
 
 if ! $GREP -q "NFNL_SUBSYS_IPSET" "$ksourcedir/include/linux/netfilter/nfnetlink.h" && \
    ! $GREP -q "NFNL_SUBSYS_IPSET" "$ksourcedir/include/uapi/linux/netfilter/nfnetlink.h";
@@ -166,7 +167,150 @@ AC_CHECK_TYPES([union nf_inet_addr],,,[#include <linux/types.h>
 dnl Checks for functions
 AC_CHECK_FUNCS(gethostbyname2)
 
-dnl Checks for  compiler characteristics.
+dnl Check kernel incompatibilities... Ugly like hell
+AC_MSG_CHECKING([kernel source for struct xt_action_param])
+if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
+   $GREP -q 'struct xt_action_param' $ksourcedir/include/linux/netfilter/x_tables.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_STRUCT_XT_ACTION_PARAM, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_STRUCT_XT_ACTION_PARAM, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for vzalloc])
+if test -f $ksourcedir/include/linux/vmalloc.h && \
+   $GREP -q 'vzalloc' $ksourcedir/include/linux/vmalloc.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_VZALLOC, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_VZALLOC, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for ether_addr_equal])
+if test -f $ksourcedir/include/linux/etherdevice.h && \
+   $GREP -q 'ether_addr_equal' $ksourcedir/include/linux/etherdevice.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_ETHER_ADDR_EQUAL, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_ETHER_ADDR_EQUAL, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for nla_put_be64])
+if test -f $ksourcedir/include/net/netlink.h && \
+   $GREP -q 'nla_put_be64' $ksourcedir/include/net/netlink.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NLA_PUT_BE64, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NLA_PUT_BE64, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for portid in nl_info])
+if test -f $ksourcedir/include/linux/netlink.h && \
+   $AWK '/^struct netlink_skb_parms/ {for(i=1; i<=5; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'portid;'; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NL_INFO_PORTID, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NL_INFO_PORTID, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for netlink_dump_start args])
+if test -f $ksourcedir/include/linux/netlink.h && \
+   $AWK '/netlink_dump_start/ {for(i=1; i<=4; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'done.*;'; then
+	AC_MSG_RESULT(5 args)
+	AC_SUBST(HAVE_NETLINK_DUMP_START_ARGS, 5)
+elif test -f $ksourcedir/include/linux/netlink.h && \
+   $AWK '/netlink_dump_start/ {for(i=1; i<=4; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'min_dump_alloc.*;'; then
+	AC_MSG_RESULT(6 args)
+	AC_SUBST(HAVE_NETLINK_DUMP_START_ARGS, 6)
+else
+	AC_MSG_RESULT(4 args)
+	AC_SUBST(HAVE_NETLINK_DUMP_START_ARGS, 4)
+fi
+
+AC_MSG_CHECKING([kernel source for ns_capable])
+if test -f $ksourcedir/include/linux/capability.h && \
+   $GREP -q 'ns_capable' $ksourcedir/include/linux/capability.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NS_CAPABLE, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NS_CAPABLE, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for nfnl_lock per subsys])
+if test -f $ksourcedir/include/linux/netfilter/nfnetlink.h && \
+   $GREP -q 'nfnl_lock.* subsys_id' $ksourcedir/include/linux/netfilter/nfnetlink.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NFNL_LOCK_SUBSYS, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NFNL_LOCK_SUBSYS, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for export.h])
+if test -f $ksourcedir/include/linux/export.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_EXPORT_H, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_EXPORT_H, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for ipv6_skip_exthdr args])
+if test -f $ksourcedir/include/net/ipv6.h && \
+   $AWK '/ipv6_skip_exthdr/ {getline; print}' $ksourcedir/include/net/ipv6.h | $GREP -q 'frag_offp'; then
+	AC_MSG_RESULT(4 args)
+	AC_SUBST(HAVE_IPV6_SKIP_EXTHDR_ARGS, 4)
+else
+	AC_MSG_RESULT(3 args)
+	AC_SUBST(HAVE_IPV6_SKIP_EXTHDR_ARGS, 3)
+fi
+
+AC_MSG_CHECKING([kernel source for bool checkentry function prototype])
+if test -f $ksourcedir/net/netfilter/xt_state.c && \
+   $GREP -q 'bool state_mt_check' $ksourcedir/net/netfilter/xt_state.c; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_CHECKENTRY_BOOL, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_CHECKENTRY_BOOL, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for old struct xt_target_param])
+if test -f $ksourcedir/net/netfilter/xt_TCPMSS.c && \
+   $GREP -q 'const struct xt_target_param' $ksourcedir/net/netfilter/xt_TCPMSS.c; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_XT_TARGET_PARAM, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_XT_TARGET_PARAM, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for id in struct pernet_operations])
+if test -f $ksourcedir/include/net/net_namespace.h && \
+   $AWK '/struct pernet_operations/ {for(i=1; i<=6; i++) {getline; print}}' $ksourcedir/include/net/net_namespace.h | $GREP -q 'int \*id;'; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NET_OPS_ID, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NET_OPS_ID, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for struct net_generic])
+if test -f $ksourcedir/include/net/netns/generic.h && \
+   $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+	AC_MSG_ERROR([Netns support is required in the Linux kernel tree])
+fi
+
+dnl Checks for compiler characteristics.
 dnl Check extra warning flags except
 dnl	-Wconversion		-> we need it
 dnl	-Wunreachable-code	-> fails with ntoh*
@@ -210,7 +354,8 @@ dnl Checks for library functions.
 
 dnl Generate output
 AC_CONFIG_FILES([Makefile include/libipset/Makefile
-	lib/Makefile lib/libipset.pc src/Makefile])
+	lib/Makefile lib/libipset.pc src/Makefile
+	kernel/include/linux/netfilter/ipset/ip_set_compat.h])
 AC_OUTPUT
 
 dnl Summary

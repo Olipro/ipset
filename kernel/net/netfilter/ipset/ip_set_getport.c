@@ -8,7 +8,7 @@
 /* Get Layer-4 data from the packets */
 
 #include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0)
+#ifdef HAVE_EXPORT_H
 #include <linux/export.h>
 #endif
 #include <linux/ip.h>
@@ -21,6 +21,7 @@
 #include <net/ipv6.h>
 
 #include <linux/netfilter/ipset/ip_set_getport.h>
+#include <linux/netfilter/ipset/ip_set_compat.h>
 
 /* We must handle non-linear skbs */
 static bool
@@ -138,7 +139,7 @@ ip_set_get_ip6_port(const struct sk_buff *skb, bool src,
 	__be16 frag_off = 0;
 
 	nexthdr = ipv6_hdr(skb)->nexthdr;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)
+#if HAVE_IPV6_SKIP_EXTHDR_ARGS == 4
 	protoff = ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr), &nexthdr,
 				   &frag_off);
 #else

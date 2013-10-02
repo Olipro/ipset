@@ -1388,11 +1388,11 @@ ip_set_dump(struct sock *ctnl, struct sk_buff *skb,
 	if (unlikely(protocol_failed(attr)))
 		return -IPSET_ERR_PROTOCOL;
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 1, 0)
+#if HAVE_NETLINK_DUMP_START_ARGS == 5
 	return netlink_dump_start(ctnl, skb, nlh,
 				  ip_set_dump_start,
 				  ip_set_dump_done);
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0)
+#elif HAVE_NETLINK_DUMP_START_ARGS == 6
 	return netlink_dump_start(ctnl, skb, nlh,
 				  ip_set_dump_start,
 				  ip_set_dump_done, 0);
@@ -1977,20 +1977,42 @@ static struct nf_sockopt_ops so_set __read_mostly = {
 static int __net_init
 ip_set_net_init(struct net *net)
 {
-	struct ip_set_net *inst = ip_set_pernet(net);
+	struct ip_set_net *inst;
 	struct ip_set **list;
 
+#ifdef HAVE_NET_OPS_ID
+	inst = ip_set_pernet(net);
+#else
+	int err;
+
+	inst = kzalloc(sizeof(struct ip_set_net), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
+	err = net_assign_generic(net, ip_set_net_id, inst);
+	if (err < 0)
+		goto err_alloc;
+#endif
 	inst->ip_set_max = max_sets ? max_sets : CONFIG_IP_SET_MAX;
 	if (inst->ip_set_max >= IPSET_INVALID_ID)
 		inst->ip_set_max = IPSET_INVALID_ID - 1;
 
 	list = kzalloc(sizeof(struct ip_set *) * inst->ip_set_max, GFP_KERNEL);
 	if (!list)
+#ifdef HAVE_NET_OPS_ID
 		return -ENOMEM;
+#else
+		goto err_alloc;
+#endif
 	inst->is_deleted = 0;
 	rcu_assign_pointer(inst->ip_set_list, list);
 	pr_notice("ip_set: protocol %u\n", IPSET_PROTOCOL);
 	return 0;
+
+#ifndef HAVE_NET_OPS_ID
+err_alloc:
+	kfree(inst);
+	return err;
+#endif
 }
 
 static void __net_exit
@@ -2009,13 +2031,18 @@ ip_set_net_exit(struct net *net)
 			ip_set_destroy_set(inst, i);
 	}
 	kfree(rcu_dereference_protected(inst->ip_set_list, 1));
+#ifndef HAVE_NET_OPS_ID
+	kfree(inst);
+#endif
 }
 
 static struct pernet_operations ip_set_net_ops = {
 	.init	= ip_set_net_init,
 	.exit   = ip_set_net_exit,
+#ifdef HAVE_NET_OPS_ID
 	.id	= &ip_set_net_id,
 	.size	= sizeof(struct ip_set_net)
+#endif
 };
 
 
@@ -2033,7 +2060,11 @@ ip_set_init(void)
 		nfnetlink_subsys_unregister(&ip_set_netlink_subsys);
 		return ret;
 	}
+#ifdef HAVE_NET_OPS_ID
 	ret = register_pernet_subsys(&ip_set_net_ops);
+#else
+	ret = register_pernet_gen_device(&ip_set_net_id, &ip_set_net_ops);
+#endif
 	if (ret) {
 		pr_err("ip_set: cannot register pernet_subsys.\n");
 		nf_unregister_sockopt(&so_set);
@@ -2046,7 +2077,11 @@ ip_set_init(void)
 static void __exit
 ip_set_fini(void)
 {
+#ifdef HAVE_NET_OPS_ID
 	unregister_pernet_subsys(&ip_set_net_ops);
+#else
+	unregister_pernet_gen_device(ip_set_net_id, &ip_set_net_ops);
+#endif
 	nf_unregister_sockopt(&so_set);
 	nfnetlink_subsys_unregister(&ip_set_netlink_subsys);
 	pr_debug("these are the famous last words\n");
