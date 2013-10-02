@@ -1,3 +1,32 @@
+6.20
+  - Missing comment support added to hash:ip,port,ip and hash:net,iface
+    types
+  - Compatibility code is modified not to rely on kernel version numbers
+  - Add userspace code to support hash:net,port,net kernel module
+    (Oliver Smith)
+  - Tests added to check comment extension
+  - Add new userspace set revisions for comment support (Oliver Smith)
+  - Support comments in the userspace library (Oliver Smith)
+  - Rework the "fake" argument parsing for ipset restore (Oliver Smith)
+  - Add userspace code to support hash:net,net kernel module
+    (Oliver Smith)
+  - Add test to verify CIDR tracking
+  - configure: uclinux is also linux (Gustavo Zacarias)
+  - Add specifying protocol for bitmap:port (Quentin Armitage)
+  - Remove artifical restriction of netmask values for hash:ip type
+    (Reported by Quentin Armitage, netfilter bugzilla id #844)
+  - Make sure called test scripts can be executed (reported by Tomas Budai)
+  - Manpage fix: not just identical, but compatible type of sets can be
+    swapped (Reported by Quentin Armitage, netfilter bugzilla id #843)
+  - Fix error message typo (Reported by Quentin Armitage, netfilter bugzilla
+    id #843)
+  - Parse option "family" first, because other options may depend on it
+    (Bug reported by Quentin Armitage, closed netfilter bugzilla #841)
+  - Change 2nd parameter type of ipset_parse_elem (Quentin Armitage)
+  - Report broken netlink messages in debug mode
+  - Fix hyphen used as minus sign in manpage (Neutron Soutmun)
+  - libipset.pc must be installed via 'make install' (Eric Leblond)
+
 6.19
   - Check at modules_install whether depmod ignores the extra subdir
     (reported by Husnu Demir and tian fang)

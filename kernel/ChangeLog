@@ -1,3 +1,31 @@
+6.20
+  - Compatibility code is modified not to rely on kernel version numbers
+  - Use netlink callback dump args only
+  - Add hash:net,port,net module to kernel (Oliver Smith)
+  - Add net namespace for ipset (Vitaly Lavrov)
+  - Use a common function at listing the extensions of the elements
+  - For set:list types, replaced elements must be zeroed out
+  - Fix hash resizing with comments
+  - Support comments in the list-type ipset (Oliver Smith)
+  - Support comments in bitmap-type ipsets (Oliver Smith)
+  - Support comments in hash-type ipsets (Oliver Smith)
+  - Support comments for ipset entries in the core (Oliver Smith)
+  - Add hash:net,net module to kernel (Oliver Smith)
+  - Fix serious failure in CIDR tracking (Oliver Smith)
+  - list:set: make sure all elements are checked by the gc
+  - Support extensions which need a per data destroy function
+  - Generalize extensions support
+  - Move extension data to set structure
+  - Rename extension offset ids to extension ids
+  - Prepare ipset to support multiple networks for hash types
+  - Introduce new operation to get both setname and family
+  - Validate the set family and not the set type family at swapping
+    (Bug reported by Quentin Armitage, netfilter bugzilla id #843)
+  - Consistent userspace testing with nomatch flag
+  - Skip really non-first fragments for IPv6 when getting port/protocol
+  - ipset standalone package needs to ship em_ipset.c (reported by Jan
+    Engelhardt)
+
 6.19
   - Compatibility fixes to keep the support of kernels back to 2.6.32
   - Backport nla_put_net64
