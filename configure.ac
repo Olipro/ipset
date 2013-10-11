@@ -167,6 +167,8 @@ AC_CHECK_TYPES([union nf_inet_addr],,,[#include <linux/types.h>
 dnl Checks for functions
 AC_CHECK_FUNCS(gethostbyname2)
 
+if test "$BUILDKMOD" == "yes"
+then
 dnl Check kernel incompatibilities... Ugly like hell
 AC_MSG_CHECKING([kernel source for struct xt_action_param])
 if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
@@ -308,6 +310,7 @@ if test -f $ksourcedir/include/net/netns/generic.h && \
 else
 	AC_MSG_RESULT(no)
 	AC_MSG_ERROR([Netns support is required in the Linux kernel tree])
+fi
 fi
 
 dnl Checks for compiler characteristics.
