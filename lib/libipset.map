@@ -1,3 +1,7 @@
+/*
+ * These are library version numbers in here - not to be confused
+ * with the API numbers used with libtool's -version-info string.
+ */
 LIBIPSET_1.0 {
 global:
   ipset_strlcpy;
