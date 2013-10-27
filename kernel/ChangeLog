@@ -1,3 +1,14 @@
+6.20.1
+  - netfilter: ipset: remove duplicate define (Michael Opdenacker)
+  - net->user_ns is available starting from 3.8, add compatibility
+    checking (reported by Jan Engelhardt)
+  - Fix memory allocation for bitmap:port (reported by Quentin Armitage)
+  - Avoid clashing with configured kernel in [CONFIG_]IP_SET_MAX
+  - The unnamed union initialization may lead to compilation error
+    (reported by Husnu Demir)
+  - Use dev_net() instead of the direct access to ->nd_net (reported by
+    the kbuild test robot)
+
 6.20
   - Compatibility code is modified not to rely on kernel version numbers
   - Use netlink callback dump args only

@@ -1,3 +1,9 @@
+6.20.1
+  - build: fix incorrect library versioning (Jan Engelhardt)
+  - netfilter: ipset: Fix configure failure when --with-kmod=no
+    (Oliver Smith)
+  - Avoid clashing with configured kernel in [CONFIG_]IP_SET_MAX
+
 6.20
   - Missing comment support added to hash:ip,port,ip and hash:net,iface
     types
