@@ -1864,7 +1864,11 @@ ip_set_sockfn_get(struct sock *sk, int optval, void __user *user, int *len)
 	struct net *net = sock_net(sk);
 	struct ip_set_net *inst = ip_set_pernet(net);
 
+#ifdef HAVE_USER_NS_IN_STRUCT_NET
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+#else
+	if (!capable(CAP_NET_ADMIN))
+#endif
 		return -EPERM;
 	if (optval != SO_IP_SET)
 		return -EBADF;

@@ -303,6 +303,16 @@ else
 	AC_SUBST(HAVE_NET_OPS_ID, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for user_ns in struct net])
+if test -f $ksourcedir/include/net/net_namespace.h && \
+   $AWK '/^struct net \{/ {for(i=1; i<=20; i++) {getline; print}}' $ksourcedir/include/net/net_namespace.h | $GREP -q 'user_ns'; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_USER_NS_IN_STRUCT_NET, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_USER_NS_IN_STRUCT_NET, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
