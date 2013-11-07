@@ -516,7 +516,7 @@ ip_set_add(ip_set_id_t index, const struct sk_buff *skb,
 
 	if (opt->dim < set->type->dimension ||
 	    !(opt->family == set->family || set->family == NFPROTO_UNSPEC))
-		return 0;
+		return -IPSET_ERR_TYPE_MISMATCH;
 
 	write_lock_bh(&set->lock);
 	ret = set->variant->kadt(set, skb, par, IPSET_ADD, opt);
@@ -539,7 +539,7 @@ ip_set_del(ip_set_id_t index, const struct sk_buff *skb,
 
 	if (opt->dim < set->type->dimension ||
 	    !(opt->family == set->family || set->family == NFPROTO_UNSPEC))
-		return 0;
+		return -IPSET_ERR_TYPE_MISMATCH;
 
 	write_lock_bh(&set->lock);
 	ret = set->variant->kadt(set, skb, par, IPSET_DEL, opt);
