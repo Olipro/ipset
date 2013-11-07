@@ -709,18 +709,20 @@ ipset_print_proto_port(char *buf, unsigned int len,
 		case IPPROTO_UDPLITE:
 			break;
 		case IPPROTO_ICMP:
-			return ipset_print_icmp(buf + offset, len, data,
+			size = ipset_print_icmp(buf + offset, len, data,
 						IPSET_OPT_PORT, env);
+			goto out;
 		case IPPROTO_ICMPV6:
-			return ipset_print_icmpv6(buf + offset, len, data,
+			size = ipset_print_icmpv6(buf + offset, len, data,
 						  IPSET_OPT_PORT, env);
+			goto out;
 		default:
 			break;
 		}
 	}
 	size = ipset_print_port(buf + offset, len, data, IPSET_OPT_PORT, env);
+out:
 	SNPRINTF_FAILURE(size, len, offset);
-
 	return offset;
 }
 
