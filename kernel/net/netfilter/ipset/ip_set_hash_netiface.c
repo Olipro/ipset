@@ -46,6 +46,14 @@ struct iface_node {
 static void
 rbtree_destroy(struct rb_root *root)
 {
+#ifdef HAVE_RBTREE_POSTORDER_FOR_EACH_ENTRY_SAFE
+	struct iface_node *node, *next;
+
+	rbtree_postorder_for_each_entry_safe(node, next, root, node)
+		kfree(node);
+
+	*root = RB_ROOT;
+#else
 	struct rb_node *p, *n = root->rb_node;
 	struct iface_node *node;
 
@@ -71,6 +79,7 @@ rbtree_destroy(struct rb_root *root)
 		kfree(node);
 		n = p;
 	}
+#endif
 }
 
 static int
