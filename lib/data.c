@@ -54,6 +54,7 @@ struct ipset_data {
 			uint8_t netmask;
 			uint32_t hashsize;
 			uint32_t maxelem;
+			uint32_t markmask;
 			uint32_t gc;
 			uint32_t size;
 			/* Filled out by kernel */
@@ -287,6 +288,9 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	case IPSET_OPT_MAXELEM:
 		data->create.maxelem = *(const uint32_t *) value;
 		break;
+	case IPSET_OPT_MARKMASK:
+		data->create.markmask = *(const uint32_t *) value;
+		break;
 	case IPSET_OPT_NETMASK:
 		data->create.netmask = *(const uint8_t *) value;
 		break;
@@ -467,6 +471,8 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 		return &data->create.hashsize;
 	case IPSET_OPT_MAXELEM:
 		return &data->create.maxelem;
+	case IPSET_OPT_MARKMASK:
+		return &data->create.markmask;
 	case IPSET_OPT_NETMASK:
 		return &data->create.netmask;
 	case IPSET_OPT_PROBES:
@@ -561,6 +567,7 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 	case IPSET_OPT_GC:
 	case IPSET_OPT_HASHSIZE:
 	case IPSET_OPT_MAXELEM:
+	case IPSET_OPT_MARKMASK:
 	case IPSET_OPT_SIZE:
 	case IPSET_OPT_ELEMENTS:
 	case IPSET_OPT_REFERENCES:

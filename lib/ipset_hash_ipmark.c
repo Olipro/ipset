@@ -26,6 +26,10 @@ static const struct ipset_arg hash_ipmark_create_args0[] = {
 	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
 	  .parse = ipset_parse_family,
 	},
+	{ .name = { "markmask", NULL },
+	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_MARKMASK,
+	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
+	},
 	{ .name = { "hashsize", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_HASHSIZE,
 	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
@@ -92,7 +96,7 @@ static const struct ipset_arg hash_ipmark_add_args0[] = {
 
 static const char hash_ipmark_usage0[] =
 "create SETNAME hash:ip,mark\n"
-"		[family inet|inet6]\n"
+"		[family inet|inet6] [markmask VALUE]\n"
 "               [hashsize VALUE] [maxelem VALUE]\n"
 "               [timeout VALUE] [counters] [comment]\n"
 "add    SETNAME IP,MARK [timeout VALUE]\n"
@@ -138,7 +142,8 @@ static struct ipset_type ipset_hash_ipmark0 = {
 			| IPSET_FLAG(IPSET_OPT_MARK),
 	},
 	.full = {
-		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
+		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_MARKMASK)
+			| IPSET_FLAG(IPSET_OPT_HASHSIZE)
 			| IPSET_FLAG(IPSET_OPT_MAXELEM)
 			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
 			| IPSET_FLAG(IPSET_OPT_COUNTERS)

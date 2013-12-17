@@ -38,6 +38,8 @@ static const struct ipset_errcode_table core_errcode_table[] = {
 	  "cannot create more." },
 	{ IPSET_ERR_INVALID_NETMASK, 0,
 	  "The value of the netmask parameter is invalid" },
+	{ IPSET_ERR_INVALID_MARKMASK, 0,
+	  "The value of the markmask parameter is invalid" },
 	{ IPSET_ERR_INVALID_FAMILY, 0,
 	  "Protocol family not supported by the set type" },
 

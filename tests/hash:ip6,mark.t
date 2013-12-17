@@ -224,4 +224,14 @@
 0 ./check_extensions test 2::20 700 13 12479
 # Counters and timeout: destroy set
 0 ipset x test
+# Create a set with 65502 ( 0x0000FFDE ) markmask
+0 ipset create test hash:ip,mark family inet6 markmask 0x0000FFDE
+# Add first value with 86111010 ( 0x0521F322 ) mark
+0 ipset add test 2:1::1,0x0521F322
+# Test last entry mark was modified to 62210 ( 0x0000F302 )
+0 ipset test test 2:1::1,0x0000F302
+# Test that mask is applied for tests as well
+0 ipset test test 2:1::1,0x0521F322
+# Destroy set
+0 ipset x test
 # eof

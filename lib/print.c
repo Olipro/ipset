@@ -893,6 +893,7 @@ ipset_print_data(char *buf, unsigned int len,
 	case IPSET_OPT_GC:
 	case IPSET_OPT_HASHSIZE:
 	case IPSET_OPT_MAXELEM:
+	case IPSET_OPT_MARKMASK:
 	case IPSET_OPT_NETMASK:
 	case IPSET_OPT_PROBES:
 	case IPSET_OPT_RESIZE:

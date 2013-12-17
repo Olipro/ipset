@@ -1,6 +1,6 @@
 Name: test
 Type: hash:ip,mark
-Header: family inet hashsize 1024 maxelem 65536
+Header: family inet markmask 4294967295 hashsize 1024 maxelem 65536
 Size in memory: 8468
 References: 0
 Members:

@@ -381,6 +381,10 @@ static const struct ipset_attr_policy create_attrs[] = {
 		.type = MNL_TYPE_U32,
 		.opt = IPSET_OPT_MAXELEM,
 	},
+	[IPSET_ATTR_MARKMASK] = {
+		.type = MNL_TYPE_U32,
+		.opt = IPSET_OPT_MARKMASK,
+	},
 	[IPSET_ATTR_NETMASK] = {
 		.type = MNL_TYPE_U8,
 		.opt = IPSET_OPT_NETMASK,
