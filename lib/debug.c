@@ -51,6 +51,7 @@ static const struct ipset_attrname adtattr2name[] = {
 	[IPSET_ATTR_IP]		= { .name = "IP" },
 	[IPSET_ATTR_IP_TO]	= { .name = "IP_TO" },
 	[IPSET_ATTR_CIDR]	= { .name = "CIDR" },
+	[IPSET_ATTR_MARK]	= { .name = "MARK" },
 	[IPSET_ATTR_PORT]	= { .name = "PORT" },
 	[IPSET_ATTR_PORT_TO]	= { .name = "PORT_TO" },
 	[IPSET_ATTR_TIMEOUT]	= { .name = "TIMEOUT" },

@@ -29,6 +29,14 @@ case "$2" in
     	    done
     	done
     	;;
+    ipmark)
+    	$ipset n test hash:ip,mark $1 hashsize 64 timeout 100
+    	for x in `seq 0 16`; do
+    	    for y in `seq 0 255`; do
+    	    	$ipset a test $ip$x$sep$y,1023
+    	    done
+    	done
+    	;;
     ipport)
     	$ipset n test hash:ip,port $1 hashsize 64 timeout 100
     	for x in `seq 0 16`; do

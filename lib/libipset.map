@@ -138,3 +138,9 @@ global:
   ipset_print_comment;
   ipset_strlcat;
 } LIBIPSET_4.0;
+
+LIBIPSET_4.2 {
+global:
+  ipset_parse_mark;
+  ipset_print_mark;
+} LIBIPSET_4.1;

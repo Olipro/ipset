@@ -491,6 +491,41 @@ ipset_print_port(char *buf, unsigned int len,
 }
 
 /**
+ * ipset_print_mark - print mark to string
+ * @buf: printing buffer
+ * @len: length of available buffer space
+ * @data: data blob
+ * @opt: the option kind
+ * @env: environment flags
+ *
+ * Print mark to output buffer.
+ *
+ * Return lenght of printed string or error size.
+ */
+int
+ipset_print_mark(char *buf, unsigned int len,
+		   const struct ipset_data *data,
+		   enum ipset_opt opt ASSERT_UNUSED,
+		   uint8_t env UNUSED)
+{
+	const uint32_t *mark;
+	int size, offset = 0;
+
+	assert(buf);
+	assert(len > 0);
+	assert(data);
+	assert(opt == IPSET_OPT_MARK);
+
+	mark = ipset_data_get(data, IPSET_OPT_MARK);
+	assert(mark);
+
+	size = snprintf(buf, len, "%u", *mark);
+	SNPRINTF_FAILURE(size, len, offset);
+
+	return offset;
+}
+
+/**
  * ipset_print_iface - print interface element string
  * @buf: printing buffer
  * @len: length of available buffer space

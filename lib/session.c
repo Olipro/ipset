@@ -424,6 +424,10 @@ static const struct ipset_attr_policy adt_attrs[] = {
 		.type = MNL_TYPE_U8,
 		.opt = IPSET_OPT_CIDR,
 	},
+	[IPSET_ATTR_MARK] = {
+		.type = MNL_TYPE_U32,
+		.opt = IPSET_OPT_MARK,
+	},
 	[IPSET_ATTR_PORT] = {
 		.type = MNL_TYPE_U16,
 		.opt = IPSET_OPT_PORT,

@@ -7,7 +7,7 @@ loop=8
 for x in ip_set_list_set ip_set_hash_netiface ip_set_hash_ipportnet \
 	 ip_set_hash_netport ip_set_hash_net ip_set_hash_ipportip \
 	 ip_set_hash_ipport ip_set_hash_ip ip_set_hash_netnet \
-	 ip_set_hash_netportnet \
+	 ip_set_hash_netportnet ip_set_hash_ipmark \
 	 ip_set_bitmap_port ip_set_bitmap_ipmac \
 	 ip_set_bitmap_ip xt_set ip_set; do
     rmmod $x

@@ -328,6 +328,36 @@ ipset_parse_port(struct ipset_session *session,
 }
 
 /**
+ * ipset_parse_mark - parse a mark
+ * @session: session structure
+ * @opt: option kind of the data
+ * @str: string to parse
+ *
+ * Parse string as a mark. The parsed mark number is
+ * stored in the data blob of the session.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_parse_mark(struct ipset_session *session,
+		 enum ipset_opt opt, const char *str)
+{
+	uint32_t mark;
+	int err;
+
+	assert(session);
+	assert(str);
+
+	if ((err = string_to_u32(session, str, &mark)) == 0)
+		err = ipset_session_data_set(session, opt, &mark);
+
+	if (!err)
+		/* No error, so reset false error messages! */
+		ipset_session_report_reset(session);
+	return err;
+}
+
+/**
  * ipset_parse_tcpudp_port - parse TCP/UDP port name, number, or range of them
  * @session: session structure
  * @opt: option kind of the data

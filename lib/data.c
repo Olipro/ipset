@@ -41,6 +41,7 @@ struct ipset_data {
 	uint32_t timeout;
 	union nf_inet_addr ip;
 	union nf_inet_addr ip_to;
+	uint32_t mark;
 	uint16_t port;
 	uint16_t port_to;
 	union {
@@ -264,6 +265,9 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	case IPSET_OPT_CIDR:
 		data->cidr = *(const uint8_t *) value;
 		break;
+	case IPSET_OPT_MARK:
+		data->mark = *(const uint32_t *) value;
+		break;
 	case IPSET_OPT_PORT:
 		data->port = *(const uint16_t *) value;
 		break;
@@ -448,6 +452,8 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 		 return &data->ip_to;
 	case IPSET_OPT_CIDR:
 		return &data->cidr;
+	case IPSET_OPT_MARK:
+		return &data->mark;
 	case IPSET_OPT_PORT:
 		return &data->port;
 	case IPSET_OPT_PORT_TO:
@@ -542,6 +548,8 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 	case IPSET_OPT_IP2_TO:
 		return family == NFPROTO_IPV4 ? sizeof(uint32_t)
 					 : sizeof(struct in6_addr);
+	case IPSET_OPT_MARK:
+		return sizeof(uint32_t);
 	case IPSET_OPT_PORT:
 	case IPSET_OPT_PORT_TO:
 		return sizeof(uint16_t);

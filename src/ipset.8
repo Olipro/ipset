@@ -878,6 +878,55 @@ ipset add foo 192.168.1,80,10.0.0/24
 ipset add foo 192.168.2,25,10.1.0.0/16
 .IP 
 ipset test foo 192.168.1,80.10.0.0/24
+.SS hash:ip,mark
+The \fBhash:ip,mark\fR set type uses a hash to store IP address and packet mark pairs.
+.PP
+\fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ]
+.PP
+\fIADD\-ENTRY\fR := \fIipaddr\fR,\fImark\fR
+.PP
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ]
+.PP
+\fIDEL\-ENTRY\fR := \fIipaddr\fR,\fImark\fR
+.PP
+\fITEST\-ENTRY\fR := \fIipaddr\fR,\fImark\fR
+.PP
+Optional \fBcreate\fR options:
+.TP
+\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
+The protocol family of the IP addresses to be stored in the set. The default is
+\fBinet\fR, i.e IPv4.
+.TP
+\fBhashsize\fR \fIvalue\fR
+The initial hash size for the set, default is 1024. The hash size must be a power
+of two, the kernel automatically rounds up non power of two hash sizes to the first
+correct value
+.TP
+\fBmaxelem\fR \fIvalue\fR
+The maximal number of elements which can be stored in the set, default 65536.
+.PP
+For the \fBinet\fR family one can add or delete multiple entries by specifying
+a range or a network of IPv4 addresses in the IP address part of the entry:
+.PP
+\fIipaddr\fR := { \fIip\fR | \fIfromaddr\fR\-\fItoaddr\fR | \fIip\fR/\fIcidr\fR }
+.PP
+The
+\fImark\fR
+can be any value between 0 and 4294967295.
+.PP
+The \fBhash:ip,mark\fR type of sets require
+two \fBsrc\fR/\fBdst\fR parameters of the \fBset\fR match and \fBSET\fR
+target kernel modules.
+.PP
+Examples:
+.IP
+ipset create foo hash:ip,mark
+.IP
+ipset add foo 192.168.1.0/24,555
+.IP
+ipset add foo 192.168.1.1,0x63
+.IP
+ipset add foo 192.168.1.1,111236
 .SS hash:net,port,net
 The \fBhash:net,port,net\fR set type behaves similarly to hash:ip,port,net but accepts a
 cidr value for both the first and last parameter. Either subnet is permitted to be a /0
