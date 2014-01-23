@@ -28,7 +28,7 @@ static const struct ipset_arg hash_ipmark_create_args0[] = {
 	},
 	{ .name = { "markmask", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_MARKMASK,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
+	  .parse = ipset_parse_uint32,		.print = ipset_print_mark,
 	},
 	{ .name = { "hashsize", NULL },
 	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_HASHSIZE,

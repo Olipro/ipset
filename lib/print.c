@@ -514,12 +514,12 @@ ipset_print_mark(char *buf, unsigned int len,
 	assert(buf);
 	assert(len > 0);
 	assert(data);
-	assert(opt == IPSET_OPT_MARK);
+	assert(opt == IPSET_OPT_MARK || opt == IPSET_OPT_MARKMASK);
 
-	mark = ipset_data_get(data, IPSET_OPT_MARK);
+	mark = ipset_data_get(data, opt);
 	assert(mark);
 
-	size = snprintf(buf, len, "%u", *mark);
+	size = snprintf(buf, len, "0x%08llx", *mark);
 	SNPRINTF_FAILURE(size, len, offset);
 
 	return offset;
