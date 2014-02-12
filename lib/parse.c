@@ -1753,14 +1753,15 @@ ipset_parse_iface(struct ipset_session *session,
 {
 	struct ipset_data *data;
 	int offset = 0, err = 0;
+	static const char pdev_prefix[]="physdev:";
 
 	assert(session);
 	assert(opt == IPSET_OPT_IFACE);
 	assert(str);
 
 	data = ipset_session_data(session);
-	if (STREQ(str, "physdev:")) {
-		offset = 8;
+	if (STRNEQ(str, pdev_prefix, strlen(pdev_prefix))) {
+		offset = strlen(pdev_prefix);
 		err = ipset_data_set(data, IPSET_OPT_PHYSDEV, str);
 		if (err < 0)
 			return err;
