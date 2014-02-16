@@ -1981,7 +1981,6 @@ ip_set_net_init(struct net *net)
 #endif
 	inst->is_deleted = 0;
 	rcu_assign_pointer(inst->ip_set_list, list);
-	pr_notice("ip_set: protocol %u\n", IPSET_PROTOCOL);
 	return 0;
 
 #ifndef HAVE_NET_OPS_ID
@@ -2047,6 +2046,7 @@ ip_set_init(void)
 		nfnetlink_subsys_unregister(&ip_set_netlink_subsys);
 		return ret;
 	}
+	pr_info("ip_set: protocol %u\n", IPSET_PROTOCOL);
 	return 0;
 }
 
