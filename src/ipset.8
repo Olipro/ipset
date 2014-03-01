@@ -327,6 +327,13 @@ ipset add foo 192.168.1.1/24 comment "allow access to SMB share on \\\\\\\\files
 .IP
 the above would appear as: "allow access to SMB share on \\\\fileserv\\"
 .PP
+.SS forceadd
+All hash set types support the optional \fBforceadd\fR parameter when creating a set.
+When sets created with this option become full the next addition to the set may
+succeed and evict a random entry from the set.
+.IP
+ipset create foo hash:ip forceadd
+.PP
 .SH "SET TYPES"
 .SS bitmap:ip
 The \fBbitmap:ip\fR set type uses a memory range to store either IPv4 host

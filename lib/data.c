@@ -309,6 +309,9 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	case IPSET_OPT_CREATE_COMMENT:
 		cadt_flag_type_attr(data, opt, IPSET_FLAG_WITH_COMMENT);
 		break;
+	case IPSET_OPT_FORCEADD:
+		cadt_flag_type_attr(data, opt, IPSET_FLAG_WITH_FORCEADD);
+		break;
 	/* Create-specific options, filled out by the kernel */
 	case IPSET_OPT_ELEMENTS:
 		data->create.elements = *(const uint32_t *) value;
@@ -529,6 +532,7 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 	case IPSET_OPT_NOMATCH:
 	case IPSET_OPT_COUNTERS:
 	case IPSET_OPT_CREATE_COMMENT:
+	case IPSET_OPT_FORCEADD:
 		return &data->cadt_flags;
 	default:
 		return NULL;
@@ -590,6 +594,7 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 	case IPSET_OPT_PHYSDEV:
 	case IPSET_OPT_NOMATCH:
 	case IPSET_OPT_COUNTERS:
+	case IPSET_OPT_FORCEADD:
 		return sizeof(uint32_t);
 	case IPSET_OPT_ADT_COMMENT:
 		return IPSET_MAX_COMMENT_SIZE + 1;
