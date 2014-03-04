@@ -1,3 +1,21 @@
+6.21
+  - ipset: add userspace support for forceadd (Josh Hunt)
+  - kernel: uapi: fix MARKMASK attr ABI breakage (Florian Westphal)
+  - lib: fix ifname 'physdev:' prefix parsing (Florian Westphal)
+  - Prepare the kernel for create option flags when no extension is needed
+  - print mark & mark mask in hex rather then decimal (Vytas Dauksa)
+  - add markmask for hash:ip,mark data type (Vytas Dauksa)
+  - add hash:ip,mark data type to ipset (Vytas Dauksa)
+  - ipset: manpage: correct add action synopsis for hash:net,port,net.
+    (Mart Frauenlob)
+  - ipset: manpage: remove spare comma for hash:net,net test action.
+    (Mart Frauenlob)
+  - Fix all set output from list/save when set with counters in use.
+    (Sergey Popovich)
+  - ipset: Fix malformed output from list/save for ICMP types in port field
+    (Sergey Popovich)
+  - ipset: fix timeout data type size (Nikolay Martynov)
+
 6.20.1
   - build: fix incorrect library versioning (Jan Engelhardt)
   - netfilter: ipset: Fix configure failure when --with-kmod=no

@@ -1,3 +1,19 @@
+6.21
+  - ipset: add forceadd kernel support for hash set types (Josh Hunt)
+  - netfilter: ipset: move registration message to init from net_init
+    (Ilia Mirkin)
+  - kernel: uapi: fix MARKMASK attr ABI breakage (Florian Westphal)
+  - Prepare the kernel for create option flags when no extension is needed
+  - add markmask for hash:ip,mark data type (Vytas Dauksa)
+  - add hash:ip,mark data type to ipset (Vytas Dauksa)
+  - ipset: remove unused code (Stephen Hemminger)
+  - netfilter: ipset: Add hash: fix coccinelle warnings (Fengguang Wu)
+  - Typo in ip_set_hash_netnet.c fixed (David Binderman)
+  - net ipset: use rbtree postorder iteration instead of opencoding
+    (Cody P Schafer)
+  - ipset: Follow manual page behavior for SET target on list:set
+    (Sergey Popovich)
+
 6.20.1
   - netfilter: ipset: remove duplicate define (Michael Opdenacker)
   - net->user_ns is available starting from 3.8, add compatibility
