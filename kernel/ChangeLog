@@ -1,3 +1,7 @@
+6.21.1
+  - netfilter: ip_set: rename nfnl_dereference()/nfnl_set()
+    (Patrick McHardy)
+
 6.21
   - ipset: add forceadd kernel support for hash set types (Josh Hunt)
   - netfilter: ipset: move registration message to init from net_init

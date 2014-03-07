@@ -1,3 +1,7 @@
+6.21.1
+  - The bash utilities are updated
+  - Fix libipset library release versioning (reported by Mathieu Bridon)
+
 6.21
   - ipset: add userspace support for forceadd (Josh Hunt)
   - kernel: uapi: fix MARKMASK attr ABI breakage (Florian Westphal)
