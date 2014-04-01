@@ -13,6 +13,7 @@
 #include <arpa/inet.h>				/* inet_ntop */
 #include <net/ethernet.h>			/* ETH_ALEN */
 #include <net/if.h>				/* IFNAMSIZ */
+#include <inttypes.h>				/* PRIx macro */
 
 #include <libipset/debug.h>			/* D() */
 #include <libipset/data.h>			/* ipset_data_* */
@@ -519,7 +520,7 @@ ipset_print_mark(char *buf, unsigned int len,
 	mark = ipset_data_get(data, opt);
 	assert(mark);
 
-	size = snprintf(buf, len, "0x%08llx", *mark);
+	size = snprintf(buf, len, "0x%08"PRIx32, *mark);
 	SNPRINTF_FAILURE(size, len, offset);
 
 	return offset;
