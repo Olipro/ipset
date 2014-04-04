@@ -2,6 +2,8 @@
 
 # set -x
 
+ipset=${IPSET_BIN:-../src/ipset}
+
 tests="init"
 tests="$tests ipmap bitmap:ip"
 tests="$tests macipmap portmap"
@@ -65,7 +67,7 @@ fi
 chmod a+x check_* *.sh
 
 for types in $tests; do
-    ../src/ipset -X test >/dev/null 2>&1
+    $ipset -X test >/dev/null 2>&1
     if [ -f $types ]; then
     	filename=$types
     else
@@ -92,7 +94,7 @@ for types in $tests; do
 		;;
 	esac
 	echo -ne "$types: $what: "
-	cmd=`echo $cmd | sed 's/ipset/..\/src\/ipset 2>.foo.err/'`
+	cmd=`echo $cmd | sed "s|ipset|$ipset 2>.foo.err|"`
 	eval $cmd
 	r=$?
 	# echo $ret $r
@@ -108,7 +110,7 @@ for types in $tests; do
     done < $filename
 done
 # Remove test sets created by setlist.t
-../src/ipset -X >/dev/null 2>&1
+$ipset -X >/dev/null 2>&1
 for x in $tests; do
 	case $x in
 	init)

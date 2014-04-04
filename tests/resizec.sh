@@ -3,7 +3,7 @@
 # set -x
 set -e
 
-ipset=../src/ipset
+ipset=${IPSET_BIN:-../src/ipset}
 
 case "$1" in
     -4)
