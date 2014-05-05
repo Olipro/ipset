@@ -1979,8 +1979,10 @@ ipset_parse_elem(struct ipset_session *session,
 		D("parse elem part two: %s", a);
 		parse_elem(session, type, IPSET_DIM_TWO, a);
 	}
-	if (type->dimension > IPSET_DIM_TWO && b != NULL)
+	if (type->dimension > IPSET_DIM_TWO && b != NULL) {
+		D("parse elem part three: %s", b);
 		parse_elem(session, type, IPSET_DIM_THREE, b);
+	}
 
 	goto out;
 
