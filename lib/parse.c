@@ -180,24 +180,27 @@ int
 ipset_parse_ether(struct ipset_session *session,
 		  enum ipset_opt opt, const char *str)
 {
-	unsigned int i = 0;
+	size_t len, p = 0, i = 0;
 	unsigned char ether[ETH_ALEN];
 
 	assert(session);
 	assert(opt == IPSET_OPT_ETHER);
 	assert(str);
 
-	if (strlen(str) != ETH_ALEN * 3 - 1)
+	len = strlen(str);
+
+	if (len > ETH_ALEN * 3 - 1)
 		goto error;
 
 	for (i = 0; i < ETH_ALEN; i++) {
 		long number;
 		char *end;
 
-		number = strtol(str + i * 3, &end, 16);
+		number = strtol(str + p, &end, 16);
+		p = end - str + 1;
 
-		if (end == str + i * 3 + 2 &&
-		    (*end == ':' || *end == '\0') &&
+		if (((*end == ':' && i < ETH_ALEN - 1) ||
+		     (*end == '\0' && i == ETH_ALEN - 1)) &&
 		    number >= 0 && number <= 255)
 			ether[i] = number;
 		else
