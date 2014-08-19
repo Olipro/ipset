@@ -37,6 +37,9 @@ libipset_la_SOURCES = \
 	ui.c \
 	types_init.c
 
+EXTRA_libipset_la_SOURCES = \
+	debug.c
+
 EXTRA_DIST = $(IPSET_SETTYPE_LIST) libipset.map
 
 pkgconfigdir = $(libdir)/pkgconfig
