@@ -1609,6 +1609,23 @@ ipset_parse_uint32(struct ipset_session *session,
 	return err;
 }
 
+int
+ipset_parse_uint16(struct ipset_session *session,
+		   enum ipset_opt opt, const char *str)
+{
+	uint16_t value;
+	int err;
+
+	assert(session);
+	assert(str);
+
+	err = string_to_u16(session, str, &value);
+	if (err == 0)
+		return ipset_session_data_set(session, opt, &value);
+
+	return err;
+}
+
 /**
  * ipset_parse_uint8 - parse string as an unsigned short integer
  * @session: session structure
@@ -1804,6 +1821,55 @@ int ipset_parse_comment(struct ipset_session *session,
 		return syntax_err("Comment is longer than the maximum allowed "
 				  "%d characters", IPSET_MAX_COMMENT_SIZE);
 	return ipset_data_set(data, opt, str);
+}
+
+int
+ipset_parse_skbmark(struct ipset_session *session,
+		    enum ipset_opt opt, const char *str)
+{
+	struct ipset_data *data;
+	uint64_t result = 0;
+	unsigned long mark, mask;
+	int ret = 0;
+
+	assert(session);
+	assert(opt == IPSET_OPT_SKBMARK);
+	assert(str);
+
+	data = ipset_session_data(session);
+	ret = sscanf(str, "0x%lx/0x%lx", &mark, &mask);
+	if (ret != 2) {
+		mask = 0xffffffff;
+		ret = sscanf(str, "0x%lx", &mark);
+		if (ret != 1)
+			return syntax_err("Invalid skbmark format, "
+					  "it should be: "
+					  " MARK/MASK or MARK (see manpage)");
+	}
+	result = ((uint64_t)(mark) << 32) | (mask & 0xffffffff);
+	return ipset_data_set(data, IPSET_OPT_SKBMARK, &result);
+}
+
+int
+ipset_parse_skbprio(struct ipset_session *session,
+		    enum ipset_opt opt, const char *str)
+{
+	struct ipset_data *data;
+	unsigned maj, min;
+	uint32_t major;
+	int err;
+
+	assert(session);
+	assert(opt == IPSET_OPT_SKBPRIO);
+	assert(str);
+
+	data = ipset_session_data(session);
+	err = sscanf(str, "%x:%x", &maj, &min);
+	if (err != 2)
+		return syntax_err("Invalid skbprio format, it should be:"\
+				  "MAJOR:MINOR (see manpage)");
+	major = ((uint32_t)maj << 16) | (min & 0xffff);
+	return ipset_data_set(data, IPSET_OPT_SKBPRIO, &major);
 }
 
 /**

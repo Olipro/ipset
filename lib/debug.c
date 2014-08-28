@@ -67,6 +67,9 @@ static const struct ipset_attrname adtattr2name[] = {
 	[IPSET_ATTR_IP2_TO]	= { .name = "IP2_TO" },
 	[IPSET_ATTR_IFACE]	= { .name = "IFACE" },
 	[IPSET_ATTR_COMMENT]	= { .name = "COMMENT" },
+	[IPSET_ATTR_SKBMARK]	= { .name = "SKBMARK" },
+	[IPSET_ATTR_SKBPRIO]	= { .name = "SKBPRIO" },
+	[IPSET_ATTR_SKBQUEUE]	= { .name = "SKBQUEUE" },
 };
 
 static void
@@ -97,6 +100,12 @@ debug_cadt_attrs(int max, const struct ipset_attr_policy *policy,
 			v = *(uint32_t *) mnl_attr_get_payload(nla[i]);
 			fprintf(stderr, "\t\t%s: %u\n",
 				attr2name[i].name, ntohl(v));
+			break;
+		case MNL_TYPE_U64:
+			fprintf(stderr, "\t\t%s: 0x%llx\n",
+				attr2name[i].name, (long long int)
+				be64toh(*(uint64_t *)
+					mnl_attr_get_payload(nla[i])));
 			break;
 		case MNL_TYPE_NUL_STRING:
 			fprintf(stderr, "\t\t%s: %s\n",

@@ -596,6 +596,55 @@ int ipset_print_comment(char *buf, unsigned int len,
 	return offset;
 }
 
+int
+ipset_print_skbmark(char *buf, unsigned int len,
+		    const struct ipset_data *data, enum ipset_opt opt,
+		    uint8_t env UNUSED)
+{
+	int size, offset = 0;
+	const uint64_t *skbmark;
+	uint32_t mark, mask;
+
+	assert(buf);
+	assert(len > 0);
+	assert(data);
+	assert(opt == IPSET_OPT_SKBMARK);
+
+	skbmark = ipset_data_get(data, IPSET_OPT_SKBMARK);
+	assert(skbmark);
+	mark = *skbmark >> 32;
+	mask = *skbmark & 0xffffffff;
+	if (mask == 0xffffffff)
+		size = snprintf(buf + offset, len, "0x%"PRIx32, mark);
+	else
+		size = snprintf(buf + offset, len,
+				"0x%"PRIx32"/0x%"PRIx32, mark, mask);
+	SNPRINTF_FAILURE(size, len, offset);
+	return offset;
+}
+
+int
+ipset_print_skbprio(char *buf, unsigned int len,
+		    const struct ipset_data *data, enum ipset_opt opt,
+		    uint8_t env UNUSED)
+{
+	int size, offset = 0;
+	const uint32_t *skbprio;
+
+	assert(buf);
+	assert(len > 0);
+	assert(data);
+	assert(opt == IPSET_OPT_SKBPRIO);
+
+	skbprio = ipset_data_get(data, opt);
+	assert(skbprio);
+	size = snprintf(buf + offset, len, "%x:%x",
+			*skbprio >> 16, *skbprio & 0xffff);
+	SNPRINTF_FAILURE(size, len, offset);
+	return offset;
+}
+
+
 /**
  * ipset_print_proto - print protocol name
  * @buf: printing buffer

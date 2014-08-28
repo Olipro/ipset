@@ -501,6 +501,18 @@ static const struct ipset_attr_policy adt_attrs[] = {
 		.opt = IPSET_OPT_ADT_COMMENT,
 		.len  = IPSET_MAX_COMMENT_SIZE + 1,
 	},
+	[IPSET_ATTR_SKBMARK] = {
+		.type = MNL_TYPE_U64,
+		.opt = IPSET_OPT_SKBMARK,
+	},
+	[IPSET_ATTR_SKBPRIO] = {
+		.type = MNL_TYPE_U32,
+		.opt = IPSET_OPT_SKBPRIO,
+	},
+	[IPSET_ATTR_SKBQUEUE] = {
+		.type = MNL_TYPE_U16,
+		.opt = IPSET_OPT_SKBQUEUE,
+	},
 };
 
 static const struct ipset_attr_policy ipaddr_attrs[] = {

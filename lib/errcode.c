@@ -76,6 +76,8 @@ static const struct ipset_errcode_table core_errcode_table[] = {
 	  "Packet/byte counters cannot be used: set was created without counter support" },
 	{ IPSET_ERR_COMMENT, 0,
 	  "Comment string is too long!" },
+	{ IPSET_ERR_SKBINFO, 0,
+	  "Skbinfo mapping cannot be used: set was created without skbinfo support" },
 
 	/* ADD specific error codes */
 	{ IPSET_ERR_EXIST, IPSET_CMD_ADD,
