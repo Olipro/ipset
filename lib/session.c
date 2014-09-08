@@ -816,7 +816,7 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 		safe_snprintf(session, "</elem>");
 
 	for (arg = type->args[IPSET_ADD]; arg != NULL && arg->opt; arg++) {
-		D("print arg opt %u %s\n", arg->opt,
+		D("print arg opt %u %s", arg->opt,
 		   ipset_data_test(data, arg->opt) ? "(yes)" : "(missing)");
 		if (!(arg->print && ipset_data_test(data, arg->opt)))
 			continue;
