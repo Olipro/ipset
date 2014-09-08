@@ -1050,8 +1050,7 @@ callback_list(struct ipset_session *session, struct nlattr *nla[],
 		ipset_data_flags_unset(data, IPSET_CREATE_FLAGS);
 		D("nla typename %s",
 		  (char *) mnl_attr_get_payload(nla[IPSET_ATTR_TYPENAME]));
-		D("nla typename %s",
-		  (char *) mnl_attr_get_payload(nla[IPSET_ATTR_TYPENAME]));
+
 		ATTR2DATA(session, nla, IPSET_ATTR_FAMILY, cmd_attrs);
 		ATTR2DATA(session, nla, IPSET_ATTR_TYPENAME, cmd_attrs);
 		ATTR2DATA(session, nla, IPSET_ATTR_REVISION, cmd_attrs);
