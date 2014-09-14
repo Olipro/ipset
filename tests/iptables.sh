@@ -99,9 +99,18 @@ timeout)
 	$ipset n test hash:ip,port timeout 2
 	$cmd -A INPUT -j SET --add-set test src,src --timeout 10 --exist
 	;;
+mangle)
+	$ipset n test hash:net $family skbinfo 2>/dev/null
+	$ipset a test 10.255.0.0/16 skbmark 0x1234 2>/dev/null
+	$cmd -t mangle -A INPUT -j SET --map-set test src --map-mark
+	$cmd -t mangle -A INPUT -m mark --mark 0x1234 -j LOG --log-prefix "in set mark: "
+	$cmd -t mangle -A INPUT -s 10.255.0.0/16 -j DROP
+	;;
 stop)
 	$cmd -F
 	$cmd -X
+	$cmd -F -t mangle
+	$cmd -X -t mangle
 	$ipset -F 2>/dev/null
 	$ipset -X 2>/dev/null
 	;;
