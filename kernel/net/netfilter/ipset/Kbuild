@@ -7,7 +7,7 @@ obj-m += ip_set_bitmap_ip.o ip_set_bitmap_ipmac.o ip_set_bitmap_port.o
 obj-m += ip_set_hash_ip.o ip_set_hash_ipport.o ip_set_hash_ipportip.o
 obj-m += ip_set_hash_ipportnet.o ip_set_hash_ipmark.o
 obj-m += ip_set_hash_net.o ip_set_hash_netport.o ip_set_hash_netiface.o
-obj-m += ip_set_hash_netnet.o ip_set_hash_netportnet.o
+obj-m += ip_set_hash_netnet.o ip_set_hash_netportnet.o ip_set_hash_mac.o
 obj-m += ip_set_list_set.o
 
 # It's for me...
