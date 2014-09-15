@@ -1,3 +1,28 @@
+6.22
+  - hash:mac type added to ipset
+  - Add test to check mark mapping
+  - ipset: remove extran newline on debug output (Holger Eitzenberger)
+  - ipset: avoid duplicate command flags (Holger Eitzenberger)
+  - Remove a duplicate debug print (Holger Eitzenberger)
+  - ipset: man: Add the skbinfo extension documentation. (Anton Danilov)
+  - libipset: Add userspace support of the skbinfo extension of the list
+    set type. (Anton Danilov)
+  - libipset: Add userspace support of the skbinfo extension of the hash
+    set types. (Anton Danilov)
+  - libipset: Add userspace support of the skbinfo extension of the
+    bitmap set types. (Anton Danilov)
+  - libipset: Add userspace code for the skbinfo extension support.
+    (Anton Danilov)
+  - Make possible to compile ipset with IPSET_DEBUG from the dist.
+    (Clinton Roy)
+  - libipset: print third element in debugging (Sergey Popovich)
+  - ipset: Handle missing leading zeros in ethernet address parser
+    (Janeks Jaunups)
+  - ipset: Pass IPSET_BIN to test scripts to change binary location
+    (Neutron Soutmun)
+  - ipset: Fix grammar error in manpage (Neutron Soutmun)
+  - ipset: Fix printf format warning (Neutron Soutmun)
+
 6.21.1
   - The bash utilities are updated
   - Fix libipset library release versioning (reported by Mathieu Bridon)

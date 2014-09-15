@@ -1,3 +1,25 @@
+6.22
+  - hash:mac type added to ipset
+  - skbinfo extension: send nonzero extension elements only to userspace
+  - netfilter: Convert pr_warning to pr_warn (Joe Perches)
+  - netfilter: ipset: Add skbinfo extension support to SET target.
+    (Anton Danilov)
+  - netfilter: ipset: Add skbinfo extension kernel support for the list
+    set type. (Anton Danilov)
+  - netfilter: ipset: Add skbinfo extension kernel support for the hash
+    set types. (Anton Danilov)
+  - netfilter: ipset: Add skbinfo extension kernel support for the
+    bitmap set types. (Anton Danilov)
+  - netfilter: ipset: Add skbinfo extension kernel support in the ipset
+    core. (Anton Danilov)
+  - Fix static checker warning in ip_set_core.c (reported by Dan Carpenter)
+  - Fix warn: integer overflows 'sizeof(*map) + size * set->dsize'
+    (reported by Dan Carpenter)
+  - net/netfilter/ipset: Resolve missing-field-initializer warnings
+    (Mark Rustad)
+  - netnet,netportnet: Fix value range support for IPv4 (Sergey Popovich)
+  - Removed invalid IPSET_ATTR_MARKMASK validation (Vytas Dauksa) 
+
 6.21.1
   - netfilter: ip_set: rename nfnl_dereference()/nfnl_set()
     (Patrick McHardy)
