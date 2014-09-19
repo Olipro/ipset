@@ -511,6 +511,38 @@ ipset create foo hash:ip netmask 30
 ipset add foo 192.168.1.0/24
 .IP 
 ipset test foo 192.168.1.2
+.SS hash:mac
+The \fBhash:mac\fR set type uses a hash to store MAC addresses. Zero valued MAC addresses cannot be stored in a \fBhash:mac\fR
+type of set.
+.PP
+\fICREATE\-OPTIONS\fR := [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ] [ \fBskbinfo\fP ]
+.PP
+\fIADD\-ENTRY\fR := \fImacaddr\fR
+.PP
+\fIADD\-OPTIONS\fR := [ \fBtimeout\fR \fIvalue\fR ] [ \fBpackets\fR \fIvalue\fR ] [ \fBbytes\fR \fIvalue\fR ] [ \fBcomment\fR \fIstring\fR ] [ \fBskbmark\fR \fIvalue\fR ] [ \fBskbprio\fR \fIvalue\fR ] [ \fBskbqueue\fR \fIvalue\fR ]
+.PP
+\fIDEL\-ENTRY\fR := \fImacaddr\fR
+.PP
+\fITEST\-ENTRY\fR := \fImacaddr\fR
+.PP
+Optional \fBcreate\fR options:
+.TP
+\fBhashsize\fR \fIvalue\fR
+The initial hash size for the set, default is 1024. The hash size must be a power
+of two, the kernel automatically rounds up non power of two hash sizes to the first
+correct value.
+.TP
+\fBmaxelem\fR \fIvalue\fR
+The maximal number of elements which can be stored in the set, default 65536.
+.PP
+Examples:
+.IP
+ipset create foo hash:mac
+.IP
+ipset add foo 01:02:03:04:05:06
+.IP
+ipset test foo 01:02:03:04:05:06
+
 .SS hash:net
 The \fBhash:net\fR set type uses a hash to store different sized IP network addresses.
 Network address with zero prefix size cannot be stored in this type of sets.
