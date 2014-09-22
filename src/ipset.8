@@ -273,12 +273,44 @@ for new entries. If a set is created with timeout support, then the same
 when adding entries. Zero timeout value means the entry is added permanent to the set.
 The timeout value of already added elements can be changed by readding the element
 using the \fB\-exist\fR option. Example:
-.IP 
+.IP
 ipset create test hash:ip timeout 300
-.IP 
+.IP
 ipset add test 192.168.0.1 timeout 60
-.IP 
+.IP
 ipset \-exist add test 192.168.0.1 timeout 600
+.PP
+.SS hashsize
+This parameter is valid for the \fBcreate\fR command of all \fBhash\fR type sets.
+It defines the initial hash size for the set, default is 1024. The hash size must be a power
+of two, the kernel automatically rounds up non power of two hash sizes to the first
+correct value.
+Example:
+.IP
+ipset create test hash:ip hashsize 1536
+.PP
+.SS maxelem
+This parameter is valid for the \fBcreate\fR command of all \fBhash\fR type sets.
+It does define the maximal number of elements which can be stored in the set, default 65536.
+Example:
+.IP
+ipset create test hash:ip maxelem 2048.
+.PP
+.SS family { inet | inet6 }
+This parameter is valid for the \fBcreate\fR command of all \fBhash\fR type sets
+except for hash:mac.
+It defines the protocol family of the IP addresses to be stored in the set. The default is
+\fBinet\fR, i.e IPv4.
+For the \fBinet\fR family one can add or delete multiple entries by specifying
+a range or a network of IPv4 addresses in the IP address part of the entry:
+.PP
+\fIipaddr\fR := { \fIip\fR | \fIfromaddr\fR\-\fItoaddr\fR | \fIip\fR/\fIcidr\fR }
+.PP
+\fInetaddr\fR := { \fIfromaddr\fR\-\fItoaddr\fR | \fIip\fR/\fIcidr\fR }
+.PP
+Example:
+.IP
+ipset create test hash:ip family inet6
 .PP
 .SS nomatch
 The \fBhash\fR set types which can store \fBnet\fR type of data (i.e. hash:*net*)
@@ -480,30 +512,12 @@ type of set.
 .PP
 Optional \fBcreate\fR options:
 .TP 
-\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
-The protocol family of the IP addresses to be stored in the set. The default is
-\fBinet\fR, i.e IPv4.
-.TP 
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value.
-.TP 
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
-.TP 
 \fBnetmask\fP \fIcidr\fP
 When the optional \fBnetmask\fP parameter specified, network addresses will be 
 stored in the set instead of IP host addresses. The \fIcidr\fP prefix value must be
 between 1\-32 for IPv4 and between 1\-128 for IPv6. An IP address will be in the set
 if the network address, which is resulted by masking the address with the netmask,
 can be found in the set.
-.PP
-For the \fBinet\fR family one can add or delete multiple entries by specifying
-a range or a network:
-.PP
-\fIipaddr\fR := { \fIip\fR | \fIfromaddr\fR\-\fItoaddr\fR | \fIip\fR/\fIcidr\fR }
-.PP
 Examples:
 .IP 
 ipset create foo hash:ip netmask 30
@@ -524,16 +538,6 @@ type of set.
 \fIDEL\-ENTRY\fR := \fImacaddr\fR
 .PP
 \fITEST\-ENTRY\fR := \fImacaddr\fR
-.PP
-Optional \fBcreate\fR options:
-.TP
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value.
-.TP
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
 .PP
 Examples:
 .IP
@@ -559,25 +563,6 @@ Network address with zero prefix size cannot be stored in this type of sets.
 .PP
 where
 \fInetaddr\fR := \fIip\fR[/\fIcidr\fR]
-.PP
-Optional \fBcreate\fR options:
-.TP 
-\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
-The protocol family of the IP addresses to be stored in the set. The default is
-\fBinet\fR, i.e IPv4.
-.TP 
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value.
-.TP 
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
-.PP
-For the \fBinet\fR family one can add or delete multiple entries by specifying
-a range, which is converted internally to network(s) equal to the range:
-.PP
-\fInetaddr\fR := { \fIip\fR[/\fIcidr\fR] | \fIfromaddr\fR\-\fItoaddr\fR }
 .PP
 When adding/deleting/testing entries, if the cidr prefix parameter is not specified,
 then the host prefix value is assumed. When adding/deleting entries, the exact
@@ -630,25 +615,6 @@ Network address with zero prefix size cannot be stored in this type of set.
 where
 \fInetaddr\fR := \fIip\fR[/\fIcidr\fR]
 .PP
-Optional \fBcreate\fR options:
-.TP
-\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
-The protocol family of the IP addresses to be stored in the set. The default is
-\fBinet\fR, i.e IPv4.
-.TP
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value.
-.TP
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
-.PP
-For the \fBinet\fR family one can add or delete multiple entries by specifying
-a range, which is converted internally to network(s) equal to the range:
-.PP
-\fInetaddr\fR := { \fIip\fR[/\fIcidr\fR] | \fIfromaddr\fR\-\fItoaddr\fR }
-.PP
 When adding/deleting/testing entries, if the cidr prefix parameter is not specified,
 then the host prefix value is assumed. When adding/deleting entries, the exact
 element is added/deleted and overlapping elements are not checked by the kernel.
@@ -698,25 +664,6 @@ protocol number cannot be used.
 \fIDEL\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR
 .PP
 \fITEST\-ENTRY\fR := \fIipaddr\fR,[\fIproto\fR:]\fIport\fR
-.PP
-Optional \fBcreate\fR options:
-.TP 
-\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
-The protocol family of the IP addresses to be stored in the set. The default is
-\fBinet\fR, i.e IPv4.
-.TP 
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value
-.TP 
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
-.PP
-For the \fBinet\fR family one can add or delete multiple entries by specifying
-a range or a network of IPv4 addresses in the IP address part of the entry:
-.PP
-\fIipaddr\fR := { \fIip\fR | \fIfromaddr\fR\-\fItoaddr\fR | \fIip\fR/\fIcidr\fR }
 .PP
 The
 [\fIproto\fR:]\fIport\fR
@@ -778,20 +725,6 @@ address with zero prefix size is not accepted either.
 where
 \fInetaddr\fR := \fIip\fR[/\fIcidr\fR]
 .PP
-Optional \fBcreate\fR options:
-.TP 
-\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
-The protocol family of the IP addresses to be stored in the set. The default is
-\fBinet\fR, i.e IPv4.
-.TP 
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value.
-.TP 
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
-.PP
 For the \fInetaddr\fR part of the elements
 see the description at the \fBhash:net\fR set type. For the
 [\fIproto\fR:]\fIport\fR
@@ -844,20 +777,6 @@ For the first \fIipaddr\fR and
 parts of the elements see the descriptions at the
 \fBhash:ip,port\fR set type.
 .PP
-Optional \fBcreate\fR options:
-.TP 
-\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
-The protocol family of the IP addresses to be stored in the set. The default is
-\fBinet\fR, i.e IPv4.
-.TP 
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value.
-.TP 
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
-.PP
 The \fBhash:ip,port,ip\fR type of sets require
 three \fBsrc\fR/\fBdst\fR parameters of the \fBset\fR match and \fBSET\fR
 target kernel modules.
@@ -893,20 +812,6 @@ For the \fIipaddr\fR and
 parts of the elements see the descriptions at the
 \fBhash:ip,port\fR set type. For the \fInetaddr\fR part of the elements
 see the description at the \fBhash:net\fR set type.
-.PP
-Optional \fBcreate\fR options:
-.TP 
-\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
-The protocol family of the IP addresses to be stored in the set. The default is
-\fBinet\fR, i.e IPv4.
-.TP 
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value.
-.TP 
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
 .PP
 From the \fBset\fR netfilter match point of view the searching for a match
 always  starts  from  the smallest  size  of netblock (most specific
@@ -946,26 +851,9 @@ The \fBhash:ip,mark\fR set type uses a hash to store IP address and packet mark 
 .PP
 Optional \fBcreate\fR options:
 .TP
-\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
-The protocol family of the IP addresses to be stored in the set. The default is
-\fBinet\fR, i.e IPv4.
-.TP
 \fBmarkmask\fR \fIvalue\fR
 Allows you to set bits you are interested in the packet mark. This values is then used to perform bitwise AND operation for every mark added.
 markmask can be any value between 1 and 4294967295, by default all 32 bits are set.
-.TP
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value
-.TP
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
-.PP
-For the \fBinet\fR family one can add or delete multiple entries by specifying
-a range or a network of IPv4 addresses in the IP address part of the entry:
-.PP
-\fIipaddr\fR := { \fIip\fR | \fIfromaddr\fR\-\fItoaddr\fR | \fIip\fR/\fIcidr\fR }
 .PP
 The
 \fImark\fR
@@ -1006,20 +894,6 @@ For the [\fIproto\fR:]\fIport\fR
 part of the elements see the description at the
 \fBhash:ip,port\fR set type. For the \fInetaddr\fR part of the elements
 see the description at the \fBhash:net\fR set type.
-.PP
-Optional \fBcreate\fR options:
-.TP 
-\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
-The protocol family of the IP addresses to be stored in the set. The default is
-\fBinet\fR, i.e IPv4.
-.TP 
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value.
-.TP 
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
 .PP
 From the \fBset\fR netfilter match point of view the searching for a match
 always  starts  from  the smallest  size  of netblock (most specific
@@ -1062,20 +936,6 @@ address and interface name pairs.
 .PP
 where
 \fInetaddr\fR := \fIip\fR[/\fIcidr\fR]
-.PP
-Optional \fBcreate\fR options:
-.TP 
-\fBfamily\fR { \fBinet\fR | \fBinet6\fR }
-The protocol family of the IP addresses to be stored in the set. The default is
-\fBinet\fR, i.e IPv4.
-.TP 
-\fBhashsize\fR \fIvalue\fR
-The initial hash size for the set, default is 1024. The hash size must be a power
-of two, the kernel automatically rounds up non power of two hash sizes to the first
-correct value.
-.TP 
-\fBmaxelem\fR \fIvalue\fR
-The maximal number of elements which can be stored in the set, default 65536.
 .PP
 For the \fInetaddr\fR part of the elements
 see the description at the \fBhash:net\fR set type.
