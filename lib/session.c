@@ -716,13 +716,7 @@ retry:
 			fmt, args);
 	va_end(args);
 
-	if (ret < 0) {
-		ipset_err(session,
-			 "Internal error at printing to output buffer");
-		longjmp(printf_failure, 1);
-	}
-
-	if (ret >= IPSET_OUTBUFLEN - len) {
+	if (ret < 0 || ret >= IPSET_OUTBUFLEN - len) {
 		/* Buffer was too small, push it out and retry */
 		D("print buffer and try again: %u", len);
 		if (loop++) {
@@ -750,13 +744,7 @@ retry:
 	ret = fn(session->outbuf + len, IPSET_OUTBUFLEN - len,
 		 session->data, opt, session->envopts);
 
-	if (ret < 0) {
-		ipset_err(session,
-			"Internal error at printing to output buffer");
-		longjmp(printf_failure, 1);
-	}
-
-	if (ret >= IPSET_OUTBUFLEN - len) {
+	if (ret < 0 || ret >= IPSET_OUTBUFLEN - len) {
 		/* Buffer was too small, push it out and retry */
 		D("print buffer and try again: %u", len);
 		if (loop++) {
