@@ -144,3 +144,11 @@ global:
   ipset_parse_mark;
   ipset_print_mark;
 } LIBIPSET_4.1;
+
+LIBIPSET_4.3 {
+global:
+  ipset_parse_skbmark;
+  ipset_parse_skbprio;
+  ipset_print_skbmark;
+  ipset_print_skbprio;
+} LIBIPSET_4.2;
