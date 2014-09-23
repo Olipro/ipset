@@ -16,6 +16,7 @@
 #include <net/ethernet.h>			/* ETH_ALEN */
 #include <net/if.h>				/* IFNAMSIZ */
 
+#include <libipset/compat.h>			/* be64toh() */
 #include <libipset/debug.h>			/* D() */
 #include <libipset/data.h>			/* IPSET_OPT_* */
 #include <libipset/errcode.h>			/* ipset_errcode */
