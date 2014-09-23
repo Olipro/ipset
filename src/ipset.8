@@ -13,7 +13,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-.TH "IPSET" "8" "Apr 4, 2013" "Jozsef Kadlecsik" ""
+.TH "IPSET" "8" "Sep 23, 2014" "Jozsef Kadlecsik" ""
 .SH "NAME"
 ipset \(em administration tool for IP sets
 .SH "SYNOPSIS"
@@ -280,6 +280,56 @@ ipset add test 192.168.0.1 timeout 60
 .IP
 ipset \-exist add test 192.168.0.1 timeout 600
 .PP
+.SS "counters, packets, bytes"
+All set types support the optional \fBcounters\fR
+option when creating a set. If the option is specified then the set is created
+with packet and byte counters per element support. The packet and byte counters
+are initialized to zero when the elements are (re\-)added to the set,
+unless the packet and byte counter values are explicitly specified by the
+\fBpackets\fR and \fBbytes\fR options. An example when an element is added
+to a set with non\-zero counter values:
+.IP 
+ipset create foo hash:ip counters
+.IP 
+ipset add foo 192.168.1.1 packets 42 bytes 1024
+.PP
+.SS comment
+All set types support the optional \fBcomment\fR extension.
+Enabling this extension on an ipset enables you to annotate an ipset entry with
+an arbitrary string. This string is completely ignored by both the kernel and ipset
+itself and is purely for providing a convenient means to document the reason for an
+entry's existence. Comments must not contain any quotation marks and the usual escape
+character (\\) has no meaning. For example, the following shell command is illegal:
+.IP
+ipset add foo 1.1.1.1 comment "this comment is \\"bad\\""
+.PP
+In the above, your shell will of course escape the quotation marks and ipset will see
+the quote marks in the argument for the comment, which will result in a parse error.
+If you are writing your own system, you should avoid creating comments containing a
+quotation mark if you do not want to break "ipset save" and "ipset restore",
+nonetheless, the kernel will not stop you from doing so. The following is perfectly
+acceptable:
+.IP
+ipset create foo hash:ip comment
+.IP
+ipset add foo 192.168.1.1/24 comment "allow access to SMB share on \\\\\\\\fileserv\\\\"
+.IP
+the above would appear as: "allow access to SMB share on \\\\fileserv\\"
+.PP
+.SS "skbinfo, skbmark, skbprio, skbqueue"
+All set types support the optional \fBskbinfo\fR extension. This extension allow to
+store the metainfo (firewall mark, tc class and hardware queue) with every entry and map it to
+packets by usage of SET netfilter target with --map-set option.
+\fBskbmark\fR option format: \fBMARK\fR or \fBMARK/MASK\fR, where \fBMARK\fR and \fBMASK\fR are 32bit hex
+numbers with 0x prefix. If only \fBmark\fR is specified mask 0xffffffff are used.
+\fBskbprio\fR option has tc class format: \fBMAJOR:MINOR\fR, where \fBmajor\fR and \fBminor\fR numbers
+are hex without 0x prefix.
+\fBskbqueue\fR option is just decimal number.
+.IP
+ipset create foo hash:ip skbinfo
+.IP
+ipset add foo skbmark 0x1111/0xff00ffff skbprio 1:10 skbqueue 10
+.PP
 .SS hashsize
 This parameter is valid for the \fBcreate\fR command of all \fBhash\fR type sets.
 It defines the initial hash size for the set, default is 1024. The hash size must be a power
@@ -323,62 +373,12 @@ possible to build up sets with exceptions. See the example at hash type
 When elements are tested by \fBipset\fR, the \fBnomatch\fR
 flags are taken into account. If one wants to test the existence of an element
 marked with \fBnomatch\fR in a set, then the flag must be specified too.
-.SS "counters, packets, bytes"
-All set types support the optional \fBcounters\fR
-option when creating a set. If the option is specified then the set is created
-with packet and byte counters per element support. The packet and byte counters
-are initialized to zero when the elements are (re\-)added to the set,
-unless the packet and byte counter values are explicitly specified by the
-\fBpackets\fR and \fBbytes\fR options. An example when an element is added
-to a set with non\-zero counter values:
-.IP 
-ipset create foo hash:ip counters
-.IP 
-ipset add foo 192.168.1.1 packets 42 bytes 1024
-.PP
-.SS comment
-All set types support the optional \fBcomment\fR extension.
-Enabling this extension on an ipset enables you to annotate an ipset entry with
-an arbitrary string. This string is completely ignored by both the kernel and ipset
-itself and is purely for providing a convenient means to document the reason for an
-entry's existence. Comments must not contain any quotation marks and the usual escape
-character (\\) has no meaning. For example, the following shell command is illegal:
-.IP
-ipset add foo 1.1.1.1 comment "this comment is \\"bad\\""
-.PP
-In the above, your shell will of course escape the quotation marks and ipset will see
-the quote marks in the argument for the comment, which will result in a parse error.
-If you are writing your own system, you should avoid creating comments containing a
-quotation mark if you do not want to break "ipset save" and "ipset restore",
-nonetheless, the kernel will not stop you from doing so. The following is perfectly
-acceptable:
-.IP
-ipset create foo hash:ip comment
-.IP
-ipset add foo 192.168.1.1/24 comment "allow access to SMB share on \\\\\\\\fileserv\\\\"
-.IP
-the above would appear as: "allow access to SMB share on \\\\fileserv\\"
-.PP
 .SS forceadd
 All hash set types support the optional \fBforceadd\fR parameter when creating a set.
 When sets created with this option become full the next addition to the set may
 succeed and evict a random entry from the set.
 .IP
 ipset create foo hash:ip forceadd
-.PP
-.SS "skbinfo, skbmark, skbprio, skbqueue"
-All set types support the optional \fBskbinfo\fR extension. This extension allow to
-store the metainfo (firewall mark, tc class and hardware queue) with every entry and map it to
-packets by usage of SET netfilter target with --map-set option.
-\fBskbmark\fR option format: \fBMARK\fR or \fBMARK/MASK\fR, where \fBMARK\fR and \fBMASK\fR are 32bit hex
-numbers with 0x prefix. If only \fBmark\fR is specified mask 0xffffffff are used.
-\fBskbprio\fR option has tc class format: \fBMAJOR:MINOR\fR, where \fBmajor\fR and \fBminor\fR numbers
-are hex without 0x prefix.
-\fBskbqueue\fR option is just decimal number.
-.IP
-ipset create foo hash:ip skbinfo
-.IP
-ipset add foo skbmark 0x1111/0xff00ffff skbprio 1:10 skbqueue 10
 .PP
 .SH "SET TYPES"
 .SS bitmap:ip
