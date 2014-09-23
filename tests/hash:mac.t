@@ -50,4 +50,22 @@
 0 diff -u -I 'Size in memory.*' .foo hash:mac.t.list1
 # MAC: Destroy test set
 0 ipset -X test
+# MAC: Create a set with small maxelem parameter
+0 ipset n test hash:mac maxelem 2 skbinfo
+# MAC: Add first element
+0 ipset a test 1:2:3:4:5:6 skbprio 1:10
+# MAC: Add second element
+0 ipset a test 1:2:3:4:5:7 skbprio 1:11
+# MAC: Add third element
+1 ipset a test 1:2:3:4:5:8 skbprio 1:12
+# MAC: Add second element again
+1 ipset a test 1:2:3:4:5:7 skbprio 1:11
+# MAC: Add second element with another extension value
+0 ipset -! a test 1:2:3:4:5:7 skbprio 1:12 skbqueue 8
+# MAC: List set
+0 ipset -L test 2>/dev/null | grep -v Revision: > .foo0 && ./sort.sh .foo0
+# MAC: Check listing
+0 diff -u -I 'Size in memory.*' .foo hash:mac.t.list3
+# MAC: Destroy test set
+0 ipset x test
 # eof
