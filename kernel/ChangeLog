@@ -1,3 +1,7 @@
+6.23
+  - Support updating extensions when the set is full
+    (fixes bugzilla id #880)
+
 6.22
   - hash:mac type added to ipset
   - skbinfo extension: send nonzero extension elements only to userspace

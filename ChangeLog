@@ -1,3 +1,16 @@
+6.23
+  - The utils are updated from their sources
+  - Order create and add options in manpage so that generic ones
+    come first
+  - Centralise generic create options (family, hashsize, maxelem)
+    on top of man page in the generic options section. (Mart Frauenlob)
+  - Support glibc < 2.9 (fixes bugzilla id #891)
+  - Add description of hash:mac set type to man page. (Mart Frauenlob)
+  - Add missing space for skbinfo option synopsis. (Mart Frauenlob)
+  - The library/API versions were forgotten to bump (reported by
+    Sergei Zhirikov)
+  - Retry printing when sprintf fails (reported by Stig Thormodsrud)
+
 6.22
   - hash:mac type added to ipset
   - Add test to check mark mapping
