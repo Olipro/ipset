@@ -319,7 +319,7 @@ the above would appear as: "allow access to SMB share on \\\\fileserv\\"
 .SS "skbinfo, skbmark, skbprio, skbqueue"
 All set types support the optional \fBskbinfo\fR extension. This extension allow to
 store the metainfo (firewall mark, tc class and hardware queue) with every entry and map it to
-packets by usage of SET netfilter target with --map-set option.
+packets by usage of SET netfilter target with \-\-map\-set option.
 \fBskbmark\fR option format: \fBMARK\fR or \fBMARK/MASK\fR, where \fBMARK\fR and \fBMASK\fR are 32bit hex
 numbers with 0x prefix. If only \fBmark\fR is specified mask 0xffffffff are used.
 \fBskbprio\fR option has tc class format: \fBMAJOR:MINOR\fR, where \fBmajor\fR and \fBminor\fR numbers
