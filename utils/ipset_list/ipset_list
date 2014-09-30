@@ -25,7 +25,7 @@
 # -----------------------------------------------------------------
 # Compatible with ipset version 6+
 # Tested with ipset versions:
-# 6.16.1, 6.20.1
+# 6.16.1, 6.20.1, 6.22
 # -----------------------------------------------------------------
 
 # -----------------------------------------------------------------
@@ -129,6 +129,11 @@
 # + show members of all sets which have a
 # + packet count greater than 100 and a byte count greater than 1024.
 #
+# $0 -m -Oi "skbmark:>0x123/0XFF" -Oi skbprio:\>=2:<=3 -Oi skbqueue:\!1
+# + show members of all sets which have the following member options set:
+# + skbmark greater than 0x123/0xFF, skbprio major greater or equal to 2
+# + and minor lower or equal to 3, skbqueue not of value 1.
+#
 # $0 -n -Ca "foo*"
 # + show only set names matching the glob "foo*" and enable all counters.
 #
@@ -228,7 +233,7 @@ set +u
 
 # variables
 export LC_ALL=C
-readonly version=3.1
+readonly version=3.2.1
 readonly me="${0//*\//}"
 readonly oIFS="$IFS"
 declare ips_version="" str_search="" str_xclude="" opt str_name str_val str_op
@@ -258,11 +263,15 @@ is_int() {
 }
 
 is_digit_or_xigit() {
-[[ $1 = @(+([[:digit:]])|0x+([[:xdigit:]])) ]]
+[[ $1 = @(+([[:digit:]])|0[xX]+([[:xdigit:]])) ]]
 }
 
 is_compare_str() {
-[[ $1 = ?(\!|<|>|<=|>=)+([[:digit:]]) ]]
+	[[ $1 = ?(\!|<|>|<=|>=)@(+([[:digit:]])|0[x|X]+([[:xdigit:]])) ]]
+}
+
+is_compare_str_complex() {
+	[[ $1 = ?(\!|<|>|<=|>=)@(+([[:digit:]])|0@(x|X)+([[:xdigit:]])?(/0@(x|X)+([[:xdigit:]]))|+([[:xdigit:]]):?(\!|<|>|<=|>=)+([[:xdigit:]])) ]]
 }
 
 add_search_to_member_cache() {
@@ -272,20 +281,54 @@ fi
 }
 
 arith_elem_opt_search() {
+local str_opt_val str_val2 str_op2 str_cg='?(\!|<|>|<=|>=)' str_xdig='0[xX]+([[:xdigit:]])'
 found_member_opt=0
 for y in ${!arr_opt_int_search[@]}; do
 	str_val="${arr_opt_int_search[y]#*:}"
-	str_op="${str_val//[[:digit:]]}" # compare operator defaults to `=='
+	if [[ $str_val = ${str_cg}@(+([[:digit:]])|$str_xdig) ]]; then # i.e. timeout or skbqueue
+		str_op="${str_val//[![:punct:]]}"
+		str_val="${str_val//[=\!\>\<]}"
+	elif [[ $str_val  = ${str_cg}${str_xdig}/$str_xdig ]]; then # i.e. skbmark
+		str_op="${str_val//[![:punct:]]}"
+		str_op="${str_op//\/}"
+		str_val="${str_val//[=\!\>\<]}"
+	elif [[ $str_val  = ${str_cg}+([[:xdigit:]]):${str_cg}+([[:xdigit:]]) ]]; then # i.e. skbprio
+		str_op="${str_val%:*}"
+		str_op="${str_op%%+([[:xdigit:]])}"
+		str_op2="${str_val#*:}"
+		str_op2="${str_op2%%+([[:xdigit:]])}"
+		str_val="${str_val##+([[:punct:]])}"
+		str_val2="${str_val#*:}"
+		str_val2="${str_val2//[[:punct:]]}"
+	fi
+	# compare operator defaults to `=='
+	# if it's a '!' set it to '!='
 	[[ ${str_op:===} = \! ]] && str_op='!='
+	[[ ${str_op2:===} = \! ]] && str_op2='!='
 	set -- $REPLY
 	shift
-	while (($# > 1)); do
-		if [[ $1 = ${arr_opt_int_search[y]%:*} ]]; then
-			if is_int "${str_val//[[:punct:]]}"; then
-				if (($2 $str_op ${str_val//[[:punct:]]})); then
+	while (($# > 1)); do # cycle through options
+		if [[ $1 = ${arr_opt_int_search[y]%%:*} ]]; then str_opt_val="$2"
+			if [[ $str_val = @(+([[:digit:]])|$str_xdig) && $str_opt_val = @(+([[:digit:]])|$str_xdig) ]]; then # i.e. timeout or skbqueue
+				if (( $str_opt_val $str_op $str_val )); then
 					let found_member_opt+=1
-					shift
 				fi
+				shift
+			elif [[ $str_val = $str_xdig && $str_opt_val = ${str_xdig}/$str_xdig ]]; then # i.e. skbmark
+				if (( $str_opt_val $str_op $(( ${str_val%/*} & ${str_val#*/} )) )); then # logicaly AND mark/mask
+					let found_member_opt+=1
+				fi
+				shift
+			elif [[ $str_val = ${str_xdig}/$str_xdig && $str_opt_val = ${str_xdig}/$str_xdig ]]; then # i.e. skbmark
+				if (( $(( ${str_opt_val%/*} & ${str_opt_val#*/} )) $str_op $(( ${str_val%/*} & ${str_val#*/} )) )); then # logicaly AND mark/mask
+					let found_member_opt+=1
+				fi
+				shift
+			elif [[ $str_val = +([[:xdigit:]]):${str_cg}+([[:xdigit:]]) && $str_opt_val = +([[:xdigit:]]):+([[:xdigit:]]) ]]; then # i.e. skbprio
+				if (( ${str_opt_val%:*} $str_op ${str_val%:*} && ${str_opt_val#*:} $str_op2 $str_val2 )); then
+					let found_member_opt+=1
+				fi
+				shift
 			fi
 		fi
 		shift
@@ -391,7 +434,8 @@ while (($#)); do
 				'-Hs [!|<|>|<=|>=]value' 'match on size in memory (value=int).'\
 				'-Hv [!|<|>|<=|>=]value' 'match on revision number (value=int).'
 			printf '%-30s%s\n' '-Mc [!|<|>|<=|>=]value [...]' 'match on member count (value=int).'
-			printf '%s\n\t%s\n' '-Oi option-glob:[!|<|>|<=|>=]value [...]' 'match on member options (value=int).'
+			printf '%s\n\t%s\n' '-Oi option-glob:[!|<|>|<=|>=]value [...]'\
+				'match member options (value=int | 0xhex[/0xhex] | hex:[!|<|>|<=|>=]hex).'
 			printf '%-13s%s\n' '-Tm' 'calculate total memory usage of all matching sets.'\
 				'-To' 'set timeout value (int) for read (listing sets).'\
 				'-Ts' 'count amount of traversed sets.'\
@@ -405,25 +449,18 @@ while (($#)); do
 			exit 0
 		;;
 		-a) show_all=1 # like `ipset list', but with $delim as delim
-			shift
 		;;
 		-c) show_count=1 # show sum of member entries
-			shift
 		;;
 		-i) isolate=1 # show only members of a single set
-			shift
 		;;
 		-m) show_members=1 # show set members
-			shift
 		;;
 		-n) names_only=1 # only list set names
-			shift
 		;;
 		-t) headers_only=1 # show only set headers
-			shift
 		;;
 		-s|-r) arr_par[i++]="$1" # ipset sort & resolve options are passed on
-			shift
 		;;
 		-d) # delimiter char for separating member entries
 			[[ $2 ]] || ex_miss_optarg $1 "delim character"
@@ -431,39 +468,34 @@ while (($#)); do
 				ex_invalid_usage "only one character is allowed as delim"
 			fi
 			delim="$2"
-			shift 2
+			shift
 		;;
 		-o) if [[ $2 != plain ]]; then
 				ex_invalid_usage "only plain output is supported"
-			else
-				shift 2
 			fi
 		;;
 		-Ca) # shortcut for -c -Cs -Ts -Tm
 			show_count=1 count_sets=1 calc_mem=1 sets_total=1
-			shift
 		;;
 		-Cs) count_sets=1 # calculate total count of matching sets
-			shift
 		;;
 		-Co) colorize=1 # colorize the output (requires cl)
-			shift
 		;;
 		-Fg) glob_search=1 # find entry with globbing pattern
 			[[ $2 ]] || ex_miss_optarg $1 "glob pattern"
 			str_search="$2"
-			shift 2
+			shift
 		;;
 		-Fr) regex_search=1 # find entry with regex pattern
 			[[ $2 ]] || ex_miss_optarg $1 "regex pattern"
 			str_search="$2"
-			shift 2
+			shift
 		;;
 		-Oi) let opt_int_search+=1
 			[[ $2 ]] || ex_miss_optarg $1 "pattern"
-			if [[ $2 = *:* ]] && is_compare_str "${2#*:}"; then
+			if [[ $2 = *:* ]] && is_compare_str_complex "${2#*:}"; then
 				arr_opt_int_search[y++]="$2"
-				shift 2
+				shift
 			else
 				ex_invalid_usage "invalid format of header descriptor. expecting: \`glob:[!|<|>|<=|>=]value'"
 			fi
@@ -472,7 +504,7 @@ while (($#)); do
 			[[ $2 ]] || ex_miss_optarg $1 "header pattern"
 			if [[ $2 = *:* ]]; then
 				arr_hsearch[x++]="$2"
-				shift 2
+				shift
 			else
 				ex_invalid_usage "invalid format of header descriptor. expecting: \`*:*'"
 			fi
@@ -481,16 +513,16 @@ while (($#)); do
 			[[ $2 ]] || ex_miss_optarg $1 "header pattern"
 			if [[ $2 = *:* ]] && is_compare_str "${2#*:}"; then
 				arr_hsearch_int[idx++]="$2"
-				shift 2
+				shift
 			else
 				ex_invalid_usage "invalid format of header descriptor. expecting: \`name:[!|<|>|<=|>=]value'"
 			fi
 		;;
 		-Hi) let match_on_header+=1 # match on name + integer (digit & xdigit) inside of headers 'Header' flag
 			[[ $2 ]] || ex_miss_optarg $1 "header pattern"
-			if [[ $2 = *:?(\!|<|>|<=|>=)@(+([[:digit:]])|0x+([[:xdigit:]])) ]]; then
+			if [[ $2 = *:?(\!|<|>|<=|>=)@(+([[:digit:]])|0[xX]+([[:xdigit:]])) ]]; then
 				arr_hsearch_xint[${#arr_hsearch_xint[@]}]="$2"
-				shift 2
+				shift
 			else
 				ex_invalid_usage "invalid format of headers \'Header' flag descriptor. expecting: \`name:[!|<|>|<=|>=]value'"
 			fi
@@ -499,7 +531,7 @@ while (($#)); do
 			[[ $2 ]] || ex_miss_optarg $1 "header pattern"
 			if is_compare_str "$2"; then
 				arr_hsearch_int[idx++]="References:$2"
-				shift 2
+				shift
 			else
 				ex_invalid_usage "invalid format of references header descriptor. expecting: \`[!|<|>|<=|>=]value'"
 			fi
@@ -508,7 +540,7 @@ while (($#)); do
 			[[ $2 ]] || ex_miss_optarg $1 "header pattern"
 			if is_compare_str "$2"; then
 				arr_hsearch_int[idx++]="Size in memory:$2"
-				shift 2
+				shift
 			else
 				ex_invalid_usage "invalid format of memsize header descriptor. expecting: \`[!|<|>|<=|>=]value'"
 			fi
@@ -517,7 +549,7 @@ while (($#)); do
 			[[ $2 ]] || ex_miss_optarg $1 "header pattern"
 			if [[ $2 = *:* ]]; then
 				arr_hsearch[x++]="Type:$2"
-				shift 2
+				shift
 			else
 				ex_invalid_usage "invalid format of set type descriptor. expecting: \`*:*'."
 			fi
@@ -526,7 +558,7 @@ while (($#)); do
 			[[ $2 ]] || ex_miss_optarg $1 "header pattern"
 			if is_compare_str "$2"; then
 				arr_hsearch_int[idx++]="Revision:$2"
-				shift 2
+				shift
 			else
 				ex_invalid_usage "invalid format of revision header descriptor. expecting: \`[!|<|>|<=|>=]value'"
 			fi
@@ -535,7 +567,7 @@ while (($#)); do
 			[[ $2 ]] || ex_miss_optarg $1 "value pattern"
 			if is_compare_str "$2"; then
 				arr_match_on_msum[${#arr_match_on_msum[@]}]="$2"
-				shift 2
+				shift
 			else
 				ex_invalid_usage "invalid format of match on member count value. expecting: \`[!|<|>|<=|>=]value'"
 			fi
@@ -543,19 +575,17 @@ while (($#)); do
 		-To) # set the timeout for read (limited to integer)
 			[[ $2 ]] || ex_miss_optarg $1 "value"
 			TMOUT=$2
-			shift 2
+			shift
 		;;
 		-Tm) calc_mem=1 # caculate total memory usage of all matching sets
-			shift
 		;;
 		-Ts) sets_total=1 # caculate sum of all traversed sets
-			shift
 		;;
 		-Xh) exclude_header=1 # don't show certain headers
 			[[ $2 ]] || ex_miss_optarg $1 "header pattern"
 			if [[ $2 = *:* ]]; then
 				arr_hxclude[${#arr_hxclude[@]}]="$2"
-				shift 2
+				shift
 			else
 				ex_invalid_usage "invalid format of header descriptor. expecting: \`*:*'"
 			fi
@@ -563,30 +593,30 @@ while (($#)); do
 		-Xg) glob_xclude_element=1 # suppress printing of matching members using a globbing pattern
 			[[ $2 ]] || ex_miss_optarg $1 "glob pattern"
 			str_xclude="$2"
-			shift 2
+			shift
 		;;
 		-Xr) regex_xclude_element=1 # suppress printing of matching members using a regex pattern
 			[[ $2 ]] || ex_miss_optarg $1 "regex pattern"
 			str_xclude="$2"
-			shift 2
+			shift
 		;;
 		-Xo) xclude_member_opts=1 # don't show elements options
-			shift
 		;;
 		-Xs) exclude_set=1 # don't show certain sets
 			[[ $2 ]] || ex_miss_optarg $1 "set name ([ext]glob pattern)"
 			arr_sxclude[${#arr_sxclude[@]}]="$2"
-			shift 2
+			shift
 		;;
 		-\!|-f) ex_invalid_usage "unsupported option: \`$1'"
 		;;
 		-v) printf "%s version %s\n" "$me" "$version"
 			exit 0
 		;;
-		--) shift; break
+		--) break
 		;;
 		*) break
 	esac
+	shift
 done
 declare -i i=x=y=idx=0
 
@@ -831,8 +861,8 @@ for idx in "${!arr_sets[@]}"; do found_set=0 arr_hcache=() arr_mcache=()
 								for y in ${!arr_hsearch_xint[@]}; do
 									str_name="${arr_hsearch_xint[y]%%:*}"
 									str_val="${arr_hsearch_xint[y]#*:}"
-									if [[ $str_val = ??0x+([[:xdigit:]]) ]]; then
-										str_op="${str_val%0x*}"
+									if [[ $str_val = ??0[xX]+([[:xdigit:]]) ]]; then
+										str_op="${str_val%0[xX]*}"
 									elif [[ $str_val = ??+([[:digit:]]) ]]; then
 										str_op="${str_val//[[:digit:]]}"
 									fi

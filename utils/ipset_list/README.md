@@ -69,6 +69,7 @@ Examples:
 - `ipset_list -m -Xo setA`     - show members of setA, but suppress displaying of the elements options.
 - `ipset_list -m -Oi packets:0`     - show members of all sets which have a packet count of 0.
 - `ipset_list -m -Oi "packets:>100" -Oi "bytes:>1024"`     - show members of all sets which have a packet count greater than 100 and a byte count greater than 1024.
+- `ipset_list -m -Oi "skbmark:>0x123/0XFF" -Oi skbprio:\>=2:<=3 -Oi skbqueue:\!1` - show members of all sets which have the following member options set: skbmark greater than 0x123/0xFF, skbprio major greater or equal to 2 and minor lower or equal to 3, skbqueue not of value 1.
 - `ipset_list -n -Ca "foo*"`    - show only set names matching the glob "foo*" and enable all counters.
 - `ipset_list -Hi "markmask:>=0x0000beef" -Hi timeout:\!10000`    - show only sets with the header 'Header' fields containing a markmask greater or equal to 0x0000beef and a timeout which is not 10000.
 
