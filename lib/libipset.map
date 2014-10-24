@@ -152,3 +152,8 @@ global:
   ipset_print_skbmark;
   ipset_print_skbprio;
 } LIBIPSET_4.2;
+
+LIBIPSET_4.4 {
+global:
+  ipset_parse_uint16;
+} LIBIPSET_4.3;
