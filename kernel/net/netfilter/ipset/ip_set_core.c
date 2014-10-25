@@ -1185,13 +1185,16 @@ ip_set_swap(struct sock *ctnl, struct sk_buff *skb,
 static int
 ip_set_dump_done(struct netlink_callback *cb)
 {
-	struct ip_set_net *inst = (struct ip_set_net *)cb->args[IPSET_CB_NET];
-
 	if (cb->args[IPSET_CB_ARG0]) {
-		pr_debug("release set %s\n",
-			 ip_set(inst, cb->args[IPSET_CB_INDEX])->name);
-		__ip_set_put_byindex(inst,
-			(ip_set_id_t) cb->args[IPSET_CB_INDEX]);
+		struct ip_set_net *inst =
+			(struct ip_set_net *)cb->args[IPSET_CB_NET];
+		ip_set_id_t index = (ip_set_id_t) cb->args[IPSET_CB_INDEX];
+		struct ip_set *set = ip_set(inst, index);
+
+		if (set->variant->uref)
+			set->variant->uref(set, cb, false);
+		pr_debug("release set %s\n", set->name);
+		__ip_set_put_byindex(inst, index);
 	}
 	return 0;
 }
@@ -1221,12 +1224,6 @@ dump_init(struct netlink_callback *cb, struct ip_set_net *inst)
 	/* Second pass, so parser can't fail */
 	nla_parse(cda, IPSET_ATTR_CMD_MAX,
 		  attr, nlh->nlmsg_len - min_len, ip_set_setname_policy);
-
-	/* cb->args[IPSET_CB_NET]:	net namespace
-	 *         [IPSET_CB_DUMP]:	dump single set/all sets
-	 *         [IPSET_CB_INDEX]:	set index
-	 *         [IPSET_CB_ARG0]:	type specific
-	 */
 
 	if (cda[IPSET_ATTR_SETNAME]) {
 		struct ip_set *set;
@@ -1335,6 +1332,8 @@ dump_last:
 				goto release_refcount;
 			if (dump_flags & IPSET_FLAG_LIST_HEADER)
 				goto next_set;
+			if (set->variant->uref)
+				set->variant->uref(set, cb, true);
 			/* Fall through and add elements */
 		default:
 			rcu_read_lock_bh();
@@ -1351,6 +1350,8 @@ dump_last:
 		dump_type = DUMP_LAST;
 		cb->args[IPSET_CB_DUMP] = dump_type | (dump_flags << 16);
 		cb->args[IPSET_CB_INDEX] = 0;
+		if (set && set->variant->uref)
+			set->variant->uref(set, cb, false);
 		goto dump_last;
 	}
 	goto out;
@@ -1365,7 +1366,10 @@ next_set:
 release_refcount:
 	/* If there was an error or set is done, release set */
 	if (ret || !cb->args[IPSET_CB_ARG0]) {
-		pr_debug("release set %s\n", ip_set(inst, index)->name);
+		set = ip_set(inst, index);
+		if (set->variant->uref)
+			set->variant->uref(set, cb, false);
+		pr_debug("release set %s\n", set->name);
 		__ip_set_put_byindex(inst, index);
 		cb->args[IPSET_CB_ARG0] = 0;
 	}
