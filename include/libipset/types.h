@@ -108,8 +108,6 @@ extern bool ipset_match_typename(const char *str,
 				 const struct ipset_type *t);
 extern void ipset_load_types(void);
 
-extern void ipset_types_init(void);
-
 #ifdef TYPE_INCLUSIVE
 #	ifdef _INIT
 #		undef _init

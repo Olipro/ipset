@@ -573,6 +573,8 @@ ipset_cache_fini(void)
 	}
 }
 
+extern void ipset_types_init(void);
+
 /**
  * ipset_load_types - load known set types
  *

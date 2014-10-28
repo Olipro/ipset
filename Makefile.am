@@ -17,7 +17,7 @@ endif
 
 SUBDIRS		= include/libipset lib src
 
-sparse-check:
+sparse:
 	$(MAKE) -C lib sparse-check
 	$(MAKE) -C src sparse-check
 
@@ -88,6 +88,9 @@ update_utils:
 	cd utils/ipset_list; tar xz --strip-components=1 -f /tmp/ipset-list.tar.gz
 	rm -f /tmp/ipset-list.tar.gz
 
+check_libmap:
+	@./check_libmap.sh
+
 tests:
 	cd tests; ./runtest.sh
 
@@ -108,6 +111,22 @@ tarball:
 	pushd /tmp/ipset-${PACKAGE_VERSION} && ./autogen.sh && popd;
 	tar -C /tmp -cjf ipset-${PACKAGE_VERSION}.tar.bz2 --owner=root --group=root ipset-${PACKAGE_VERSION}/;
 	rm -Rf /tmp/ipset-${PACKAGE_VERSION};
+
+help:
+	@echo '  <nothing>              - Compile userspace'
+	@echo '  modules                - Compile kernel modules'
+	@echo '  install                - Install userspace'
+	@echo '  modules_install        - Install kernel modules'
+	@echo '  clean                  - Remove generated userspace files'
+	@echo '  modules_clean          - Remove generated kernelspace files'
+	@echo '  tidy                   - Tidy up the whole source tree'
+	@echo '  tests                  - Run testsuite'
+	@echo '  sparse                 - Check userspace with sparse'
+	@echo '  modules_sparse         - Check kernelspace with sparse'
+	@echo '  update_includes        - Update userspace include files'
+	@echo '  update_utils           - Update bash utilities'
+	@echo '  check_libmap           - Check libipset.map for missing symbols'
+	@echo '  tarball                - Create a tarball for a new release'
 
 .PHONY: modules modules_instal modules_clean update_includes tests tarball
 
