@@ -155,5 +155,6 @@ global:
 
 LIBIPSET_4.4 {
 global:
+  ipset_parse_tcp_udp_port;
   ipset_parse_uint16;
 } LIBIPSET_4.3;
