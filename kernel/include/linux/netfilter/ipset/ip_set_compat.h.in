@@ -9,6 +9,17 @@
 #endif
 #endif
 
+#ifndef IS_ENABLED
+#define __X_ARG_PLACEHOLDER_1 0,
+#define x_config_enabled(cfg) _x_config_enabled(cfg)
+#define _x_config_enabled(value) __x_config_enabled(__X_ARG_PLACEHOLDER_##value)
+#define __x_config_enabled(arg1_or_junk) ___x_config_enabled(arg1_or_junk 1, 0)
+#define ___x_config_enabled(__ignored, val, ...) val
+
+#define IS_ENABLED(option) \
+	(x_config_enabled(option) || x_config_enabled(option##_MODULE))
+#endif
+
 #@HAVE_STRUCT_XT_ACTION_PARAM@ HAVE_STRUCT_XT_ACTION_PARAM
 #@HAVE_VZALLOC@ HAVE_VZALLOC
 #@HAVE_ETHER_ADDR_EQUAL@ HAVE_ETHER_ADDR_EQUAL
