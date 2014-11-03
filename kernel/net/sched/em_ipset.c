@@ -15,16 +15,24 @@
 #include <linux/string.h>
 #include <linux/skbuff.h>
 #include <linux/netfilter/xt_set.h>
+#include <linux/netfilter/ipset/ip_set_compat.h>
 #include <linux/ipv6.h>
 #include <net/ip.h>
 #include <net/pkt_cls.h>
 
+#ifdef HAVE_TCF_EMATCH_OPS_CHANGE_ARG_NET
+static int em_ipset_change(struct net *net, void *data, int data_len,
+			   struct tcf_ematch *em)
+#else
 static int em_ipset_change(struct tcf_proto *tp, void *data, int data_len,
 			   struct tcf_ematch *em)
+#endif
 {
 	struct xt_set_info *set = data;
 	ip_set_id_t index;
+#ifndef HAVE_TCF_EMATCH_OPS_CHANGE_ARG_NET
 	struct net *net = dev_net(qdisc_dev(tp->q));
+#endif
 
 	if (data_len != sizeof(*set))
 		return -EINVAL;
@@ -42,11 +50,19 @@ static int em_ipset_change(struct tcf_proto *tp, void *data, int data_len,
 	return -ENOMEM;
 }
 
+#ifdef HAVE_TCF_EMATCH_STRUCT_NET
+static void em_ipset_destroy(struct tcf_ematch *em)
+#else
 static void em_ipset_destroy(struct tcf_proto *p, struct tcf_ematch *em)
+#endif
 {
 	const struct xt_set_info *set = (const void *) em->data;
 	if (set) {
+#ifdef HAVE_TCF_EMATCH_STRUCT_NET
+		ip_set_nfnl_put(em->net, set->index);
+#else
 		ip_set_nfnl_put(dev_net(qdisc_dev(p->q)), set->index);
+#endif
 		kfree((void *) em->data);
 	}
 }
