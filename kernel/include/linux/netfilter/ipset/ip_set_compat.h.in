@@ -35,6 +35,7 @@
 #@HAVE_NET_OPS_ID@ HAVE_NET_OPS_ID
 #@HAVE_USER_NS_IN_STRUCT_NET@ HAVE_USER_NS_IN_STRUCT_NET
 #@HAVE_RBTREE_POSTORDER_FOR_EACH_ENTRY_SAFE@ HAVE_RBTREE_POSTORDER_FOR_EACH_ENTRY_SAFE
+#@HAVE_KVFREE@ HAVE_KVFREE
 
 /* Not everything could be moved here. Compatibility stuffs can be found in
  * xt_set.c, ip_set_core.c, ip_set_getport.c, pfxlen.c too.
@@ -113,6 +114,16 @@ static inline int nla_put_net64(struct sk_buff *skb, int attrtype, __be64 value)
 #else
 #define lock_nfnl()		nfnl_lock()
 #define unlock_nfnl()		nfnl_unlock()
+#endif
+
+#ifndef HAVE_KVFREE
+static inline void kvfree(const void *addr)
+{
+	if (is_vmalloc_addr(addr))
+		vfree(addr);
+	else
+		kfree(addr);
+}
 #endif
 
 #ifdef NLA_PUT_NET16

@@ -323,6 +323,16 @@ else
 	AC_SUBST(HAVE_RBTREE_POSTORDER_FOR_EACH_ENTRY_SAFE, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for kvfree])
+if test -f $ksourcedir/include/linux/mm.h && \
+   $GREP -q 'kvfree' $ksourcedir/include/linux/mm.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_KVFREE, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_KVFREE, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
