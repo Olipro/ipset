@@ -200,6 +200,16 @@ else
 	AC_SUBST(HAVE_ETHER_ADDR_EQUAL, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for nla_put_be16])
+if test -f $ksourcedir/include/net/netlink.h && \
+   $GREP -q 'nla_put_be16' $ksourcedir/include/net/netlink.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NLA_PUT_BE16, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NLA_PUT_BE16, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for nla_put_be64])
 if test -f $ksourcedir/include/net/netlink.h && \
    $GREP -q 'nla_put_be64' $ksourcedir/include/net/netlink.h; then
@@ -274,8 +284,8 @@ else
 fi
 
 AC_MSG_CHECKING([kernel source for bool checkentry function prototype])
-if test -f $ksourcedir/net/netfilter/xt_state.c && \
-   $GREP -q 'bool state_mt_check' $ksourcedir/net/netfilter/xt_state.c; then
+if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
+   $GREP -q 'bool .\*checkentry.' $ksourcedir/include/linux/netfilter/x_tables.h; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_CHECKENTRY_BOOL, define)
 else
@@ -284,8 +294,8 @@ else
 fi
 
 AC_MSG_CHECKING([kernel source for old struct xt_target_param])
-if test -f $ksourcedir/net/netfilter/xt_TCPMSS.c && \
-   $GREP -q 'const struct xt_target_param' $ksourcedir/net/netfilter/xt_TCPMSS.c; then
+if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
+   $GREP -q '^struct xt_target_param ' $ksourcedir/include/linux/netfilter/x_tables.h; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_XT_TARGET_PARAM, define)
 else
@@ -331,6 +341,17 @@ if test -f $ksourcedir/include/linux/mm.h && \
 else
 	AC_MSG_RESULT(no)
 	AC_SUBST(HAVE_KVFREE, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for struct net in struct xt_mtchk_param])
+if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
+   $AWK '/^struct xt_mtchk_param / {for(i=1; i<=5; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/x_tables.h | \
+   $GREP -q 'struct net '; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_XT_MTCHK_PARAM_STRUCT_NET, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_XT_MTCHK_PARAM_STRUCT_NET, undef)
 fi
 
 AC_MSG_CHECKING([kernel source for struct net in the change function of tcf_ematch_ops])

@@ -33,13 +33,16 @@ MODULE_ALIAS("ip6t_SET");
 #define CHECK_FAIL(err)	0
 #define	CONST		const
 #define FTYPE		bool
-#define	XT_PAR_NET(par)	NULL
 #else /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35) */
 #define CHECK_OK	0
 #define CHECK_FAIL(err)	(err)
 #define	CONST
 #define	FTYPE		int
+#endif
+#ifdef HAVE_XT_MTCHK_PARAM_STRUCT_NET
 #define XT_PAR_NET(par)	(par)->net
+#else
+#define	XT_PAR_NET(par)	NULL
 #endif
 
 static inline int
