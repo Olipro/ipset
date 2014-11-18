@@ -396,6 +396,7 @@ ip_set_get_extensions(struct ip_set *set, struct nlattr *tb[],
 		      struct ip_set_ext *ext)
 {
 	u64 fullmark;
+
 	if (tb[IPSET_ATTR_TIMEOUT]) {
 		if (!(set->extensions & IPSET_EXT_TIMEOUT))
 			return -IPSET_ERR_TIMEOUT;
@@ -909,7 +910,7 @@ ip_set_create(struct sock *ctnl, struct sk_buff *skb,
 			/* Wraparound */
 			goto cleanup;
 
-		list = kzalloc(sizeof(struct ip_set *) * i, GFP_KERNEL);
+		list = kcalloc(i, sizeof(struct ip_set *), GFP_KERNEL);
 		if (!list)
 			goto cleanup;
 		/* nfnl mutex is held, both lists are valid */
@@ -1185,6 +1186,7 @@ static int
 ip_set_dump_done(struct netlink_callback *cb)
 {
 	struct ip_set_net *inst = (struct ip_set_net *)cb->args[IPSET_CB_NET];
+
 	if (cb->args[IPSET_CB_ARG0]) {
 		pr_debug("release set %s\n",
 			 ip_set(inst, cb->args[IPSET_CB_INDEX])->name);
@@ -1222,7 +1224,7 @@ dump_init(struct netlink_callback *cb, struct ip_set_net *inst)
 
 	/* cb->args[IPSET_CB_NET]:	net namespace
 	 *         [IPSET_CB_DUMP]:	dump single set/all sets
-	 *         [IPSET_CB_INDEX]: 	set index
+	 *         [IPSET_CB_INDEX]:	set index
 	 *         [IPSET_CB_ARG0]:	type specific
 	 */
 
@@ -1241,6 +1243,7 @@ dump_init(struct netlink_callback *cb, struct ip_set_net *inst)
 
 	if (cda[IPSET_ATTR_FLAGS]) {
 		u32 f = ip_set_get_h32(cda[IPSET_ATTR_FLAGS]);
+
 		dump_type |= (f << 16);
 	}
 	cb->args[IPSET_CB_NET] = (unsigned long)inst;
@@ -1884,6 +1887,7 @@ ip_set_sockfn_get(struct sock *sk, int optval, void __user *user, int *len)
 	if (*op < IP_SET_OP_VERSION) {
 		/* Check the version at the beginning of operations */
 		struct ip_set_req_version *req_version = data;
+
 		if (req_version->version != IPSET_PROTOCOL) {
 			ret = -EPROTO;
 			goto done;
@@ -1997,7 +2001,7 @@ ip_set_net_init(struct net *net)
 	if (inst->ip_set_max >= IPSET_INVALID_ID)
 		inst->ip_set_max = IPSET_INVALID_ID - 1;
 
-	list = kzalloc(sizeof(struct ip_set *) * inst->ip_set_max, GFP_KERNEL);
+	list = kcalloc(inst->ip_set_max, sizeof(struct ip_set *), GFP_KERNEL);
 	if (!list)
 #ifdef HAVE_NET_OPS_ID
 		return -ENOMEM;
@@ -2050,6 +2054,7 @@ static int __init
 ip_set_init(void)
 {
 	int ret = nfnetlink_subsys_register(&ip_set_netlink_subsys);
+
 	if (ret != 0) {
 		pr_err("ip_set: cannot register with nfnetlink.\n");
 		return ret;

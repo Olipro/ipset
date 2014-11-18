@@ -57,6 +57,7 @@ static void em_ipset_destroy(struct tcf_proto *p, struct tcf_ematch *em)
 #endif
 {
 	const struct xt_set_info *set = (const void *) em->data;
+
 	if (set) {
 #ifdef HAVE_TCF_EMATCH_STRUCT_NET
 		ip_set_nfnl_put(em->net, set->index);
@@ -87,7 +88,9 @@ static int em_ipset_match(struct sk_buff *skb, struct tcf_ematch *em,
 		acpar.family = NFPROTO_IPV6;
 		if (!pskb_network_may_pull(skb, sizeof(struct ipv6hdr)))
 			return 0;
-		/* doesn't call ipv6_find_hdr() because ipset doesn't use thoff, yet */
+		/* doesn't call ipv6_find_hdr() because ipset doesn't use
+		 * thoff, yet
+		 */
 		acpar.thoff = sizeof(struct ipv6hdr);
 		break;
 	default:

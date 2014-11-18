@@ -326,6 +326,7 @@ ip_set_update_counter(struct ip_set_counter *counter,
 /* RCU-safe assign value */
 #define IP_SET_RCU_ASSIGN(ptr, value)	\
 do {					\
+	/* Safe assign numeric types */ \
 	smp_wmb();			\
 	*(ptr) = value;			\
 } while (0)
@@ -384,10 +385,10 @@ ip_set_put_skbinfo(struct sk_buff *skb, struct ip_set_skbinfo *skbinfo)
 			      cpu_to_be64((u64)skbmark << 32 |
 					  skbmarkmask))) ||
 	       (skbprio &&
-	        nla_put_net32(skb, IPSET_ATTR_SKBPRIO,
+		nla_put_net32(skb, IPSET_ATTR_SKBPRIO,
 			      cpu_to_be32(skbprio))) ||
 	       (skbqueue &&
-	        nla_put_net16(skb, IPSET_ATTR_SKBQUEUE,
+		nla_put_net16(skb, IPSET_ATTR_SKBQUEUE,
 			     cpu_to_be16(skbqueue)));
 
 }
@@ -585,8 +586,8 @@ ip_set_put_extensions(struct sk_buff *skb, const struct ip_set *set,
 		unsigned long *timeout = ext_timeout(e, set);
 
 		if (nla_put_net32(skb, IPSET_ATTR_TIMEOUT,
-	    		  htonl(active ? ip_set_timeout_get(timeout)
-	    		  	: *timeout)))
+			htonl(active ? ip_set_timeout_get(timeout)
+			      : *timeout)))
 			return -EMSGSIZE;
 	}
 	if (SET_WITH_COUNTER(set) &&

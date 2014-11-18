@@ -82,7 +82,6 @@ struct ipset_type {
 	const char *usage;			/* terse usage */
 	void (*usagefn)(void);			/* additional usage */
 	const char *description;		/* short revision description */
-
 	struct ipset_type *next;
 	const char *alias[];			/* name alias(es) */
 };
