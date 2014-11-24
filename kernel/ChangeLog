@@ -1,3 +1,26 @@
+6.24
+  - netfilter: ipset: small potential read beyond the end of buffer
+    (Dan Carpenter)
+  - Fix parallel resizing and listing of the same set
+  - styles warned by checkpatch.pl fixed
+  - Introduce RCU in all set types instead of rwlock per set
+    (performance tested by Jesper Dangaard Brouer)
+  - Remove rbtree from hash:net,iface in order to run under RCU
+  - Explicitly add padding elements to hash:net,net and hash:net,port,net
+  - Allocate the proper size of memory when /0 networks are supported
+  - Simplify cidr handling for hash:*net* types
+  - Indicate when /0 networks are supported
+  - Kernel API changes in em_ipset.c, support both old and new ones
+  - netfilter: Convert uses of __constant_<foo> to <foo> (Joe Perches)
+  - net: use the new API kvfree() (WANG Cong)
+  - treewide: fix errors in print (Masanari Iida)
+  - netfilter: use IS_ENABLED(CONFIG_BRIDGE_NETFILTER) (Pablo Neira Ayuso)
+  - Use IS_ENABLED macro and define it if required
+  - Alignment problem between 64bit kernel 32bit userspace fixed
+    (reported by Sven-Haegar Koch)
+  - netfilter: ipset: off by one in ip_set_nfnl_get_byindex()
+    (Dan Carpenter)
+
 6.23
   - Support updating extensions when the set is full
     (fixes bugzilla id #880)

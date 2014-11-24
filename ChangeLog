@@ -1,3 +1,16 @@
+6.24
+  - The "extra" subdirectory for kernel modules may have a full subtree
+    (reported by Jesper Dangaard Brouer)
+  - Add more compatibility checkings to support older kernel releases
+  - Make_global.am: Don't include host headers (Baruch Siach)
+  - Alignment problem between 64bit kernel 32bit userspace fixed
+    (reported by Sven-Haegar Koch)
+  - Add script to check libipset.map for missing symbols
+  - Update libipset.map with ipset_parse_tcp_udp_port (Thomas Backlund)
+  - libipset: Bump lib version and update map file (Neutron Soutmun)
+  - Bash utilities updated
+  - ipset: Fix hyphen used as minus sign in manpage (Neutron Soutmun)
+
 6.23
   - The utils are updated from their sources
   - Order create and add options in manpage so that generic ones
