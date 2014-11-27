@@ -114,10 +114,10 @@ struct ip_set_comment {
 };
 
 struct ip_set_skbinfo {
-	u32 __rcu skbmark;
-	u32 __rcu skbmarkmask;
-	u32 __rcu skbprio;
-	u16 __rcu skbqueue;
+	u32 skbmark;
+	u32 skbmarkmask;
+	u32 skbprio;
+	u16 skbqueue;
 };
 
 struct ip_set;
@@ -326,38 +326,6 @@ ip_set_update_counter(struct ip_set_counter *counter,
 	}
 }
 
-/* RCU-safe assign value */
-#define IP_SET_RCU_ASSIGN(ptr, value)	\
-do {					\
-	/* Safe assign numeric types */ \
-	smp_wmb();			\
-	*(ptr) = value;			\
-} while (0)
-
-static inline void
-ip_set_rcu_assign_ulong(unsigned long *v, unsigned long value)
-{
-	IP_SET_RCU_ASSIGN(v, value);
-}
-
-static inline void
-ip_set_rcu_assign_u32(u32 *v, u32 value)
-{
-	IP_SET_RCU_ASSIGN(v, value);
-}
-
-static inline void
-ip_set_rcu_assign_u16(u16 *v, u16 value)
-{
-	IP_SET_RCU_ASSIGN(v, value);
-}
-
-static inline void
-ip_set_rcu_assign_u8(u8 *v, u8 value)
-{
-	IP_SET_RCU_ASSIGN(v, value);
-}
-
 #define ip_set_rcu_deref(t)		\
 	rcu_dereference_index_check(t,	\
 		rcu_read_lock_held() || rcu_read_lock_bh_held())
@@ -367,32 +335,25 @@ ip_set_get_skbinfo(struct ip_set_skbinfo *skbinfo,
 		      const struct ip_set_ext *ext,
 		      struct ip_set_ext *mext, u32 flags)
 {
-		mext->skbmark = ip_set_rcu_deref(skbinfo->skbmark);
-		mext->skbmarkmask = ip_set_rcu_deref(skbinfo->skbmarkmask);
-		mext->skbprio = ip_set_rcu_deref(skbinfo->skbprio);
-		mext->skbqueue = ip_set_rcu_deref(skbinfo->skbqueue);
+		mext->skbmark = skbinfo->skbmark;
+		mext->skbmarkmask = skbinfo->skbmarkmask;
+		mext->skbprio = skbinfo->skbprio;
+		mext->skbqueue = skbinfo->skbqueue;
 }
 static inline bool
 ip_set_put_skbinfo(struct sk_buff *skb, struct ip_set_skbinfo *skbinfo)
 {
-	u32 skbmark, skbmarkmask, skbprio;
-	u16 skbqueue;
-
-	skbmark = ip_set_rcu_deref(skbinfo->skbmark);
-	skbmarkmask = ip_set_rcu_deref(skbinfo->skbmarkmask);
-	skbprio = ip_set_rcu_deref(skbinfo->skbprio);
-	skbqueue = ip_set_rcu_deref(skbinfo->skbqueue);
 	/* Send nonzero parameters only */
-	return ((skbmark || skbmarkmask) &&
+	return ((skbinfo->skbmark || skbinfo->skbmarkmask) &&
 		nla_put_net64(skb, IPSET_ATTR_SKBMARK,
-			      cpu_to_be64((u64)skbmark << 32 |
-					  skbmarkmask))) ||
-	       (skbprio &&
+			      cpu_to_be64((u64)skbinfo->skbmark << 32 |
+					  skbinfo->skbmarkmask))) ||
+	       (skbinfo->skbprio &&
 		nla_put_net32(skb, IPSET_ATTR_SKBPRIO,
-			      cpu_to_be32(skbprio))) ||
-	       (skbqueue &&
+			      cpu_to_be32(skbinfo->skbprio))) ||
+	       (skbinfo->skbqueue &&
 		nla_put_net16(skb, IPSET_ATTR_SKBQUEUE,
-			     cpu_to_be16(skbqueue)));
+			     cpu_to_be16(skbinfo->skbqueue)));
 
 }
 
@@ -400,10 +361,10 @@ static inline void
 ip_set_init_skbinfo(struct ip_set_skbinfo *skbinfo,
 		    const struct ip_set_ext *ext)
 {
-	ip_set_rcu_assign_u32(&skbinfo->skbmark, ext->skbmark);
-	ip_set_rcu_assign_u32(&skbinfo->skbmarkmask, ext->skbmarkmask);
-	ip_set_rcu_assign_u32(&skbinfo->skbprio, ext->skbprio);
-	ip_set_rcu_assign_u16(&skbinfo->skbqueue, ext->skbqueue);
+	skbinfo->skbmark = ext->skbmark;
+	skbinfo->skbmarkmask = ext->skbmarkmask;
+	skbinfo->skbprio = ext->skbprio;
+	skbinfo->skbqueue = ext->skbqueue;
 }
 
 static inline bool

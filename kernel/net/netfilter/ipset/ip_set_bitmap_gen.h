@@ -124,7 +124,7 @@ mtype_test(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 	if (ret <= 0)
 		return ret;
 	if (SET_WITH_TIMEOUT(set) &&
-	    ip_set_timeout_expired_rcu(ext_timeout(x, set)))
+	    ip_set_timeout_expired(ext_timeout(x, set)))
 		return 0;
 	if (SET_WITH_COUNTER(set))
 		ip_set_update_counter(ext_counter(x, set), ext, mext, flags);
@@ -216,7 +216,7 @@ mtype_list(const struct ip_set *set,
 #ifdef IP_SET_BITMAP_STORED_TIMEOUT
 		     mtype_is_filled((const struct mtype_elem *) x) &&
 #endif
-		     ip_set_timeout_expired_rcu(ext_timeout(x, set))))
+		     ip_set_timeout_expired(ext_timeout(x, set))))
 			continue;
 		nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 		if (!nested) {

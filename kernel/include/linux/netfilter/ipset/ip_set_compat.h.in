@@ -53,11 +53,23 @@
 #endif
 
 #ifndef rcu_dereference_protected
-#define rcu_dereference_protected(p, c)	rcu_dereference(p)
+#define rcu_dereference_protected(p, c)	(p)
+#endif
+
+#ifndef rcu_dereference_bh_check
+#define rcu_dereference_bh_check(p, c)	rcu_dereference_bh(p)
 #endif
 
 #ifndef __rcu
 #define	__rcu
+#endif
+
+#ifndef RCU_INITIALIZER
+#define RCU_INITIALIZER(v)	(typeof(*(v)) __force __rcu *)(v)
+#define RCU_INIT_POINTER(p, v)	\
+	do { \
+		p = RCU_INITIALIZER(v); \
+	} while (0)
 #endif
 
 #ifdef CHECK_KCONFIG

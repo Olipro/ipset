@@ -134,7 +134,7 @@ bitmap_ipmac_add_timeout(unsigned long *timeout,
 		if (e->ether)
 			ip_set_timeout_set(timeout, t);
 		else
-			ip_set_rcu_assign_ulong(timeout, t);
+			*timeout = t;
 	}
 	return 0;
 }

@@ -12,9 +12,10 @@
 #include <linux/jhash.h>
 #include <linux/types.h>
 #include <linux/netfilter/ipset/ip_set_timeout.h>
-#ifndef rcu_dereference_bh_check
-#define rcu_dereference_bh_check(p, c)	rcu_dereference_bh(p)
-#endif
+
+#define __ipset_dereference_protected(p, c)	rcu_dereference_protected(p, c)
+#define ipset_dereference_protected(p, set) \
+	__ipset_dereference_protected(p, spin_is_locked(&(set)->lock))
 
 #define rcu_dereference_bh_nfnl(p)	rcu_dereference_bh_check(p, 1)
 
@@ -78,7 +79,7 @@ struct htable {
 	atomic_t ref;		/* References for resizing */
 	atomic_t uref;		/* References for dumping */
 	u8 htable_bits;		/* size of hash table == 2^htable_bits */
-	struct hbucket * __rcu bucket[0]; /* hashtable buckets */
+	struct hbucket __rcu * bucket[0]; /* hashtable buckets */
 };
 
 #define hbucket(h, i)		((h)->bucket[i])
@@ -362,9 +363,9 @@ mtype_flush(struct ip_set *set)
 	struct hbucket *n;
 	u32 i;
 
-	t = h->table;
+	t = ipset_dereference_protected(h->table, set);
 	for (i = 0; i < jhash_size(t->htable_bits); i++) {
-		n = hbucket(t, i);
+		n = __ipset_dereference_protected(hbucket(t, i), 1);
 		if (n == NULL)
 			continue;
 		if (set->extensions & IPSET_EXT_DESTROY)
@@ -387,7 +388,7 @@ mtype_ahash_destroy(struct ip_set *set, struct htable *t, bool ext_destroy)
 	u32 i;
 
 	for (i = 0; i < jhash_size(t->htable_bits); i++) {
-		n = hbucket(t, i);
+		n = __ipset_dereference_protected(hbucket(t, i), 1);
 		if (n == NULL)
 			continue;
 		if (set->extensions & IPSET_EXT_DESTROY && ext_destroy)
@@ -408,7 +409,8 @@ mtype_destroy(struct ip_set *set)
 	if (set->extensions & IPSET_EXT_TIMEOUT)
 		del_timer_sync(&h->gc);
 
-	mtype_ahash_destroy(set, h->table, true);
+	mtype_ahash_destroy(set,
+		__ipset_dereference_protected(h->table, 1), true);
 	kfree(h);
 
 	set->data = NULL;
@@ -458,10 +460,9 @@ mtype_expire(struct ip_set *set, struct htype *h, u8 nets_length, size_t dsize)
 	u8 k;
 #endif
 
-	BUG_ON(!spin_is_locked(&set->lock));
-	t = h->table;
+	t = ipset_dereference_protected(h->table, set);
 	for (i = 0; i < jhash_size(t->htable_bits); i++) {
-		n = hbucket(t, i);
+		n = __ipset_dereference_protected(hbucket(t, i), 1);
 		if (n == NULL)
 			continue;
 		for (j = 0, d = 0; j < n->pos; j++) {
@@ -533,8 +534,7 @@ mtype_resize(struct ip_set *set, bool retried)
 	size_t dsize = set->dsize;
 #ifdef IP_SET_HASH_WITH_NETS
 	u8 flags;
-	unsigned char _tmp[dsize];
-	struct mtype_elem *tmp = (struct mtype_elem *) &_tmp;
+	struct mtype_elem *tmp;
 #endif
 	struct mtype_elem *data;
 	struct mtype_elem *d;
@@ -542,6 +542,11 @@ mtype_resize(struct ip_set *set, bool retried)
 	u32 i, j, key;
 	int ret;
 
+#ifdef IP_SET_HASH_WITH_NETS
+	tmp = kmalloc(dsize, GFP_KERNEL);
+	if (!tmp)
+		return -ENOMEM;
+#endif
 	rcu_read_lock_bh();
 	orig = rcu_dereference_bh_nfnl(h->table);
 	htable_bits = orig->htable_bits;
@@ -565,13 +570,13 @@ retry:
 	t->htable_bits = htable_bits;
 
 	spin_lock_bh(&set->lock);
-	orig = h->table;
+	orig = __ipset_dereference_protected(h->table, 1);
 	atomic_set(&orig->ref, 1);
 	atomic_inc(&orig->uref);
 	pr_debug("attempt to resize set %s from %u to %u, t %p\n",
 		 set->name, orig->htable_bits, htable_bits, orig);
 	for (i = 0; i < jhash_size(orig->htable_bits); i++) {
-		n = hbucket(orig, i);
+		n = __ipset_dereference_protected(hbucket(orig, i), 1);
 		if (n == NULL)
 			continue;
 		for (j = 0; j < n->pos; j++) {
@@ -588,7 +593,7 @@ retry:
 			mtype_data_reset_flags(data, &flags);
 #endif
 			key = HKEY(data, h->initval, htable_bits);
-			m = hbucket(t, key);
+			m = __ipset_dereference_protected(hbucket(t, key), 1);
 			if (!m) {
 				m = kzalloc(sizeof(struct hbucket) +
 					    AHASH_INIT_SIZE * dsize,
@@ -596,18 +601,18 @@ retry:
 				if (!m)
 					ret = -ENOMEM;
 				m->size = AHASH_INIT_SIZE;
-				hbucket(t, key) = m;
+				RCU_INIT_POINTER(hbucket(t, key), m);
 			} else if (m->pos >= m->size) {
-				struct hbucket *tmp;
+				struct hbucket *ht;
 
 				if (m->size >= AHASH_MAX(h))
 					ret = -EAGAIN;
 				else {
-					tmp = kzalloc(sizeof(struct hbucket) +
+					ht = kzalloc(sizeof(struct hbucket) +
 						(m->size + AHASH_INIT_SIZE)
 						* dsize,
 						GFP_ATOMIC);
-					if (!tmp)
+					if (!ht)
 						ret = -ENOMEM;
 				}
 				if (ret < 0) {
@@ -617,13 +622,14 @@ retry:
 					mtype_ahash_destroy(set, t, false);
 					if (ret == -EAGAIN)
 						goto retry;
-					return ret;
+					goto out;
 				}
-				memcpy(tmp, m, sizeof(struct hbucket) +
-					       m->size * dsize);
-				tmp->size = m->size + AHASH_INIT_SIZE;
+				memcpy(ht, m, sizeof(struct hbucket) +
+					      m->size * dsize);
+				ht->size = m->size + AHASH_INIT_SIZE;
 				kfree(m);
-				m = hbucket(t, key) = tmp;
+				m = ht;
+				RCU_INIT_POINTER(hbucket(t, key), ht);
 			}
 			d = ahash_data(m, m->pos, dsize);
 			memcpy(d, data, dsize);
@@ -648,11 +654,12 @@ retry:
 		mtype_ahash_destroy(set, orig, false);
 	}
 
-	return 0;
-
 out:
-	spin_unlock_bh(&set->lock);
+#ifdef IP_SET_HASH_WITH_NETS
+	kfree(tmp);
+#endif
 	return ret;
+
 }
 
 /* Add an element to a hash and update the internal counters when succeeded,
@@ -679,9 +686,9 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 			forceadd = true;
 	}
 
-	t = h->table;
+	t = ipset_dereference_protected(h->table, set);
 	key = HKEY(value, h->initval, t->htable_bits);
-	n = hbucket(t, key);
+	n = __ipset_dereference_protected(hbucket(t, key), 1);
 	if (n == NULL) {
 		if (forceadd) {
 			if (net_ratelimit())
@@ -815,9 +822,9 @@ mtype_del(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 	u32 key, multi = 0;
 	size_t dsize = set->dsize;
 
-	t = h->table;
+	t = ipset_dereference_protected(h->table, set);
 	key = HKEY(value, h->initval, t->htable_bits);
-	n = hbucket(t, key);
+	n = __ipset_dereference_protected(hbucket(t, key), 1);
 	if (!n)
 		goto out;
 	for (i = 0, k = 0; i < n->pos; i++) {
@@ -1091,7 +1098,7 @@ mtype_list(const struct ip_set *set,
 	for (; cb->args[IPSET_CB_ARG0] < jhash_size(t->htable_bits);
 	     cb->args[IPSET_CB_ARG0]++) {
 		incomplete = skb_tail_pointer(skb);
-		n = hbucket(t, cb->args[IPSET_CB_ARG0]);
+		n = rcu_dereference(hbucket(t, cb->args[IPSET_CB_ARG0]));
 		pr_debug("cb->arg bucket: %lu, t %p n %p\n",
 			 cb->args[IPSET_CB_ARG0], t, n);
 		if (n == NULL)
@@ -1199,12 +1206,14 @@ IPSET_TOKEN(HTYPE, _create)(struct net *net, struct ip_set *set,
 
 	if (unlikely(!ip_set_optattr_netorder(tb, IPSET_ATTR_HASHSIZE) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_MAXELEM) ||
-#ifdef IP_SET_HASH_WITH_MARKMASK
-		     !ip_set_optattr_netorder(tb, IPSET_ATTR_MARKMASK) ||
-#endif
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_TIMEOUT) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_CADT_FLAGS)))
 		return -IPSET_ERR_PROTOCOL;
+#ifdef IP_SET_HASH_WITH_MARKMASK
+	/* Separated condition in order to avoid directive in argument list */
+	if (unlikely(!ip_set_optattr_netorder(tb, IPSET_ATTR_MARKMASK)))
+		return -IPSET_ERR_PROTOCOL;
+#endif
 
 	if (tb[IPSET_ATTR_HASHSIZE]) {
 		hashsize = ip_set_get_h32(tb[IPSET_ATTR_HASHSIZE]);
@@ -1227,7 +1236,7 @@ IPSET_TOKEN(HTYPE, _create)(struct net *net, struct ip_set *set,
 #endif
 #ifdef IP_SET_HASH_WITH_MARKMASK
 	if (tb[IPSET_ATTR_MARKMASK]) {
-		markmask = ntohl(nla_get_u32(tb[IPSET_ATTR_MARKMASK]));
+		markmask = ntohl(nla_get_be32(tb[IPSET_ATTR_MARKMASK]));
 
 		if (markmask == 0)
 			return -IPSET_ERR_INVALID_MARKMASK;
