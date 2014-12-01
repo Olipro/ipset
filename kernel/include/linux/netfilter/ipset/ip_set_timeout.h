@@ -55,7 +55,7 @@ ip_set_timeout_set(unsigned long *timeout, u32 value)
 		return;
 	}
 
-	t = msecs_to_jiffies(value * 1000) + jiffies;
+	t = msecs_to_jiffies(value * MSEC_PER_SEC) + jiffies;
 	if (t == IPSET_ELEM_PERMANENT)
 		/* Bingo! :-) */
 		t--;
@@ -66,7 +66,7 @@ static inline u32
 ip_set_timeout_get(unsigned long *timeout)
 {
 	return *timeout == IPSET_ELEM_PERMANENT ? 0 :
-		jiffies_to_msecs(*timeout - jiffies)/1000;
+		jiffies_to_msecs(*timeout - jiffies)/MSEC_PER_SEC;
 }
 
 #endif	/* __KERNEL__ */
