@@ -90,7 +90,7 @@ list_set_kadd(struct ip_set *set, const struct sk_buff *skb,
 	struct set_elem *e;
 	int ret;
 
-	list_for_each_entry_rcu(e, &map->members, list) {
+	list_for_each_entry(e, &map->members, list) {
 		if (SET_WITH_TIMEOUT(set) &&
 		    ip_set_timeout_expired(ext_timeout(e, set)))
 			continue;
@@ -110,7 +110,7 @@ list_set_kdel(struct ip_set *set, const struct sk_buff *skb,
 	struct set_elem *e;
 	int ret;
 
-	list_for_each_entry_rcu(e, &map->members, list) {
+	list_for_each_entry(e, &map->members, list) {
 		if (SET_WITH_TIMEOUT(set) &&
 		    ip_set_timeout_expired(ext_timeout(e, set)))
 			continue;
@@ -673,6 +673,7 @@ list_set_init(void)
 static void __exit
 list_set_fini(void)
 {
+	rcu_barrier();
 	ip_set_type_unregister(&list_set_type);
 }
 
