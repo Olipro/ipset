@@ -214,14 +214,13 @@ ip_set_type_register(struct ip_set_type *type)
 		pr_warn("ip_set type %s, family %s with revision min %u already registered!\n",
 			type->name, family_name(type->family),
 			type->revision_min);
-		ret = -EINVAL;
-		goto unlock;
+		ip_set_type_unlock();
+		return -EINVAL;
 	}
 	list_add_rcu(&type->list, &ip_set_type_list);
 	pr_debug("type %s, family %s, revision %u:%u registered.\n",
 		 type->name, family_name(type->family),
 		 type->revision_min, type->revision_max);
-unlock:
 	ip_set_type_unlock();
 	synchronize_rcu();
 	return ret;
@@ -237,12 +236,12 @@ ip_set_type_unregister(struct ip_set_type *type)
 		pr_warn("ip_set type %s, family %s with revision min %u not registered\n",
 			type->name, family_name(type->family),
 			type->revision_min);
-		goto unlock;
+		ip_set_type_unlock();
+		return;
 	}
 	list_del_rcu(&type->list);
 	pr_debug("type %s, family %s with revision min %u unregistered.\n",
 		 type->name, family_name(type->family), type->revision_min);
-unlock:
 	ip_set_type_unlock();
 
 	synchronize_rcu();
