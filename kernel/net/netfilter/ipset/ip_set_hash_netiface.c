@@ -41,8 +41,7 @@ MODULE_ALIAS("ip_set_hash:net,iface");
 #define IP_SET_HASH_WITH_MULTI
 #define IP_SET_HASH_WITH_NET0
 
-#define STREQ(a, b)	(strcmp(a, b) == 0)
-#define IFNAMCPY(a, b)	strncpy(a, b, IFNAMSIZ)
+#define IFNAMCPY(a, b)	strlcpy(a, b, IFNAMSIZ)
 
 /* IPv4 variant */
 
@@ -75,7 +74,7 @@ hash_netiface4_data_equal(const struct hash_netiface4_elem *ip1,
 	       ip1->cidr == ip2->cidr &&
 	       (++*multi) &&
 	       ip1->physdev == ip2->physdev &&
-	       STREQ(ip1->iface, ip2->iface);
+	       strcmp(ip1->iface, ip2->iface) == 0;
 }
 
 static inline int
@@ -214,7 +213,7 @@ hash_netiface4_uadt(struct ip_set *set, struct nlattr *tb[],
 		if (e.cidr > HOST_MASK)
 			return -IPSET_ERR_INVALID_CIDR;
 	}
-	IFNAMCPY(e.iface, nla_data(tb[IPSET_ATTR_IFACE]));
+	nla_strlcpy(e.iface, tb[IPSET_ATTR_IFACE], IFNAMSIZ);
 
 	if (tb[IPSET_ATTR_CADT_FLAGS]) {
 		u32 cadt_flags = ip_set_get_h32(tb[IPSET_ATTR_CADT_FLAGS]);
@@ -288,7 +287,7 @@ hash_netiface6_data_equal(const struct hash_netiface6_elem *ip1,
 	       ip1->cidr == ip2->cidr &&
 	       (++*multi) &&
 	       ip1->physdev == ip2->physdev &&
-	       STREQ(ip1->iface, ip2->iface);
+	       strcmp(ip1->iface, ip2->iface) == 0;
 }
 
 static inline int
@@ -430,7 +429,7 @@ hash_netiface6_uadt(struct ip_set *set, struct nlattr *tb[],
 		return -IPSET_ERR_INVALID_CIDR;
 	ip6_netmask(&e.ip, e.cidr);
 
-	IFNAMCPY(e.iface, nla_data(tb[IPSET_ATTR_IFACE]));
+	nla_strlcpy(e.iface, tb[IPSET_ATTR_IFACE], IFNAMSIZ);
 
 	if (tb[IPSET_ATTR_CADT_FLAGS]) {
 		u32 cadt_flags = ip_set_get_h32(tb[IPSET_ATTR_CADT_FLAGS]);
