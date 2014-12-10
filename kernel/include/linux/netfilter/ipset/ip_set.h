@@ -326,10 +326,6 @@ ip_set_update_counter(struct ip_set_counter *counter,
 	}
 }
 
-#define ip_set_rcu_deref(t)		\
-	rcu_dereference_index_check(t,	\
-		rcu_read_lock_held() || rcu_read_lock_bh_held())
-
 static inline void
 ip_set_get_skbinfo(struct ip_set_skbinfo *skbinfo,
 		      const struct ip_set_ext *ext,
