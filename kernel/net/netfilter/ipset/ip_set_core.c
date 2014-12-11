@@ -1214,7 +1214,7 @@ static int
 dump_init(struct netlink_callback *cb, struct ip_set_net *inst)
 {
 	struct nlmsghdr *nlh = nlmsg_hdr(cb->skb);
-	int min_len = NLMSG_SPACE(sizeof(struct nfgenmsg));
+	int min_len = nlmsg_total_size(sizeof(struct nfgenmsg));
 	struct nlattr *cda[IPSET_ATTR_CMD_MAX+1];
 	struct nlattr *attr = (void *)nlh + min_len;
 	u32 dump_type;
@@ -1447,7 +1447,7 @@ call_ad(struct sock *ctnl, struct sk_buff *skb, struct ip_set *set,
 		struct nlmsgerr *errmsg;
 		size_t payload = min(SIZE_MAX,
 				     sizeof(*errmsg) + nlmsg_len(nlh));
-		int min_len = NLMSG_SPACE(sizeof(struct nfgenmsg));
+		int min_len = nlmsg_total_size(sizeof(struct nfgenmsg));
 		struct nlattr *cda[IPSET_ATTR_CMD_MAX+1];
 		struct nlattr *cmdattr;
 		u32 *errline;
