@@ -41,7 +41,7 @@ MODULE_ALIAS("ip_set_hash:net,iface");
 #define IP_SET_HASH_WITH_MULTI
 #define IP_SET_HASH_WITH_NET0
 
-#define IFNAMCPY(a, b)	strlcpy(a, b, IFNAMSIZ)
+#define STRLCPY(a, b)	strlcpy(a, b, IFNAMSIZ)
 
 /* IPv4 variant */
 
@@ -166,12 +166,13 @@ hash_netiface4_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 		if (!nf_bridge)
 			return -EINVAL;
-		IFNAMCPY(e.iface,
-			 SRCDIR ? PHYSDEV(physindev) : PHYSDEV(physoutdev));
+		STRLCPY(e.iface,
+			SRCDIR ? PHYSDEV(physindev) : PHYSDEV(physoutdev));
 		e.physdev = 1;
 #endif
-	} else
-		IFNAMCPY(e.iface, SRCDIR ? IFACE(in) : IFACE(out));
+	} else {
+		STRLCPY(e.iface, SRCDIR ? IFACE(in) : IFACE(out));
+	}
 
 	if (strlen(e.iface) == 0)
 		return -EINVAL;
@@ -238,8 +239,9 @@ hash_netiface4_uadt(struct ip_set *set, struct nlattr *tb[],
 			swap(ip, ip_to);
 		if (ip + UINT_MAX == ip_to)
 			return -IPSET_ERR_HASH_RANGE;
-	} else
+	} else {
 		ip_set_mask_from_to(ip, ip_to, e.cidr);
+	}
 
 	if (retried)
 		ip = ntohl(h->next.ip);
@@ -250,8 +252,8 @@ hash_netiface4_uadt(struct ip_set *set, struct nlattr *tb[],
 
 		if (ret && !ip_set_eexist(ret, flags))
 			return ret;
-		else
-			ret = 0;
+
+		ret = 0;
 		ip = last + 1;
 	}
 	return ret;
@@ -380,12 +382,13 @@ hash_netiface6_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 		if (!nf_bridge)
 			return -EINVAL;
-		IFNAMCPY(e.iface,
-			 SRCDIR ? PHYSDEV(physindev) : PHYSDEV(physoutdev));
+		STRLCPY(e.iface,
+			SRCDIR ? PHYSDEV(physindev) : PHYSDEV(physoutdev));
 		e.physdev = 1;
 #endif
-	} else
-		IFNAMCPY(e.iface, SRCDIR ? IFACE(in) : IFACE(out));
+	} else {
+		STRLCPY(e.iface, SRCDIR ? IFACE(in) : IFACE(out));
+	}
 
 	if (strlen(e.iface) == 0)
 		return -EINVAL;
@@ -395,7 +398,7 @@ hash_netiface6_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 static int
 hash_netiface6_uadt(struct ip_set *set, struct nlattr *tb[],
-		   enum ipset_adt adt, u32 *lineno, u32 flags, bool retried)
+		    enum ipset_adt adt, u32 *lineno, u32 flags, bool retried)
 {
 	ipset_adtfn adtfn = set->variant->adt[adt];
 	struct hash_netiface6_elem e = { .cidr = HOST_MASK, .elem = 1 };

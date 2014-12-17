@@ -203,8 +203,8 @@ hash_net4_uadt(struct ip_set *set, struct nlattr *tb[],
 		ret = adtfn(set, &e, &ext, &ext, flags);
 		if (ret && !ip_set_eexist(ret, flags))
 			return ret;
-		else
-			ret = 0;
+
+		ret = 0;
 		ip = last + 1;
 	}
 	return ret;

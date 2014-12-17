@@ -130,7 +130,8 @@ bitmap_ipmac_add_timeout(unsigned long *timeout,
 		/* If MAC is unset yet, we store plain timeout value
 		 * because the timer is not activated yet
 		 * and we can reuse it later when MAC is filled out,
-		 * possibly by the kernel */
+		 * possibly by the kernel
+		 */
 		if (e->ether)
 			ip_set_timeout_set(timeout, t);
 		else
@@ -346,8 +347,9 @@ bitmap_ipmac_create(struct net *net, struct ip_set *set, struct nlattr *tb[],
 		if (cidr >= 32)
 			return -IPSET_ERR_INVALID_CIDR;
 		ip_set_mask_from_to(first_ip, last_ip, cidr);
-	} else
+	} else {
 		return -IPSET_ERR_PROTOCOL;
+	}
 
 	elements = (u64)last_ip - first_ip + 1;
 

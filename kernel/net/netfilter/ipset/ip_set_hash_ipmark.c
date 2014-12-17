@@ -160,8 +160,8 @@ hash_ipmark4_uadt(struct ip_set *set, struct nlattr *tb[],
 
 		if (ret && !ip_set_eexist(ret, flags))
 			return ret;
-		else
-			ret = 0;
+
+		ret = 0;
 	}
 	return ret;
 }
@@ -274,10 +274,8 @@ hash_ipmark6_uadt(struct ip_set *set, struct nlattr *tb[],
 	ret = adtfn(set, &e, &ext, &ext, flags);
 	if (ret && !ip_set_eexist(ret, flags))
 		return ret;
-	else
-		ret = 0;
 
-	return ret;
+	return 0;
 }
 
 static struct ip_set_type hash_ipmark_type __read_mostly = {

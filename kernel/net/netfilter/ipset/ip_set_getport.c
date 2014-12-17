@@ -120,7 +120,8 @@ ip_set_get_ip4_port(const struct sk_buff *skb, bool src,
 			return false;
 		default:
 			/* Other protocols doesn't have ports,
-			   so we can match fragments */
+			 * so we can match fragments.
+			 */
 			*proto = protocol;
 			return true;
 		}

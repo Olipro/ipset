@@ -57,6 +57,7 @@ tune_ahash_max(u8 curr, u32 multi)
 	 */
 	return n > curr && n <= AHASH_MAX_TUNED ? n : curr;
 }
+
 #define TUNE_AHASH_MAX(h, multi)	\
 	((h)->ahash_max = tune_ahash_max((h)->ahash_max, multi))
 #else
@@ -79,7 +80,7 @@ struct htable {
 	atomic_t ref;		/* References for resizing */
 	atomic_t uref;		/* References for dumping */
 	u8 htable_bits;		/* size of hash table == 2^htable_bits */
-	struct hbucket __rcu * bucket[0]; /* hashtable buckets */
+	struct hbucket __rcu *bucket[0]; /* hashtable buckets */
 };
 
 #define hbucket(h, i)		((h)->bucket[i])
@@ -274,7 +275,8 @@ struct htype {
 
 #ifdef IP_SET_HASH_WITH_NETS
 /* Network cidr size book keeping when the hash stores different
- * sized networks */
+ * sized networks
+ */
 static void
 mtype_add_cidr(struct htype *h, u8 cidr, u8 nets_length, u8 n)
 {
@@ -282,11 +284,11 @@ mtype_add_cidr(struct htype *h, u8 cidr, u8 nets_length, u8 n)
 
 	/* Add in increasing prefix order, so larger cidr first */
 	for (i = 0, j = -1; i < nets_length && h->nets[i].cidr[n]; i++) {
-		if (j != -1)
+		if (j != -1) {
 			continue;
-		else if (h->nets[i].cidr[n] < cidr)
+		} else if (h->nets[i].cidr[n] < cidr) {
 			j = i;
-		else if (h->nets[i].cidr[n] == cidr) {
+		} else if (h->nets[i].cidr[n] == cidr) {
 			h->nets[cidr - 1].nets[n]++;
 			return;
 		}
@@ -410,7 +412,7 @@ mtype_destroy(struct ip_set *set)
 		del_timer_sync(&h->gc);
 
 	mtype_ahash_destroy(set,
-		__ipset_dereference_protected(h->table, 1), true);
+			    __ipset_dereference_protected(h->table, 1), true);
 	kfree(h);
 
 	set->data = NULL;
@@ -422,7 +424,7 @@ mtype_gc_init(struct ip_set *set, void (*gc)(unsigned long ul_set))
 	struct htype *h = set->data;
 
 	init_timer(&h->gc);
-	h->gc.data = (unsigned long) set;
+	h->gc.data = (unsigned long)set;
 	h->gc.function = gc;
 	h->gc.expires = jiffies + IPSET_GC_PERIOD(set->timeout) * HZ;
 	add_timer(&h->gc);
@@ -485,7 +487,7 @@ mtype_expire(struct ip_set *set, struct htype *h, u8 nets_length, size_t dsize)
 			}
 		}
 		if (d >= AHASH_INIT_SIZE) {
-			struct hbucket *tmp = kzalloc(sizeof(struct hbucket) +
+			struct hbucket *tmp = kzalloc(sizeof(*tmp) +
 					(n->size - AHASH_INIT_SIZE) * dsize,
 					GFP_ATOMIC);
 			if (!tmp)
@@ -510,7 +512,7 @@ mtype_expire(struct ip_set *set, struct htype *h, u8 nets_length, size_t dsize)
 static void
 mtype_gc(unsigned long ul_set)
 {
-	struct ip_set *set = (struct ip_set *) ul_set;
+	struct ip_set *set = (struct ip_set *)ul_set;
 	struct htype *h = set->data;
 
 	pr_debug("called\n");
@@ -524,7 +526,8 @@ mtype_gc(unsigned long ul_set)
 
 /* Resize a hash: create a new hash table with doubling the hashsize
  * and inserting the elements to it. Repeat until we succeed or
- * fail due to memory pressures. */
+ * fail due to memory pressures.
+ */
 static int
 mtype_resize(struct ip_set *set, bool retried)
 {
@@ -595,7 +598,7 @@ retry:
 			key = HKEY(data, h->initval, htable_bits);
 			m = __ipset_dereference_protected(hbucket(t, key), 1);
 			if (!m) {
-				m = kzalloc(sizeof(struct hbucket) +
+				m = kzalloc(sizeof(*m) +
 					    AHASH_INIT_SIZE * dsize,
 					    GFP_ATOMIC);
 				if (!m)
@@ -605,10 +608,10 @@ retry:
 			} else if (m->pos >= m->size) {
 				struct hbucket *ht;
 
-				if (m->size >= AHASH_MAX(h))
+				if (m->size >= AHASH_MAX(h)) {
 					ret = -EAGAIN;
-				else {
-					ht = kzalloc(sizeof(struct hbucket) +
+				} else {
+					ht = kzalloc(sizeof(*ht) +
 						(m->size + AHASH_INIT_SIZE)
 						* dsize,
 						GFP_ATOMIC);
@@ -659,11 +662,11 @@ out:
 	kfree(tmp);
 #endif
 	return ret;
-
 }
 
 /* Add an element to a hash and update the internal counters when succeeded,
- * otherwise report the proper error code. */
+ * otherwise report the proper error code.
+ */
 static int
 mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 	  struct ip_set_ext *mext, u32 flags)
@@ -695,11 +698,11 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 				pr_warn("Set %s is full, maxelem %u reached\n",
 					set->name, h->maxelem);
 			return -IPSET_ERR_HASH_FULL;
-		} else if (h->elements >= h->maxelem)
+		} else if (h->elements >= h->maxelem) {
 			goto set_full;
+		}
 		old = NULL;
-		n = kzalloc(sizeof(struct hbucket) +
-			    AHASH_INIT_SIZE * set->dsize,
+		n = kzalloc(sizeof(*n) + AHASH_INIT_SIZE * set->dsize,
 			    GFP_ATOMIC);
 		if (n == NULL)
 			return -ENOMEM;
@@ -723,8 +726,8 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 				/* Just the extensions could be overwritten */
 				j = i;
 				goto overwrite_extensions;
-			} else
-				return -IPSET_ERR_EXIST;
+			}
+			return -IPSET_ERR_EXIST;
 		}
 		/* Reuse first timed out entry */
 		if (SET_WITH_TIMEOUT(set) &&
@@ -758,7 +761,7 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 			return -EAGAIN;
 		}
 		old = n;
-		n = kzalloc(sizeof(struct hbucket) +
+		n = kzalloc(sizeof(*n) +
 			    (old->size + AHASH_INIT_SIZE) * set->dsize,
 			    GFP_ATOMIC);
 		if (!n)
@@ -859,7 +862,7 @@ mtype_del(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 			rcu_assign_pointer(hbucket(t, key), NULL);
 			kfree_rcu(n, rcu);
 		} else if (k >= AHASH_INIT_SIZE) {
-			struct hbucket *tmp = kzalloc(sizeof(struct hbucket) +
+			struct hbucket *tmp = kzalloc(sizeof(*tmp) +
 					(n->size - AHASH_INIT_SIZE) * dsize,
 					GFP_ATOMIC);
 			if (!tmp)
@@ -899,7 +902,8 @@ mtype_data_match(struct mtype_elem *data, const struct ip_set_ext *ext,
 
 #ifdef IP_SET_HASH_WITH_NETS
 /* Special test function which takes into account the different network
- * sizes added to the set */
+ * sizes added to the set
+ */
 static int
 mtype_test_cidrs(struct ip_set *set, struct mtype_elem *d,
 		 const struct ip_set_ext *ext,
@@ -976,7 +980,8 @@ mtype_test(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 	t = rcu_dereference_bh(h->table);
 #ifdef IP_SET_HASH_WITH_NETS
 	/* If we test an IP address and not a network address,
-	 * try all possible network sizes */
+	 * try all possible network sizes
+	 */
 	for (i = 0; i < IPSET_NET_COUNT; i++)
 		if (GCIDR(d->cidr, i) != SET_HOST_MASK(set->family))
 			break;
@@ -1118,8 +1123,8 @@ mtype_list(const struct ip_set *set,
 					nla_nest_cancel(skb, atd);
 					ret = -EMSGSIZE;
 					goto out;
-				} else
-					goto nla_put_failure;
+				}
+				goto nla_put_failure;
 			}
 			if (mtype_data_list(skb, e))
 				goto nla_put_failure;
@@ -1141,20 +1146,22 @@ nla_put_failure:
 			set->name);
 		cb->args[IPSET_CB_ARG0] = 0;
 		ret = -EMSGSIZE;
-	} else
+	} else {
 		ipset_nest_end(skb, atd);
+	}
 out:
 	return ret;
 }
 
 static int
 IPSET_TOKEN(MTYPE, _kadt)(struct ip_set *set, const struct sk_buff *skb,
-	    const struct xt_action_param *par,
-	    enum ipset_adt adt, struct ip_set_adt_opt *opt);
+			  const struct xt_action_param *par,
+			  enum ipset_adt adt, struct ip_set_adt_opt *opt);
 
 static int
 IPSET_TOKEN(MTYPE, _uadt)(struct ip_set *set, struct nlattr *tb[],
-	    enum ipset_adt adt, u32 *lineno, u32 flags, bool retried);
+			  enum ipset_adt adt, u32 *lineno, u32 flags,
+			  bool retried);
 
 static const struct ip_set_type_variant mtype_variant = {
 	.kadt	= mtype_kadt,
