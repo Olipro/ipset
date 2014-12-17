@@ -40,6 +40,7 @@
 #@HAVE_XT_MTCHK_PARAM_STRUCT_NET@ HAVE_XT_MTCHK_PARAM_STRUCT_NET
 #@HAVE_TCF_EMATCH_OPS_CHANGE_ARG_NET@ HAVE_TCF_EMATCH_OPS_CHANGE_ARG_NET
 #@HAVE_TCF_EMATCH_STRUCT_NET@ HAVE_TCF_EMATCH_STRUCT_NET
+#@HAVE_LIST_LAST_ENTRY@ HAVE_LIST_LAST_ENTRY
 
 /* Not everything could be moved here. Compatibility stuffs can be found in
  * xt_set.c, ip_set_core.c, ip_set_getport.c, pfxlen.c too.
@@ -162,6 +163,11 @@ static inline int nla_put_net32(struct sk_buff *skb, int attrtype, __be32 value)
 {
 	return nla_put_be32(skb, attrtype | NLA_F_NET_BYTEORDER, value);
 }
+#endif
+
+#ifndef HAVE_LIST_LAST_ENTRY
+#define list_last_entry(ptr, type, member) \
+	list_entry((ptr)->prev, type, member)
 #endif
 
 #endif /* __IP_SET_COMPAT_H */

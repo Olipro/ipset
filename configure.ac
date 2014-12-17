@@ -376,6 +376,16 @@ else
 	AC_SUBST(HAVE_TCF_EMATCH_STRUCT_NET, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for list_last_entry])
+if test -f $ksourcedir/include/linux/list.h && \
+   $GREP -q 'list_last_entry' $ksourcedir/include/linux/list.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_LIST_LAST_ENTRY, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_LIST_LAST_ENTRY, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
