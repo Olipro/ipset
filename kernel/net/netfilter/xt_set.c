@@ -486,7 +486,8 @@ set_target_v3(struct sk_buff *skb, const struct xt_action_param *par)
 		map_opt.cmdflags |= info->flags & (IPSET_FLAG_MAP_SKBMARK |
 						   IPSET_FLAG_MAP_SKBPRIO |
 						   IPSET_FLAG_MAP_SKBQUEUE);
-		ret = match_set(info->map_set.index, skb, par, &map_opt,
+		ret = match_set(info->map_set.index, skb, CAST_TO_MATCH par,
+				&map_opt,
 				info->map_set.flags & IPSET_INV_MATCH);
 		if (!ret)
 			return XT_CONTINUE;

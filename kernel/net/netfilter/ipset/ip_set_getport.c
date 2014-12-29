@@ -140,12 +140,8 @@ ip_set_get_ip6_port(const struct sk_buff *skb, bool src,
 	__be16 frag_off = 0;
 
 	nexthdr = ipv6_hdr(skb)->nexthdr;
-#if HAVE_IPV6_SKIP_EXTHDR_ARGS == 4
 	protoff = ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr), &nexthdr,
 				   &frag_off);
-#else
-	protoff = ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr), &nexthdr);
-#endif
 	if (protoff < 0 || (frag_off & htons(~0x7)) != 0)
 		return false;
 

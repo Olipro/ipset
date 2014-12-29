@@ -18,8 +18,8 @@
 #include <linux/stringify.h>
 #include <linux/vmalloc.h>
 #include <net/netlink.h>
-#include <uapi/linux/netfilter/ipset/ip_set.h>
 #include <linux/netfilter/ipset/ip_set_compat.h>
+#include <uapi/linux/netfilter/ipset/ip_set.h>
 
 #define _IP_SET_MODULE_DESC(a, b, c)		\
 	MODULE_DESCRIPTION(a " type of IP sets, revisions " b "-" c)

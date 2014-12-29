@@ -215,7 +215,6 @@ hash_ipmark6_data_next(struct hash_ipmark4_elem *next,
 #define	IP_SET_EMIT_CREATE
 #include "ip_set_hash_gen.h"
 
-
 static int
 hash_ipmark6_kadt(struct ip_set *set, const struct sk_buff *skb,
 		  const struct xt_action_param *par,

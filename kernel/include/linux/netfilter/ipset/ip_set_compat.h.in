@@ -41,6 +41,7 @@
 #@HAVE_TCF_EMATCH_OPS_CHANGE_ARG_NET@ HAVE_TCF_EMATCH_OPS_CHANGE_ARG_NET
 #@HAVE_TCF_EMATCH_STRUCT_NET@ HAVE_TCF_EMATCH_STRUCT_NET
 #@HAVE_LIST_LAST_ENTRY@ HAVE_LIST_LAST_ENTRY
+#@HAVE_LIST_NEXT_ENTRY@ HAVE_LIST_NEXT_ENTRY
 
 /* Not everything could be moved here. Compatibility stuffs can be found in
  * xt_set.c, ip_set_core.c, ip_set_getport.c, pfxlen.c too.
@@ -76,6 +77,26 @@
 		p = RCU_INITIALIZER(v); \
 	} while (0)
 #endif
+#endif
+
+#ifndef kfree_rcu
+
+static inline void kfree_call_rcu(struct rcu_head *head,
+				  void (*func)(struct rcu_head *rcu))
+{
+	call_rcu(head, func);
+}
+
+#define __is_kfree_rcu_offset(offset) ((offset) < 4096)
+
+#define __kfree_rcu(head, offset)	\
+do {				\
+	BUILD_BUG_ON(!__is_kfree_rcu_offset(offset));	\
+	kfree_call_rcu(head, (void (*)(struct rcu_head *))(unsigned long)(offset)); \
+} while (0)
+
+#define kfree_rcu(ptr, rcu_head)	\
+	__kfree_rcu(&((ptr)->rcu_head), offsetof(typeof(*(ptr)), rcu_head))
 #endif
 
 #ifdef CHECK_KCONFIG
@@ -126,16 +147,18 @@ static inline int nla_put_net64(struct sk_buff *skb, int attrtype, __be64 value)
 #define NETLINK_PORTID(skb)	NETLINK_CB(skb).pid
 #endif
 
-#ifndef HAVE_NS_CAPABLE
+#ifndef HAVE_USER_NS_IN_STRUCT_NET
 #define ns_capable(ns, cap)	capable(cap)
 #endif
 
-#ifdef HAVE_NFNL_LOCK_SUBSYS
-#define lock_nfnl()		nfnl_lock(NFNL_SUBSYS_IPSET)
-#define unlock_nfnl()		nfnl_unlock(NFNL_SUBSYS_IPSET)
-#else
-#define lock_nfnl()		nfnl_lock()
-#define unlock_nfnl()		nfnl_unlock()
+#ifndef HAVE_NFNL_LOCK_SUBSYS
+#define nfnl_lock(x)		nfnl_lock()
+#define nfnl_unlock(x)		nfnl_unlock()
+#endif
+
+#if HAVE_IPV6_SKIP_EXTHDR_ARGS == 3
+#define ipv6_skip_exthdr(skbuff, start, nexthdrp, frag_offp)	\
+	ipv6_skip_exthdr(skbuff, start, nexthdrp)
 #endif
 
 #ifndef HAVE_KVFREE
@@ -173,6 +196,24 @@ static inline int nla_put_net32(struct sk_buff *skb, int attrtype, __be32 value)
 #ifndef HAVE_LIST_LAST_ENTRY
 #define list_last_entry(ptr, type, member) \
 	list_entry((ptr)->prev, type, member)
+#endif
+#ifndef HAVE_LIST_NEXT_ENTRY
+#define list_next_entry(pos, member)	\
+	list_entry((pos)->member.next, typeof(*(pos)), member)
+#define list_prev_entry(pos, member)	\
+	list_entry((pos)->member.prev, typeof(*(pos)), member)
+#endif
+
+#ifndef __aligned_u64
+#define __aligned_u64 __u64
+#endif
+
+#ifndef pr_warn
+#define pr_warn	pr_warning
+#endif
+
+#ifndef SIZE_MAX
+#define SIZE_MAX	(~(size_t)0)
 #endif
 
 #endif /* __IP_SET_COMPAT_H */
