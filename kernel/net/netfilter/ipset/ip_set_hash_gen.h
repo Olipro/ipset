@@ -1100,6 +1100,8 @@ mtype_list(const struct ip_set *set,
 
 	pr_debug("list hash set %s\n", set->name);
 	t = (const struct htable *) cb->args[IPSET_CB_PRIVATE];
+	/* Expire may replace a hbucket with another one */
+	rcu_read_lock();
 	for (; cb->args[IPSET_CB_ARG0] < jhash_size(t->htable_bits);
 	     cb->args[IPSET_CB_ARG0]++) {
 		incomplete = skb_tail_pointer(skb);
@@ -1150,6 +1152,7 @@ nla_put_failure:
 		ipset_nest_end(skb, atd);
 	}
 out:
+	rcu_read_unlock();
 	return ret;
 }
 
