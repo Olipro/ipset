@@ -310,11 +310,7 @@ list_set_uadd(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 		list_add_rcu(&e->list, &prev->list);
 	else
 		list_add_tail_rcu(&e->list, &map->members);
-	spin_unlock_bh(&set->lock);
 
-	synchronize_rcu_bh();
-
-	spin_lock_bh(&set->lock);
 	return 0;
 }
 
