@@ -32,7 +32,8 @@ static DEFINE_RWLOCK(ip_set_ref_lock);		/* protects the set refs */
 struct ip_set_net {
 	struct ip_set * __rcu *ip_set_list;	/* all individual sets */
 	ip_set_id_t	ip_set_max;	/* max number of sets */
-	int		is_deleted;	/* deleted by ip_set_net_exit */
+	bool		is_deleted;	/* deleted by ip_set_net_exit */
+	bool		is_destroyed;	/* all sets are destroyed */
 };
 
 static int ip_set_net_id __read_mostly;
@@ -983,12 +984,15 @@ ip_set_destroy(struct sock *ctnl, struct sk_buff *skb,
 				goto out;
 			}
 		}
+		inst->is_destroyed = true;
 		read_unlock_bh(&ip_set_ref_lock);
 		for (i = 0; i < inst->ip_set_max; i++) {
 			s = ip_set(inst, i);
 			if (s != NULL)
 				ip_set_destroy_set(inst, i);
 		}
+		/* Modified by ip_set_destroy() only, which is serialized */
+		inst->is_destroyed = false;
 	} else {
 		s = find_set_and_id(inst, nla_data(attr[IPSET_ATTR_SETNAME]),
 				    &i);
@@ -1271,10 +1275,17 @@ dump_last:
 		 dump_type, dump_flags, cb->args[IPSET_CB_INDEX]);
 	for (; cb->args[IPSET_CB_INDEX] < max; cb->args[IPSET_CB_INDEX]++) {
 		index = (ip_set_id_t)cb->args[IPSET_CB_INDEX];
+		write_lock_bh(&ip_set_ref_lock);
 		set = ip_set(inst, index);
-		if (set == NULL) {
+		if (set == NULL || inst->is_destroyed) {
+			write_unlock_bh(&ip_set_ref_lock);
 			if (dump_type == DUMP_ONE) {
 				ret = -ENOENT;
+				goto out;
+			}
+			if (inst->is_destroyed) {
+				/* All sets are just being destroyed */
+				ret = 0;
 				goto out;
 			}
 			continue;
@@ -1284,14 +1295,17 @@ dump_last:
 		 */
 		if (dump_type != DUMP_ONE &&
 		    ((dump_type == DUMP_ALL) ==
-		     !!(set->type->features & IPSET_DUMP_LAST)))
+		     !!(set->type->features & IPSET_DUMP_LAST))) {
+			write_unlock_bh(&ip_set_ref_lock);
 			continue;
+		}
 		pr_debug("List set: %s\n", set->name);
 		if (!cb->args[IPSET_CB_ARG0]) {
 			/* Start listing: make sure set won't be destroyed */
 			pr_debug("reference set\n");
-			__ip_set_get(set);
+			set->ref++;
 		}
+		write_unlock_bh(&ip_set_ref_lock);
 		nlh = start_msg(skb, NETLINK_PORTID(cb->skb),
 				cb->nlh->nlmsg_seq, flags,
 				IPSET_CMD_LIST);
@@ -2000,7 +2014,8 @@ ip_set_net_init(struct net *net)
 #else
 		goto err_alloc;
 #endif
-	inst->is_deleted = 0;
+	inst->is_deleted = false;
+	inst->is_destroyed = false;
 	rcu_assign_pointer(inst->ip_set_list, list);
 	return 0;
 
@@ -2019,7 +2034,7 @@ ip_set_net_exit(struct net *net)
 	struct ip_set *set = NULL;
 	ip_set_id_t i;
 
-	inst->is_deleted = 1; /* flag for ip_set_nfnl_put */
+	inst->is_deleted = true; /* flag for ip_set_nfnl_put */
 
 	for (i = 0; i < inst->ip_set_max; i++) {
 		set = ip_set(inst, i);
