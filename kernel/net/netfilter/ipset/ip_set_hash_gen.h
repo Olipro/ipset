@@ -244,6 +244,14 @@ htable_bits(u32 hashsize)
 #define mtype_variant		IPSET_TOKEN(MTYPE, _variant)
 #define mtype_data_match	IPSET_TOKEN(MTYPE, _data_match)
 
+#ifndef MTYPE
+#error "MTYPE is not defined!"
+#endif
+
+#ifndef HOST_MASK
+#error "HOST_MASK is not defined!"
+#endif
+
 #ifndef HKEY_DATALEN
 #define HKEY_DATALEN		sizeof(struct mtype_elem)
 #endif
@@ -253,6 +261,9 @@ htable_bits(u32 hashsize)
 	& jhash_mask(htable_bits))
 
 #ifndef htype
+#ifndef HTYPE
+#error "HTYPE is not defined!"
+#endif /* HTYPE */
 #define htype			HTYPE
 
 /* The generic hash structure */
@@ -276,7 +287,7 @@ struct htype {
 	struct net_prefixes nets[0]; /* book-keeping of prefixes */
 #endif
 };
-#endif
+#endif /* htype */
 
 #ifdef IP_SET_HASH_WITH_NETS
 /* Network cidr size book keeping when the hash stores different
