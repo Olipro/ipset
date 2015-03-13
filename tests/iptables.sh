@@ -95,6 +95,11 @@ del)
 	$cmd -F INPUT
 	$cmd -A INPUT -j SET --del-set ipport src,src
 	;;
+add)
+	$ipset n test hash:net $family 2>/dev/null
+	$cmd -F INPUT
+	$cmd -A INPUT -j SET --add-set test src
+	;;
 timeout)
 	$ipset n test hash:ip,port timeout 2
 	$cmd -A INPUT -j SET --add-set test src,src --timeout 10 --exist
