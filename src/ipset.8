@@ -95,9 +95,8 @@ ignores if the entry already added to the set.
 \fBdel\fP \fISETNAME\fP \fIDEL\-ENTRY\fP [ \fIDEL\-OPTIONS\fP ]
 Delete an entry from a set. If the
 \fB\-exist\fR
-option is specified,
-\fBipset\fR
-ignores if the entry does not added to (already expired from) the set.
+option is specified and the entry is not in the set (maybe already expired),
+then the command is ignored.
 .TP 
 \fBtest\fP \fISETNAME\fP \fITEST\-ENTRY\fP [ \fITEST\-OPTIONS\fP ]
 Test wether an entry is in a set or not. Exit status number is zero
