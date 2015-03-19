@@ -479,6 +479,8 @@ mtype_expire(struct ip_set *set, struct htype *h, u8 nets_length, size_t dsize)
 			data = ahash_data(n, j, dsize);
 			if (ip_set_timeout_expired(ext_timeout(data, set))) {
 				pr_debug("expired %u/%u\n", i, j);
+				clear_bit(j, n->used);
+				smp_mb__after_atomic();
 #ifdef IP_SET_HASH_WITH_NETS
 				for (k = 0; k < IPSET_NET_COUNT; k++)
 					mtype_del_cidr(h,
@@ -487,7 +489,6 @@ mtype_expire(struct ip_set *set, struct htype *h, u8 nets_length, size_t dsize)
 						nets_length, k);
 #endif
 				ip_set_ext_destroy(set, data);
-				clear_bit(j, n->used);
 				h->elements--;
 				d++;
 			}
@@ -799,9 +800,10 @@ overwrite_extensions:
 		ip_set_init_comment(ext_comment(data, set), ext);
 	if (SET_WITH_SKBINFO(set))
 		ip_set_init_skbinfo(ext_skbinfo(data, set), ext);
-	/* Must come last */
+	/* Must come last for the case when timed out entry is reused */
 	if (SET_WITH_TIMEOUT(set))
 		ip_set_timeout_set(ext_timeout(data, set), ext->timeout);
+	smp_mb__before_atomic();
 	set_bit(j, n->used);
 	if (old != ERR_PTR(-ENOENT)) {
 		rcu_assign_pointer(hbucket(t, key), n);
@@ -851,6 +853,7 @@ mtype_del(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 
 		ret = 0;
 		clear_bit(i, n->used);
+		smp_mb__after_atomic();
 		if (i + 1 == n->pos)
 			n->pos--;
 		h->elements--;

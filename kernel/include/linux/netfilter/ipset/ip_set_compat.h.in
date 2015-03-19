@@ -204,6 +204,11 @@ static inline int nla_put_net32(struct sk_buff *skb, int attrtype, __be32 value)
 	list_entry((pos)->member.prev, typeof(*(pos)), member)
 #endif
 
+#ifndef smp_mb__before_atomic
+#define smp_mb__before_atomic()	smp_mb()
+#define smp_mb__after_atomic()	smp_mb()
+#endif
+
 #ifndef __aligned_u64
 #define __aligned_u64 __u64
 #endif
