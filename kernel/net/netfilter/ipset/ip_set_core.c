@@ -1257,6 +1257,7 @@ ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
 	unsigned int flags = NETLINK_PORTID(cb->skb) ? NLM_F_MULTI : 0;
 	struct ip_set_net *inst = ip_set_pernet(sock_net(skb->sk));
 	u32 dump_type, dump_flags;
+	bool is_destroyed;
 	int ret = 0;
 
 	if (!cb->args[IPSET_CB_DUMP]) {
@@ -1286,13 +1287,14 @@ dump_last:
 		index = (ip_set_id_t)cb->args[IPSET_CB_INDEX];
 		write_lock_bh(&ip_set_ref_lock);
 		set = ip_set(inst, index);
-		if (set == NULL || inst->is_destroyed) {
+		is_destroyed = inst->is_destroyed;
+		if (set == NULL || is_destroyed) {
 			write_unlock_bh(&ip_set_ref_lock);
 			if (dump_type == DUMP_ONE) {
 				ret = -ENOENT;
 				goto out;
 			}
-			if (inst->is_destroyed) {
+			if (is_destroyed) {
 				/* All sets are just being destroyed */
 				ret = 0;
 				goto out;
