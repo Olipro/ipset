@@ -478,6 +478,7 @@ list_set_list(const struct ip_set *set,
 	struct nlattr *atd, *nested;
 	u32 i = 0, first = cb->args[IPSET_CB_ARG0];
 	struct set_elem *e;
+	int ret = 0;
 
 	atd = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!atd)
@@ -488,6 +489,7 @@ list_set_list(const struct ip_set *set,
 		i++;
 	}
 
+	rcu_read_lock();
 	list_for_each_entry_from(e, &map->members, list) {
 		i++;
 		if (SET_WITH_TIMEOUT(set) &&
@@ -497,7 +499,8 @@ list_set_list(const struct ip_set *set,
 		if (!nested) {
 			if (i == first) {
 				nla_nest_cancel(skb, atd);
-				return -EMSGSIZE;
+				ret = -EMSGSIZE;
+				goto out;
 			}
 			goto nla_put_failure;
 		}
@@ -512,17 +515,19 @@ list_set_list(const struct ip_set *set,
 	ipset_nest_end(skb, atd);
 	/* Set listing finished */
 	cb->args[IPSET_CB_ARG0] = 0;
-	return 0;
+	goto out;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nested);
 	if (unlikely(i == first)) {
 		cb->args[IPSET_CB_ARG0] = 0;
-		return -EMSGSIZE;
+		ret = -EMSGSIZE;
 	}
 	cb->args[IPSET_CB_ARG0] = i - 1;
 	ipset_nest_end(skb, atd);
-	return 0;
+out:
+	rcu_read_unlock();
+	return ret;
 }
 
 static bool

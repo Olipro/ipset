@@ -203,10 +203,13 @@ mtype_list(const struct ip_set *set,
 	struct nlattr *adt, *nested;
 	void *x;
 	u32 id, first = cb->args[IPSET_CB_ARG0];
+	int ret = 0;
 
 	adt = ipset_nest_start(skb, IPSET_ATTR_ADT);
 	if (!adt)
 		return -EMSGSIZE;
+	/* Extensions may be replaced */
+	rcu_read_lock();
 	for (; cb->args[IPSET_CB_ARG0] < map->elements;
 	     cb->args[IPSET_CB_ARG0]++) {
 		id = cb->args[IPSET_CB_ARG0];
@@ -222,7 +225,8 @@ mtype_list(const struct ip_set *set,
 		if (!nested) {
 			if (id == first) {
 				nla_nest_cancel(skb, adt);
-				return -EMSGSIZE;
+				ret = -EMSGSIZE;
+				goto out;
 			}
 
 			goto nla_put_failure;
@@ -239,16 +243,18 @@ mtype_list(const struct ip_set *set,
 	/* Set listing finished */
 	cb->args[IPSET_CB_ARG0] = 0;
 
-	return 0;
+	goto out;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nested);
 	if (unlikely(id == first)) {
 		cb->args[IPSET_CB_ARG0] = 0;
-		return -EMSGSIZE;
+		ret = -EMSGSIZE;
 	}
 	ipset_nest_end(skb, adt);
-	return 0;
+out:
+	rcu_read_unlock();
+	return ret;
 }
 
 static void
