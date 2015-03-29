@@ -144,10 +144,12 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 
 	if (ret == IPSET_ADD_FAILED) {
 		if (SET_WITH_TIMEOUT(set) &&
-		    ip_set_timeout_expired(ext_timeout(x, set)))
+		    ip_set_timeout_expired(ext_timeout(x, set))) {
 			ret = 0;
-		else if (!(flags & IPSET_FLAG_EXIST))
+		} else if (!(flags & IPSET_FLAG_EXIST)) {
+			set_bit(e->id, map->members);
 			return -IPSET_ERR_EXIST;
+		}
 		/* Element is re-added, cleanup extensions */
 		ip_set_ext_destroy(set, x);
 	}
@@ -165,6 +167,10 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 		ip_set_init_comment(ext_comment(x, set), ext);
 	if (SET_WITH_SKBINFO(set))
 		ip_set_init_skbinfo(ext_skbinfo(x, set), ext);
+
+	/* Activate element */
+	set_bit(e->id, map->members);
+
 	return 0;
 }
 
