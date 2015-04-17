@@ -307,6 +307,7 @@ bitmap_port_init(void)
 static void __exit
 bitmap_port_fini(void)
 {
+	rcu_barrier();
 	ip_set_type_unregister(&bitmap_port_type);
 }
 

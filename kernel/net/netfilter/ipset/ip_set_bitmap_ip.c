@@ -378,6 +378,7 @@ bitmap_ip_init(void)
 static void __exit
 bitmap_ip_fini(void)
 {
+	rcu_barrier();
 	ip_set_type_unregister(&bitmap_ip_type);
 }
 
