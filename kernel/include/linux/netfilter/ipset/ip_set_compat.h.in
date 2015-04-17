@@ -42,6 +42,7 @@
 #@HAVE_TCF_EMATCH_STRUCT_NET@ HAVE_TCF_EMATCH_STRUCT_NET
 #@HAVE_LIST_LAST_ENTRY@ HAVE_LIST_LAST_ENTRY
 #@HAVE_LIST_NEXT_ENTRY@ HAVE_LIST_NEXT_ENTRY
+#@HAVE_ETHER_ADDR_COPY@ HAVE_ETHER_ADDR_COPY
 
 /* Not everything could be moved here. Compatibility stuffs can be found in
  * xt_set.c, ip_set_core.c, ip_set_getport.c, pfxlen.c too.
@@ -202,6 +203,10 @@ static inline int nla_put_net32(struct sk_buff *skb, int attrtype, __be32 value)
 	list_entry((pos)->member.next, typeof(*(pos)), member)
 #define list_prev_entry(pos, member)	\
 	list_entry((pos)->member.prev, typeof(*(pos)), member)
+#endif
+
+#ifndef HAVE_ETHER_ADDR_COPY
+#define ether_addr_copy(dst, src)	memcpy(dst, src, ETH_ALEN)
 #endif
 
 #ifndef smp_mb__before_atomic

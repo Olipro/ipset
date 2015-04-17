@@ -296,6 +296,7 @@ hash_ipportip6_uadt(struct ip_set *set, struct nlattr *tb[],
 		return -IPSET_ERR_HASH_RANGE_UNSUPPORTED;
 	if (unlikely(tb[IPSET_ATTR_CIDR])) {
 		u8 cidr = nla_get_u8(tb[IPSET_ATTR_CIDR]);
+
 		if (cidr != HOST_MASK)
 			return -IPSET_ERR_INVALID_CIDR;
 	}

@@ -35,7 +35,7 @@
 /* Number of elements to store in an initial array block */
 #define AHASH_INIT_SIZE			4
 /* Max number of elements to store in an array block */
-#define AHASH_MAX_SIZE			(3*AHASH_INIT_SIZE)
+#define AHASH_MAX_SIZE			(3 * AHASH_INIT_SIZE)
 /* Max muber of elements in the array block when tuned */
 #define AHASH_MAX_TUNED			64
 
@@ -105,7 +105,7 @@ htable_size(u8 hbits)
 	if (hbits > 31)
 		return 0;
 	hsize = jhash_size(hbits);
-	if ((((size_t)-1) - sizeof(struct htable))/sizeof(struct hbucket *)
+	if ((((size_t)-1) - sizeof(struct htable)) / sizeof(struct hbucket *)
 	    < hsize)
 		return 0;
 
@@ -257,7 +257,7 @@ htable_bits(u32 hashsize)
 #endif
 
 #define HKEY(data, initval, htable_bits)			\
-(jhash2((u32 *)(data), HKEY_DATALEN/sizeof(u32), initval)	\
+(jhash2((u32 *)(data), HKEY_DATALEN / sizeof(u32), initval)	\
 	& jhash_mask(htable_bits))
 
 #ifndef htype
@@ -350,7 +350,7 @@ mtype_ahash_memsize(const struct htype *h, const struct htable *t,
 #endif
 	for (i = 0; i < jhash_size(t->htable_bits); i++) {
 		n = rcu_dereference_bh(hbucket(t, i));
-		if (n == NULL)
+		if (!n)
 			continue;
 		memsize += sizeof(struct hbucket) + n->size * dsize;
 	}
@@ -384,7 +384,7 @@ mtype_flush(struct ip_set *set)
 	t = ipset_dereference_protected(h->table, set);
 	for (i = 0; i < jhash_size(t->htable_bits); i++) {
 		n = __ipset_dereference_protected(hbucket(t, i), 1);
-		if (n == NULL)
+		if (!n)
 			continue;
 		if (set->extensions & IPSET_EXT_DESTROY)
 			mtype_ext_cleanup(set, n);
@@ -407,7 +407,7 @@ mtype_ahash_destroy(struct ip_set *set, struct htable *t, bool ext_destroy)
 
 	for (i = 0; i < jhash_size(t->htable_bits); i++) {
 		n = __ipset_dereference_protected(hbucket(t, i), 1);
-		if (n == NULL)
+		if (!n)
 			continue;
 		if (set->extensions & IPSET_EXT_DESTROY && ext_destroy)
 			mtype_ext_cleanup(set, n);
@@ -481,7 +481,7 @@ mtype_expire(struct ip_set *set, struct htype *h, u8 nets_length, size_t dsize)
 	t = ipset_dereference_protected(h->table, set);
 	for (i = 0; i < jhash_size(t->htable_bits); i++) {
 		n = __ipset_dereference_protected(hbucket(t, i), 1);
-		if (n == NULL)
+		if (!n)
 			continue;
 		for (j = 0, d = 0; j < n->pos; j++) {
 			if (!test_bit(j, n->used)) {
@@ -599,7 +599,7 @@ retry:
 		 set->name, orig->htable_bits, htable_bits, orig);
 	for (i = 0; i < jhash_size(orig->htable_bits); i++) {
 		n = __ipset_dereference_protected(hbucket(orig, i), 1);
-		if (n == NULL)
+		if (!n)
 			continue;
 		for (j = 0; j < n->pos; j++) {
 			if (!test_bit(j, n->used))
@@ -711,7 +711,7 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 	t = ipset_dereference_protected(h->table, set);
 	key = HKEY(value, h->initval, t->htable_bits);
 	n = __ipset_dereference_protected(hbucket(t, key), 1);
-	if (n == NULL) {
+	if (!n) {
 		if (forceadd) {
 			if (net_ratelimit())
 				pr_warn("Set %s is full, maxelem %u reached\n",
@@ -723,7 +723,7 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 		old = NULL;
 		n = kzalloc(sizeof(*n) + AHASH_INIT_SIZE * set->dsize,
 			    GFP_ATOMIC);
-		if (n == NULL)
+		if (!n)
 			return -ENOMEM;
 		n->size = AHASH_INIT_SIZE;
 		goto copy_elem;
@@ -958,7 +958,7 @@ mtype_test_cidrs(struct ip_set *set, struct mtype_elem *d,
 #endif
 		key = HKEY(d, h->initval, t->htable_bits);
 		n =  rcu_dereference_bh(hbucket(t, key));
-		if (n == NULL)
+		if (!n)
 			continue;
 		for (i = 0; i < n->pos; i++) {
 			if (!test_bit(i, n->used))
@@ -1016,7 +1016,7 @@ mtype_test(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 
 	key = HKEY(d, h->initval, t->htable_bits);
 	n = rcu_dereference_bh(hbucket(t, key));
-	if (n == NULL) {
+	if (!n) {
 		ret = 0;
 		goto out;
 	}
@@ -1090,10 +1090,10 @@ mtype_uref(struct ip_set *set, struct netlink_callback *cb, bool start)
 		rcu_read_lock_bh();
 		t = rcu_dereference_bh_nfnl(h->table);
 		atomic_inc(&t->uref);
-		cb->args[IPSET_CB_PRIVATE] = (unsigned long) t;
+		cb->args[IPSET_CB_PRIVATE] = (unsigned long)t;
 		rcu_read_unlock_bh();
 	} else if (cb->args[IPSET_CB_PRIVATE]) {
-		t = (struct htable *) cb->args[IPSET_CB_PRIVATE];
+		t = (struct htable *)cb->args[IPSET_CB_PRIVATE];
 		if (atomic_dec_and_test(&t->uref) && atomic_read(&t->ref)) {
 			/* Resizing didn't destroy the hash table */
 			pr_debug("Table destroy by dump: %p\n", t);
@@ -1122,7 +1122,7 @@ mtype_list(const struct ip_set *set,
 		return -EMSGSIZE;
 
 	pr_debug("list hash set %s\n", set->name);
-	t = (const struct htable *) cb->args[IPSET_CB_PRIVATE];
+	t = (const struct htable *)cb->args[IPSET_CB_PRIVATE];
 	/* Expire may replace a hbucket with another one */
 	rcu_read_lock();
 	for (; cb->args[IPSET_CB_ARG0] < jhash_size(t->htable_bits);
@@ -1131,7 +1131,7 @@ mtype_list(const struct ip_set *set,
 		n = rcu_dereference(hbucket(t, cb->args[IPSET_CB_ARG0]));
 		pr_debug("cb->arg bucket: %lu, t %p n %p\n",
 			 cb->args[IPSET_CB_ARG0], t, n);
-		if (n == NULL)
+		if (!n)
 			continue;
 		for (i = 0; i < n->pos; i++) {
 			if (!test_bit(i, n->used))

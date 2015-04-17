@@ -34,7 +34,7 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 		const struct tcphdr *th;
 
 		th = skb_header_pointer(skb, protooff, sizeof(_tcph), &_tcph);
-		if (th == NULL)
+		if (!th)
 			/* No choice either */
 			return false;
 
@@ -46,7 +46,7 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 		const sctp_sctphdr_t *sh;
 
 		sh = skb_header_pointer(skb, protooff, sizeof(_sh), &_sh);
-		if (sh == NULL)
+		if (!sh)
 			/* No choice either */
 			return false;
 
@@ -59,7 +59,7 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 		const struct udphdr *uh;
 
 		uh = skb_header_pointer(skb, protooff, sizeof(_udph), &_udph);
-		if (uh == NULL)
+		if (!uh)
 			/* No choice either */
 			return false;
 
@@ -71,7 +71,7 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 		const struct icmphdr *ic;
 
 		ic = skb_header_pointer(skb, protooff, sizeof(_ich), &_ich);
-		if (ic == NULL)
+		if (!ic)
 			return false;
 
 		*port = (__force __be16)htons((ic->type << 8) | ic->code);
@@ -82,7 +82,7 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 		const struct icmp6hdr *ic;
 
 		ic = skb_header_pointer(skb, protooff, sizeof(_ich), &_ich);
-		if (ic == NULL)
+		if (!ic)
 			return false;
 
 		*port = (__force __be16)

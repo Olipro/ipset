@@ -59,7 +59,7 @@ struct bitmap_ip_adt_elem {
 static inline u32
 ip_to_id(const struct bitmap_ip *m, u32 ip)
 {
-	return ((ip & ip_set_hostmask(m->netmask)) - m->first_ip)/m->hosts;
+	return ((ip & ip_set_hostmask(m->netmask)) - m->first_ip) / m->hosts;
 }
 
 /* Common functions */

@@ -64,7 +64,7 @@ struct bitmap_ipmac_adt_elem {
 struct bitmap_ipmac_elem {
 	unsigned char ether[ETH_ALEN];
 	unsigned char filled;
-} __attribute__ ((aligned));
+} __aligned(8);
 
 static inline u32
 ip_to_id(const struct bitmap_ipmac *m, u32 ip)
@@ -90,7 +90,7 @@ bitmap_ipmac_do_test(const struct bitmap_ipmac_adt_elem *e,
 		return 0;
 	elem = get_elem(map->extensions, e->id, dsize);
 	if (elem->filled == MAC_FILLED)
-		return e->ether == NULL ||
+		return !e->ether ||
 		       ether_addr_equal(e->ether, elem->ether);
 	/* Trigger kernel to fill out the ethernet address */
 	return -EAGAIN;
@@ -156,7 +156,7 @@ bitmap_ipmac_do_add(const struct bitmap_ipmac_adt_elem *e,
 				/* memcpy isn't atomic */
 				clear_bit(e->id, map->members);
 				smp_mb__after_atomic();
-				memcpy(elem->ether, e->ether, ETH_ALEN);
+				ether_addr_copy(elem->ether, e->ether);
 			}
 			return IPSET_ADD_FAILED;
 		} else if (!e->ether)
@@ -165,19 +165,18 @@ bitmap_ipmac_do_add(const struct bitmap_ipmac_adt_elem *e,
 		/* Fill the MAC address and trigger the timer activation */
 		clear_bit(e->id, map->members);
 		smp_mb__after_atomic();
-		memcpy(elem->ether, e->ether, ETH_ALEN);
+		ether_addr_copy(elem->ether, e->ether);
 		elem->filled = MAC_FILLED;
 		return IPSET_ADD_START_STORED_TIMEOUT;
 	} else if (e->ether) {
 		/* We can store MAC too */
-		memcpy(elem->ether, e->ether, ETH_ALEN);
+		ether_addr_copy(elem->ether, e->ether);
 		elem->filled = MAC_FILLED;
 		return 0;
-	} else {
-		elem->filled = MAC_UNSET;
-		/* MAC is not stored yet, don't start timer */
-		return IPSET_ADD_STORE_PLAIN_TIMEOUT;
 	}
+	elem->filled = MAC_UNSET;
+	/* MAC is not stored yet, don't start timer */
+	return IPSET_ADD_STORE_PLAIN_TIMEOUT;
 }
 
 static inline int

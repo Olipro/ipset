@@ -370,7 +370,7 @@ hash_netnet6_kadt(struct ip_set *set, const struct sk_buff *skb,
 	e.cidr[0] = INIT_CIDR(h->nets[0].cidr[0], HOST_MASK);
 	e.cidr[1] = INIT_CIDR(h->nets[0].cidr[1], HOST_MASK);
 	if (adt == IPSET_TEST)
-		e.ccmp = (HOST_MASK << (sizeof(u8)*8)) | HOST_MASK;
+		e.ccmp = (HOST_MASK << (sizeof(u8) * 8)) | HOST_MASK;
 
 	ip6addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip[0].in6);
 	ip6addrptr(skb, opt->flags & IPSET_DIM_TWO_SRC, &e.ip[1].in6);

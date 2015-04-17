@@ -213,7 +213,7 @@ list_set_utest(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 			ret = !list_is_last(&e->list, &map->members) &&
 			      next->id == d->refid;
 		} else {
-			ret = prev != NULL && prev->id == d->refid;
+			ret = prev && prev->id == d->refid;
 		}
 		return ret;
 	}
@@ -292,7 +292,7 @@ list_set_uadd(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 			n = list_prev_entry(prev, list);
 	}
 	/* Can we replace a timed out entry? */
-	if (n != NULL &&
+	if (n &&
 	    !(SET_WITH_TIMEOUT(set) &&
 	      ip_set_timeout_expired(ext_timeout(n, set))))
 		n =  NULL;
@@ -338,7 +338,7 @@ list_set_udel(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 			    next->id != d->refid)
 				return -IPSET_ERR_REF_EXIST;
 		} else if (d->before < 0) {
-			if (prev == NULL || prev->id != d->refid)
+			if (!prev || prev->id != d->refid)
 				return -IPSET_ERR_REF_EXIST;
 		}
 		list_set_del(set, e);

@@ -396,6 +396,16 @@ else
 	AC_SUBST(HAVE_LIST_NEXT_ENTRY, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for ether_addr_copy])
+if test -f $ksourcedir/include/linux/etherdevice.h && \
+   $GREP -q 'ether_addr_copy' $ksourcedir/include/linux/etherdevice.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_ETHER_ADDR_COPY, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_ETHER_ADDR_COPY, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
