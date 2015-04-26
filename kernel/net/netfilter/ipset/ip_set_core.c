@@ -947,12 +947,9 @@ ip_set_setname_policy[IPSET_ATTR_CMD_MAX + 1] = {
 };
 
 static void
-ip_set_destroy_set(struct ip_set_net *inst, ip_set_id_t index)
+ip_set_destroy_set(struct ip_set *set)
 {
-	struct ip_set *set = ip_set(inst, index);
-
 	pr_debug("set: %s\n",  set->name);
-	ip_set(inst, index) = NULL;
 
 	/* Must call it without holding any lock */
 	set->variant->destroy(set);
@@ -996,8 +993,10 @@ ip_set_destroy(struct sock *ctnl, struct sk_buff *skb,
 		read_unlock_bh(&ip_set_ref_lock);
 		for (i = 0; i < inst->ip_set_max; i++) {
 			s = ip_set(inst, i);
-			if (s)
-				ip_set_destroy_set(inst, i);
+			if (s) {
+				ip_set(inst, i) = NULL;
+				ip_set_destroy_set(s);
+			}
 		}
 		/* Modified by ip_set_destroy() only, which is serialized */
 		inst->is_destroyed = false;
@@ -1011,9 +1010,10 @@ ip_set_destroy(struct sock *ctnl, struct sk_buff *skb,
 			ret = -IPSET_ERR_BUSY;
 			goto out;
 		}
+		ip_set(inst, i) = NULL;
 		read_unlock_bh(&ip_set_ref_lock);
 
-		ip_set_destroy_set(inst, i);
+		ip_set_destroy_set(s);
 	}
 	return 0;
 out:
@@ -2049,8 +2049,10 @@ ip_set_net_exit(struct net *net)
 
 	for (i = 0; i < inst->ip_set_max; i++) {
 		set = ip_set(inst, i);
-		if (set)
-			ip_set_destroy_set(inst, i);
+		if (set) {
+			ip_set(inst, i) = NULL;
+			ip_set_destroy_set(set);
+		}
 	}
 	kfree(rcu_dereference_protected(inst->ip_set_list, 1));
 #ifndef HAVE_NET_OPS_ID
