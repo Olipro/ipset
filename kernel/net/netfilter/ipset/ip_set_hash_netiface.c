@@ -18,6 +18,7 @@
 #include <net/netlink.h>
 
 #include <linux/netfilter.h>
+#include <linux/netfilter_bridge.h>
 #include <linux/netfilter/ipset/pfxlen.h>
 #include <linux/netfilter/ipset/ip_set.h>
 #include <linux/netfilter/ipset/ip_set_hash.h>
@@ -134,6 +135,22 @@ hash_netiface4_data_next(struct hash_netiface4_elem *next,
 #define HKEY_DATALEN	sizeof(struct hash_netiface4_elem_hashed)
 #include "ip_set_hash_gen.h"
 
+#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+static const char *get_physindev_name(const struct sk_buff *skb)
+{
+	struct net_device *dev = nf_bridge_get_physindev(skb);
+
+	return dev ? dev->name : NULL;
+}
+
+static const char *get_physoutdev_name(const struct sk_buff *skb)
+{
+	struct net_device *dev = nf_bridge_get_physoutdev(skb);
+
+	return dev ? dev->name : NULL;
+}
+#endif
+
 static int
 hash_netiface4_kadt(struct ip_set *set, const struct sk_buff *skb,
 		    const struct xt_action_param *par,
@@ -156,17 +173,16 @@ hash_netiface4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	e.ip &= ip_set_netmask(e.cidr);
 
 #define IFACE(dir)	(par->dir ? par->dir->name : "")
-#define PHYSDEV(dir)	(nf_bridge->dir ? nf_bridge->dir->name : "")
 #define SRCDIR		(opt->flags & IPSET_DIM_TWO_SRC)
 
 	if (opt->cmdflags & IPSET_FLAG_PHYSDEV) {
 #if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-		const struct nf_bridge_info *nf_bridge = skb->nf_bridge;
+		const char *eiface = SRCDIR ? get_physindev_name(skb) :
+					      get_phyoutdev_name(skb);
 
-		if (!nf_bridge)
+		if (!eiface)
 			return -EINVAL;
-		STRLCPY(e.iface,
-			SRCDIR ? PHYSDEV(physindev) : PHYSDEV(physoutdev));
+		STRLCPY(e.iface, eiface);
 		e.physdev = 1;
 #endif
 	} else {
@@ -371,12 +387,12 @@ hash_netiface6_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	if (opt->cmdflags & IPSET_FLAG_PHYSDEV) {
 #if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-		const struct nf_bridge_info *nf_bridge = skb->nf_bridge;
+		const char *eiface = SRCDIR ? get_physindev_name(skb) :
+					      get_phyoutdev_name(skb);
 
-		if (!nf_bridge)
+		if (!eiface)
 			return -EINVAL;
-		STRLCPY(e.iface,
-			SRCDIR ? PHYSDEV(physindev) : PHYSDEV(physoutdev));
+		STRLCPY(e.iface, eiface);
 		e.physdev = 1;
 #endif
 	} else {

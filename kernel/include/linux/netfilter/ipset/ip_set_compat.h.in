@@ -43,6 +43,7 @@
 #@HAVE_LIST_LAST_ENTRY@ HAVE_LIST_LAST_ENTRY
 #@HAVE_LIST_NEXT_ENTRY@ HAVE_LIST_NEXT_ENTRY
 #@HAVE_ETHER_ADDR_COPY@ HAVE_ETHER_ADDR_COPY
+#@HAVE_NF_BRIDGE_GET_PHYSDEV@ HAVE_NF_BRIDGE_GET_PHYSDEV
 
 /* Not everything could be moved here. Compatibility stuffs can be found in
  * xt_set.c, ip_set_core.c, ip_set_getport.c, pfxlen.c too.
@@ -207,6 +208,22 @@ static inline int nla_put_net32(struct sk_buff *skb, int attrtype, __be32 value)
 
 #ifndef HAVE_ETHER_ADDR_COPY
 #define ether_addr_copy(dst, src)	memcpy(dst, src, ETH_ALEN)
+#endif
+
+#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+#ifndef HAVE_NF_BRIDGE_GET_PHYSDEV
+static inline struct net_device *
+nf_bridge_get_physindev(const struct sk_buff *skb)
+{
+	return skb->nf_bridge ? skb->nf_bridge->physindev : NULL;
+}
+
+static inline struct net_device *
+nf_bridge_get_physoutdev(const struct sk_buff *skb)
+{
+	return skb->nf_bridge ? skb->nf_bridge->physoutdev : NULL;
+}
+#endif
 #endif
 
 #ifndef smp_mb__before_atomic

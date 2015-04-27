@@ -406,6 +406,16 @@ else
 	AC_SUBST(HAVE_ETHER_ADDR_COPY, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for nf_bridge_get_physindev])
+if test -f $ksourcedir/include/linux/netfilter_bridge.h && \
+   $GREP -q 'nf_bridge_get_physindev' $ksourcedir/include/linux/netfilter_bridge.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NF_BRIDGE_GET_PHYSDEV, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NF_BRIDGE_GET_PHYSDEV, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
