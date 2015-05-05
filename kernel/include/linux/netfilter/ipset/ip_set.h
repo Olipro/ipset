@@ -93,17 +93,6 @@ struct ip_set_ext_type {
 
 extern const struct ip_set_ext_type ip_set_extensions[];
 
-struct ip_set_ext {
-	u64 packets;
-	u64 bytes;
-	u32 timeout;
-	u32 skbmark;
-	u32 skbmarkmask;
-	u32 skbprio;
-	u16 skbqueue;
-	char *comment;
-};
-
 struct ip_set_counter {
 	atomic64_t bytes;
 	atomic64_t packets;
@@ -123,6 +112,15 @@ struct ip_set_skbinfo {
 	u32 skbmarkmask;
 	u32 skbprio;
 	u16 skbqueue;
+	u16 __pad;
+};
+
+struct ip_set_ext {
+	struct ip_set_skbinfo skbinfo;
+	u64 packets;
+	u64 bytes;
+	char *comment;
+	u32 timeout;
 };
 
 struct ip_set;
@@ -355,10 +353,7 @@ ip_set_get_skbinfo(struct ip_set_skbinfo *skbinfo,
 		   const struct ip_set_ext *ext,
 		   struct ip_set_ext *mext, u32 flags)
 {
-	mext->skbmark = skbinfo->skbmark;
-	mext->skbmarkmask = skbinfo->skbmarkmask;
-	mext->skbprio = skbinfo->skbprio;
-	mext->skbqueue = skbinfo->skbqueue;
+	mext->skbinfo = *skbinfo;
 }
 
 static inline bool
@@ -381,10 +376,7 @@ static inline void
 ip_set_init_skbinfo(struct ip_set_skbinfo *skbinfo,
 		    const struct ip_set_ext *ext)
 {
-	skbinfo->skbmark = ext->skbmark;
-	skbinfo->skbmarkmask = ext->skbmarkmask;
-	skbinfo->skbprio = ext->skbprio;
-	skbinfo->skbqueue = ext->skbqueue;
+	*skbinfo = ext->skbinfo;
 }
 
 /* Netlink CB args */
