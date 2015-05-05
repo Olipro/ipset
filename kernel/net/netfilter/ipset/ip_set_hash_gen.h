@@ -17,7 +17,9 @@
 #define ipset_dereference_protected(p, set) \
 	__ipset_dereference_protected(p, spin_is_locked(&(set)->lock))
 
-#define rcu_dereference_bh_nfnl(p)	rcu_dereference_bh_check(p, 1)
+#ifndef rcu_dereference_bh_nfnl
+#define rcu_dereference_bh_nfnl(p, ss)	rcu_dereference_bh_check(p, 1)
+#endif
 
 /* Hashing which uses arrays to resolve clashing. The hash table is resized
  * (doubled) when searching becomes too long.
@@ -570,7 +572,7 @@ mtype_resize(struct ip_set *set, bool retried)
 		return -ENOMEM;
 #endif
 	rcu_read_lock_bh();
-	orig = rcu_dereference_bh_nfnl(h->table);
+	orig = rcu_dereference_bh_nfnl(h->table, NFNL_SUBSYS_IPSET);
 	htable_bits = orig->htable_bits;
 	rcu_read_unlock_bh();
 
@@ -1046,7 +1048,7 @@ mtype_head(struct ip_set *set, struct sk_buff *skb)
 	u8 htable_bits;
 
 	rcu_read_lock_bh();
-	t = rcu_dereference_bh_nfnl(h->table);
+	t = rcu_dereference_bh_nfnl(h->table, NFNL_SUBSYS_IPSET);
 	memsize = mtype_ahash_memsize(h, t, NLEN(set->family), set->dsize);
 	htable_bits = t->htable_bits;
 	rcu_read_unlock_bh();
@@ -1088,7 +1090,7 @@ mtype_uref(struct ip_set *set, struct netlink_callback *cb, bool start)
 
 	if (start) {
 		rcu_read_lock_bh();
-		t = rcu_dereference_bh_nfnl(h->table);
+		t = rcu_dereference_bh_nfnl(h->table, NFNL_SUBSYS_IPSET);
 		atomic_inc(&t->uref);
 		cb->args[IPSET_CB_PRIVATE] = (unsigned long)t;
 		rcu_read_unlock_bh();
