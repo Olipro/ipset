@@ -442,24 +442,35 @@ list_set_destroy(struct ip_set *set)
 	set->data = NULL;
 }
 
+/* Calculate the actual memory size of the set data */
+static size_t
+list_set_memsize(const struct list_set *map, size_t dsize)
+{
+	struct set_elem *e;
+	size_t memsize;
+	u32 n = 0;
+
+	list_for_each_entry(e, &map->members, list)
+		n++;
+
+	memsize = sizeof(*map) + n * dsize;
+
+	return memsize;
+}
+
 static int
 list_set_head(struct ip_set *set, struct sk_buff *skb)
 {
 	const struct list_set *map = set->data;
 	struct nlattr *nested;
-	struct set_elem *e;
-	u32 n = 0;
-
-	list_for_each_entry(e, &map->members, list)
-		n++;
+	size_t memsize = list_set_memsize(map, set->dsize);
 
 	nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 	if (!nested)
 		goto nla_put_failure;
 	if (nla_put_net32(skb, IPSET_ATTR_SIZE, htonl(map->size)) ||
 	    nla_put_net32(skb, IPSET_ATTR_REFERENCES, htonl(set->ref - 1)) ||
-	    nla_put_net32(skb, IPSET_ATTR_MEMSIZE,
-			  htonl(sizeof(*map) + n * set->dsize)))
+	    nla_put_net32(skb, IPSET_ATTR_MEMSIZE, htonl(memsize)))
 		goto nla_put_failure;
 	if (unlikely(ip_set_put_flags(skb, set)))
 		goto nla_put_failure;

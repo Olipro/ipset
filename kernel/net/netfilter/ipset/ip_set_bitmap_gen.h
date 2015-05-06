@@ -22,6 +22,7 @@
 #define mtype_kadt		IPSET_TOKEN(MTYPE, _kadt)
 #define mtype_uadt		IPSET_TOKEN(MTYPE, _uadt)
 #define mtype_destroy		IPSET_TOKEN(MTYPE, _destroy)
+#define mtype_memsize		IPSET_TOKEN(MTYPE, _memsize)
 #define mtype_flush		IPSET_TOKEN(MTYPE, _flush)
 #define mtype_head		IPSET_TOKEN(MTYPE, _head)
 #define mtype_same_set		IPSET_TOKEN(MTYPE, _same_set)
@@ -87,21 +88,30 @@ mtype_flush(struct ip_set *set)
 	memset(map->members, 0, map->memsize);
 }
 
+/* Calculate the actual memory size of the set data */
+static size_t
+mtype_memsize(const struct mtype *map, size_t dsize)
+{
+	size_t memsize = sizeof(*map) +
+			 map->memsize +
+			 map->elements * dsize;
+
+	return memsize;
+}
+
 static int
 mtype_head(struct ip_set *set, struct sk_buff *skb)
 {
 	const struct mtype *map = set->data;
 	struct nlattr *nested;
+	size_t memsize = mtype_memsize(map, set->dsize);
 
 	nested = ipset_nest_start(skb, IPSET_ATTR_DATA);
 	if (!nested)
 		goto nla_put_failure;
 	if (mtype_do_head(skb, map) ||
 	    nla_put_net32(skb, IPSET_ATTR_REFERENCES, htonl(set->ref - 1)) ||
-	    nla_put_net32(skb, IPSET_ATTR_MEMSIZE,
-			  htonl(sizeof(*map) +
-				map->memsize +
-				set->dsize * map->elements)))
+	    nla_put_net32(skb, IPSET_ATTR_MEMSIZE, htonl(memsize)))
 		goto nla_put_failure;
 	if (unlikely(ip_set_put_flags(skb, set)))
 		goto nla_put_failure;
