@@ -69,5 +69,5 @@ ip_set_comment_free(struct ip_set_comment *comment)
 	rcu_assign_pointer(comment->c, NULL);
 }
 
-#endif
-#endif
+#endif /* __KERNEL__ */
+#endif /* _IP_SET_COMMENT_H */
