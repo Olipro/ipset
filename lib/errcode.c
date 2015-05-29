@@ -148,8 +148,6 @@ static const struct ipset_errcode_table list_errcode_table[] = {
 	{ },
 };
 
-#define MATCH_TYPENAME(a, b)	STRNEQ(a, b, strlen(b))
-
 /**
  * ipset_errcode - interpret a kernel error code
  * @session: session structure
