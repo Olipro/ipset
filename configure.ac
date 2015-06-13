@@ -416,6 +416,16 @@ else
 	AC_SUBST(HAVE_NF_BRIDGE_GET_PHYSDEV, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for nla_put_in_addr])
+if test -f $ksourcedir/include/net/netlink.h && \
+   $GREP -q 'nla_put_in_add' $ksourcedir/include/net/netlink.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NLA_PUT_IN_ADDR, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NLA_PUT_IN_ADDR, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then

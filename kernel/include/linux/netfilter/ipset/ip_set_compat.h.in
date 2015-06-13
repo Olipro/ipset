@@ -44,6 +44,7 @@
 #@HAVE_LIST_NEXT_ENTRY@ HAVE_LIST_NEXT_ENTRY
 #@HAVE_ETHER_ADDR_COPY@ HAVE_ETHER_ADDR_COPY
 #@HAVE_NF_BRIDGE_GET_PHYSDEV@ HAVE_NF_BRIDGE_GET_PHYSDEV
+#@HAVE_NLA_PUT_IN_ADDR@ HAVE_NLA_PUT_IN_ADDR
 
 /* Not everything could be moved here. Compatibility stuffs can be found in
  * xt_set.c, ip_set_core.c, ip_set_getport.c, pfxlen.c too.
@@ -224,6 +225,20 @@ nf_bridge_get_physoutdev(const struct sk_buff *skb)
 	return skb->nf_bridge ? skb->nf_bridge->physoutdev : NULL;
 }
 #endif
+#endif
+
+#ifndef HAVE_NLA_PUT_IN_ADDR
+static inline int nla_put_in_addr(struct sk_buff *skb, int attrtype,
+				  __be32 addr)
+{
+	return nla_put_be32(skb, attrtype, addr);
+}
+
+static inline int nla_put_in6_addr(struct sk_buff *skb, int attrtype,
+				   const struct in6_addr *addr)
+{
+	return nla_put(skb, attrtype, sizeof(*addr), addr);
+}
 #endif
 
 #ifndef smp_mb__before_atomic
