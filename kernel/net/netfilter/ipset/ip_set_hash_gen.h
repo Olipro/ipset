@@ -595,6 +595,7 @@ retry:
 
 	spin_lock_bh(&set->lock);
 	orig = __ipset_dereference_protected(h->table, 1);
+	/* There can't be another parallel resizing, but dumping is possible */
 	atomic_set(&orig->ref, 1);
 	atomic_inc(&orig->uref);
 	pr_debug("attempt to resize set %s from %u to %u, t %p\n",
@@ -622,8 +623,10 @@ retry:
 				m = kzalloc(sizeof(*m) +
 					    AHASH_INIT_SIZE * dsize,
 					    GFP_ATOMIC);
-				if (!m)
+				if (!m) {
 					ret = -ENOMEM;
+					goto cleanup;
+				}
 				m->size = AHASH_INIT_SIZE;
 				RCU_INIT_POINTER(hbucket(t, key), m);
 			} else if (m->pos >= m->size) {
@@ -639,15 +642,8 @@ retry:
 					if (!ht)
 						ret = -ENOMEM;
 				}
-				if (ret < 0) {
-					atomic_set(&orig->ref, 0);
-					atomic_dec(&orig->uref);
-					spin_unlock_bh(&set->lock);
-					mtype_ahash_destroy(set, t, false);
-					if (ret == -EAGAIN)
-						goto retry;
-					goto out;
-				}
+				if (ret < 0)
+					goto cleanup;
 				memcpy(ht, m, sizeof(struct hbucket) +
 					      m->size * dsize);
 				ht->size = m->size + AHASH_INIT_SIZE;
@@ -683,6 +679,15 @@ out:
 	kfree(tmp);
 #endif
 	return ret;
+
+cleanup:
+	atomic_set(&orig->ref, 0);
+	atomic_dec(&orig->uref);
+	spin_unlock_bh(&set->lock);
+	mtype_ahash_destroy(set, t, false);
+	if (ret == -EAGAIN)
+		goto retry;
+	goto out;
 }
 
 /* Add an element to a hash and update the internal counters when succeeded,
