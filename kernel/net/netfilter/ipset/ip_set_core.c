@@ -223,7 +223,7 @@ ip_set_type_register(struct ip_set_type *type)
 		 type->name, family_name(type->family),
 		 type->revision_min, type->revision_max);
 	ip_set_type_unlock();
-	synchronize_rcu();
+
 	return ret;
 }
 EXPORT_SYMBOL_GPL(ip_set_type_register);
