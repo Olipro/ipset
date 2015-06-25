@@ -166,6 +166,7 @@ __list_set_del(struct ip_set *set, struct set_elem *e)
 static inline void
 list_set_del(struct ip_set *set, struct set_elem *e)
 {
+	set->elements--;
 	list_del_rcu(&e->list);
 	__list_set_del(set, e);
 }
@@ -311,6 +312,7 @@ list_set_uadd(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 		list_add_rcu(&e->list, &prev->list);
 	else
 		list_add_tail_rcu(&e->list, &map->members);
+	set->elements++;
 
 	return 0;
 }
@@ -421,6 +423,7 @@ list_set_flush(struct ip_set *set)
 
 	list_for_each_entry_safe(e, n, &map->members, list)
 		list_set_del(set, e);
+	set->elements = 0;
 }
 
 static void
@@ -470,7 +473,8 @@ list_set_head(struct ip_set *set, struct sk_buff *skb)
 		goto nla_put_failure;
 	if (nla_put_net32(skb, IPSET_ATTR_SIZE, htonl(map->size)) ||
 	    nla_put_net32(skb, IPSET_ATTR_REFERENCES, htonl(set->ref - 1)) ||
-	    nla_put_net32(skb, IPSET_ATTR_MEMSIZE, htonl(memsize)))
+	    nla_put_net32(skb, IPSET_ATTR_MEMSIZE, htonl(memsize)) ||
+	    nla_put_net32(skb, IPSET_ATTR_ELEMENTS, htonl(set->elements)))
 		goto nla_put_failure;
 	if (unlikely(ip_set_put_flags(skb, set)))
 		goto nla_put_failure;

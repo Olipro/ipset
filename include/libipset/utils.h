@@ -19,9 +19,6 @@
 #define STRCASEQ(a, b)		(strcasecmp(a, b) == 0)
 #define STRNCASEQ(a, b, n)	(strncasecmp(a, b, n) == 0)
 
-/* Match set type names */
-#define MATCH_TYPENAME(a, b)    STRNEQ(a, b, strlen(b))
-
 /* Stringify tokens */
 #define _STR(c)			#c
 #define STR(c)			_STR(c)

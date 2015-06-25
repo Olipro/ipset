@@ -279,6 +279,11 @@ ipset add test 192.168.0.1 timeout 60
 .IP
 ipset \-exist add test 192.168.0.1 timeout 600
 .PP
+When listing the set, the number of entries printed in the header might be
+larger than the listed number of entries for sets with the timeout extensions:
+the number of entries in the set is updated when elements added/deleted to the
+set and periodically when the garbage colletor evicts the timed out entries.
+.PP
 .SS "counters, packets, bytes"
 All set types support the optional \fBcounters\fR
 option when creating a set. If the option is specified then the set is created
