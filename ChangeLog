@@ -1,3 +1,8 @@
+6.25.1
+  - ipset manpage: refer to iptables-extensions
+  - Update userspace header file from the kernel tree
+  - Handle 'extern "C" {' in check_libmap.sh
+
 6.25
   - Add element count to all set types header
   - Add element count to hash headers (Eric B Munson)

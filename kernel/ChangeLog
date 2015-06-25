@@ -1,3 +1,7 @@
+6.25.1
+  - net/netfilter/ipset: work around gcc-4.4.4 initializer bug
+    (Andrew Morton)
+
 6.25
   - Add element count to all set types header
   - Add element count to hash headers (Eric B Munson)
