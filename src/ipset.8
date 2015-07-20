@@ -321,7 +321,7 @@ ipset add foo 192.168.1.1/24 comment "allow access to SMB share on \\\\\\\\files
 the above would appear as: "allow access to SMB share on \\\\fileserv\\"
 .PP
 .SS "skbinfo, skbmark, skbprio, skbqueue"
-All set types support the optional \fBskbinfo\fR extension. This extension allow to
+All set types support the optional \fBskbinfo\fR extension. This extension allows you to
 store the metainfo (firewall mark, tc class and hardware queue) with every entry and map it to
 packets by usage of SET netfilter target with \-\-map\-set option.
 \fBskbmark\fR option format: \fBMARK\fR or \fBMARK/MASK\fR, where \fBMARK\fR and \fBMASK\fR are 32bit hex
