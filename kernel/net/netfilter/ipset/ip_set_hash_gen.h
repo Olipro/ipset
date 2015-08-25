@@ -152,9 +152,13 @@ htable_bits(u32 hashsize)
 	DCIDR_PUT(((cidr) ? NCIDR_GET(cidr) : host_mask))
 
 #ifdef IP_SET_HASH_WITH_NET0
+/* cidr from 0 to HOST_MASK value and c = cidr + 1 */
 #define NLEN			(HOST_MASK + 1)
+#define CIDR_POS(c)		((c) - 1)
 #else
+/* cidr from 1 to HOST_MASK value and c = cidr + 1 */
 #define NLEN			HOST_MASK
+#define CIDR_POS(c)		((c) - 2)
 #endif
 
 #else
@@ -308,7 +312,7 @@ mtype_add_cidr(struct htype *h, u8 cidr, u8 n)
 		} else if (h->nets[i].cidr[n] < cidr) {
 			j = i;
 		} else if (h->nets[i].cidr[n] == cidr) {
-			h->nets[cidr - 1].nets[n]++;
+			h->nets[CIDR_POS(cidr)].nets[n]++;
 			return;
 		}
 	}
@@ -317,7 +321,7 @@ mtype_add_cidr(struct htype *h, u8 cidr, u8 n)
 			h->nets[i].cidr[n] = h->nets[i - 1].cidr[n];
 	}
 	h->nets[i].cidr[n] = cidr;
-	h->nets[cidr - 1].nets[n] = 1;
+	h->nets[CIDR_POS(cidr)].nets[n] = 1;
 }
 
 static void
@@ -328,8 +332,8 @@ mtype_del_cidr(struct htype *h, u8 cidr, u8 n)
 	for (i = 0; i < NLEN; i++) {
 		if (h->nets[i].cidr[n] != cidr)
 			continue;
-		h->nets[cidr - 1].nets[n]--;
-		if (h->nets[cidr - 1].nets[n] > 0)
+		h->nets[CIDR_POS(cidr)].nets[n]--;
+		if (h->nets[CIDR_POS(cidr)].nets[n] > 0)
 			return;
 		for (j = i; j < net_end && h->nets[j].cidr[n]; j++)
 			h->nets[j].cidr[n] = h->nets[j + 1].cidr[n];
