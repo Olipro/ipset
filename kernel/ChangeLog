@@ -1,3 +1,15 @@
+6.26
+  - Out of bound access in hash:net* types fixed (reported by Dave Jones)
+  - Make struct htype per ipset family (originally from Sergey Popovich)
+  - Optimize hash creation routine (originally from Sergey Popovich)
+  - Make sure element data size is a multiple of u32 (originally from Sergey
+    Popovich)
+  - Make NLEN compile time constant for hash types (originally from Sergey
+    Popovich)
+  - Simplify mtype_expire() for hash types (originally from Sergey Popovich)
+  - Count non-static extension memory into the set memory size for userspace
+  - net: sched: Simplify em_ipset_match (Eric W. Biederman)
+
 6.25.1
   - net/netfilter/ipset: work around gcc-4.4.4 initializer bug
     (Andrew Morton)

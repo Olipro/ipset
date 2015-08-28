@@ -1,3 +1,12 @@
+6.26
+  - Out of bound access in hash:net* types fixed (reported by Dave Jones):
+    new tests added to the testsuite to verify the fix
+  - Warn about loaded in ip_set modules at module installation
+  - Use IPSET_BIN in resize-and-list.sh and suppress echoing of loop
+    variable
+  - Manpage typo corrections (David Wittman)
+  - Fix grammar error in manpage (Neutron Soutmun)
+
 6.25.1
   - ipset manpage: refer to iptables-extensions
   - Update userspace header file from the kernel tree
