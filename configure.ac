@@ -367,7 +367,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for struct net in struct tcf_ematch])
 if test -f $ksourcedir/include/net/pkt_cls.h && \
-   $AWK '/^struct tcf_ematch_ops / {for(i=1; i<=7; i++) {getline; print}}' $ksourcedir/include/net/pkt_cls.h | \
+   $AWK '/^struct tcf_ematch / {for(i=1; i<=7; i++) {getline; print}}' $ksourcedir/include/net/pkt_cls.h | \
    $GREP -q 'struct net'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_TCF_EMATCH_STRUCT_NET, define)
