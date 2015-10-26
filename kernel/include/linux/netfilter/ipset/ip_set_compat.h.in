@@ -169,6 +169,7 @@ static inline int nla_put_net64(struct sk_buff *skb, int attrtype, __be64 value)
 #endif
 
 #ifndef HAVE_KVFREE
+#include <linux/vmalloc.h>
 static inline void kvfree(const void *addr)
 {
 	if (is_vmalloc_addr(addr))
