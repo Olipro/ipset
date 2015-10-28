@@ -636,7 +636,10 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 		D("netorder attr type %u", type);
 		switch (attr->type) {
 		case MNL_TYPE_U64: {
-			v64  = be64toh(*(const uint64_t *)d);
+			uint64_t tmp;
+			/* Ensure data alignment */
+			memcpy(&tmp, d, sizeof(tmp));
+			v64  = be64toh(tmp);
 			d = &v64;
 			break;
 		}
