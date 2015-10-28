@@ -1,24 +1,9 @@
 #ifndef __IP_SET_COMPAT_H
 #define __IP_SET_COMPAT_H
 
-#ifndef CONFIG_IP_SET_MAX
-#ifdef IP_SET_MAX
-#define CONFIG_IP_SET_MAX	IP_SET_MAX
-#else
-#define CONFIG_IP_SET_MAX	256
-#endif
-#endif
-
-#ifndef IS_ENABLED
-#define __X_ARG_PLACEHOLDER_1 0,
-#define x_config_enabled(cfg) _x_config_enabled(cfg)
-#define _x_config_enabled(value) __x_config_enabled(__X_ARG_PLACEHOLDER_##value)
-#define __x_config_enabled(arg1_or_junk) ___x_config_enabled(arg1_or_junk 1, 0)
-#define ___x_config_enabled(__ignored, val, ...) val
-
-#define IS_ENABLED(option) \
-	(x_config_enabled(option) || x_config_enabled(option##_MODULE))
-#endif
+/* Not everything could be moved here. Compatibility stuffs can be found in
+ * xt_set.c, ip_set_core.c, ip_set_getport.c, pfxlen.c too.
+ */
 
 #@HAVE_STRUCT_XT_ACTION_PARAM@ HAVE_STRUCT_XT_ACTION_PARAM
 #@HAVE_VZALLOC@ HAVE_VZALLOC
@@ -46,9 +31,30 @@
 #@HAVE_NF_BRIDGE_GET_PHYSDEV@ HAVE_NF_BRIDGE_GET_PHYSDEV
 #@HAVE_NLA_PUT_IN_ADDR@ HAVE_NLA_PUT_IN_ADDR
 
-/* Not everything could be moved here. Compatibility stuffs can be found in
- * xt_set.c, ip_set_core.c, ip_set_getport.c, pfxlen.c too.
- */
+#ifdef HAVE_EXPORT_H
+#include <linux/export.h>
+#endif
+
+#ifndef IP_SET_COMPAT_HEADERS
+
+#ifndef CONFIG_IP_SET_MAX
+#ifdef IP_SET_MAX
+#define CONFIG_IP_SET_MAX	IP_SET_MAX
+#else
+#define CONFIG_IP_SET_MAX	256
+#endif
+#endif
+
+#ifndef IS_ENABLED
+#define __X_ARG_PLACEHOLDER_1 0,
+#define x_config_enabled(cfg) _x_config_enabled(cfg)
+#define _x_config_enabled(value) __x_config_enabled(__X_ARG_PLACEHOLDER_##value)
+#define __x_config_enabled(arg1_or_junk) ___x_config_enabled(arg1_or_junk 1, 0)
+#define ___x_config_enabled(__ignored, val, ...) val
+
+#define IS_ENABLED(option) \
+	(x_config_enabled(option) || x_config_enabled(option##_MODULE))
+#endif
 
 #include <linux/version.h>
 #include <linux/netlink.h>
@@ -263,4 +269,5 @@ static inline int nla_put_in6_addr(struct sk_buff *skb, int attrtype,
 #define SIZE_MAX	(~(size_t)0)
 #endif
 
+#endif /* IP_SET_COMPAT_HEADERS */
 #endif /* __IP_SET_COMPAT_H */

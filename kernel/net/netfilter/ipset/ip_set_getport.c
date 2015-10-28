@@ -8,9 +8,6 @@
 /* Get Layer-4 data from the packets */
 
 #include <linux/version.h>
-#ifdef HAVE_EXPORT_H
-#include <linux/export.h>
-#endif
 #include <linux/ip.h>
 #include <linux/skbuff.h>
 #include <linux/icmp.h>
