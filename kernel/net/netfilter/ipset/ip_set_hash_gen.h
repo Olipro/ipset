@@ -512,7 +512,7 @@ mtype_expire(struct ip_set *set, struct htype *h)
 					continue;
 				data = ahash_data(n, j, dsize);
 				memcpy(tmp->value + d * dsize, data, dsize);
-				set_bit(j, tmp->used);
+				set_bit(d, tmp->used);
 				d++;
 			}
 			tmp->pos = d;
