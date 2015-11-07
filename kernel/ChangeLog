@@ -1,3 +1,17 @@
+6.27
+  - Fix reported memory size for hash:* types
+  - Fix hash type expire: release empty hash bucket block
+  - Fix hash type expiration: incorrect index fixed
+  - Collapse same condition body to a single one
+  - Fix extension alignment
+  - Compatibility: include linux/export.h when needed
+  - Compatibility: make sure vmalloc.h is included for kvfree()
+  - Compatibility: Fix detecting 'struct net' in 'struct tcf_ematch'
+  - Compatibility: Protect definition of RCU_INIT_POINTER in compatibility
+    header file
+  - netfilter: ipset: Fix sleeping memory allocation in atomic context
+    (Nikolay Borisov)
+
 6.26
   - Out of bound access in hash:net* types fixed (reported by Dave Jones)
   - Make struct htype per ipset family (originally from Sergey Popovich)
