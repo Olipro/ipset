@@ -30,6 +30,7 @@
 #@HAVE_ETHER_ADDR_COPY@ HAVE_ETHER_ADDR_COPY
 #@HAVE_NF_BRIDGE_GET_PHYSDEV@ HAVE_NF_BRIDGE_GET_PHYSDEV
 #@HAVE_NLA_PUT_IN_ADDR@ HAVE_NLA_PUT_IN_ADDR
+#@HAVE_NET_IN_NFNL_CALLBACK_FN@ HAVE_NET_IN_NFNL_CALLBACK_FN
 
 #ifdef HAVE_EXPORT_H
 #include <linux/export.h>
@@ -250,6 +251,14 @@ static inline int nla_put_in6_addr(struct sk_buff *skb, int attrtype,
 {
 	return nla_put(skb, attrtype, sizeof(*addr), addr);
 }
+#endif
+
+#ifdef HAVE_NET_IN_NFNL_CALLBACK_FN
+#define IPSET_CBFN(fn, net, nl, skb, nlh, cda)	fn(net, nl, skb, nlh, cda)
+#define IPSET_SOCK_NET(net, ctnl)		net
+#else
+#define IPSET_CBFN(fn, net, nl, skb, nlh, cda)	fn(nl, skb, nlh, cda)
+#define IPSET_SOCK_NET(net, ctnl)		sock_net(ctnl)
 #endif
 
 #ifndef smp_mb__before_atomic

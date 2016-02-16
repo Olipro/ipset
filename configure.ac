@@ -426,6 +426,17 @@ else
 	AC_SUBST(HAVE_NLA_PUT_IN_ADDR, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for struct net in struct nfnl_callback])
+if test -f $ksourcedir/include/linux/netfilter/nfnetlink.h && \
+   $AWK '/^struct nfnl_callback / {for(i=1; i<=3; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/nfnetlink.h | \
+   $GREP -q 'struct net'; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NET_IN_NFNL_CALLBACK_FN, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NET_IN_NFNL_CALLBACK_FN, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
