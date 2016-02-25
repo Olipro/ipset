@@ -15,7 +15,7 @@ else
 IP_SET_MAX=$(MAXSETS)
 endif
 
-SUBDIRS		= include/libipset lib src
+SUBDIRS		= include/libipset lib src utils
 
 sparse:
 	$(MAKE) -C lib sparse-check

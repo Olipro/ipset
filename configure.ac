@@ -39,6 +39,17 @@ AC_ARG_WITH([ksource],
 AM_CONDITIONAL(WITH_KBUILDDIR, test "$KBUILDDIR" != "")
 AC_SUBST(KBUILDDIR)
 
+dnl ipset bash compspec - bash shell programmable completion
+AC_ARG_ENABLE([bashcompl],
+	AS_HELP_STRING([--enable-bashcompl],
+	[Install bash completion for ipset]),
+	[enable_bashcompl="$enableval"], [enable_bashcompl="no"])
+
+if test "x$enable_bashcompl" = "xyes"; then
+	PKG_CHECK_VAR(bashcompdir, [bash-completion], [completionsdir], , bashcompdir="${sysconfdir}/bash_completion.d")
+	AC_SUBST(bashcompdir)
+fi
+
 if test "$BUILDKMOD" == "yes"
 then
 dnl Sigh: check kernel version dependencies
@@ -501,13 +512,16 @@ dnl Checks for library functions.
 
 dnl Generate output
 AC_CONFIG_FILES([Makefile include/libipset/Makefile
-	lib/Makefile lib/libipset.pc src/Makefile
+	lib/Makefile lib/libipset.pc src/Makefile utils/Makefile
 	kernel/include/linux/netfilter/ipset/ip_set_compat.h])
 AC_OUTPUT
 
 dnl Summary
 AC_MSG_RESULT([])
 AC_MSG_RESULT([$PACKAGE userspace tool configuration:])
+if test "x$bashcompdir" != "x"; then
+	AC_MSG_RESULT([    Bash completion directory: ${bashcompdir}])
+fi
 if test "x$enable_settype_modules" != "xyes"; then
 	AC_MSG_RESULT([    Dynamic module loading: disabled])
 else
