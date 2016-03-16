@@ -1,3 +1,10 @@
+6.29
+  - Suppress unnecessary stderr in command loop for resize and list
+  - Correction in comment test
+  - Support chroot buildroots (reported by Jan Engelhardt)
+  - Fix "configure" breakage due to pkg-config related changes
+    (reported by Jan Engelhardt)
+
 6.28
   - Support older pkg-config packages
   - Add bash completion to the install routine (Mart Frauenlob)

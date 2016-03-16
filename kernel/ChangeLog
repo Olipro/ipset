@@ -1,3 +1,6 @@
+6.29
+  - Fix race condition in ipset save, swap and delete (Vishwanath Pai)
+
 6.28
   - Check IPSET_ATTR_ETHER netlink attribute length
   - Fix __aligned_u64 compatibility support for older kernel releases
