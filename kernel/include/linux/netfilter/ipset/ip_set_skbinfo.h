@@ -23,9 +23,10 @@ ip_set_put_skbinfo(struct sk_buff *skb, const struct ip_set_skbinfo *skbinfo)
 {
 	/* Send nonzero parameters only */
 	return ((skbinfo->skbmark || skbinfo->skbmarkmask) &&
-		nla_put_net64(skb, IPSET_ATTR_SKBMARK,
-			      cpu_to_be64((u64)skbinfo->skbmark << 32 |
-					  skbinfo->skbmarkmask))) ||
+		IPSET_NLA_PUT_NET64(skb, IPSET_ATTR_SKBMARK,
+				    cpu_to_be64((u64)skbinfo->skbmark << 32 |
+						skbinfo->skbmarkmask),
+				    IPSET_ATTR_PAD)) ||
 	       (skbinfo->skbprio &&
 		nla_put_net32(skb, IPSET_ATTR_SKBPRIO,
 			      cpu_to_be32(skbinfo->skbprio))) ||

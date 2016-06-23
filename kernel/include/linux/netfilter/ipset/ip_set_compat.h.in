@@ -10,6 +10,7 @@
 #@HAVE_ETHER_ADDR_EQUAL@ HAVE_ETHER_ADDR_EQUAL
 #@HAVE_NLA_PUT_BE16@ HAVE_NLA_PUT_BE16
 #@HAVE_NLA_PUT_BE64@ HAVE_NLA_PUT_BE64
+#@HAVE_NLA_PUT_64BIT@ HAVE_NLA_PUT_64BIT
 #@HAVE_NL_INFO_PORTID@ HAVE_NL_INFO_PORTID
 #define HAVE_NETLINK_DUMP_START_ARGS	@HAVE_NETLINK_DUMP_START_ARGS@
 #@HAVE_NS_CAPABLE@ HAVE_NS_CAPABLE
@@ -158,6 +159,12 @@ static inline int nla_put_net64(struct sk_buff *skb, int attrtype, __be64 value)
 {
 	return nla_put_be64(skb, attrtype | NLA_F_NET_BYTEORDER, value);
 }
+#endif
+
+#ifdef HAVE_NLA_PUT_64BIT
+#define IPSET_NLA_PUT_NET64(skb, t, v, pa) nla_put_be64(skb, t, v, pa)
+#else
+#define IPSET_NLA_PUT_NET64(skb, t, v, pa) nla_put_be64(skb, t, v)
 #endif
 
 #ifdef HAVE_NL_INFO_PORTID

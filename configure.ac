@@ -250,6 +250,16 @@ else
 	AC_SUBST(HAVE_NLA_PUT_BE64, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for nla_put_64bit])
+if test -f $ksourcedir/include/net/netlink.h && \
+   $GREP -q 'nla_put_64bit' $ksourcedir/include/net/netlink.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NLA_PUT_64BIT, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NLA_PUT_64BIT, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for portid in nl_info])
 if test -f $ksourcedir/include/linux/netlink.h && \
    $AWK '/^struct netlink_skb_parms/ {for(i=1; i<=5; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'portid;'; then
