@@ -487,6 +487,16 @@ else
 	AC_SUBST(HAVE_EXPORT_SYMBOL_GPL_IN_MODULE_H, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for tc_skb_protocol in pkt_sched.h])
+if test -f $ksourcedir/include/net/pkt_sched.h && \
+   $GREP -q 'tc_skb_protocol' $ksourcedir/include/net/pkt_sched.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_TC_SKB_PROTOCOL, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_TC_SKB_PROTOCOL, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
