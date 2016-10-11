@@ -497,6 +497,17 @@ else
 	AC_SUBST(HAVE_TC_SKB_PROTOCOL, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for struct net in struct xt_action_param])
+if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
+   $AWK '/^struct xt_action_param / {for(i=1; i<=8; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/x_tables.h | \
+   $GREP -q 'struct net '; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NET_IN_XT_ACTION_PARAM, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NET_IN_XT_ACTION_PARAM, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then

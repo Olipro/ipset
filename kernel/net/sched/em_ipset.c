@@ -119,6 +119,9 @@ static int em_ipset_match(struct sk_buff *skb, struct tcf_ematch *em,
 		indev = dev_get_by_index_rcu(dev_net(dev), skb->skb_iif);
 #endif
 
+#ifdef HAVE_NET_IN_XT_ACTION_PARAM
+	acpar.net     = em->net;
+#endif
 	acpar.in      = indev ? indev : dev;
 	acpar.out     = dev;
 
