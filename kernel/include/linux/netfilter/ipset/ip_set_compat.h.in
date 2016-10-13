@@ -285,6 +285,12 @@ static inline __be16 tc_skb_protocol(const struct sk_buff *skb)
 }
 #endif
 
+#ifdef HAVE_NET_IN_XT_ACTION_PARAM
+#define IPSET_DEV_NET(par)	(par)->net
+#else
+#define IPSET_DEV_NET(par)	dev_net((par)->in ? (par)->in : (par)->out)
+#endif
+
 #ifndef smp_mb__before_atomic
 #define smp_mb__before_atomic()	smp_mb()
 #define smp_mb__after_atomic()	smp_mb()
