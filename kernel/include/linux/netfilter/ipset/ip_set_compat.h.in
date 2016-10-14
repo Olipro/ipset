@@ -164,9 +164,9 @@ static inline int nla_put_net64(struct sk_buff *skb, int attrtype, __be64 value)
 #endif
 
 #ifdef HAVE_NLA_PUT_64BIT
-#define IPSET_NLA_PUT_NET64(skb, t, v, pa) nla_put_be64(skb, t, v, pa)
+#define IPSET_NLA_PUT_NET64(skb, t, v, pa) nla_put_net64(skb, t, v, pa)
 #else
-#define IPSET_NLA_PUT_NET64(skb, t, v, pa) nla_put_be64(skb, t, v)
+#define IPSET_NLA_PUT_NET64(skb, t, v, pa) nla_put_net64(skb, t, v)
 #endif
 
 #ifdef HAVE_NL_INFO_PORTID
