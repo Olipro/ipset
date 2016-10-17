@@ -591,7 +591,7 @@ elif echo $SETTYPE_MODLIST | grep "all" >/dev/null; then
 	done
 else
 	for mod in $IPSET_ALL_MODULES; do
-		if echo $SETTYPE_MODLIST | grep $mod >/dev/null; then
+		if echo $SETTYPE_MODLIST | grep -w "$mod" >/dev/null; then
 			:
 		else
 			AC_MSG_RESULT([        ${mod}])
@@ -599,7 +599,7 @@ else
 	done
 	AC_MSG_RESULT([    Dynamic modules:])
 	for mod in $IPSET_ALL_MODULES; do
-		if echo $SETTYPE_MODLIST | grep $mod >/dev/null; then
+		if echo $SETTYPE_MODLIST | grep -w "$mod" >/dev/null; then
 			AC_MSG_RESULT([        ${mod}])
 		fi
 	done
