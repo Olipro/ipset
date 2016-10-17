@@ -1,3 +1,23 @@
+6.30
+  - netfilter: ipset: hash: fix boolreturn.cocci warnings
+    (Fengguang Wu)
+  - Fix the nla_put_net64() API changes backport
+  - netfilter: ipset: Fixing unnamed union init (Elad Raz)
+  - netfilter: x_tables: Use par->net instead of computing from the passed
+    net devices (Eric W. Biederman)
+  - Correct the reported memory size for bitmap:* types
+  - Fix coding styles reported by checkpatch.pl, already in kernel
+  - netfilter: x_tables: Pass struct net in xt_action_param
+    (Eric W. Biederman)
+  - net: sched: fix skb->protocol use in case of accelerated vlan path
+    (Jiri Pirko)
+  - Check IPSET_ATTR_ETHER netlink attribute length in hash:ipmac too
+  - netfilter: fix include files for compilation (Mikko Rapeli)
+  - ipset: Backports for the nla_put_net64() API changes (Neutron Soutmun)
+  - netfilter: ipset: use setup_timer() and mod_timer().
+    (Muhammad Falak R Wani)
+  - hash:ipmac type support added to ipset (Tomasz Chilinski)
+
 6.29
   - Fix race condition in ipset save, swap and delete (Vishwanath Pai)
 

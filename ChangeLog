@@ -1,3 +1,9 @@
+6.30
+  - Drop extra comma from error message (Neutron Soutmun)
+  - Fix the incorrect dynamic/static modules list (Neutron Soutmun)
+  - Correct tests to check the number of entries too
+  - hash:ipmac type support added to ipset, userspace part (Tomasz Chilinski)
+
 6.29
   - Suppress unnecessary stderr in command loop for resize and list
   - Correction in comment test
