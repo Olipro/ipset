@@ -508,6 +508,37 @@ else
 	AC_SUBST(HAVE_NET_IN_XT_ACTION_PARAM, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for struct nf_hook_state in struct xt_action_param])
+if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
+   $AWK '/^struct xt_action_param / {for(i=1; i<=10; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/x_tables.h | \
+   $GREP -q 'struct nf_hook_state '; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_STATE_IN_XT_ACTION_PARAM, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_STATE_IN_XT_ACTION_PARAM, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for xt_family() in x_tables.h])
+if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
+   $GREP -q 'xt_family' $ksourcedir/include/linux/netfilter/x_tables.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_XT_FAMILY, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_XT_FAMILY, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for xt_net() in x_tables.h])
+if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
+   $GREP -q 'xt_net' $ksourcedir/include/linux/netfilter/x_tables.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_XT_NET, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_XT_NET, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then

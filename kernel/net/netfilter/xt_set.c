@@ -72,7 +72,7 @@ set_match_v0(const struct sk_buff *skb, CONST struct xt_action_param *par)
 {
 	const struct xt_set_info_match_v0 *info = par->matchinfo;
 
-	ADT_OPT(opt, par->family, info->match_set.u.compat.dim,
+	ADT_OPT(opt, XT_FAMILY(par), info->match_set.u.compat.dim,
 		info->match_set.u.compat.flags, 0, UINT_MAX);
 
 	return match_set(info->match_set.index, skb, par, &opt,
@@ -135,7 +135,7 @@ set_match_v1(const struct sk_buff *skb, CONST struct xt_action_param *par)
 {
 	const struct xt_set_info_match_v1 *info = par->matchinfo;
 
-	ADT_OPT(opt, par->family, info->match_set.dim,
+	ADT_OPT(opt, XT_FAMILY(par), info->match_set.dim,
 		info->match_set.flags, 0, UINT_MAX);
 
 	if (opt.flags & IPSET_RETURN_NOMATCH)
@@ -201,7 +201,7 @@ set_match_v3(const struct sk_buff *skb, CONST struct xt_action_param *par)
 	const struct xt_set_info_match_v3 *info = par->matchinfo;
 	int ret;
 
-	ADT_OPT(opt, par->family, info->match_set.dim,
+	ADT_OPT(opt, XT_FAMILY(par), info->match_set.dim,
 		info->match_set.flags, info->flags, UINT_MAX);
 
 	if (info->packets.op != IPSET_COUNTER_NONE ||
@@ -248,7 +248,7 @@ set_match_v4(const struct sk_buff *skb, CONST struct xt_action_param *par)
 	const struct xt_set_info_match_v4 *info = par->matchinfo;
 	int ret;
 
-	ADT_OPT(opt, par->family, info->match_set.dim,
+	ADT_OPT(opt, XT_FAMILY(par), info->match_set.dim,
 		info->match_set.flags, info->flags, UINT_MAX);
 
 	if (info->packets.op != IPSET_COUNTER_NONE ||
@@ -284,9 +284,9 @@ set_target_v0(struct sk_buff *skb, const struct xt_action_param *par)
 {
 	const struct xt_set_info_target_v0 *info = par->targinfo;
 
-	ADT_OPT(add_opt, par->family, info->add_set.u.compat.dim,
+	ADT_OPT(add_opt, XT_FAMILY(par), info->add_set.u.compat.dim,
 		info->add_set.u.compat.flags, 0, UINT_MAX);
-	ADT_OPT(del_opt, par->family, info->del_set.u.compat.dim,
+	ADT_OPT(del_opt, XT_FAMILY(par), info->del_set.u.compat.dim,
 		info->del_set.u.compat.flags, 0, UINT_MAX);
 
 	if (info->add_set.index != IPSET_INVALID_ID)
@@ -362,9 +362,9 @@ set_target_v1(struct sk_buff *skb, const struct xt_action_param *par)
 {
 	const struct xt_set_info_target_v1 *info = par->targinfo;
 
-	ADT_OPT(add_opt, par->family, info->add_set.dim,
+	ADT_OPT(add_opt, XT_FAMILY(par), info->add_set.dim,
 		info->add_set.flags, 0, UINT_MAX);
-	ADT_OPT(del_opt, par->family, info->del_set.dim,
+	ADT_OPT(del_opt, XT_FAMILY(par), info->del_set.dim,
 		info->del_set.flags, 0, UINT_MAX);
 
 	if (info->add_set.index != IPSET_INVALID_ID)
@@ -436,9 +436,9 @@ set_target_v2(struct sk_buff *skb, const struct xt_action_param *par)
 {
 	const struct xt_set_info_target_v2 *info = par->targinfo;
 
-	ADT_OPT(add_opt, par->family, info->add_set.dim,
+	ADT_OPT(add_opt, XT_FAMILY(par), info->add_set.dim,
 		info->add_set.flags, info->flags, info->timeout);
-	ADT_OPT(del_opt, par->family, info->del_set.dim,
+	ADT_OPT(del_opt, XT_FAMILY(par), info->del_set.dim,
 		info->del_set.flags, 0, UINT_MAX);
 
 	/* Normalize to fit into jiffies */
@@ -468,11 +468,11 @@ set_target_v3(struct sk_buff *skb, const struct xt_action_param *par)
 	const struct xt_set_info_target_v3 *info = par->targinfo;
 	int ret;
 
-	ADT_OPT(add_opt, par->family, info->add_set.dim,
+	ADT_OPT(add_opt, XT_FAMILY(par), info->add_set.dim,
 		info->add_set.flags, info->flags, info->timeout);
-	ADT_OPT(del_opt, par->family, info->del_set.dim,
+	ADT_OPT(del_opt, XT_FAMILY(par), info->del_set.dim,
 		info->del_set.flags, 0, UINT_MAX);
-	ADT_OPT(map_opt, par->family, info->map_set.dim,
+	ADT_OPT(map_opt, XT_FAMILY(par), info->map_set.dim,
 		info->map_set.flags, 0, UINT_MAX);
 
 	/* Normalize to fit into jiffies */
