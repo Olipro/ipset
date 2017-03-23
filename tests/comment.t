@@ -51,7 +51,7 @@
 # Bitmap comment: List set
 0 ipset list test | grep -v Revision: | sed 's/timeout ./timeout x/' > .foo
 # Bitmap comment: Check listing
-0 diff -u -I 'Size in memory.*' .foo comment.t.list12
+0 diff -u -I 'Size in memory.*' -I 'Number of entries' .foo comment.t.list12
 # Bitmap comment: Flush set
 0 ipset flush test
 # Bitmap comment: Delete test set
