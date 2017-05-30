@@ -96,7 +96,7 @@ for types in $tests; do
 	echo -ne "$types: $what: "
 	cmd=`echo $cmd | sed "s|ipset|$ipset 2>.foo.err|"`
 	# For the case: ipset list | ... | xargs -n1 ipset
-	cmd=`echo $cmd | sed "s|ipset|$ipset|"`
+	cmd=`echo $cmd | sed "s|ipset|$ipset|2g"`
 	eval $cmd
 	r=$?
 	# echo $ret $r
