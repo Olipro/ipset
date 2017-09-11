@@ -549,6 +549,16 @@ else
 	AC_SUBST(HAVE_NFNL_MSG_TYPE, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for netlink extended ACK])
+if test -f $ksourcedir/include/linux/netlink.h && \
+   $AWK '/^extern void netlink_ack/ {for(i=1; i<=2; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'const struct netlink_ext_ack'; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NETLINK_EXTENDED_ACK, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NETLINK_EXTENDED_ACK, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
