@@ -39,8 +39,13 @@ get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 		break;
 	}
 	case IPPROTO_SCTP: {
+#ifdef HAVE_TYPEDEF_SCTP_SCTPHDR_T
 		sctp_sctphdr_t _sh;
 		const sctp_sctphdr_t *sh;
+#else
+		struct sctphdr _sh;
+		const struct sctphdr *sh;
+#endif
 
 		sh = skb_header_pointer(skb, protooff, sizeof(_sh), &_sh);
 		if (!sh)

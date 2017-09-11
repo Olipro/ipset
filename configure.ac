@@ -579,6 +579,16 @@ else
 	AC_SUBST(HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for no typedef sctp_sctphdr_t])
+if test -f $ksourcedir/include/linux/sctp.h && \
+   $GREP -q '^typedef struct sctphdr' $ksourcedir/include/linux/sctp.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_TYPEDEF_SCTP_SCTPHDR_T, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_TYPEDEF_SCTP_SCTPHDR_T, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
