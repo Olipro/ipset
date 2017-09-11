@@ -559,6 +559,16 @@ else
 	AC_SUBST(HAVE_NETLINK_EXTENDED_ACK, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for passing extended ACK struct to parsing functions])
+if test -f $ksourcedir/include/linux/netlink.h && \
+   $AWK '/^static inline int nla_parse_nested/ {for(i=1; i<=4; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'struct netlink_ext_ack'; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_PASSING_EXTENDED_ACK_TO_PARSERS, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_PASSING_EXTENDED_ACK_TO_PARSERS, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
