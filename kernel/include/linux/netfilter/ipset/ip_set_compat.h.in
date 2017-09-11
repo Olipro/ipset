@@ -38,6 +38,7 @@
 #@HAVE_STATE_IN_XT_ACTION_PARAM@ HAVE_STATE_IN_XT_ACTION_PARAM
 #@HAVE_XT_FAMILY@ HAVE_XT_FAMILY
 #@HAVE_XT_NET@ HAVE_XT_NET
+#@HAVE_NFNL_MSG_TYPE@ HAVE_NFNL_MSG_TYPE
 
 #ifdef HAVE_EXPORT_SYMBOL_GPL_IN_MODULE_H
 #include <linux/module.h>
@@ -294,6 +295,13 @@ static inline __be16 tc_skb_protocol(const struct sk_buff *skb)
 #define IPSET_DEV_NET(par)	(par)->net
 #else
 #define IPSET_DEV_NET(par)	dev_net((par)->in ? (par)->in : (par)->out)
+#endif
+
+#ifndef HAVE_NFNL_MSG_TYPE
+static inline u16 nfnl_msg_type(u8 subsys, u8 msg_type)
+{
+	return subsys << 8 | msg_type;
+}
 #endif
 
 #ifdef HAVE_STATE_IN_XT_ACTION_PARAM

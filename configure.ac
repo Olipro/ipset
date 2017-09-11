@@ -539,6 +539,16 @@ else
 	AC_SUBST(HAVE_XT_NET, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for nfnl_msg_type() in nfnetlink.h])
+if test -f $ksourcedir/include/linux/netfilter/nfnetlink.h && \
+   $GREP -q 'nfnl_msg_type' $ksourcedir/include/linux/netfilter/nfnetlink.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NFNL_MSG_TYPE, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NFNL_MSG_TYPE, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
