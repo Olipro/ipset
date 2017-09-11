@@ -250,8 +250,7 @@ mtype_list(const struct ip_set *set,
 		}
 		if (mtype_do_list(skb, map, id, set->dsize))
 			goto nla_put_failure;
-		if (ip_set_put_extensions(skb, set, x,
-		    mtype_is_filled(x)))
+		if (ip_set_put_extensions(skb, set, x, mtype_is_filled(x)))
 			goto nla_put_failure;
 		ipset_nest_end(skb, nested);
 	}
