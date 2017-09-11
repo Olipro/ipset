@@ -103,6 +103,8 @@ extern const struct ipset_type *
 	ipset_type_get(struct ipset_session *session, enum ipset_cmd cmd);
 extern const struct ipset_type *
 	ipset_type_check(struct ipset_session *session);
+extern const struct ipset_type *
+	ipset_type_higher_rev(const struct ipset_type *type);
 
 extern int ipset_type_add(struct ipset_type *type);
 extern const struct ipset_type *ipset_types(void);

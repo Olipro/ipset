@@ -275,15 +275,21 @@ static bool do_parse(const struct ipset_arg *arg, bool family)
 }
 
 static int
-call_parser(int *argc, char *argv[], const struct ipset_arg *args, bool family)
+call_parser(int *argc, char *argv[], const struct ipset_type *type,
+	    enum ipset_adt cmd, bool family)
 {
-	int ret = 0, i = 1;
+	const struct ipset_arg *args = type->args[cmd];
 	const struct ipset_arg *arg;
 	const char *optstr;
+	const struct ipset_type *t = type;
+	u_int8_t revision = type->revision;
+	int ret = 0, i = 1;
 
 	/* Currently CREATE and ADT may have got additional arguments */
 	if (!args && *argc > 1)
-		goto err_unknown;
+		return exit_error(PARAMETER_PROBLEM, "Unknown argument: `%s'",
+				  argv[i]);
+
 	while (*argc > i) {
 		ret = -1;
 		for (arg = args; arg->opt; arg++) {
@@ -336,6 +342,21 @@ call_parser(int *argc, char *argv[], const struct ipset_arg *args, bool family)
 	return ret;
 
 err_unknown:
+	while ((type = ipset_type_higher_rev(t)) != t) {
+		args = type->args[cmd];
+		for (arg = args; arg->opt; arg++) {
+			D("argc: %u, %s vs %s", i, argv[i], arg->name[0]);
+			if (ipset_match_option(argv[i], arg->name))
+				return exit_error(PARAMETER_PROBLEM,
+					"Argument `%s' is supported in the kernel module "
+					"of the set type %s starting from the revision %u "
+					"and you have installed revision %u only. "
+					"Your kernel is behind your ipset utility.",
+					argv[i], type->name,
+					type->revision, revision);
+		}
+		t = type;
+	}
 	return exit_error(PARAMETER_PROBLEM, "Unknown argument: `%s'", argv[i]);
 }
 
@@ -717,14 +738,14 @@ parse_commandline(int argc, char *argv[])
 			return handle_error();
 
 		/* Parse create options: first check INET family */
-		ret = call_parser(&argc, argv, type->args[IPSET_CREATE], true);
+		ret = call_parser(&argc, argv, type, IPSET_CREATE, true);
 		if (ret < 0)
 			return handle_error();
 		else if (ret)
 			return ret;
 
 		/* Parse create options: then check all options */
-		ret = call_parser(&argc, argv, type->args[IPSET_CREATE], false);
+		ret = call_parser(&argc, argv, type, IPSET_CREATE, false);
 		if (ret < 0)
 			return handle_error();
 		else if (ret)
@@ -792,7 +813,7 @@ parse_commandline(int argc, char *argv[])
 			return handle_error();
 
 		/* Parse additional ADT options */
-		ret = call_parser(&argc, argv, type->args[cmd2cmd(cmd)], false);
+		ret = call_parser(&argc, argv, type, cmd2cmd(cmd), false);
 		if (ret < 0)
 			return handle_error();
 		else if (ret)
