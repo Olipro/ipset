@@ -560,13 +560,23 @@ else
 fi
 
 AC_MSG_CHECKING([kernel source for passing extended ACK struct to parsing functions])
-if test -f $ksourcedir/include/linux/netlink.h && \
-   $AWK '/^static inline int nla_parse_nested/ {for(i=1; i<=4; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'struct netlink_ext_ack'; then
+if test -f $ksourcedir/include/net/netlink.h && \
+   $AWK '/^static inline int nla_parse_nested/ {for(i=1; i<=4; i++) {getline; print}}' $ksourcedir/include/net/netlink.h | $GREP -q 'struct netlink_ext_ack'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_PASSING_EXTENDED_ACK_TO_PARSERS, define)
 else
 	AC_MSG_RESULT(no)
 	AC_SUBST(HAVE_PASSING_EXTENDED_ACK_TO_PARSERS, undef)
+fi
+
+AC_MSG_CHECKING([kernel source for passing extended ACK struct to callback functions])
+if test -f $ksourcedir/include/linux/netfilter/nfnetlink.h && \
+   $AWK '/^struct nfnl_callback / {for(i=1; i<=5; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/nfnetlink.h | $GREP -q 'struct netlink_ext_ack'; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS, undef)
 fi
 
 AC_MSG_CHECKING([kernel source for struct net_generic])

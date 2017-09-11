@@ -41,6 +41,7 @@
 #@HAVE_NFNL_MSG_TYPE@ HAVE_NFNL_MSG_TYPE
 #@HAVE_NETLINK_EXTENDED_ACK@ HAVE_NETLINK_EXTENDED_ACK
 #@HAVE_PASSING_EXTENDED_ACK_TO_PARSERS@ HAVE_PASSING_EXTENDED_ACK_TO_PARSERS
+#@HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS@ HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS
 
 #ifdef HAVE_EXPORT_SYMBOL_GPL_IN_MODULE_H
 #include <linux/module.h>
@@ -273,12 +274,15 @@ static inline int nla_put_in6_addr(struct sk_buff *skb, int attrtype,
 }
 #endif
 
-#ifdef HAVE_NET_IN_NFNL_CALLBACK_FN
-#define IPSET_CBFN(fn, net, nl, skb, nlh, cda)	fn(net, nl, skb, nlh, cda)
-#define IPSET_SOCK_NET(net, ctnl)		net
+#ifdef HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS
+#define IPSET_CBFN(fn, net, nl, skb, nlh, cda, e)	fn(net, nl, skb, nlh, cda, e)
+#define IPSET_SOCK_NET(net, ctnl)			net
+#elif defined(HAVE_NET_IN_NFNL_CALLBACK_FN)
+#define IPSET_CBFN(fn, net, nl, skb, nlh, cda, e)	fn(net, nl, skb, nlh, cda)
+#define IPSET_SOCK_NET(net, ctnl)			net
 #else
-#define IPSET_CBFN(fn, net, nl, skb, nlh, cda)	fn(nl, skb, nlh, cda)
-#define IPSET_SOCK_NET(net, ctnl)		sock_net(ctnl)
+#define IPSET_CBFN(fn, net, nl, skb, nlh, cda,e)	fn(nl, skb, nlh, cda)
+#define IPSET_SOCK_NET(net, ctnl)			sock_net(ctnl)
 #endif
 
 #ifndef HAVE_TC_SKB_PROTOCOL
