@@ -1,3 +1,8 @@
+6.33
+  - Report if the option is supported by a newer kernel release
+  - ipset: Fix ipset command replacement in runtest.sh (Neutron Soutmun)
+  - Correct a test: number of entries may be outdated
+
 6.32
   - Fix possible truncated output in ipset output buffer handling
     (Reported by Omri Bahumi and Yoni Lavi).

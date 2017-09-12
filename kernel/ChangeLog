@@ -1,3 +1,22 @@
+6.33
+  - Backport patch: sctp: remove the typedef sctp_sctphdr_t
+  - Backport patch: netfilter: nfnetlink: extended ACK reporting
+  - ipset: remove unused function __ip_set_get_netlink (Aaron Conole)
+  - Backport patch: netlink: pass extended ACK struct to parsing functions
+  - Backport patch netlink: extended ACK reporting
+  - netfilter: Remove exceptional & on function name (Arushi Singhal)
+  - Backport missing part of patch: netfilter: Remove unnecessary cast on
+    void pointer
+  - Backport nfnl_msg_type()
+  - netfilter: ipset: ipset list may return wrong member count for set with
+    timeout (Vishwanath Pai)
+  - netfilter: ipset: deduplicate prefixlen maps (Aaron Conole)
+  - Fix sparse warnings
+  - netfilter: ipset: Compress return logic (simran singhal)
+  - netfilter: ipset: Remove unnecessary cast on void pointer (simran
+    singhal)
+  - Compatibility: handle changes in 4.10 kernel tree
+
 6.31
   - netfilter: ipset: Null pointer exception in ipset list:set
     (Vishwanath Pai)
