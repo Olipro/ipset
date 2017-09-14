@@ -158,3 +158,8 @@ global:
   ipset_parse_tcp_udp_port;
   ipset_parse_uint16;
 } LIBIPSET_4.3;
+
+LIBIPSET_4.5 {
+global:
+  ipset_type_higher_rev;
+} LIBIPSET_4.4;
