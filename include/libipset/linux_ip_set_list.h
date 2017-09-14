@@ -1,5 +1,7 @@
-#ifndef _UAPI__IP_SET_LIST_H
-#define _UAPI__IP_SET_LIST_H
+#ifndef __IP_SET_LIST_H
+#define __IP_SET_LIST_H
+
+
 
 /* List type specific error codes */
 enum {
@@ -18,4 +20,4 @@ enum {
 };
 
 
-#endif /* _UAPI__IP_SET_LIST_H */
+#endif /* __IP_SET_LIST_H */

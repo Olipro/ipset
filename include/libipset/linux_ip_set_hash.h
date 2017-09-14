@@ -1,5 +1,7 @@
-#ifndef _UAPI__IP_SET_HASH_H
-#define _UAPI__IP_SET_HASH_H
+#ifndef __IP_SET_HASH_H
+#define __IP_SET_HASH_H
+
+
 
 /* Hash type specific error codes */
 enum {
@@ -18,4 +20,4 @@ enum {
 };
 
 
-#endif /* _UAPI__IP_SET_HASH_H */
+#endif /* __IP_SET_HASH_H */

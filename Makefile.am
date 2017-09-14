@@ -88,8 +88,10 @@ endif
 
 update_includes:
 	for x in ip_set.h ip_set_bitmap.h ip_set_hash.h ip_set_list.h; do \
-	    cp kernel/include/uapi/linux/netfilter/ipset/$$x \
-		include/libipset/linux_$$x; \
+	    sed -r -e 's@#(ifndef|define|endif[ \t]*/[*])[ \t]*_UAPI@#\1 @' \
+		   -e 's@^#include <linux/netfilter/ipset/ip_set.h>@@' \
+		kernel/include/uapi/linux/netfilter/ipset/$$x \
+		> include/libipset/linux_$$x; \
 	done
 
 update_utils:

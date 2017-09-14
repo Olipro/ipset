@@ -7,8 +7,8 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-#ifndef _UAPI_IP_SET_H
-#define _UAPI_IP_SET_H
+#ifndef _IP_SET_H
+#define _IP_SET_H
 
 #include <linux/types.h>
 
@@ -118,6 +118,7 @@ enum {
 	IPSET_ATTR_SKBMARK,
 	IPSET_ATTR_SKBPRIO,
 	IPSET_ATTR_SKBQUEUE,
+	IPSET_ATTR_PAD,
 	__IPSET_ATTR_ADT_MAX,
 };
 #define IPSET_ATTR_ADT_MAX	(__IPSET_ATTR_ADT_MAX - 1)
@@ -300,4 +301,4 @@ struct ip_set_req_version {
 	unsigned int version;
 };
 
-#endif /* _UAPI_IP_SET_H */
+#endif /* _IP_SET_H */
