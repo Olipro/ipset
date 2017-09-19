@@ -87,6 +87,9 @@ debug_cadt_attrs(int max, const struct ipset_attr_policy *policy,
 		if (!nla[i])
 			continue;
 		switch (policy[i].type) {
+		case MNL_TYPE_UNSPEC:
+			fprintf(stderr,"\t\tpadding\n");
+			break;
 		case MNL_TYPE_U8:
 			v = *(uint8_t *) mnl_attr_get_payload(nla[i]);
 			fprintf(stderr, "\t\t%s: %u\n",

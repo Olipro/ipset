@@ -514,6 +514,10 @@ static const struct ipset_attr_policy adt_attrs[] = {
 		.type = MNL_TYPE_U16,
 		.opt = IPSET_OPT_SKBQUEUE,
 	},
+	[IPSET_ATTR_PAD] = {
+		.type = MNL_TYPE_UNSPEC,
+		.len = 0,
+	},
 };
 
 static const struct ipset_attr_policy ipaddr_attrs[] = {
@@ -593,6 +597,8 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 	attr = &attrs[type];
 	d = mnl_attr_get_payload(nla[type]);
 
+	if (attr->type == MNL_TYPE_UNSPEC)
+		return 0;
 	if (attr->type == MNL_TYPE_NESTED && attr->opt) {
 		/* IP addresses */
 		struct nlattr *ipattr[IPSET_ATTR_IPADDR_MAX+1] = {};
