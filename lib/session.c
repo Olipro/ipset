@@ -231,6 +231,7 @@ ipset_session_report(struct ipset_session *session,
 	if (type == IPSET_ERROR) {
 		session->errmsg = session->report;
 		session->warnmsg = NULL;
+		ipset_data_reset(ipset_session_data(session));
 	} else {
 		session->errmsg = NULL;
 		session->warnmsg = session->report;
