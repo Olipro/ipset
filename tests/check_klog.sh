@@ -5,6 +5,12 @@ set -e
 
 # arguments: ipaddr proto port setname ...
 
+test -f .loglines || exit 1
+loglines=$(<.loglines)
+if [ $loglines -ne 0 ]; then
+    loglines=$((loglines - 1))
+fi
+
 expand_ipv6() {
 	# incomplete, but for our addresses it's OK
 	addr=
@@ -37,7 +43,7 @@ proto=`echo $1 | tr a-z A-Z`; shift
 port=$1; shift
 
 for setname in $@; do
-	match=`dmesg| tail -n 2 | grep -e "in set $setname: .* SRC=$ipaddr .* PROTO=$proto SPT=$port .*"`
+	match=`tail -n +$loglines /var/log/kern.log | grep -e "in set $setname: .* SRC=$ipaddr .* PROTO=$proto SPT=$port .*"`
 	if [ -z "$match" ]; then
 		echo "no match!"
 		exit 1

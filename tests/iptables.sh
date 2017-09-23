@@ -36,7 +36,6 @@ inet6)
 	;;
 esac
 
-
 case "$2" in
 start)
 	$ipset n ip1 hash:ip $family 2>/dev/null
@@ -93,16 +92,16 @@ start_flags_reversed)
 	;;
 del)
 	$cmd -F INPUT
-	$cmd -A INPUT -j SET --del-set ipport src,src
+	$cmd -A INPUT -s $NET -j SET --del-set ipport src,src
 	;;
 add)
 	$ipset n test hash:net $family 2>/dev/null
 	$cmd -F INPUT
-	$cmd -A INPUT -j SET --add-set test src
+	$cmd -A INPUT -s $NET -j SET --add-set test src
 	;;
 timeout)
 	$ipset n test hash:ip,port timeout 2
-	$cmd -A INPUT -j SET --add-set test src,src --timeout 10 --exist
+	$cmd -A INPUT -s $NET -j SET --add-set test src,src --timeout 10 --exist
 	;;
 mangle)
 	$ipset n test hash:net $family skbinfo 2>/dev/null
