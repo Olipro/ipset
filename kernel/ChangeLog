@@ -1,3 +1,7 @@
+6.34
+  - Fix adding an IPv4 range containing more than 2^31 addresses
+    (bugzilla id #1005, reported by Oleg Serditov and Oliver Ford)
+
 6.33
   - Backport patch: sctp: remove the typedef sctp_sctphdr_t
   - Backport patch: netfilter: nfnetlink: extended ACK reporting

@@ -1,3 +1,15 @@
+6.34
+  - testsuite: Make sure it can be run over ssh :-)
+  - Reset state after a command failed, when multiple ones are issued
+    (bugzilla id #1158, reported by Dimitri Grischin)
+  - Handle padding attribute properly in userspace.
+  - Test to check the fix to add an IPv4 range containing more than 2^31
+    addresses
+  - Fix the include guards on the include/libipset/linux_ip_set*.h
+    (bugzilla id #1139, suggested by Quentin Armitage)
+  - New function added in commit 54802b2c is missing from libipset.map
+    (bugzilla id #1182, reported by irherder@gmail.com)
+
 6.33
   - Report if the option is supported by a newer kernel release
   - ipset: Fix ipset command replacement in runtest.sh (Neutron Soutmun)
