@@ -14,6 +14,8 @@
 #include <stdio.h>			/* fprintf, fgets */
 #include <stdlib.h>			/* exit */
 #include <string.h>			/* str* */
+#define _GNU_SOURCE
+#include <sys/types.h>			/* u_int8_t */
 
 #include <config.h>
 
