@@ -2126,32 +2126,44 @@ static struct pernet_operations ip_set_net_ops = {
 #endif
 };
 
+#ifdef HAVE_NET_OPS_ID
+#define REGISTER_PERNET_SUBSYS(s) \
+	register_pernet_subsys(s)
+#define UNREGISTER_PERNET_SUBSYS(s) \
+	unregister_pernet_subsys(s);
+#else
+#define REGISTER_PERNET_SUBSYS(s) \
+	register_pernet_gen_device(&ip_set_net_id, s)
+#define UNREGISTER_PERNET_SUBSYS(s) \
+	unregister_pernet_gen_device(ip_set_net_id, s);
+#endif
+
+
 static int __init
 ip_set_init(void)
 {
-	int ret = nfnetlink_subsys_register(&ip_set_netlink_subsys);
+	int ret = REGISTER_PERNET_SUBSYS(&ip_set_net_ops);
 
-	if (ret != 0) {
-		pr_err("ip_set: cannot register with nfnetlink.\n");
+	if (ret) {
+		pr_err("ip_set: cannot register pernet_subsys.\n");
 		return ret;
 	}
+
+	ret = nfnetlink_subsys_register(&ip_set_netlink_subsys);
+	if (ret != 0) {
+		pr_err("ip_set: cannot register with nfnetlink.\n");
+		UNREGISTER_PERNET_SUBSYS(&ip_set_net_ops);
+		return ret;
+	}
+
 	ret = nf_register_sockopt(&so_set);
 	if (ret != 0) {
 		pr_err("SO_SET registry failed: %d\n", ret);
 		nfnetlink_subsys_unregister(&ip_set_netlink_subsys);
+		UNREGISTER_PERNET_SUBSYS(&ip_set_net_ops);
 		return ret;
 	}
-#ifdef HAVE_NET_OPS_ID
-	ret = register_pernet_subsys(&ip_set_net_ops);
-#else
-	ret = register_pernet_gen_device(&ip_set_net_id, &ip_set_net_ops);
-#endif
-	if (ret) {
-		pr_err("ip_set: cannot register pernet_subsys.\n");
-		nf_unregister_sockopt(&so_set);
-		nfnetlink_subsys_unregister(&ip_set_netlink_subsys);
-		return ret;
-	}
+
 	pr_info("ip_set: protocol %u\n", IPSET_PROTOCOL);
 	return 0;
 }
@@ -2159,13 +2171,10 @@ ip_set_init(void)
 static void __exit
 ip_set_fini(void)
 {
-#ifdef HAVE_NET_OPS_ID
-	unregister_pernet_subsys(&ip_set_net_ops);
-#else
-	unregister_pernet_gen_device(ip_set_net_id, &ip_set_net_ops);
-#endif
 	nf_unregister_sockopt(&so_set);
 	nfnetlink_subsys_unregister(&ip_set_netlink_subsys);
+
+	UNREGISTER_PERNET_SUBSYS(&ip_set_net_ops);
 	pr_debug("these are the famous last words\n");
 }
 
