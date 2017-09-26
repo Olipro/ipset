@@ -282,7 +282,7 @@ call_parser(int *argc, char *argv[], const struct ipset_type *type,
 	const struct ipset_arg *arg;
 	const char *optstr;
 	const struct ipset_type *t = type;
-	u_int8_t revision = type->revision;
+	uint8_t revision = type->revision;
 	int ret = 0, i = 1;
 
 	/* Currently CREATE and ADT may have got additional arguments */
