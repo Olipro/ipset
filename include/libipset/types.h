@@ -10,6 +10,7 @@
 #include <stddef.h>				/* NULL */
 #include <stdint.h>				/* uintxx_t */
 
+#include <libipset/args.h>			/* enum ipset_keywords */
 #include <libipset/data.h>			/* enum ipset_opt */
 #include <libipset/parse.h>			/* ipset_parsefn */
 #include <libipset/print.h>			/* ipset_printfn */
@@ -47,6 +48,7 @@ struct ipset_arg {
 	enum ipset_opt opt;		/* argumentum type */
 	ipset_parsefn parse;		/* parser function */
 	ipset_printfn print;		/* printing function */
+	const char *help;		/* help text */
 };
 
 /* Type check against the kernel */
@@ -63,6 +65,16 @@ struct ipset_elem {
 	enum ipset_opt opt;			/* elem option */
 };
 
+#define IPSET_OPTARG_MAX	24
+
+/* How other CADT args are parsed */
+struct ipset_optarg {
+	enum ipset_keywords args[IPSET_OPTARG_MAX];/* args */
+	uint64_t need;				/* needed flags */
+	uint64_t full;				/* all possible flags */
+	const char *help;			/* help text */
+};
+
 /* The set types in userspace
  * we could collapse 'args' and 'mandatory' to two-element lists
  * but for the readability the full list is supported.
@@ -76,9 +88,7 @@ struct ipset_type {
 	bool last_elem_optional;		/* last element optional */
 	struct ipset_elem elem[IPSET_DIM_UMAX];	/* parse elem */
 	ipset_parsefn compat_parse_elem;	/* compatibility parser */
-	const struct ipset_arg *args[IPSET_CADT_MAX]; /* create/ADT args besides elem */
-	uint64_t mandatory[IPSET_CADT_MAX];	/* create/ADT mandatory flags */
-	uint64_t full[IPSET_CADT_MAX];		/* full args flags */
+	struct ipset_optarg cmd[IPSET_CADT_MAX];/* optional arguments */
 	const char *usage;			/* terse usage */
 	void (*usagefn)(void);			/* additional usage */
 	const char *description;		/* short revision description */

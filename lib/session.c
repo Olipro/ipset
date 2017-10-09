@@ -817,8 +817,9 @@ list_adt(struct ipset_session *session, struct nlattr *nla[])
 	if (session->mode == IPSET_LIST_XML)
 		safe_snprintf(session, "</elem>");
 
-	for (arg = type->args[IPSET_ADD]; arg != NULL && arg->opt; arg++) {
-		D("print arg opt %u %s", arg->opt,
+	for (i = 0; type->cmd[IPSET_ADD].args[i] != IPSET_ARG_NONE; i++) {
+		arg = ipset_keyword(type->cmd[IPSET_ADD].args[i]);
+		D("print arg opt %u (%s) %s", arg->opt, arg->name[0],
 		   ipset_data_test(data, arg->opt) ? "(yes)" : "(missing)");
 		if (!(arg->print && ipset_data_test(data, arg->opt)))
 			continue;
@@ -905,7 +906,12 @@ list_create(struct ipset_session *session, struct nlattr *nla[])
 		break;
 	}
 
-	for (arg = type->args[IPSET_CREATE]; arg != NULL && arg->opt; arg++) {
+	D("type %s, rev %u", type->name, type->revision);
+	for (i = 0; type->cmd[IPSET_CREATE].args[i] != IPSET_ARG_NONE; i++) {
+		arg = ipset_keyword(type->cmd[IPSET_CREATE].args[i]);
+		D("create print arg opt %u (%s) %s", arg->opt,
+		   arg->name[0] ? arg->name[0] : "",
+		   ipset_data_test(data, arg->opt) ? "(yes)" : "(missing)");
 		if (!arg->print ||
 		    !ipset_data_test(data, arg->opt) ||
 		    (arg->opt == IPSET_OPT_FAMILY &&

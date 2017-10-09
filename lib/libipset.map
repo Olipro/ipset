@@ -163,3 +163,8 @@ LIBIPSET_4.5 {
 global:
   ipset_type_higher_rev;
 } LIBIPSET_4.4;
+
+LIBIPSET_4.6 {
+global:
+  ipset_keyword;
+} LIBIPSET_4.5;

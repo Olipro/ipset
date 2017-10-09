@@ -9,66 +9,7 @@
 #include <libipset/print.h>			/* printing functions */
 #include <libipset/types.h>			/* prototypes */
 
-/* Parse commandline arguments */
-static const struct ipset_arg hash_net_create_args0[] = {
-	{ .name = { "family", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,		.print = ipset_print_family,
-	},
-	/* Alias: family inet */
-	{ .name = { "-4", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	/* Alias: family inet6 */
-	{ .name = { "-6", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	{ .name = { "hashsize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_HASHSIZE,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "maxelem", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_MAXELEM,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "timeout", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
-	  .parse = ipset_parse_timeout,		.print = ipset_print_number,
-	},
-	/* Ignored options: backward compatibilty */
-	{ .name = { "probes", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROBES,
-	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
-	},
-	{ .name = { "resize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_RESIZE,
-	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
-	},
-	{ },
-};
-
-static const struct ipset_arg hash_net_add_args0[] = {
-	{ .name = { "timeout", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
-	  .parse = ipset_parse_timeout,		.print = ipset_print_number,
-	},
-	{ },
-};
-
-static const char hash_net_usage0[] =
-"create SETNAME hash:net\n"
-"		[family inet|inet6]\n"
-"               [hashsize VALUE] [maxelem VALUE]\n"
-"               [timeout VALUE]\n"
-"add    SETNAME IP[/CIDR] [timeout VALUE]\n"
-"del    SETNAME IP[/CIDR]\n"
-"test   SETNAME IP[/CIDR]\n\n"
-"where depending on the INET family\n"
-"      IP is an IPv4 or IPv6 address (or hostname),\n"
-"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n";
-
+/* Initial revision */
 static struct ipset_type ipset_hash_net0 = {
 	.name = "hash:net",
 	.alias = { "nethash", NULL },
@@ -82,46 +23,61 @@ static struct ipset_type ipset_hash_net0 = {
 			.opt = IPSET_OPT_IP
 		},
 	},
-	.args = {
-		[IPSET_CREATE] = hash_net_create_args0,
-		[IPSET_ADD] = hash_net_add_args0,
+	.cmd = {
+		[IPSET_CREATE] = {
+			.args = {
+				IPSET_ARG_FAMILY,
+				/* Aliases */
+				IPSET_ARG_INET,
+				IPSET_ARG_INET6,
+				IPSET_ARG_HASHSIZE,
+				IPSET_ARG_MAXELEM,
+				IPSET_ARG_TIMEOUT,
+				/* Ignored options: backward compatibilty */
+				IPSET_ARG_PROBES,
+				IPSET_ARG_RESIZE,
+				IPSET_ARG_NONE,
+			},
+			.need = 0,
+			.full = 0,
+			.help = "",
+		},
+		[IPSET_ADD] = {
+			.args = {
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_DEL] = {
+			.args = {
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_TEST] = {
+			.args = {
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR),
+			.help = "IP[/CIDR]",
+		},
 	},
-	.mandatory = {
-		[IPSET_CREATE] = 0,
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP),
-	},
-	.full = {
-		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
-			| IPSET_FLAG(IPSET_OPT_MAXELEM)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR),
-	},
-
-	.usage = hash_net_usage0,
+	.usage = "where depending on the INET family\n"
+		 "      IP is an IPv4 or IPv6 address (or hostname),\n"
+		 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.",
 	.description = "Initial revision",
 };
 
-static const char hash_net_usage1[] =
-"create SETNAME hash:net\n"
-"		[family inet|inet6]\n"
-"               [hashsize VALUE] [maxelem VALUE]\n"
-"               [timeout VALUE]\n"
-"add    SETNAME IP[/CIDR]|FROM-TO [timeout VALUE]\n"
-"del    SETNAME IP[/CIDR]|FROM-TO\n"
-"test   SETNAME IP[/CIDR]\n\n"
-"where depending on the INET family\n"
-"      IP is an IPv4 or IPv6 address (or hostname),\n"
-"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
-"      IP range is not supported with IPv6.\n";
-
+/* Add/del range support */
 static struct ipset_type ipset_hash_net1 = {
 	.name = "hash:net",
 	.alias = { "nethash", NULL },
@@ -135,60 +91,63 @@ static struct ipset_type ipset_hash_net1 = {
 			.opt = IPSET_OPT_IP
 		},
 	},
-	.args = {
-		[IPSET_CREATE] = hash_net_create_args0,
-		[IPSET_ADD] = hash_net_add_args0,
+	.cmd = {
+		[IPSET_CREATE] = {
+			.args = {
+				IPSET_ARG_FAMILY,
+				/* Aliases */
+				IPSET_ARG_INET,
+				IPSET_ARG_INET6,
+				IPSET_ARG_HASHSIZE,
+				IPSET_ARG_MAXELEM,
+				IPSET_ARG_TIMEOUT,
+				/* Ignored options: backward compatibilty */
+				IPSET_ARG_PROBES,
+				IPSET_ARG_RESIZE,
+				IPSET_ARG_NONE,
+			},
+			.need = 0,
+			.full = 0,
+			.help = "",
+		},
+		[IPSET_ADD] = {
+			.args = {
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_DEL] = {
+			.args = {
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_TEST] = {
+			.args = {
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR),
+			.help = "IP[/CIDR]",
+		},
 	},
-	.mandatory = {
-		[IPSET_CREATE] = 0,
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP),
-	},
-	.full = {
-		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
-			| IPSET_FLAG(IPSET_OPT_MAXELEM)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR),
-	},
-
-	.usage = hash_net_usage1,
+	.usage = "where depending on the INET family\n"
+		 "      IP is an IPv4 or IPv6 address (or hostname),\n"
+		 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.",
 	.description = "Add/del range support",
 };
 
-static const struct ipset_arg hash_net_add_args2[] = {
-	{ .name = { "timeout", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
-	  .parse = ipset_parse_timeout,		.print = ipset_print_number,
-	},
-	{ .name = { "nomatch", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_NOMATCH,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ },
-};
-
-static const char hash_net_usage2[] =
-"create SETNAME hash:net\n"
-"		[family inet|inet6]\n"
-"               [hashsize VALUE] [maxelem VALUE]\n"
-"               [timeout VALUE]\n"
-"add    SETNAME IP[/CIDR]|FROM-TO [timeout VALUE] [nomatch]\n"
-"del    SETNAME IP[/CIDR]|FROM-TO\n"
-"test   SETNAME IP[/CIDR]\n\n"
-"where depending on the INET family\n"
-"      IP is an IPv4 or IPv6 address (or hostname),\n"
-"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
-"      IP range is not supported with IPv6.\n";
-
+/* nomatch flag support */
 static struct ipset_type ipset_hash_net2 = {
 	.name = "hash:net",
 	.alias = { "nethash", NULL },
@@ -202,122 +161,65 @@ static struct ipset_type ipset_hash_net2 = {
 			.opt = IPSET_OPT_IP
 		},
 	},
-	.args = {
-		[IPSET_CREATE] = hash_net_create_args0,
-		[IPSET_ADD] = hash_net_add_args2,
+	.cmd = {
+		[IPSET_CREATE] = {
+			.args = {
+				IPSET_ARG_FAMILY,
+				/* Aliases */
+				IPSET_ARG_INET,
+				IPSET_ARG_INET6,
+				IPSET_ARG_HASHSIZE,
+				IPSET_ARG_MAXELEM,
+				IPSET_ARG_TIMEOUT,
+				/* Ignored options: backward compatibilty */
+				IPSET_ARG_PROBES,
+				IPSET_ARG_RESIZE,
+				IPSET_ARG_NONE,
+			},
+			.need = 0,
+			.full = 0,
+			.help = "",
+		},
+		[IPSET_ADD] = {
+			.args = {
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_NOMATCH,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_DEL] = {
+			.args = {
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_TEST] = {
+			.args = {
+				IPSET_ARG_NOMATCH,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR),
+			.help = "IP[/CIDR]",
+		},
 	},
-	.mandatory = {
-		[IPSET_CREATE] = 0,
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP),
-	},
-	.full = {
-		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
-			| IPSET_FLAG(IPSET_OPT_MAXELEM)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT),
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
-			| IPSET_FLAG(IPSET_OPT_NOMATCH),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR),
-	},
-
-	.usage = hash_net_usage2,
+	.usage = "where depending on the INET family\n"
+		 "      IP is an IPv4 or IPv6 address (or hostname),\n"
+		 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.",
 	.description = "nomatch flag support",
 };
 
-/* Parse commandline arguments */
-static const struct ipset_arg hash_net_create_args3[] = {
-	{ .name = { "family", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,		.print = ipset_print_family,
-	},
-	/* Alias: family inet */
-	{ .name = { "-4", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	/* Alias: family inet6 */
-	{ .name = { "-6", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	{ .name = { "hashsize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_HASHSIZE,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "maxelem", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_MAXELEM,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "timeout", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
-	  .parse = ipset_parse_timeout,		.print = ipset_print_number,
-	},
-	{ .name = { "counters", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_COUNTERS,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	/* Ignored options: backward compatibilty */
-	{ .name = { "probes", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROBES,
-	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
-	},
-	{ .name = { "resize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_RESIZE,
-	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
-	},
-	{ },
-};
-
-static const struct ipset_arg hash_net_add_args3[] = {
-	{ .name = { "timeout", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
-	  .parse = ipset_parse_timeout,		.print = ipset_print_number,
-	},
-	{ .name = { "nomatch", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_NOMATCH,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ .name = { "packets", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PACKETS,
-	  .parse = ipset_parse_uint64,		.print = ipset_print_number,
-	},
-	{ .name = { "bytes", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_BYTES,
-	  .parse = ipset_parse_uint64,		.print = ipset_print_number,
-	},
-	{ },
-};
-
-static const struct ipset_arg hash_net_test_args3[] = {
-	{ .name = { "nomatch", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_NOMATCH,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ },
-};
-
-static const char hash_net_usage3[] =
-"create SETNAME hash:net\n"
-"		[family inet|inet6]\n"
-"               [hashsize VALUE] [maxelem VALUE]\n"
-"               [timeout VALUE] [counters]\n"
-"add    SETNAME IP[/CIDR]|FROM-TO [timeout VALUE] [nomatch]\n"
-"               [packets VALUE] [bytes VALUE]\n"
-"del    SETNAME IP[/CIDR]|FROM-TO\n"
-"test   SETNAME IP[/CIDR]\n\n"
-"where depending on the INET family\n"
-"      IP is an IPv4 or IPv6 address (or hostname),\n"
-"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
-"      IP range is not supported with IPv6.\n";
-
+/* counters support */
 static struct ipset_type ipset_hash_net3 = {
 	.name = "hash:net",
 	.alias = { "nethash", NULL },
@@ -331,135 +233,68 @@ static struct ipset_type ipset_hash_net3 = {
 			.opt = IPSET_OPT_IP
 		},
 	},
-	.args = {
-		[IPSET_CREATE] = hash_net_create_args3,
-		[IPSET_ADD] = hash_net_add_args3,
-		[IPSET_TEST] = hash_net_test_args3,
+	.cmd = {
+		[IPSET_CREATE] = {
+			.args = {
+				IPSET_ARG_FAMILY,
+				/* Aliases */
+				IPSET_ARG_INET,
+				IPSET_ARG_INET6,
+				IPSET_ARG_HASHSIZE,
+				IPSET_ARG_MAXELEM,
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_COUNTERS,
+				/* Ignored options: backward compatibilty */
+				IPSET_ARG_PROBES,
+				IPSET_ARG_RESIZE,
+				IPSET_ARG_NONE,
+			},
+			.need = 0,
+			.full = 0,
+			.help = "",
+		},
+		[IPSET_ADD] = {
+			.args = {
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_NOMATCH,
+				IPSET_ARG_PACKETS,
+				IPSET_ARG_BYTES,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_DEL] = {
+			.args = {
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_TEST] = {
+			.args = {
+				IPSET_ARG_NOMATCH,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR),
+			.help = "IP[/CIDR]",
+		},
 	},
-	.mandatory = {
-		[IPSET_CREATE] = 0,
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP),
-	},
-	.full = {
-		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
-			| IPSET_FLAG(IPSET_OPT_MAXELEM)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
-			| IPSET_FLAG(IPSET_OPT_COUNTERS),
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
-			| IPSET_FLAG(IPSET_OPT_NOMATCH)
-			| IPSET_FLAG(IPSET_OPT_PACKETS)
-			| IPSET_FLAG(IPSET_OPT_BYTES),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_NOMATCH),
-	},
-
-	.usage = hash_net_usage3,
+	.usage = "where depending on the INET family\n"
+		 "      IP is an IPv4 or IPv6 address (or hostname),\n"
+		 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.",
 	.description = "counters support",
 };
 
-/* Parse commandline arguments */
-static const struct ipset_arg hash_net_create_args4[] = {
-	{ .name = { "family", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,		.print = ipset_print_family,
-	},
-	/* Alias: family inet */
-	{ .name = { "-4", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	/* Alias: family inet6 */
-	{ .name = { "-6", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	{ .name = { "hashsize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_HASHSIZE,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "maxelem", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_MAXELEM,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "timeout", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
-	  .parse = ipset_parse_timeout,		.print = ipset_print_number,
-	},
-	{ .name = { "counters", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_COUNTERS,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ .name = { "comment", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_CREATE_COMMENT,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	/* Ignored options: backward compatibilty */
-	{ .name = { "probes", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROBES,
-	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
-	},
-	{ .name = { "resize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_RESIZE,
-	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
-	},
-	{ },
-};
-
-static const struct ipset_arg hash_net_add_args4[] = {
-	{ .name = { "timeout", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
-	  .parse = ipset_parse_timeout,		.print = ipset_print_number,
-	},
-	{ .name = { "nomatch", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_NOMATCH,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ .name = { "packets", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PACKETS,
-	  .parse = ipset_parse_uint64,		.print = ipset_print_number,
-	},
-	{ .name = { "bytes", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_BYTES,
-	  .parse = ipset_parse_uint64,		.print = ipset_print_number,
-	},
-	{ .name = { "comment", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_ADT_COMMENT,
-	  .parse = ipset_parse_comment,		.print = ipset_print_comment,
-	},
-	{ },
-};
-
-static const struct ipset_arg hash_net_test_args4[] = {
-	{ .name = { "nomatch", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_NOMATCH,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ },
-};
-
-static const char hash_net_usage4[] =
-"create SETNAME hash:net\n"
-"		[family inet|inet6]\n"
-"               [hashsize VALUE] [maxelem VALUE]\n"
-"               [timeout VALUE] [counters] [comment]\n"
-"add    SETNAME IP[/CIDR]|FROM-TO [timeout VALUE] [nomatch]\n"
-"               [packets VALUE] [bytes VALUE] [comment \"string\"]\n"
-"del    SETNAME IP[/CIDR]|FROM-TO\n"
-"test   SETNAME IP[/CIDR]\n\n"
-"where depending on the INET family\n"
-"      IP is an IPv4 or IPv6 address (or hostname),\n"
-"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
-"      IP range is not supported with IPv6.\n";
-
+/* comment support */
 static struct ipset_type ipset_hash_net4 = {
 	.name = "hash:net",
 	.alias = { "nethash", NULL },
@@ -473,110 +308,70 @@ static struct ipset_type ipset_hash_net4 = {
 			.opt = IPSET_OPT_IP
 		},
 	},
-	.args = {
-		[IPSET_CREATE] = hash_net_create_args4,
-		[IPSET_ADD] = hash_net_add_args4,
-		[IPSET_TEST] = hash_net_test_args4,
+	.cmd = {
+		[IPSET_CREATE] = {
+			.args = {
+				IPSET_ARG_FAMILY,
+				/* Aliases */
+				IPSET_ARG_INET,
+				IPSET_ARG_INET6,
+				IPSET_ARG_HASHSIZE,
+				IPSET_ARG_MAXELEM,
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_COUNTERS,
+				IPSET_ARG_COMMENT,
+				/* Ignored options: backward compatibilty */
+				IPSET_ARG_PROBES,
+				IPSET_ARG_RESIZE,
+				IPSET_ARG_NONE,
+			},
+			.need = 0,
+			.full = 0,
+			.help = "",
+		},
+		[IPSET_ADD] = {
+			.args = {
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_NOMATCH,
+				IPSET_ARG_PACKETS,
+				IPSET_ARG_BYTES,
+				IPSET_ARG_ADT_COMMENT,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_DEL] = {
+			.args = {
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_TEST] = {
+			.args = {
+				IPSET_ARG_NOMATCH,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR),
+			.help = "IP[/CIDR]",
+		},
 	},
-	.mandatory = {
-		[IPSET_CREATE] = 0,
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP),
-	},
-	.full = {
-		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
-			| IPSET_FLAG(IPSET_OPT_MAXELEM)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
-			| IPSET_FLAG(IPSET_OPT_COUNTERS)
-			| IPSET_FLAG(IPSET_OPT_CREATE_COMMENT),
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
-			| IPSET_FLAG(IPSET_OPT_NOMATCH)
-			| IPSET_FLAG(IPSET_OPT_PACKETS)
-			| IPSET_FLAG(IPSET_OPT_BYTES)
-			| IPSET_FLAG(IPSET_OPT_ADT_COMMENT),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_NOMATCH),
-	},
-
-	.usage = hash_net_usage4,
+	.usage = "where depending on the INET family\n"
+		 "      IP is an IPv4 or IPv6 address (or hostname),\n"
+		 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.",
 	.description = "comment support",
 };
 
-/* Parse commandline arguments */
-static const struct ipset_arg hash_net_create_args5[] = {
-	{ .name = { "family", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,		.print = ipset_print_family,
-	},
-	/* Alias: family inet */
-	{ .name = { "-4", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	/* Alias: family inet6 */
-	{ .name = { "-6", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	{ .name = { "hashsize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_HASHSIZE,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "maxelem", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_MAXELEM,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "timeout", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
-	  .parse = ipset_parse_timeout,		.print = ipset_print_number,
-	},
-	{ .name = { "counters", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_COUNTERS,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ .name = { "comment", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_CREATE_COMMENT,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ .name = { "forceadd", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FORCEADD,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	/* Ignored options: backward compatibilty */
-	{ .name = { "probes", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROBES,
-	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
-	},
-	{ .name = { "resize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_RESIZE,
-	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
-	},
-	{ },
-};
-
-static const char hash_net_usage5[] =
-"create SETNAME hash:net\n"
-"		[family inet|inet6]\n"
-"               [hashsize VALUE] [maxelem VALUE]\n"
-"               [timeout VALUE] [counters] [comment]\n"
-"		[forceadd]\n"
-"add    SETNAME IP[/CIDR]|FROM-TO [timeout VALUE] [nomatch]\n"
-"               [packets VALUE] [bytes VALUE] [comment \"string\"]\n"
-"del    SETNAME IP[/CIDR]|FROM-TO\n"
-"test   SETNAME IP[/CIDR]\n\n"
-"where depending on the INET family\n"
-"      IP is an IPv4 or IPv6 address (or hostname),\n"
-"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
-"      IP range is not supported with IPv6.\n";
-
+/* forceadd support */
 static struct ipset_type ipset_hash_net5 = {
 	.name = "hash:net",
 	.alias = { "nethash", NULL },
@@ -590,154 +385,71 @@ static struct ipset_type ipset_hash_net5 = {
 			.opt = IPSET_OPT_IP
 		},
 	},
-	.args = {
-		[IPSET_CREATE] = hash_net_create_args5,
-		[IPSET_ADD] = hash_net_add_args4,
-		[IPSET_TEST] = hash_net_test_args4,
+	.cmd = {
+		[IPSET_CREATE] = {
+			.args = {
+				IPSET_ARG_FAMILY,
+				/* Aliases */
+				IPSET_ARG_INET,
+				IPSET_ARG_INET6,
+				IPSET_ARG_HASHSIZE,
+				IPSET_ARG_MAXELEM,
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_COUNTERS,
+				IPSET_ARG_COMMENT,
+				IPSET_ARG_FORCEADD,
+				/* Ignored options: backward compatibilty */
+				IPSET_ARG_PROBES,
+				IPSET_ARG_RESIZE,
+				IPSET_ARG_NONE,
+			},
+			.need = 0,
+			.full = 0,
+			.help = "",
+		},
+		[IPSET_ADD] = {
+			.args = {
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_NOMATCH,
+				IPSET_ARG_PACKETS,
+				IPSET_ARG_BYTES,
+				IPSET_ARG_ADT_COMMENT,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_DEL] = {
+			.args = {
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_TEST] = {
+			.args = {
+				IPSET_ARG_NOMATCH,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR),
+			.help = "IP[/CIDR]",
+		},
 	},
-	.mandatory = {
-		[IPSET_CREATE] = 0,
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP),
-	},
-	.full = {
-		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
-			| IPSET_FLAG(IPSET_OPT_MAXELEM)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
-			| IPSET_FLAG(IPSET_OPT_COUNTERS)
-			| IPSET_FLAG(IPSET_OPT_CREATE_COMMENT)
-			| IPSET_FLAG(IPSET_OPT_FORCEADD),
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
-			| IPSET_FLAG(IPSET_OPT_NOMATCH)
-			| IPSET_FLAG(IPSET_OPT_PACKETS)
-			| IPSET_FLAG(IPSET_OPT_BYTES)
-			| IPSET_FLAG(IPSET_OPT_ADT_COMMENT),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_NOMATCH),
-	},
-
-	.usage = hash_net_usage5,
+	.usage = "where depending on the INET family\n"
+		 "      IP is an IPv4 or IPv6 address (or hostname),\n"
+		 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.",
 	.description = "forceadd support",
 };
 
-/* Parse commandline arguments */
-static const struct ipset_arg hash_net_create_args6[] = {
-	{ .name = { "family", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,		.print = ipset_print_family,
-	},
-	/* Alias: family inet */
-	{ .name = { "-4", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	/* Alias: family inet6 */
-	{ .name = { "-6", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FAMILY,
-	  .parse = ipset_parse_family,
-	},
-	{ .name = { "hashsize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_HASHSIZE,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "maxelem", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_MAXELEM,
-	  .parse = ipset_parse_uint32,		.print = ipset_print_number,
-	},
-	{ .name = { "timeout", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
-	  .parse = ipset_parse_timeout,		.print = ipset_print_number,
-	},
-	{ .name = { "counters", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_COUNTERS,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ .name = { "comment", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_CREATE_COMMENT,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ .name = { "forceadd", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_FORCEADD,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ .name = { "skbinfo", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_SKBINFO,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	/* Ignored options: backward compatibilty */
-	{ .name = { "probes", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PROBES,
-	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
-	},
-	{ .name = { "resize", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_RESIZE,
-	  .parse = ipset_parse_ignored,		.print = ipset_print_number,
-	},
-	{ },
-};
-
-
-static const struct ipset_arg hash_net_add_args6[] = {
-	{ .name = { "timeout", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_TIMEOUT,
-	  .parse = ipset_parse_timeout,		.print = ipset_print_number,
-	},
-	{ .name = { "nomatch", NULL },
-	  .has_arg = IPSET_NO_ARG,		.opt = IPSET_OPT_NOMATCH,
-	  .parse = ipset_parse_flag,		.print = ipset_print_flag,
-	},
-	{ .name = { "packets", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_PACKETS,
-	  .parse = ipset_parse_uint64,		.print = ipset_print_number,
-	},
-	{ .name = { "bytes", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_BYTES,
-	  .parse = ipset_parse_uint64,		.print = ipset_print_number,
-	},
-	{ .name = { "comment", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_ADT_COMMENT,
-	  .parse = ipset_parse_comment,		.print = ipset_print_comment,
-	},
-	{ .name = { "skbmark", NULL },
-	  . has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_SKBMARK,
-	  .parse = ipset_parse_skbmark,		.print = ipset_print_skbmark,
-	},
-	{ .name = { "skbprio", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_SKBPRIO,
-	  .parse = ipset_parse_skbprio,		.print = ipset_print_skbprio,
-	},
-	{ .name = { "skbqueue", NULL },
-	  .has_arg = IPSET_MANDATORY_ARG,	.opt = IPSET_OPT_SKBQUEUE,
-	  .parse = ipset_parse_uint16,		.print = ipset_print_number,
-	},
-	{ },
-};
-
-
-static const char hash_net_usage6[] =
-"create SETNAME hash:net\n"
-"		[family inet|inet6]\n"
-"               [hashsize VALUE] [maxelem VALUE]\n"
-"               [timeout VALUE] [counters] [comment]\n"
-"		[skbinfo] [forceadd]\n"
-"add    SETNAME IP[/CIDR]|FROM-TO [timeout VALUE] [nomatch]\n"
-"               [packets VALUE] [bytes VALUE] [comment \"string\"]\n"
-"		[skbmark VALUE/VALUE] [skbprio VALUE] [skbqueue VALUE]\n"
-"del    SETNAME IP[/CIDR]|FROM-TO\n"
-"test   SETNAME IP[/CIDR]\n\n"
-"where depending on the INET family\n"
-"      IP is an IPv4 or IPv6 address (or hostname),\n"
-"      CIDR is a valid IPv4 or IPv6 CIDR prefix.\n"
-"      IP range is not supported with IPv6.\n";
-
+/* skbinfo support */
 static struct ipset_type ipset_hash_net6 = {
 	.name = "hash:net",
 	.alias = { "nethash", NULL },
@@ -751,45 +463,71 @@ static struct ipset_type ipset_hash_net6 = {
 			.opt = IPSET_OPT_IP
 		},
 	},
-	.args = {
-		[IPSET_CREATE] = hash_net_create_args6,
-		[IPSET_ADD] = hash_net_add_args6,
-		[IPSET_TEST] = hash_net_test_args4,
+	.cmd = {
+		[IPSET_CREATE] = {
+			.args = {
+				IPSET_ARG_FAMILY,
+				/* Aliases */
+				IPSET_ARG_INET,
+				IPSET_ARG_INET6,
+				IPSET_ARG_HASHSIZE,
+				IPSET_ARG_MAXELEM,
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_COUNTERS,
+				IPSET_ARG_COMMENT,
+				IPSET_ARG_FORCEADD,
+				IPSET_ARG_SKBINFO,
+				/* Ignored options: backward compatibilty */
+				IPSET_ARG_PROBES,
+				IPSET_ARG_RESIZE,
+				IPSET_ARG_NONE,
+			},
+			.need = 0,
+			.full = 0,
+			.help = "",
+		},
+		[IPSET_ADD] = {
+			.args = {
+				IPSET_ARG_TIMEOUT,
+				IPSET_ARG_NOMATCH,
+				IPSET_ARG_PACKETS,
+				IPSET_ARG_BYTES,
+				IPSET_ARG_ADT_COMMENT,
+				IPSET_ARG_SKBMARK,
+				IPSET_ARG_SKBPRIO,
+				IPSET_ARG_SKBQUEUE,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_DEL] = {
+			.args = {
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR)
+				| IPSET_FLAG(IPSET_OPT_IP_TO),
+			.help = "IP[/CIDR]",
+		},
+		[IPSET_TEST] = {
+			.args = {
+				IPSET_ARG_NOMATCH,
+				IPSET_ARG_NONE,
+			},
+			.need = IPSET_FLAG(IPSET_OPT_IP),
+			.full = IPSET_FLAG(IPSET_OPT_IP)
+				| IPSET_FLAG(IPSET_OPT_CIDR),
+			.help = "IP[/CIDR]",
+		},
 	},
-	.mandatory = {
-		[IPSET_CREATE] = 0,
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP),
-	},
-	.full = {
-		[IPSET_CREATE] = IPSET_FLAG(IPSET_OPT_HASHSIZE)
-			| IPSET_FLAG(IPSET_OPT_MAXELEM)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
-			| IPSET_FLAG(IPSET_OPT_COUNTERS)
-			| IPSET_FLAG(IPSET_OPT_CREATE_COMMENT)
-			| IPSET_FLAG(IPSET_OPT_FORCEADD)
-			| IPSET_FLAG(IPSET_OPT_SKBINFO),
-		[IPSET_ADD] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO)
-			| IPSET_FLAG(IPSET_OPT_TIMEOUT)
-			| IPSET_FLAG(IPSET_OPT_NOMATCH)
-			| IPSET_FLAG(IPSET_OPT_PACKETS)
-			| IPSET_FLAG(IPSET_OPT_BYTES)
-			| IPSET_FLAG(IPSET_OPT_ADT_COMMENT)
-			| IPSET_FLAG(IPSET_OPT_SKBMARK)
-			| IPSET_FLAG(IPSET_OPT_SKBPRIO)
-			| IPSET_FLAG(IPSET_OPT_SKBQUEUE),
-		[IPSET_DEL] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_IP_TO),
-		[IPSET_TEST] = IPSET_FLAG(IPSET_OPT_IP)
-			| IPSET_FLAG(IPSET_OPT_CIDR)
-			| IPSET_FLAG(IPSET_OPT_NOMATCH),
-	},
-
-	.usage = hash_net_usage6,
+	.usage = "where depending on the INET family\n"
+		 "      IP is an IPv4 or IPv6 address (or hostname),\n"
+		 "      CIDR is a valid IPv4 or IPv6 CIDR prefix.",
 	.description = "skbinfo support",
 };
 

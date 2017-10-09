@@ -631,7 +631,7 @@ ipset_parse_proto_port(struct ipset_session *session,
 		case IPPROTO_ICMP:
 			if (family != NFPROTO_IPV4) {
 				syntax_err("Protocol ICMP can be used "
-					   "with family INET only");
+					   "with family inet only");
 				goto error;
 			}
 			err = ipset_parse_icmp(session, opt, a);
@@ -639,7 +639,7 @@ ipset_parse_proto_port(struct ipset_session *session,
 		case IPPROTO_ICMPV6:
 			if (family != NFPROTO_IPV6) {
 				syntax_err("Protocol ICMPv6 can be used "
-					   "with family INET6 only");
+					   "with family inet6 only");
 				goto error;
 			}
 			err = ipset_parse_icmpv6(session, opt, a);
@@ -742,7 +742,7 @@ ipset_parse_family(struct ipset_session *session,
 	else if (STREQ(str, "any") || STREQ(str, "unspec"))
 		family = NFPROTO_UNSPEC;
 	else
-		return syntax_err("unknown INET family %s", str);
+		return syntax_err("unknown inet family %s", str);
 
 	return ipset_data_set(data, opt, &family);
 }

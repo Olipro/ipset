@@ -497,12 +497,21 @@ int
 ipset_type_add(struct ipset_type *type)
 {
 	struct ipset_type *t, *prev;
+	const struct ipset_arg *arg;
+	enum ipset_adt cmd;
+	int i;
 
 	assert(type);
 
 	if (strlen(type->name) > IPSET_MAXNAMELEN - 1)
 		return -EINVAL;
 
+	for (cmd = IPSET_ADD; cmd < IPSET_CADT_MAX; cmd++) {
+		for (i = 0; type->cmd[cmd].args[i] != IPSET_ARG_NONE; i++) {
+			arg = ipset_keyword(type->cmd[cmd].args[i]);
+			type->cmd[cmd].full |= IPSET_FLAG(arg->opt);
+		}
+	}
 	/* Add to the list: higher revision numbers first */
 	for (t = typelist, prev = NULL; t != NULL; t = t->next) {
 		if (STREQ(t->name, type->name)) {
