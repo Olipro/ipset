@@ -43,6 +43,7 @@
 #@HAVE_PASSING_EXTENDED_ACK_TO_PARSERS@ HAVE_PASSING_EXTENDED_ACK_TO_PARSERS
 #@HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS@ HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS
 #@HAVE_TYPEDEF_SCTP_SCTPHDR_T@ HAVE_TYPEDEF_SCTP_SCTPHDR_T
+#@HAVE_TIMER_SETUP@ HAVE_TIMER_SETUP
 
 #ifdef HAVE_EXPORT_SYMBOL_GPL_IN_MODULE_H
 #include <linux/module.h>
@@ -335,6 +336,20 @@ static inline u16 nfnl_msg_type(u8 subsys, u8 msg_type)
 #define XT_FAMILY(par)		xt_family(par)
 #else
 #define XT_FAMILY(par)		(par)->family
+#endif
+
+#ifdef HAVE_TIMER_SETUP
+#define GC_ARG			struct timer_list *t
+#define TIMER_SETUP(a, b)	timer_setup(a, b, 0)
+#define INIT_GC_VARS(type, var)				\
+	struct type *var = from_timer(var, t, gc); 	\
+	struct ip_set *set = var->set
+#else
+#define GC_ARG			unsigned long ul_set
+#define TIMER_SETUP(a, b)	setup_timer(a, b, (unsigned long)set)
+#define INIT_GC_VARS(type, var)				\
+	struct ip_set *set = (struct ip_set *)ul_set;	\
+	struct type *var = set->data
 #endif
 
 #ifndef smp_mb__before_atomic

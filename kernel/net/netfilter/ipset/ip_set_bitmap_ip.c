@@ -48,6 +48,9 @@ struct bitmap_ip {
 	size_t memsize;		/* members size */
 	u8 netmask;		/* subnet netmask */
 	struct timer_list gc;	/* garbage collection */
+#ifdef HAVE_TIMER_SETUP
+	struct ip_set *set;	/* attached to this ip_set */
+#endif
 	unsigned char extensions[0]	/* data extensions */
 		__aligned(__alignof__(u64));
 };
@@ -232,6 +235,9 @@ init_map_ip(struct ip_set *set, struct bitmap_ip *map,
 	map->netmask = netmask;
 	set->timeout = IPSET_NO_TIMEOUT;
 
+#ifdef HAVE_TIMER_SETUP
+	map->set = set;
+#endif
 	set->data = map;
 	set->family = NFPROTO_IPV4;
 

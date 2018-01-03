@@ -280,6 +280,9 @@ htable_bits(u32 hashsize)
 struct htype {
 	struct htable __rcu *table; /* the hash table */
 	struct timer_list gc;	/* garbage collection when timeout enabled */
+#ifdef HAVE_TIMER_SETUP
+	struct ip_set *set;	/* attached to this ip_set */
+#endif
 	u32 maxelem;		/* max elements in the hash */
 	u32 initval;		/* random jhash init value */
 #ifdef IP_SET_HASH_WITH_MARKMASK
@@ -429,11 +432,11 @@ mtype_destroy(struct ip_set *set)
 }
 
 static void
-mtype_gc_init(struct ip_set *set, void (*gc)(unsigned long ul_set))
+mtype_gc_init(struct ip_set *set, void (*gc)(GC_ARG))
 {
 	struct htype *h = set->data;
 
-	setup_timer(&h->gc, gc, (unsigned long)set);
+	TIMER_SETUP(&h->gc, gc);
 	mod_timer(&h->gc, jiffies + IPSET_GC_PERIOD(set->timeout) * HZ);
 	pr_debug("gc initialized, run in every %u\n",
 		 IPSET_GC_PERIOD(set->timeout));
@@ -527,10 +530,9 @@ mtype_expire(struct ip_set *set, struct htype *h)
 }
 
 static void
-mtype_gc(unsigned long ul_set)
+mtype_gc(GC_ARG)
 {
-	struct ip_set *set = (struct ip_set *)ul_set;
-	struct htype *h = set->data;
+	INIT_GC_VARS(htype, h);
 
 	pr_debug("called\n");
 	spin_lock_bh(&set->lock);
@@ -1315,6 +1317,9 @@ IPSET_TOKEN(HTYPE, _create)(struct net *net, struct ip_set *set,
 	t->htable_bits = hbits;
 	RCU_INIT_POINTER(h->table, t);
 
+#ifdef HAVE_TIMER_SETUP
+	h->set = set;
+#endif
 	set->data = h;
 #ifndef IP_SET_PROTO_UNDEF
 	if (set->family == NFPROTO_IPV4) {

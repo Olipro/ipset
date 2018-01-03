@@ -589,6 +589,16 @@ else
 	AC_SUBST(HAVE_TYPEDEF_SCTP_SCTPHDR_T, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for timer_setup in timer.h])
+if test -f $ksourcedir/include/linux/timer.h && \
+   $GREP -q ' timer_setup' $ksourcedir/include/linux/timer.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_TIMER_SETUP, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_TIMER_SETUP, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then
