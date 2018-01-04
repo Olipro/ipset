@@ -116,6 +116,15 @@ netiface)
 	$cmd -A OUTPUT -m set --match-set test dst,dst -j LOG --log-prefix "in set netiface: "
 	$cmd -A OUTPUT -d 10.255.255.254 -j DROP
 	;;
+counter)
+	$ipset n test hash:ip counters
+	$ipset a test 10.255.255.64
+	$cmd -A OUTPUT -m set --match-set test src --packets-gt 1 ! --update-counters -j DROP
+	$cmd -A OUTPUT -m set --match-set test src -j DROP
+	./sendip.sh -p ipv4 -id 10.255.255.254 -is 10.255.255.64 -p udp -ud 80 -us 1025 10.255.255.254 >/dev/null 2>&1
+	./sendip.sh -p ipv4 -id 10.255.255.254 -is 10.255.255.64 -p udp -ud 80 -us 1025 10.255.255.254 >/dev/null 2>&1
+	./sendip.sh -p ipv4 -id 10.255.255.254 -is 10.255.255.64 -p udp -ud 80 -us 1025 10.255.255.254 >/dev/null 2>&1
+	;;
 stop)
 	$cmd -F
 	$cmd -X

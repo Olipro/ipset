@@ -112,4 +112,10 @@
 0 ./check_klog.sh 10.255.255.64 udp 1025 netiface
 # Destroy sets and rules
 0 ./iptables.sh inet stop
+# Create set and rules for the counter test
+0 ./iptables.sh inet counter
+# Check packet counter
+0 ipset l test |grep -q '^10.255.255.64 packets 2'
+# Destroy sets and rules
+0 ./iptables.sh inet stop
 # eof

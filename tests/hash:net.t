@@ -86,6 +86,8 @@
 0 ipset -A test 1.1.1.0/26
 # Check non-matching IP
 1 ipset -T test 1.1.1.1
+# Check non-matching IP with nomatch flag
+0 ipset -T test 1.1.1.1 nomatch
 # Check matching IP from non-matchin small net
 0 ipset -T test 1.1.1.3
 # Check non-matching IP from larger net
