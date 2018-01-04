@@ -1425,9 +1425,7 @@ dump_last:
 				set->variant->uref(set, cb, true);
 			/* Fall through and add elements */
 		default:
-			rcu_read_lock_bh();
 			ret = set->variant->list(set, skb, cb);
-			rcu_read_unlock_bh();
 			if (!cb->args[IPSET_CB_ARG0])
 				/* Set is done, proceed with next one */
 				goto next_set;
