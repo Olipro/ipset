@@ -44,6 +44,7 @@
 #@HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS@ HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS
 #@HAVE_TYPEDEF_SCTP_SCTPHDR_T@ HAVE_TYPEDEF_SCTP_SCTPHDR_T
 #@HAVE_TIMER_SETUP@ HAVE_TIMER_SETUP
+#@HAVE_LOCKDEP_NFNL_IS_HELD@ HAVE_LOCKDEP_NFNL_IS_HELD
 
 #ifdef HAVE_EXPORT_SYMBOL_GPL_IN_MODULE_H
 #include <linux/module.h>
@@ -191,6 +192,10 @@ static inline int nla_put_net64(struct sk_buff *skb, int attrtype, __be64 value)
 #ifndef HAVE_NFNL_LOCK_SUBSYS
 #define nfnl_lock(x)		nfnl_lock()
 #define nfnl_unlock(x)		nfnl_unlock()
+#endif
+
+#ifndef HAVE_LOCKDEP_NFNL_IS_HELD
+#define lockdep_nfnl_is_held(x)	1
 #endif
 
 #if HAVE_IPV6_SKIP_EXTHDR_ARGS == 3
