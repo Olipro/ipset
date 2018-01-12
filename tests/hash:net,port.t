@@ -74,6 +74,12 @@
 0 ipset add test 10.0.0.0-10.0.2.255,tcp:80-1105
 # Check that correct number of elements are added
 0 n=`ipset list test|grep '^10.0'|wc -l` && test $n -eq 2052
+# Flush set
+0 ipset flush test
+# Add range to verify wraparound does not happen
+0 ipset add test 255.255.255.253-255.255.255.255,tcp:65534-65535
+# Check that correct number of elements are added
+0 n=`ipset list test|grep '^255.255.255'|wc -l` && test $n -eq 4
 # Destroy set
 0 ipset -X test
 # Create test set with timeout support
