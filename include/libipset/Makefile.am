@@ -1,5 +1,6 @@
 pkgincludedir = ${includedir}/libipset
 pkginclude_HEADERS = \
+	args.h \
 	data.h \
 	errcode.h \
 	linux_ip_set_bitmap.h \
