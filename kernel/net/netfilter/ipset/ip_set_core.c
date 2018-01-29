@@ -48,16 +48,11 @@ static inline struct ip_set_net *ip_set_pernet(struct net *net)
 
 static unsigned int max_sets;
 
-#define _IP_SET_CORE_MODULE_DESC(a)	\
-	MODULE_DESCRIPTION("core IP set support (v" a ")")
-#define IP_SET_CORE_MODULE_DESC(a)	\
-	_IP_SET_CORE_MODULE_DESC(__stringify(a))
-
 module_param(max_sets, int, 0600);
 MODULE_PARM_DESC(max_sets, "maximal number of sets");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
-IP_SET_CORE_MODULE_DESC(PACKAGE_VERSION);
+MODULE_DESCRIPTION("ip_set: protocol " __stringify(IPSET_PROTOCOL));
 MODULE_ALIAS_NFNL_SUBSYS(NFNL_SUBSYS_IPSET);
 
 /* When the nfnl mutex is held: */
@@ -2207,5 +2202,3 @@ ip_set_fini(void)
 
 module_init(ip_set_init);
 module_exit(ip_set_fini);
-
-MODULE_DESCRIPTION("ip_set: protocol " __stringify(IPSET_PROTOCOL));
