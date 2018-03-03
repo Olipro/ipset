@@ -45,12 +45,22 @@ add_tests() {
 	     `$cmd -t filter | grep ACCEPT | wc -l` -eq 3 ]; then
 	     	if [ -z "`which sendip`" ]; then
 	     		echo "sendip utility is missig: skipping $1 match and target tests"
-	     	elif [ -n "`netstat --protocol $1 -n | grep $2`" ]; then
-	     		echo "Our test network $2 in use: skipping $1 match and target tests"
+	     		return
+	     	elif [ -n "`which ss`" ]; then
+	     		if [ -n "`ss -f $1 -t -u -a | grep $2`" ]; then
+	     			echo "Our test network $2 in use: skipping $1 match and target tests"
+	     			return
+	     		fi
+	     	elif [ -n "`which netstat`" ]; then
+	     		if [ -n "`netstat --protocol $1 -n | grep $2`" ]; then
+	     			echo "Our test network $2 in use: skipping $1 match and target tests"
+	     			return
+	     		fi
 	     	else
-	     		tests="$tests $add"
+	     		echo "Cannot check test network, skipping $1 match and target tests"
+	     		return
 	     	fi
-	     	:
+	     	tests="$tests $add"
 	else
 		echo "You have got iptables rules: skipping $1 match and target tests"
 	fi
