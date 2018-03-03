@@ -1,3 +1,10 @@
+6.36
+  - Remove duplicate module description
+  - netfilter: remove messages print and boot/module load time
+    (Pablo Neira Ayuso)
+  - Fix wraparound bug introduced in commit 48596a8ddc46 in v6.34
+    (reported by Thomas Schwark)
+
 6.35
   - netfilter: mark expected switch fall-throughs (Gustavo A. R. Silva)
   - License cleanup: add SPDX GPL-2.0 license identifier to files with no

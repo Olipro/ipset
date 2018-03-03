@@ -1,3 +1,9 @@
+6.36
+  - Use 'ss' in runtest.sh but fall back to deprecated 'net-tools'
+    command (bugzilla id #1209)
+  - build: do install libipset/args.h (Jan Engelhardt)
+  - Add test to verify wraparound fix
+
 6.35
   - Userspace revision handling is reworked
   - Replace the last reference to u_int8_t with uint8_t.
