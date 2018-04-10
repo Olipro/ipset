@@ -1,3 +1,7 @@
+6.37
+  - netfilter: ipset: Use is_zero_ether_addr instead of static and memcmp
+    (Joe Perches)
+
 6.36
   - Remove duplicate module description
   - netfilter: remove messages print and boot/module load time
