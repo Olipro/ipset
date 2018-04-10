@@ -240,6 +240,21 @@ ipset_session_report(struct ipset_session *session,
 }
 
 /**
+ * ipset_session_warning_as_error - set warning as error
+ * @session: session structrure
+ *
+ * Returns -1.
+ */
+int
+ipset_session_warning_as_error(struct ipset_session *session)
+{
+	session->errmsg = session->report;
+	session->warnmsg = NULL;
+	ipset_data_reset(ipset_session_data(session));
+	return -1;
+}
+
+/**
  * ipset_session_reset - reset the report buffer
  * @session: session structure
  *

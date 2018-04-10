@@ -42,6 +42,7 @@ enum ipset_err_type {
 extern int ipset_session_report(struct ipset_session *session,
 				enum ipset_err_type type,
 				const char *fmt, ...);
+extern int ipset_session_warning_as_error(struct ipset_session *session);
 
 #define ipset_err(session, fmt, args...) \
 	ipset_session_report(session, IPSET_ERROR, fmt , ## args)

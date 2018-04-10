@@ -168,3 +168,8 @@ LIBIPSET_4.6 {
 global:
   ipset_keyword;
 } LIBIPSET_4.5;
+
+LIBIPSET_4.7 {
+global:
+  ipset_session_warning_as_error;
+} LIBIPSET_4.6;
