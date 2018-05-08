@@ -42,8 +42,12 @@ ipaddr=`expand_ipv6 $1`; shift
 proto=`echo $1 | tr a-z A-Z`; shift
 port=$1; shift
 
+set +e
 for setname in $@; do
 	match=`tail -n +$loglines /var/log/kern.log | grep -e "in set $setname: .* SRC=$ipaddr .* PROTO=$proto SPT=$port .*"`
+	if [ -z "$match" ]; then
+		match=`dmesg | tail -n +$loglines | grep -e "in set $setname: .* SRC=$ipaddr .* PROTO=$proto SPT=$port .*"`
+	fi
 	if [ -z "$match" ]; then
 		echo "no match!"
 		exit 1
