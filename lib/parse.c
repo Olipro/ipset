@@ -1334,7 +1334,7 @@ ipset_parse_timeout(struct ipset_session *session,
 	assert(opt == IPSET_OPT_TIMEOUT);
 	assert(str);
 
-	err = string_to_number_ll(session, str, 0, UINT_MAX/1000, &llnum);
+	err = string_to_number_ll(session, str, 0, (UINT_MAX>>1)/1000, &llnum);
 	if (err == 0) {
 		/* Timeout is expected to be 32bits wide, so we have
 		   to convert it here */

@@ -271,7 +271,8 @@ for new entries. If a set is created with timeout support, then the same
 \fBtimeout\fR option can be used to specify non\-default timeout values
 when adding entries. Zero timeout value means the entry is added permanent to the set.
 The timeout value of already added elements can be changed by re-adding the element
-using the \fB\-exist\fR option. Example:
+using the \fB\-exist\fR option. The largest possible timeout value is 2147483
+(in seconds). Example:
 .IP
 ipset create test hash:ip timeout 300
 .IP
