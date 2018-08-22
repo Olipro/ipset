@@ -115,7 +115,7 @@ ipset_mnl_query(struct ipset_handle *handle, void *buffer, size_t len)
 		ret = mnl_socket_recvfrom(handle->h, buffer, len);
 		D("message received, ret: %d", ret);
 	}
-	return ret > 0 ? 0 : ret;
+	return ret;
 }
 
 static struct ipset_handle *
