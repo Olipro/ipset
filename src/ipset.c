@@ -176,7 +176,7 @@ build_argv(char *buffer)
 		if ((newargc + 1) == (int)(sizeof(newargv)/sizeof(char *))) {
 			exit_error(PARAMETER_PROBLEM,
 				   "Line is too long to parse.");
-			return;
+			goto out;
 		}
 		switch (*tmp) {
 		case '"':
@@ -200,7 +200,7 @@ build_argv(char *buffer)
 		}
 		if (!*(tmp+1) && quoted) {
 			exit_error(PARAMETER_PROBLEM, "Missing close quote!");
-			return;
+			goto out;
 		}
 		if (!*arg)
 			continue;
@@ -209,6 +209,7 @@ build_argv(char *buffer)
 		memset(arg, 0, strlen(arg) + 1);
 		i = 0;
 	}
+out:
 	free(arg);
 }
 
