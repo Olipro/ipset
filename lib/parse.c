@@ -1396,10 +1396,11 @@ ipset_parse_iptimeout(struct ipset_session *session,
 #define check_setname(str, saved)					\
 do {									\
 	if (strlen(str) > IPSET_MAXNAMELEN - 1) {			\
-		if (saved != NULL)					\
-			free(saved);					\
-		return syntax_err("setname '%s' is longer than %u characters",\
+		int err;						\
+		err = syntax_err("setname '%s' is longer than %u characters",\
 				  str, IPSET_MAXNAMELEN - 1);		\
+		free(saved);						\
+		return err;						\
 	}								\
 } while (0)
 
