@@ -451,13 +451,15 @@ The \fBbitmap:ip,mac\fR type is exceptional in the sense that the MAC part can
 be left out when adding/deleting/testing entries in the set. If we add an entry
 without the MAC address specified, then when the first time the entry is
 matched by the kernel, it will automatically fill out the missing MAC address with the
-source MAC address from the packet. If the entry was specified with a timeout value,
-the timer starts off when the IP and MAC address pair is complete.
+MAC address from the packet. The source MAC address is used if the entry matched
+due to a \fBsrc\fR parameter of the \fBset\fR match, and the destination MAC
+address is used if available and the entry matched due to a \fBdst\fR parameter.
+If the entry was specified with a timeout value, the timer starts off when the
+IP and MAC address pair is complete.
 .PP
 The \fBbitmap:ip,mac\fR type of sets require two \fBsrc/dst\fR parameters of
-the \fBset\fR match and \fBSET\fR target netfilter kernel modules and the second
-one must be \fBsrc\fR to match, add or delete entries, because the \fBset\fR
-match and \fBSET\fR target have access to the source MAC address only.
+the \fBset\fR match and \fBSET\fR target netfilter kernel modules. For matches
+on destination MAC addresses, see COMMENTS below.
 .PP
 Examples:
 .IP 
@@ -532,7 +534,7 @@ ipset add foo 192.168.1.0/24
 ipset test foo 192.168.1.2
 .SS hash:mac
 The \fBhash:mac\fR set type uses a hash to store MAC addresses. Zero valued MAC addresses cannot be stored in a \fBhash:mac\fR
-type of set.
+type of set. For matches on destination MAC addresses, see COMMENTS below.
 .PP
 \fICREATE\-OPTIONS\fR := [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ] [ \fBskbinfo\fP ]
 .PP
@@ -554,7 +556,7 @@ ipset test foo 01:02:03:04:05:06
 
 .SS hash:ip,mac
 The \fBhash:ip,mac\fR set type uses a hash to store IP and a MAC address pairs. Zero valued MAC addresses cannot be stored in a \fBhash:ip,mac\fR
-type of set.
+type of set. For matches on destination MAC addresses, see COMMENTS below.
 .PP
 \fICREATE\-OPTIONS\fR := [ \fBfamily\fR { \fBinet\fR | \fBinet6\fR } ] | [ \fBhashsize\fR \fIvalue\fR ] [ \fBmaxelem\fR \fIvalue\fR ] [ \fBtimeout\fR \fIvalue\fR ] [ \fBcounters\fP ] [ \fBcomment\fP ] [ \fBskbinfo\fP ]
 .PP
@@ -1057,6 +1059,16 @@ If you want to store same size subnets from a given network
 If you want to store random same size networks (say random /24 blocks), 
 use the \fBhash:ip\fR set type. If you have got random size of netblocks, 
 use \fBhash:net\fR.
+.PP
+Matching on destination MAC addresses using the \fBdst\fR parameter of the
+\fBset\fR match netfilter kernel modules will only work if the destination MAC
+address is available in the packet at the given processing stage, that is, it
+only applies for incoming packets in the \fBPREROUTING\fR, \fBINPUT\fR and
+\fBFORWARD\fR chains, against the MAC address as originally found in the
+received packet (typically, one of the MAC addresses of the local host). This is
+\fBnot\fR the destination MAC address a destination IP address resolves to,
+after routing. If the MAC address is not available (e.g. in the \fBOUTPUT\fR
+chain), the packet will simply not match.
 .PP
 Backward compatibility is maintained and old \fBipset\fR syntax is still supported.
 .PP
