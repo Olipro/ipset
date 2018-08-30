@@ -8,6 +8,7 @@
 #@HAVE_STRUCT_XT_ACTION_PARAM@ HAVE_STRUCT_XT_ACTION_PARAM
 #@HAVE_VZALLOC@ HAVE_VZALLOC
 #@HAVE_ETHER_ADDR_EQUAL@ HAVE_ETHER_ADDR_EQUAL
+#@HAVE_IS_ZERO_ETHER_ADDR@ HAVE_IS_ZERO_ETHER_ADDR
 #@HAVE_NLA_PUT_BE16@ HAVE_NLA_PUT_BE16
 #@HAVE_NLA_PUT_BE64@ HAVE_NLA_PUT_BE64
 #@HAVE_NLA_PUT_64BIT@ HAVE_NLA_PUT_64BIT
@@ -152,13 +153,24 @@ do {				\
 					  PAGE_KERNEL)
 #endif
 
-#ifndef HAVE_ETHER_ADDR_EQUAL
+#if !defined(HAVE_ETHER_ADDR_EQUAL) || !defined(HAVE_IS_ZERO_ETHER_ADDR)
 #include <linux/etherdevice.h>
 
+#ifndef HAVE_ETHER_ADDR_EQUAL
 static inline bool ether_addr_equal(const u8 *addr1, const u8 *addr2)
 {
 	return !compare_ether_addr(addr1, addr2);
 }
+#endif
+
+#ifndef HAVE_IS_ZERO_ETHER_ADDR
+static inline bool is_zero_ether_addr(const u8 *addr)
+{
+	return (*(const u16 *)(addr + 0) |
+		*(const u16 *)(addr + 2) |
+		*(const u16 *)(addr + 4)) == 0;
+}
+#endif
 #endif
 
 #ifndef HAVE_NLA_PUT_BE64

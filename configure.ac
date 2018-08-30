@@ -230,6 +230,16 @@ else
 	AC_SUBST(HAVE_ETHER_ADDR_EQUAL, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for is_zero_ether_addr])
+if test -f $ksourcedir/include/linux/etherdevice.h && \
+   $GREP -q 'is_zero_ether_addr' $ksourcedir/include/linux/etherdevice.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_IS_ZERO_ETHER_ADDR, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_IS_ZERO_ETHER_ADDR, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for nla_put_be16])
 if test -f $ksourcedir/include/net/netlink.h && \
    $GREP -q 'nla_put_be16' $ksourcedir/include/net/netlink.h; then
