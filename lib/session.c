@@ -678,6 +678,10 @@ attr2data(struct ipset_session *session, struct nlattr *nla[],
 		default:
 			break;
 		}
+	} else if (attr->type == MNL_TYPE_NUL_STRING) {
+		if (!d || strlen(d) >= attr->len)
+			FAILURE("Broken kernel message: "
+				"string type attribute missing or too long!");
 	}
 #ifdef IPSET_DEBUG
 	 else
