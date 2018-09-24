@@ -23,6 +23,7 @@
 #@HAVE_NET_OPS_ID@ HAVE_NET_OPS_ID
 #@HAVE_USER_NS_IN_STRUCT_NET@ HAVE_USER_NS_IN_STRUCT_NET
 #@HAVE_RBTREE_POSTORDER_FOR_EACH_ENTRY_SAFE@ HAVE_RBTREE_POSTORDER_FOR_EACH_ENTRY_SAFE
+#@HAVE_KVCALLOC@ HAVE_KVCALLOC
 #@HAVE_KVFREE@ HAVE_KVFREE
 #@HAVE_XT_MTCHK_PARAM_STRUCT_NET@ HAVE_XT_MTCHK_PARAM_STRUCT_NET
 #@HAVE_TCF_EMATCH_OPS_CHANGE_ARG_NET@ HAVE_TCF_EMATCH_OPS_CHANGE_ARG_NET
@@ -213,6 +214,10 @@ static inline int nla_put_net64(struct sk_buff *skb, int attrtype, __be64 value)
 #if HAVE_IPV6_SKIP_EXTHDR_ARGS == 3
 #define ipv6_skip_exthdr(skbuff, start, nexthdrp, frag_offp)	\
 	ipv6_skip_exthdr(skbuff, start, nexthdrp)
+#endif
+
+#ifndef HAVE_KVCALLOC
+#define kvcalloc(n, size, flags)	kcalloc(n, size, flags)
 #endif
 
 #ifndef HAVE_KVFREE

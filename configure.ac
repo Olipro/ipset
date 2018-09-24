@@ -383,6 +383,16 @@ else
 	AC_SUBST(HAVE_RBTREE_POSTORDER_FOR_EACH_ENTRY_SAFE, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for kvcalloc])
+if test -f $ksourcedir/include/linux/mm.h && \
+   $GREP -q 'kvcalloc' $ksourcedir/include/linux/mm.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_KVCALLOC, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_KVCALLOC, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for kvfree])
 if test -f $ksourcedir/include/linux/mm.h && \
    $GREP -q 'kvfree' $ksourcedir/include/linux/mm.h; then
