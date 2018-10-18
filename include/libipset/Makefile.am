@@ -16,7 +16,7 @@ pkginclude_HEADERS = \
 	session.h \
 	transport.h \
 	types.h \
-	ui.h \
+	ipset.h \
 	utils.h
 
 EXTRA_DIST = debug.h icmp.h icmpv6.h

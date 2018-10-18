@@ -10,6 +10,7 @@
 #include <setjmp.h>				/* setjmp, longjmp */
 #include <stdio.h>				/* snprintf */
 #include <stdarg.h>				/* va_* */
+#include <stdbool.h>				/* bool */
 #include <stdlib.h>				/* free */
 #include <string.h>				/* str* */
 #include <unistd.h>				/* getpagesize */
@@ -25,7 +26,7 @@
 #include <libipset/transport.h>			/* transport */
 #include <libipset/mnl.h>			/* default backend */
 #include <libipset/utils.h>			/* STREQ */
-#include <libipset/ui.h>			/* IPSET_ENV_* */
+#include <libipset/ipset.h>			/* IPSET_ENV_* */
 #include <libipset/session.h>			/* prototypes */
 
 #define IPSET_NEST_MAX	4
@@ -47,7 +48,11 @@ struct ipset_session {
 	/* Output buffer */
 	char outbuf[IPSET_OUTBUFLEN];		/* Output buffer */
 	enum ipset_output_mode mode;		/* Output mode */
-	ipset_outfn outfn;			/* Output function */
+	ipset_print_outfn print_outfn;		/* Output function to file */
+	void *p;				/* Private data for print_outfn */
+	/* Session IO */
+	bool normal_io, full_io;		/* Default/normal/full IO */
+	FILE *istream, *ostream;		/* Session input/output stream */
 	/* Error/warning reporting */
 	char report[IPSET_ERRORBUFLEN];		/* Error/report buffer */
 	char *errmsg;
@@ -115,40 +120,23 @@ ipset_session_lineno(struct ipset_session *session, uint32_t lineno)
 	session->lineno = lineno;
 }
 
+/**
+ * ipset_session_printf_private - returns the session private pointer
+ * @session: session structure
+ *
+ * Returns the private pointer in the session structure,
+ * for private/custom print fuctions.
+ */
+void *
+ipset_session_printf_private(struct ipset_session *session)
+{
+	assert(session);
+	return session->p;
+}
+
 /*
  * Environment options
  */
-
-/**
- * ipset_envopt_parse - parse/set environment option
- * @session: session structure
- * @opt: environment option
- * @arg: option argument (unused)
- *
- * Parse and set an environment option.
- *
- * Returns 0 on success or a negative error code.
- */
-int
-ipset_envopt_parse(struct ipset_session *session, int opt,
-		   const char *arg UNUSED)
-{
-	assert(session);
-
-	switch (opt) {
-	case IPSET_ENV_SORTED:
-	case IPSET_ENV_QUIET:
-	case IPSET_ENV_RESOLVE:
-	case IPSET_ENV_EXIST:
-	case IPSET_ENV_LIST_SETNAME:
-	case IPSET_ENV_LIST_HEADER:
-		session->envopts |= opt;
-		return 0;
-	default:
-		break;
-	}
-	return -1;
-}
 
 /**
  * ipset_envopt_test - test environment option
@@ -164,6 +152,34 @@ ipset_envopt_test(struct ipset_session *session, enum ipset_envopt opt)
 {
 	assert(session);
 	return session->envopts & opt;
+}
+
+/**
+ * ipset_envopt_set - set environment option
+ * @session: session structure
+ * @opt: environment option
+ *
+ * Set an environment option of the session.
+ */
+void
+ipset_envopt_set(struct ipset_session *session, enum ipset_envopt opt)
+{
+	assert(session);
+	session->envopts |= opt;
+}
+
+/**
+ * ipset_envopt_unset - unset environment option
+ * @session: session structure
+ * @opt: environment option
+ *
+ * Unset an environment option of the session.
+ */
+void
+ipset_envopt_unset(struct ipset_session *session, enum ipset_envopt opt)
+{
+	assert(session);
+	session->envopts &= ~opt;
 }
 
 /**
@@ -722,7 +738,8 @@ static const char cmd2name[][9] = {
 static inline int
 call_outfn(struct ipset_session *session)
 {
-	int ret = session->outfn("%s", session->outbuf);
+	int ret = session->print_outfn(session, session->p,
+				      "%s", session->outbuf);
 
 	session->outbuf[0] = '\0';
 
@@ -2034,29 +2051,57 @@ cleanup:
 	return ret;
 }
 
+static
+int __attribute__ ((format (printf, 3, 4)))
+default_print_outfn(struct ipset_session *session, void *p UNUSED,
+		    const char *fmt, ...)
+{
+	int len;
+	va_list args;
+
+	va_start(args, fmt);
+	len = vfprintf(session->ostream, fmt, args);
+	va_end(args);
+
+	return len;
+}
+
 /**
- * ipset_session_outfn - set session output printing function
+ * ipset_session_print_outfn - set session output printing function
+ * @session: session structure
+ * @outfn: output printing function
+ * @p: pointer to private area
  *
- * Set the session printing function.
+ * Set the session output printing function. If the @outfn is NULL,
+ * then the default output function is configured. You can set
+ * the @p pointer to a private area: the output printing function
+ * is called with @p in one of its arguments.
  *
+ * Returns 0 on success or a negative error code.
  */
 int
-ipset_session_outfn(struct ipset_session *session, ipset_outfn outfn)
+ipset_session_print_outfn(struct ipset_session *session,
+			  ipset_print_outfn outfn,
+			  void *p)
 {
-	session->outfn = outfn ? outfn : printf;
+	session->print_outfn = outfn ? outfn : default_print_outfn;
+	session->p = p;
 	return 0;
 }
 
 /**
  * ipset_session_init - initialize an ipset session
+ * @outfn: output printing function
+ * @p: pointer to private area
  *
  * Initialize an ipset session by allocating a session structure
- * and filling out with the initialization data.
+ * and filling out with the initialization data. The function
+ * calls ipset_session_print_outfn() to set @print_outfn, @p.
  *
  * Returns the created session sctructure on success or NULL.
  */
 struct ipset_session *
-ipset_session_init(ipset_outfn outfn)
+ipset_session_init(ipset_print_outfn print_outfn, void *p)
 {
 	struct ipset_session *session;
 	size_t bufsize = getpagesize();
@@ -2067,12 +2112,14 @@ ipset_session_init(ipset_outfn outfn)
 		return NULL;
 	session->bufsize = bufsize;
 	session->buffer = session + 1;
+	session->istream = stdin;
+	session->ostream = stdout;
 
 	/* The single transport method yet */
 	session->transport = &ipset_mnl_transport;
 
 	/* Output function */
-	session->outfn = outfn;
+	ipset_session_print_outfn(session, print_outfn, p);
 
 	/* Initialize data structures */
 	session->data = ipset_data_init();
@@ -2085,6 +2132,197 @@ ipset_session_init(ipset_outfn outfn)
 free_session:
 	free(session);
 	return NULL;
+}
+
+/**
+ * ipset_session_io_full - set full IO for the session
+ * @session: session structure
+ * @filename: filename
+ * @what: operate on input/output
+ *
+ * The normal "-file" CLI interface does not provide an interface
+ * to set both the input (restore) and output (list/save) for
+ * a session. This function makes it possible to configure those.
+ *
+ * When a filename for input is passed, then the file will be opened
+ * for reading.
+ * When a filename for output is passed, then the file will be opened
+ * for writing.
+ * Previously opened files are closed.
+ * If NULL is passed as filename, stdin/stdout is set.
+ * Input/output files can be set separatedly.
+ * The function returns error if the file cannot be opened or
+ * normal IO mode is already set.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_session_io_full(struct ipset_session *session, const char *filename,
+		      enum ipset_io_type what)
+{
+	FILE *f;
+
+	assert(session);
+
+	if (session->normal_io)
+		return ipset_err(session,
+			"Normal IO is in use, full IO cannot be selected");
+
+	switch (what) {
+	case IPSET_IO_INPUT:
+		if (session->istream != stdin)
+			fclose(session->istream);
+		if (!filename) {
+			session->istream = stdin;
+		} else {
+			f = fopen(filename, "r");
+			if (!f)
+				return ipset_err(session,
+					"Cannot open %s for reading: %s",
+					filename, strerror(errno));
+			session->istream = f;
+		}
+		break;
+	case IPSET_IO_OUTPUT:
+		if (session->ostream != stdout)
+			fclose(session->ostream);
+		if (!filename) {
+			session->ostream = stdout;
+		} else {
+			f = fopen(filename, "w");
+			if (!f)
+				return ipset_err(session,
+					"Cannot open %s for writing: %s",
+					filename, strerror(errno));
+			session->ostream = f;
+		}
+		break;
+	default:
+		return ipset_err(session,
+				"Library error, invalid ipset_io_type");
+	}
+	session->full_io = !(session->istream == stdin &&
+			     session->ostream == stdout);
+	return 0;
+}
+
+/**
+ * ipset_session_io_normal - set normal IO for the session
+ * @session: session structure
+ * @filename: filename
+ * @what: operate on input/output
+ *
+ * The normal "-file" CLI interface to set either the input (restore)
+ * or output (list/save) for a session. This function does not make
+ * possible to set both independently.
+ *
+ * When a filename for input is passed, then the file will be opened
+ * for reading.
+ * When a filename for output is passed, then the file will be opened
+ * for writing.
+ * Previously opened files are closed.
+ * If NULL is passed as filename, stdin/stdout is set.
+ * Input/output files cannot be set separatedly.
+ * The function returns error if the file cannot be opened or
+ * full IO mode is already set.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_session_io_normal(struct ipset_session *session, const char *filename,
+			enum ipset_io_type what)
+{
+	FILE *f;
+
+	assert(session);
+	assert(filename);
+
+	if (session->full_io)
+		return ipset_err(session,
+			"Full IO is in use, normal IO cannot be selected");
+	if (session->istream != stdin) {
+		fclose(session->istream);
+		session->istream = stdin;
+	}
+	if (session->ostream != stdout) {
+		fclose(session->ostream);
+		session->ostream = stdout;
+	}
+	switch (what) {
+	case IPSET_IO_INPUT:
+		f = fopen(filename, "r");
+		if (!f)
+			return ipset_err(session,
+				"Cannot open %s for reading: %s",
+				filename, strerror(errno));
+		session->istream = f;
+		break;
+	case IPSET_IO_OUTPUT:
+		f = fopen(filename, "w");
+		if (!f)
+			return ipset_err(session,
+				"Cannot open %s for writing: %s",
+				filename, strerror(errno));
+		session->ostream = f;
+		break;
+	default:
+		return ipset_err(session,
+				"Library error, invalid ipset_io_type");
+	}
+	session->normal_io = !(session->istream == stdin &&
+			       session->ostream == stdout);
+	return 0;
+}
+
+/**
+ * ipset_session_io_stream - returns the input or output stream
+ * @what: operate on input/output
+ *
+ * Returns the input or output stream of the session.
+ */
+FILE *
+ipset_session_io_stream(struct ipset_session *session,
+			enum ipset_io_type what)
+{
+	switch (what) {
+	case IPSET_IO_INPUT:
+		return session->istream;
+	case IPSET_IO_OUTPUT:
+		return session->ostream;
+	default:
+		return NULL;
+	}
+}
+
+/**
+ * ipset_session_io_close - closes the input or output stream
+ * @what: operate on input/output
+ *
+ * Closes the input or output stream of the session.
+ *
+ * Returns 0 on success or a negative error code.
+ */
+int
+ipset_session_io_close(struct ipset_session *session,
+		       enum ipset_io_type what)
+{
+	switch (what) {
+	case IPSET_IO_INPUT:
+		if (session->istream != stdin) {
+			fclose(session->istream);
+			session->istream = stdin;
+		}
+		break;
+	case IPSET_IO_OUTPUT:
+		if (session->ostream != stdout) {
+			fclose(session->ostream);
+			session->ostream = stdout;
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
 }
 
 /**
@@ -2104,6 +2342,10 @@ ipset_session_fini(struct ipset_session *session)
 		session->transport->fini(session->handle);
 	if (session->data)
 		ipset_data_fini(session->data);
+	if (session->istream != stdin)
+		fclose(session->istream);
+	if (session->ostream != stdout)
+		fclose(session->ostream);
 
 	ipset_cache_fini();
 	free(session);

@@ -19,7 +19,6 @@
 
 struct ipset_session;
 struct ipset_data;
-struct ipset_handle;
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +32,7 @@ extern const struct ipset_type *
 	ipset_saved_type(const struct ipset_session *session);
 extern void ipset_session_lineno(struct ipset_session *session,
 				 uint32_t lineno);
+extern void * ipset_session_printf_private(struct ipset_session *session);
 
 enum ipset_err_type {
 	IPSET_ERROR,
@@ -80,10 +80,12 @@ enum ipset_envopt {
 	IPSET_ENV_LIST_HEADER	= (1 << IPSET_ENV_BIT_LIST_HEADER),
 };
 
-extern int ipset_envopt_parse(struct ipset_session *session,
-			      int env, const char *str);
 extern bool ipset_envopt_test(struct ipset_session *session,
 			      enum ipset_envopt env);
+extern void ipset_envopt_set(struct ipset_session *session,
+			     enum ipset_envopt env);
+extern void ipset_envopt_unset(struct ipset_session *session,
+			       enum ipset_envopt env);
 
 enum ipset_output_mode {
 	IPSET_LIST_NONE,
@@ -99,12 +101,30 @@ extern int ipset_commit(struct ipset_session *session);
 extern int ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd,
 		     uint32_t lineno);
 
-typedef int (*ipset_outfn)(const char *fmt, ...)
-	__attribute__ ((format (printf, 1, 2)));
+typedef int (*ipset_print_outfn)(struct ipset_session *session,
+	void *p, const char *fmt, ...)
+	__attribute__ ((format (printf, 3, 4)));
 
-extern int ipset_session_outfn(struct ipset_session *session,
-			       ipset_outfn outfn);
-extern struct ipset_session *ipset_session_init(ipset_outfn outfn);
+extern int ipset_session_print_outfn(struct ipset_session *session,
+				     ipset_print_outfn outfn,
+				     void *p);
+
+enum ipset_io_type {
+	IPSET_IO_INPUT,
+	IPSET_IO_OUTPUT,
+};
+
+extern int ipset_session_io_full(struct ipset_session *session,
+		const char *filename, enum ipset_io_type what);
+extern int ipset_session_io_normal(struct ipset_session *session,
+		const char *filename, enum ipset_io_type what);
+extern FILE * ipset_session_io_stream(struct ipset_session *session,
+				      enum ipset_io_type what);
+extern int ipset_session_io_close(struct ipset_session *session,
+				  enum ipset_io_type what);
+
+extern struct ipset_session *ipset_session_init(ipset_print_outfn outfn,
+						void *p);
 extern int ipset_session_fini(struct ipset_session *session);
 
 extern void ipset_debug_msg(const char *dir, void *buffer, int len);

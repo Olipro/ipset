@@ -173,3 +173,24 @@ LIBIPSET_4.7 {
 global:
   ipset_session_warning_as_error;
 } LIBIPSET_4.6;
+
+LIBIPSET_4.8 {
+global:
+  ipset_parse_filename;
+  ipset_session;
+  ipset_is_interactive;
+  ipset_custom_printf;
+  ipset_parse_argv;
+  ipset_parse_line;
+  ipset_parse_stream;
+  ipset_init;
+  ipset_fini;
+  ipset_session_printf_private;
+  ipset_envopt_set;
+  ipset_envopt_unset;
+  ipset_session_print_outfn;
+  ipset_session_io_full;
+  ipset_session_io_normal;
+  ipset_session_io_stream;
+  ipset_session_io_close;
+} LIBIPSET_4.7;

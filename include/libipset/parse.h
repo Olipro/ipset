@@ -104,8 +104,6 @@ extern int ipset_parse_skbmark(struct ipset_session *session,
 			      enum ipset_opt opt, const char *str);
 extern int ipset_parse_skbprio(struct ipset_session *session,
 				enum ipset_opt opt, const char *str);
-extern int ipset_parse_output(struct ipset_session *session,
-			      int opt, const char *str);
 extern int ipset_parse_ignored(struct ipset_session *session,
 			       enum ipset_opt opt, const char *str);
 extern int ipset_parse_elem(struct ipset_session *session,

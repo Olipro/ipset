@@ -1396,11 +1396,11 @@ ipset_parse_iptimeout(struct ipset_session *session,
 #define check_setname(str, saved)					\
 do {									\
 	if (strlen(str) > IPSET_MAXNAMELEN - 1) {			\
-		int err;						\
-		err = syntax_err("setname '%s' is longer than %u characters",\
+		int __err;						\
+		__err = syntax_err("setname '%s' is longer than %u characters",\
 				  str, IPSET_MAXNAMELEN - 1);		\
 		free(saved);						\
-		return err;						\
+		return __err;						\
 	}								\
 } while (0)
 
@@ -1873,34 +1873,6 @@ ipset_parse_skbprio(struct ipset_session *session,
 				  "MAJOR:MINOR (see manpage)");
 	major = ((uint32_t)maj << 16) | (min & 0xffff);
 	return ipset_data_set(data, IPSET_OPT_SKBPRIO, &major);
-}
-
-/**
- * ipset_parse_output - parse output format name
- * @session: session structure
- * @opt: option kind of the data
- * @str: string to parse
- *
- * Parse output format names and set session mode.
- * The value is stored in the session.
- *
- * Returns 0 on success or a negative error code.
- */
-int
-ipset_parse_output(struct ipset_session *session,
-		   int opt UNUSED, const char *str)
-{
-	assert(session);
-	assert(str);
-
-	if (STREQ(str, "plain"))
-		return ipset_session_output(session, IPSET_LIST_PLAIN);
-	else if (STREQ(str, "xml"))
-		return ipset_session_output(session, IPSET_LIST_XML);
-	else if (STREQ(str, "save"))
-		return ipset_session_output(session, IPSET_LIST_SAVE);
-
-	return syntax_err("unknown output mode '%s'", str);
 }
 
 /**

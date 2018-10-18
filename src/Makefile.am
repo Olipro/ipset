@@ -1,7 +1,7 @@
 include $(top_srcdir)/Make_global.am
 
 sbin_PROGRAMS	= ipset
-ipset_SOURCES	= ipset.c ui.c
+ipset_SOURCES	= ipset.c
 ipset_LDADD	= ../lib/libipset.la
 
 if ENABLE_SETTYPE_MODULES

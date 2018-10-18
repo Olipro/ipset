@@ -13,7 +13,7 @@
 #include <libipset/linux_ip_set.h>		/* enum ipset_cmd */
 #include <libipset/debug.h>			/* D() */
 #include <libipset/session.h>			/* ipset_session_handle */
-#include <libipset/ui.h>			/* IPSET_ENV_EXIST */
+#include <libipset/ipset.h>			/* IPSET_ENV_EXIST */
 #include <libipset/utils.h>			/* UNUSED */
 #include <libipset/mnl.h>			/* prototypes */
 

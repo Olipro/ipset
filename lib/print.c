@@ -23,7 +23,7 @@
 #include <libipset/types.h>			/* ipset set types */
 #include <libipset/session.h>			/* IPSET_FLAG_ */
 #include <libipset/utils.h>			/* UNUSED */
-#include <libipset/ui.h>			/* IPSET_ENV_* */
+#include <libipset/ipset.h>			/* IPSET_ENV_* */
 #include <libipset/print.h>			/* prototypes */
 
 /* Print data (to output buffer). All function must follow snprintf. */

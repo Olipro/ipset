@@ -7,7 +7,7 @@
 #include <libipset/data.h>			/* IPSET_OPT_* */
 #include <libipset/parse.h>			/* parser functions */
 #include <libipset/print.h>			/* printing functions */
-#include <libipset/ui.h>			/* ipset_port_usage */
+#include <libipset/ipset.h>			/* ipset_port_usage */
 #include <libipset/types.h>			/* prototypes */
 
 /* SCTP and UDPLITE support */
