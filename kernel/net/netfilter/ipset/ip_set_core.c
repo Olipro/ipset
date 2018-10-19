@@ -55,11 +55,26 @@ MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>");
 MODULE_DESCRIPTION("ip_set: protocol " __stringify(IPSET_PROTOCOL));
 MODULE_ALIAS_NFNL_SUBSYS(NFNL_SUBSYS_IPSET);
 
-/* When the nfnl mutex is held: */
+/* When the nfnl mutex or ip_set_ref_lock is held: */
 #define ip_set_dereference(p)		\
-	rcu_dereference_protected(p, lockdep_nfnl_is_held(NFNL_SUBSYS_IPSET))
+	rcu_dereference_protected(p,	\
+		lockdep_nfnl_is_held(NFNL_SUBSYS_IPSET) || \
+		lockdep_is_held(&ip_set_ref_lock))
 #define ip_set(inst, id)		\
 	ip_set_dereference((inst)->ip_set_list)[id]
+
+/* When the nfnl mutex is not held (dumping): */
+static inline
+struct ip_set * ip_set_no_mutex(struct ip_set_net *inst, ip_set_id_t id)
+{
+	struct ip_set *set;
+
+	rcu_read_lock();
+	set = rcu_dereference((inst)->ip_set_list)[id];
+	rcu_read_unlock();
+
+	return set;
+}
 
 /* The set types are implemented in modules and registered set types
  * can be found in ip_set_type_list. Adding/deleting types is
@@ -1258,7 +1273,7 @@ ip_set_dump_done(struct netlink_callback *cb)
 		struct ip_set_net *inst =
 			(struct ip_set_net *)cb->args[IPSET_CB_NET];
 		ip_set_id_t index = (ip_set_id_t)cb->args[IPSET_CB_INDEX];
-		struct ip_set *set = ip_set(inst, index);
+		struct ip_set *set = ip_set_no_mutex(inst, index);
 
 		if (set->variant->uref)
 			set->variant->uref(set, cb, false);
@@ -1447,7 +1462,7 @@ next_set:
 release_refcount:
 	/* If there was an error or set is done, release set */
 	if (ret || !cb->args[IPSET_CB_ARG0]) {
-		set = ip_set(inst, index);
+		set = ip_set_no_mutex(inst, index);
 		if (set->variant->uref)
 			set->variant->uref(set, cb, false);
 		pr_debug("release set %s\n", set->name);
