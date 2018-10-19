@@ -1,11 +1,17 @@
 # Range: Create a set
 0 ipset -N test netportnethash -6
 # Range: Add zero valued element
-1 ipset -A test 2:0:0::1/24,0,0:0:0::0/0
+1 ipset -A test 0::0/0,0:0,0:0:0::0/0
 # Range: Test zero valued element
-1 ipset -T test 2:0:0::1/24,0,0:0:0::0/0
+1 ipset -T test 0::0/0,0:0,0:0:0::0/0
 # Range: Delete zero valued element
-1 ipset -D test 2:0:0::1,0,0:0:0::0/0
+1 ipset -D test 0::0/0,0,0:0:0:0::0/0
+# Range: Add almost zero valued element
+0 ipset -A test 2:0:0::1/24,0,0:0:0::0/0
+# Range: Test almost zero valued element
+0 ipset -T test 2:0:0::1/24,0,0:0:0::0/0
+# Range: Delete almost zero valued element
+0 ipset -D test 2:0:0::1/24,0,0:0:0::0/0
 # Range: Add almost zero valued element
 0 ipset -A test 2:0:0::1,0,0:0:0::0/24
 # Range: Test almost zero valued element
