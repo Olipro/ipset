@@ -2159,7 +2159,10 @@ static struct pernet_operations ip_set_net_ops = {
 	.exit   = ip_set_net_exit,
 #ifdef HAVE_NET_OPS_ID
 	.id	= &ip_set_net_id,
-	.size	= sizeof(struct ip_set_net)
+	.size	= sizeof(struct ip_set_net),
+#ifdef HAVE_NET_OPS_ASYNC
+	.async	= true,
+#endif
 #endif
 };
 
