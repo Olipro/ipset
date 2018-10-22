@@ -1090,6 +1090,10 @@ ipset_parse_argv(struct ipset *ipset, int oargc, char *oargv[])
 			return 0;
 		printf("%s v%s, protocol version: %u\n",
 		       program_name, program_version, IPSET_PROTOCOL);
+		/* Check kernel protocol version */
+		ipset_cmd(session, IPSET_CMD_NONE, 0);
+		if (ipset_session_report_type(session) != IPSET_NO_ERROR)
+			ipset->standard_error(ipset, p);
 		if (ipset->interactive)
 			return 0;
 		return ipset->custom_error(ipset, p, IPSET_NO_PROBLEM, NULL);

@@ -12,8 +12,9 @@
 
 #include <linux/types.h>
 
-/* The protocol version */
-#define IPSET_PROTOCOL		6
+/* The supported protocol versions */
+#define IPSET_PROTOCOL_MIN	6
+#define IPSET_PROTOCOL		7
 
 /* The max length of strings including NUL: set and type identifiers */
 #define IPSET_MAXNAMELEN	32

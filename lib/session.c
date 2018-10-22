@@ -44,6 +44,7 @@ struct ipset_session {
 	const struct ipset_type *saved_type;	/* Saved type */
 	struct nlattr *nested[IPSET_NEST_MAX];	/* Pointer to nest levels */
 	uint8_t nestid;				/* Current nest level */
+	uint8_t protocol;			/* The protocol used */
 	bool version_checked;			/* Version checked */
 	/* Output buffer */
 	char outbuf[IPSET_OUTBUFLEN];		/* Output buffer */
@@ -1170,6 +1171,7 @@ callback_version(struct ipset_session *session, struct nlattr *nla[])
 			   "while userspace supports protocol versions %u-%u",
 			   min, max, IPSET_PROTOCOL_MIN, IPSET_PROTOCOL_MAX);
 
+	session->protocol = MIN(max, IPSET_PROTOCOL_MAX);
 	session->version_checked = true;
 
 	return MNL_CB_STOP;
@@ -1297,10 +1299,10 @@ callback_data(const struct nlmsghdr *nlh, void *data)
 	proto = mnl_attr_get_u8(nla[IPSET_ATTR_PROTOCOL]);
 
 	/* Check protocol */
-	if (cmd != IPSET_CMD_PROTOCOL && proto != IPSET_PROTOCOL)
+	if (cmd != IPSET_CMD_PROTOCOL && proto != session->protocol)
 		FAILURE("Giving up: kernel protocol version %u "
 			"does not match our protocol version %u",
-			proto, IPSET_PROTOCOL);
+			proto, session->protocol);
 
 	D("Message: %s", cmd2name[cmd]);
 	switch (cmd) {
@@ -1602,8 +1604,8 @@ data2attr(struct ipset_session *session, struct nlmsghdr *nlh,
 			    type, family, attrs);
 }
 
-#define ADDATTR_PROTOCOL(nlh)						\
-	mnl_attr_put_u8(nlh, IPSET_ATTR_PROTOCOL, IPSET_PROTOCOL)
+#define ADDATTR_PROTOCOL(nlh, protocol)					\
+	mnl_attr_put_u8(nlh, IPSET_ATTR_PROTOCOL, protocol)
 
 #define ADDATTR(session, nlh, data, type, family, attrs)		\
 	data2attr(session, nlh, data, type, family, attrs)
@@ -1655,7 +1657,8 @@ build_send_private_msg(struct ipset_session *session, enum ipset_cmd cmd)
 	/* Initialize header */
 	session->transport->fill_hdr(session->handle, cmd, buffer, len, 0);
 
-	ADDATTR_PROTOCOL(nlh);
+	ADDATTR_PROTOCOL(nlh,
+		cmd == IPSET_CMD_PROTOCOL ? IPSET_PROTOCOL : session->protocol);
 
 	switch (cmd) {
 	case IPSET_CMD_PROTOCOL:
@@ -1719,7 +1722,7 @@ build_msg(struct ipset_session *session, bool aggregate)
 					     session->buffer,
 					     session->bufsize,
 					     session->envopts);
-		ADDATTR_PROTOCOL(nlh);
+		ADDATTR_PROTOCOL(nlh, session->protocol);
 	}
 	D("Protocol added, aggregate %s", aggregate ? "yes" : "no");
 	switch (session->cmd) {
@@ -1965,7 +1968,7 @@ ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd, uint32_t lineno)
 
 	assert(session);
 
-	if (cmd <= IPSET_CMD_NONE || cmd >= IPSET_MSG_MAX)
+	if (cmd < IPSET_CMD_NONE || cmd >= IPSET_MSG_MAX)
 		return 0;
 
 	/* Initialize transport method if not done yet */
@@ -1979,7 +1982,14 @@ ipset_cmd(struct ipset_session *session, enum ipset_cmd cmd, uint32_t lineno)
 	if (!session->version_checked) {
 		if (build_send_private_msg(session, IPSET_CMD_PROTOCOL) < 0)
 			return -1;
+		if (ipset_session_report_type(session) == IPSET_WARNING &&
+		    cmd != IPSET_CMD_NONE)
+			/* Suppress protocol warning */
+			ipset_session_report_reset(session);
 	}
+	/* IPSET_CMD_NONE: check protocol version only */
+	if (cmd == IPSET_CMD_NONE)
+		return 0;
 
 	/* Private commands */
 	if (cmd == IPSET_CMD_TYPE || cmd == IPSET_CMD_HEADER)
@@ -2111,6 +2121,7 @@ ipset_session_init(ipset_print_outfn print_outfn, void *p)
 	session->buffer = session + 1;
 	session->istream = stdin;
 	session->ostream = stdout;
+	session->protocol = IPSET_PROTOCOL;
 
 	/* The single transport method yet */
 	session->transport = &ipset_mnl_transport;
