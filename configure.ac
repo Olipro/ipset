@@ -363,6 +363,16 @@ else
 	AC_SUBST(HAVE_NET_OPS_ID, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for async in struct pernet_operations])
+if test -f $ksourcedir/include/net/net_namespace.h && \
+   $AWK '/^struct pernet_operations /,/^}/' $ksourcedir/include/net/net_namespace.h | $GREP -q 'bool async;'; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_NET_OPS_ASYNC, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_NET_OPS_ASYNC, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for user_ns in struct net])
 if test -f $ksourcedir/include/net/net_namespace.h && \
    $AWK '/^struct net \{/,/^}/' $ksourcedir/include/net/net_namespace.h | $GREP -q 'user_ns'; then
