@@ -272,7 +272,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for portid in nl_info])
 if test -f $ksourcedir/include/linux/netlink.h && \
-   $AWK '/^struct netlink_skb_parms/ {for(i=1; i<=5; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'portid;'; then
+   $AWK '/^struct netlink_skb_parms /,/^}/' $ksourcedir/include/linux/netlink.h | $GREP -q 'portid;'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_NL_INFO_PORTID, define)
 else
@@ -282,11 +282,11 @@ fi
 
 AC_MSG_CHECKING([kernel source for netlink_dump_start args])
 if test -f $ksourcedir/include/linux/netlink.h && \
-   $AWK '/netlink_dump_start/ {for(i=1; i<=4; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'done.*;'; then
+   $AWK '/ netlink_dump_start\(/,/\)/' $ksourcedir/include/linux/netlink.h | $GREP -q 'done.*;'; then
 	AC_MSG_RESULT(5 args)
 	AC_SUBST(HAVE_NETLINK_DUMP_START_ARGS, 5)
 elif test -f $ksourcedir/include/linux/netlink.h && \
-   $AWK '/netlink_dump_start/ {for(i=1; i<=4; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'min_dump_alloc.*;'; then
+   $AWK '/ netlink_dump_start\(/,/\)/' $ksourcedir/include/linux/netlink.h | $GREP -q 'min_dump_alloc.*;'; then
 	AC_MSG_RESULT(6 args)
 	AC_SUBST(HAVE_NETLINK_DUMP_START_ARGS, 6)
 else
@@ -325,7 +325,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for ipv6_skip_exthdr args])
 if test -f $ksourcedir/include/net/ipv6.h && \
-   $AWK '/ipv6_skip_exthdr/ {getline; print}' $ksourcedir/include/net/ipv6.h | $GREP -q 'frag_offp'; then
+   $AWK '/ ipv6_skip_exthdr\(/,/\)/' $ksourcedir/include/net/ipv6.h | $GREP -q 'frag_offp'; then
 	AC_MSG_RESULT(4 args)
 	AC_SUBST(HAVE_IPV6_SKIP_EXTHDR_ARGS, 4)
 else
@@ -355,7 +355,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for id in struct pernet_operations])
 if test -f $ksourcedir/include/net/net_namespace.h && \
-   $AWK '/struct pernet_operations/ {for(i=1; i<=6; i++) {getline; print}}' $ksourcedir/include/net/net_namespace.h | $GREP -q 'int \*id;'; then
+   $AWK '/^struct pernet_operations /,/^}/' $ksourcedir/include/net/net_namespace.h | $GREP -q 'int \*id;'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_NET_OPS_ID, define)
 else
@@ -365,7 +365,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for user_ns in struct net])
 if test -f $ksourcedir/include/net/net_namespace.h && \
-   $AWK '/^struct net \{/ {for(i=1; i<=20; i++) {getline; print}}' $ksourcedir/include/net/net_namespace.h | $GREP -q 'user_ns'; then
+   $AWK '/^struct net \{/,/^}/' $ksourcedir/include/net/net_namespace.h | $GREP -q 'user_ns'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_USER_NS_IN_STRUCT_NET, define)
 else
@@ -405,7 +405,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for struct net in struct xt_mtchk_param])
 if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
-   $AWK '/^struct xt_mtchk_param / {for(i=1; i<=5; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/x_tables.h | \
+   $AWK '/^struct xt_mtchk_param /,/^}/' $ksourcedir/include/linux/netfilter/x_tables.h | \
    $GREP -q 'struct net '; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_XT_MTCHK_PARAM_STRUCT_NET, define)
@@ -416,7 +416,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for struct net in the change function of tcf_ematch_ops])
 if test -f $ksourcedir/include/net/pkt_cls.h && \
-   $AWK '/^struct tcf_ematch_ops / {for(i=1; i<=5; i++) {getline; print}}' $ksourcedir/include/net/pkt_cls.h | \
+   $AWK '/^struct tcf_ematch_ops /,/^}/' $ksourcedir/include/net/pkt_cls.h | \
    $GREP -q '\*change..struct net \*net'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_TCF_EMATCH_OPS_CHANGE_ARG_NET, define)
@@ -427,7 +427,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for struct net in struct tcf_ematch])
 if test -f $ksourcedir/include/net/pkt_cls.h && \
-   $AWK '/^struct tcf_ematch / {for(i=1; i<=7; i++) {getline; print}}' $ksourcedir/include/net/pkt_cls.h | \
+   $AWK '/^struct tcf_ematch /,/^}/' $ksourcedir/include/net/pkt_cls.h | \
    $GREP -q 'struct net'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_TCF_EMATCH_STRUCT_NET, define)
@@ -488,7 +488,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for struct net in struct nfnl_callback])
 if test -f $ksourcedir/include/linux/netfilter/nfnetlink.h && \
-   $AWK '/^struct nfnl_callback / {for(i=1; i<=3; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/nfnetlink.h | \
+   $AWK '/^struct nfnl_callback /,/^}/' $ksourcedir/include/linux/netfilter/nfnetlink.h | \
    $GREP -q 'struct net'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_NET_IN_NFNL_CALLBACK_FN, define)
@@ -519,7 +519,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for struct net in struct xt_action_param])
 if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
-   $AWK '/^struct xt_action_param / {for(i=1; i<=8; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/x_tables.h | \
+   $AWK '/^struct xt_action_param /,/^}/' $ksourcedir/include/linux/netfilter/x_tables.h | \
    $GREP -q 'struct net '; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_NET_IN_XT_ACTION_PARAM, define)
@@ -530,7 +530,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for struct nf_hook_state in struct xt_action_param])
 if test -f $ksourcedir/include/linux/netfilter/x_tables.h && \
-   $AWK '/^struct xt_action_param / {for(i=1; i<=10; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/x_tables.h | \
+   $AWK '/^struct xt_action_param /,/^}/' $ksourcedir/include/linux/netfilter/x_tables.h | \
    $GREP -q 'struct nf_hook_state '; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_STATE_IN_XT_ACTION_PARAM, define)
@@ -571,7 +571,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for netlink extended ACK])
 if test -f $ksourcedir/include/linux/netlink.h && \
-   $AWK '/^extern void netlink_ack/ {for(i=1; i<=2; i++) {getline; print}}' $ksourcedir/include/linux/netlink.h | $GREP -q 'const struct netlink_ext_ack'; then
+   $AWK '/^extern void netlink_ack\(/,/\)/' $ksourcedir/include/linux/netlink.h | $GREP -q 'const struct netlink_ext_ack'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_NETLINK_EXTENDED_ACK, define)
 else
@@ -581,7 +581,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for passing extended ACK struct to parsing functions])
 if test -f $ksourcedir/include/net/netlink.h && \
-   $AWK '/^static inline int nla_parse_nested/ {for(i=1; i<=4; i++) {getline; print}}' $ksourcedir/include/net/netlink.h | $GREP -q 'struct netlink_ext_ack'; then
+   $AWK '/^static inline int nla_parse_nested\(/,/\)/' $ksourcedir/include/net/netlink.h | $GREP -q 'struct netlink_ext_ack'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_PASSING_EXTENDED_ACK_TO_PARSERS, define)
 else
@@ -591,7 +591,7 @@ fi
 
 AC_MSG_CHECKING([kernel source for passing extended ACK struct to callback functions])
 if test -f $ksourcedir/include/linux/netfilter/nfnetlink.h && \
-   $AWK '/^struct nfnl_callback / {for(i=1; i<=5; i++) {getline; print}}' $ksourcedir/include/linux/netfilter/nfnetlink.h | $GREP -q 'struct netlink_ext_ack'; then
+   $AWK '/^struct nfnl_callback /,/^}/' $ksourcedir/include/linux/netfilter/nfnetlink.h | $GREP -q 'struct netlink_ext_ack'; then
 	AC_MSG_RESULT(yes)
 	AC_SUBST(HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS, define)
 else
