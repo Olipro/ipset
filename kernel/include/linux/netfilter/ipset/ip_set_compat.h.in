@@ -134,9 +134,11 @@ do {				\
 	__kfree_rcu(&((ptr)->rcu_head), offsetof(typeof(*(ptr)), rcu_head))
 #endif
 
+#if 0
 #ifdef CHECK_KCONFIG
 #ifndef CONFIG_SPARSE_RCU_POINTER
 #error "CONFIG_SPARSE_RCU_POINTER must be enabled"
+#endif
 #endif
 #endif
 

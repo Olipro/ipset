@@ -365,6 +365,10 @@ static const struct ipset_attr_policy cmd_attrs[] = {
 		.type = MNL_TYPE_U32,
 		.opt = IPSET_OPT_LINENO,
 	},
+	[IPSET_ATTR_INDEX] = {
+		.type = MNL_TYPE_U16,
+		.opt = IPSET_OPT_INDEX,
+	},
 };
 
 static const struct ipset_attr_policy create_attrs[] = {

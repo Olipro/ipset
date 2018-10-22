@@ -286,7 +286,7 @@ ipset_keyword(enum ipset_keywords i)
 }
 
 const char *
-ipset_ignored_optname(int opt)
+ipset_ignored_optname(unsigned int opt)
 {
 	enum ipset_keywords i;
 

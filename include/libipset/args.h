@@ -63,7 +63,7 @@ extern "C" {
 #endif
 
 extern const struct ipset_arg * ipset_keyword(enum ipset_keywords i);
-extern const char * ipset_ignored_optname(int opt);
+extern const char * ipset_ignored_optname(unsigned int opt);
 #ifdef __cplusplus
 }
 #endif

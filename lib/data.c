@@ -44,6 +44,7 @@ struct ipset_data {
 	uint32_t mark;
 	uint16_t port;
 	uint16_t port_to;
+	uint16_t index;
 	union {
 		/* RENAME/SWAP */
 		char setname2[IPSET_MAXNAMELEN];
@@ -281,6 +282,9 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 	case IPSET_OPT_TIMEOUT:
 		data->timeout = *(const uint32_t *) value;
 		break;
+	case IPSET_OPT_INDEX:
+		data->index = *(const uint16_t *) value;
+		break;
 	/* Create-specific options */
 	case IPSET_OPT_GC:
 		data->create.gc = *(const uint32_t *) value;
@@ -485,6 +489,8 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 		return &data->port_to;
 	case IPSET_OPT_TIMEOUT:
 		return &data->timeout;
+	case IPSET_OPT_INDEX:
+		return &data->index;
 	/* Create-specific options */
 	case IPSET_OPT_GC:
 		return &data->create.gc;
@@ -588,6 +594,7 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 	case IPSET_OPT_PORT:
 	case IPSET_OPT_PORT_TO:
 	case IPSET_OPT_SKBQUEUE:
+	case IPSET_OPT_INDEX:
 		return sizeof(uint16_t);
 	case IPSET_SETNAME:
 	case IPSET_OPT_NAME:
