@@ -55,8 +55,7 @@ struct ipset_session {
 	FILE *istream, *ostream;		/* Session input/output stream */
 	/* Error/warning reporting */
 	char report[IPSET_ERRORBUFLEN];		/* Error/report buffer */
-	char *errmsg;
-	char *warnmsg;
+	enum ipset_err_type err_type;		/* ERROR/WARNING/NOTICE */
 	uint8_t envopts;			/* Session env opts */
 	/* Kernel message buffer */
 	size_t bufsize;
@@ -227,6 +226,10 @@ ipset_session_report(struct ipset_session *session,
 	assert(session);
 	assert(fmt);
 
+	/* Suppress warning/notice when more important message is required */
+	if (session->err_type > IPSET_NO_ERROR && session->err_type < type)
+		session->report[0] = '\0';
+
 	if (session->lineno != 0 && type == IPSET_ERROR) {
 		sprintf(session->report, "Error in line %u: ",
 			session->lineno);
@@ -244,14 +247,10 @@ ipset_session_report(struct ipset_session *session,
 	if (strlen(session->report) < IPSET_ERRORBUFLEN - 1)
 		strcat(session->report, "\n");
 
-	if (type == IPSET_ERROR) {
-		session->errmsg = session->report;
-		session->warnmsg = NULL;
+	session->err_type = type;
+	if (type == IPSET_ERROR)
 		ipset_data_reset(ipset_session_data(session));
-	} else {
-		session->errmsg = NULL;
-		session->warnmsg = session->report;
-	}
+
 	return -1;
 }
 
@@ -264,8 +263,7 @@ ipset_session_report(struct ipset_session *session,
 int
 ipset_session_warning_as_error(struct ipset_session *session)
 {
-	session->errmsg = session->report;
-	session->warnmsg = NULL;
+	session->err_type = IPSET_ERROR;
 	ipset_data_reset(ipset_session_data(session));
 	return -1;
 }
@@ -281,37 +279,36 @@ ipset_session_report_reset(struct ipset_session *session)
 {
 	assert(session);
 	session->report[0] = '\0';
-	session->errmsg = session->warnmsg = NULL;
+	session->err_type = IPSET_NO_ERROR;
 }
 
 /**
- * ipset_session_error - return the report buffer as error
+ * ipset_session_report_msg - return the report buffer
  * @session: session structure
  *
- * Return the pointer to the report buffer as an error report.
- * If there is no error message in the buffer, NULL returned.
+ * Return the pointer to the report buffer.
+ * If there is no error message, the buffer is empty.
  */
 const char *
-ipset_session_error(const struct ipset_session *session)
+ipset_session_report_msg(const struct ipset_session *session)
 {
 	assert(session);
 
-	return session->errmsg;
+	return session->report;
 }
 
 /**
- * ipset_session_warning - return the report buffer as warning
+ * ipset_session_report_type - return the type of the report
  * @session: session structure
  *
- * Return the pointer to the report buffer as a warning report.
- * If there is no warning message in the buffer, NULL returned.
+ * Return the type of the message in the report buffer.
  */
-const char *
-ipset_session_warning(const struct ipset_session *session)
+enum ipset_err_type
+ipset_session_report_type(const struct ipset_session *session)
 {
 	assert(session);
 
-	return session->warnmsg;
+	return session->err_type;
 }
 
 /*
@@ -1462,8 +1459,8 @@ callback_error(const struct nlmsghdr *nlh, void *cbdata)
 		if (!(session->envopts & IPSET_ENV_QUIET)) {
 			ipset_print_elem(session->report, IPSET_ERRORBUFLEN,
 					 session->data, IPSET_OPT_NONE, 0);
-			ipset_warn(session, " is NOT in set %s.",
-				   ipset_data_setname(data));
+			ipset_notice(session, " is NOT in set %s.",
+				     ipset_data_setname(data));
 		}
 		return ret;
 	}

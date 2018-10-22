@@ -35,8 +35,10 @@ extern void ipset_session_lineno(struct ipset_session *session,
 extern void * ipset_session_printf_private(struct ipset_session *session);
 
 enum ipset_err_type {
-	IPSET_ERROR,
-	IPSET_WARNING,
+	IPSET_NO_ERROR,
+	IPSET_WARNING,		/* Success code when exit */
+	IPSET_NOTICE,		/* Error code and exit in non interactive mode */
+	IPSET_ERROR,		/* Error code and exit */
 };
 
 extern int ipset_session_report(struct ipset_session *session,
@@ -50,14 +52,18 @@ extern int ipset_session_warning_as_error(struct ipset_session *session);
 #define ipset_warn(session, fmt, args...) \
 	ipset_session_report(session, IPSET_WARNING, fmt , ## args)
 
+#define ipset_notice(session, fmt, args...) \
+	ipset_session_report(session, IPSET_NOTICE, fmt , ## args)
+
 #define ipset_errptr(session, fmt, args...) ({				\
 	ipset_session_report(session, IPSET_ERROR, fmt , ## args);	\
 	NULL;								\
 })
 
 extern void ipset_session_report_reset(struct ipset_session *session);
-extern const char *ipset_session_error(const struct ipset_session *session);
-extern const char *ipset_session_warning(const struct ipset_session *session);
+extern const char *ipset_session_report_msg(const struct ipset_session *session);
+extern enum ipset_err_type ipset_session_report_type(
+	const struct ipset_session *session);
 
 #define ipset_session_data_set(session, opt, value)	\
 	ipset_data_set(ipset_session_data(session), opt, value)

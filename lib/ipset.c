@@ -498,19 +498,22 @@ default_standard_error(struct ipset *ipset, void *p)
 {
 	struct ipset_session *session = ipset_session(ipset);
 	bool is_interactive = ipset_is_interactive(ipset);
+	enum ipset_err_type err_type = ipset_session_report_type(session);
 
-	if (ipset_session_warning(session) &&
+	if ((err_type == IPSET_WARNING || err_type == IPSET_NOTICE) &&
 	    !ipset_envopt_test(session, IPSET_ENV_QUIET))
-		fprintf(stderr, "Warning: %s\n",
-			ipset_session_warning(session));
-	if (ipset_session_error(session))
+		fprintf(stderr, "%s%s",
+			err_type == IPSET_WARNING ? "Warning: " : "",
+			ipset_session_report_msg(session));
+	if (err_type == IPSET_ERROR)
 		return ipset->custom_error(ipset, p,
 				IPSET_SESSION_PROBLEM, "%s",
-				ipset_session_error(session));
+				ipset_session_report_msg(session));
 
 	if (!is_interactive) {
 		ipset_fini(ipset);
-		exit(IPSET_OTHER_PROBLEM);
+		/* Warnings are not errors */
+		exit(err_type <= IPSET_WARNING ? 0 : IPSET_OTHER_PROBLEM);
 	}
 
 	ipset_session_report_reset(session);
@@ -1267,13 +1270,8 @@ ipset_parse_argv(struct ipset *ipset, int oargc, char *oargv[])
 			"Unknown argument %s", argv[1]);
 	ret = ipset_cmd(session, cmd, ipset->restore_line);
 	D("ret %d", ret);
-	/* Special case for TEST and non-quiet mode */
-	if (cmd == IPSET_CMD_TEST && ipset_session_warning(session)) {
-		if (!ipset_envopt_test(session, IPSET_ENV_QUIET))
-			fprintf(stderr, "%s", ipset_session_warning(session));
-		ipset_session_report_reset(session);
-	}
-	if (ret < 0)
+	/* In the case of warning, the return code is success */
+	if (ret < 0 || ipset_session_report_type(session) > IPSET_NO_ERROR)
 		ipset->standard_error(ipset, p);
 
 	return ret;

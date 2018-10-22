@@ -278,8 +278,20 @@ static const struct ipset_arg ipset_args[] = {
 	},
 };
 
-const struct ipset_arg * ipset_keyword(enum ipset_keywords i)
+const struct ipset_arg *
+ipset_keyword(enum ipset_keywords i)
 {
 	return (i > IPSET_ARG_NONE && i < IPSET_ARG_MAX)
 			? &ipset_args[i] : NULL;
+}
+
+const char *
+ipset_ignored_optname(int opt)
+{
+	enum ipset_keywords i;
+
+	for (i = IPSET_ARG_NONE + 1 ; i < IPSET_ARG_MAX; i++)
+		if (ipset_args[i].opt == opt)
+			return ipset_args[i].name[0];
+	return "";
 }

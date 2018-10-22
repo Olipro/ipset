@@ -443,7 +443,7 @@ ipset_parse_tcp_port(struct ipset_session *session,
  */
 int
 ipset_parse_single_tcp_port(struct ipset_session *session,
-		     enum ipset_opt opt, const char *str)
+			    enum ipset_opt opt, const char *str)
 {
 	assert(session);
 	assert(opt == IPSET_OPT_PORT || opt == IPSET_OPT_PORT_TO);
@@ -759,7 +759,7 @@ print_warn(struct ipset_session *session)
 {
 	if (!ipset_envopt_test(session, IPSET_ENV_QUIET))
 		fprintf(stderr, "Warning: %s",
-			ipset_session_warning(session));
+			ipset_session_report_msg(session));
 	ipset_session_report_reset(session);
 }
 
@@ -1306,8 +1306,9 @@ ipset_parse_ip4_net6(struct ipset_session *session,
 		ipset_data_set(data, IPSET_OPT_FAMILY, &family);
 	}
 
-	return family == NFPROTO_IPV4 ? parse_ip(session, opt, str, IPADDR_ANY)
-				 : ipset_parse_ipnet(session, opt, str);
+	return family == NFPROTO_IPV4 ?
+		parse_ip(session, opt, str, IPADDR_ANY) :
+		ipset_parse_ipnet(session, opt, str);
 
 }
 
@@ -1540,7 +1541,7 @@ ipset_parse_before(struct ipset_session *session,
  */
 int
 ipset_parse_after(struct ipset_session *session,
-		   enum ipset_opt opt, const char *str)
+		  enum ipset_opt opt, const char *str)
 {
 	struct ipset_data *data;
 
@@ -1809,7 +1810,7 @@ ipset_parse_iface(struct ipset_session *session,
  * Returns 0 on success or a negative error code.
  */
 int ipset_parse_comment(struct ipset_session *session,
-		       enum ipset_opt opt, const char *str)
+			enum ipset_opt opt, const char *str)
 {
 	struct ipset_data *data;
 
@@ -1850,7 +1851,7 @@ ipset_parse_skbmark(struct ipset_session *session,
 					  " MARK/MASK or MARK (see manpage)");
 	}
 	result = ((uint64_t)(mark) << 32) | (mask & 0xffffffff);
-	return ipset_data_set(data, IPSET_OPT_SKBMARK, &result);
+	return ipset_data_set(data, opt, &result);
 }
 
 int
@@ -1872,7 +1873,7 @@ ipset_parse_skbprio(struct ipset_session *session,
 		return syntax_err("Invalid skbprio format, it should be:"\
 				  "MAJOR:MINOR (see manpage)");
 	major = ((uint32_t)maj << 16) | (min & 0xffff);
-	return ipset_data_set(data, IPSET_OPT_SKBPRIO, &major);
+	return ipset_data_set(data, opt, &major);
 }
 
 /**
@@ -1895,8 +1896,9 @@ ipset_parse_ignored(struct ipset_session *session,
 
 	if (!ipset_data_ignored(ipset_session_data(session), opt))
 		ipset_warn(session,
-			   "Option %s is ignored. "
-			   "Please upgrade your syntax.", str);
+			   "Option '--%s %s' is ignored. "
+			   "Please upgrade your syntax.",
+			   ipset_ignored_optname(opt), str);
 
 	return 0;
 }
@@ -1916,8 +1918,8 @@ ipset_parse_ignored(struct ipset_session *session,
  */
 int
 ipset_call_parser(struct ipset_session *session,
-				  const struct ipset_arg *arg,
-				  const char *str)
+		  const struct ipset_arg *arg,
+		  const char *str)
 {
 	struct ipset_data *data = ipset_session_data(session);
 
