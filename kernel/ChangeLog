@@ -1,3 +1,25 @@
+7.0
+  - Introduction of new commands and protocol version 7
+  - License cleanup: add SPDX license identifier to uapi header files with
+    no license (Greg Kroah-Hartman)
+  - net: Convert ip_set_net_ops (Kirill Tkhai)
+  - netfilter: Replace spin_is_locked() with lockdep (Lance Roy)
+  - Fix calling ip_set() macro at dumping
+  - Correct rcu_dereference() call in ip_set_put_comment()
+  - netfilter: ipset: fix ip_set_list allocation failure (Andrey Ryabinin)
+  - ipset: Make invalid MAC address checks consisten (Stefano Brivio)
+  - ipset: Allow matching on destination MAC address for mac and ipmac sets
+    (Stefano Brivio)
+  - netfilter: ipset: actually allow allowable CIDR 0 in hash:net,port,net
+    (Eric Westbrook)
+  - ipset: list:set: Decrease refcount synchronously on deletion and replace
+    (Stefano Brivio)
+  - netfilter: ipset: forbid family for hash:mac sets (Florent Fourcot)
+  - Limit max timeout value to (UINT_MAX >> 1)/MSEC_PER_SEC
+  - List timing out entries with "timeout 1" instead of zero timeout value
+    (Fixes bugzilla #1258)
+  - netfilter: xt_set: Check hook mask correctly (Serhey Popovych)
+
 6.37
   - netfilter: ipset: Use is_zero_ether_addr instead of static and memcmp
     (Joe Perches)

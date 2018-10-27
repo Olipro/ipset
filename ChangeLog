@@ -1,3 +1,23 @@
+7.0
+  - Introduction of new commands and protocol version 7, updated
+    kernel include files
+  - Add compatibility support for async in pernet_operations
+  - Use more robust awk patterns to check for backward compatibility
+  - Prepare the ipset tool to handle multiple protocol version
+  - Fix warning message handling
+  - Correct to test null valued entry in hash:net6,port,net6 test
+  - Library reworked to support embedding ipset completely
+  - Add compatibility to support kvcalloc()
+  - Validate string type attributes in attr2data() (Stefano Brivio)
+  - manpage: Add comment about matching on destination MAC address
+    (Stefano Brivio)
+  - Add compatibility to support is_zero_ether_addr()
+  - Fix use-after-free in ipset_parse_name_compat() (Stefano Brivio)
+  - Fix leak in build_argv() on line parsing error (Stefano Brivio)
+  - Simplify return statement in ipset_mnl_query() (Stefano Brivio)
+  - tests/check_klog.sh: Try dmesg too, don't let shell terminate script
+    (Stefano Brivio)
+
 6.38
   - Fix API version number
 
