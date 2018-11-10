@@ -633,7 +633,7 @@ restore(struct ipset *ipset)
 	if (ipset->filename) {
 		ret = ipset_session_io_normal(session, ipset->filename,
 					      IPSET_IO_INPUT);
-		if (ret)
+		if (ret < 0)
 			return ret;
 		f = ipset_session_io_stream(session, IPSET_IO_INPUT);
 	}
@@ -1204,9 +1204,10 @@ ipset_parse_argv(struct ipset *ipset, int oargc, char *oargv[])
 		if (ipset->filename != NULL) {
 			ret = ipset_session_io_normal(session,
 					ipset->filename, IPSET_IO_OUTPUT);
-			if (!ret)
+			if (ret < 0)
 				return ret;
 		}
+		/* Fall through to parse optional setname */
 	case IPSET_CMD_DESTROY:
 	case IPSET_CMD_FLUSH:
 		/* Args: [setname] */
