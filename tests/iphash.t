@@ -44,6 +44,22 @@
 0 ipset -F test
 # IP: Delete test set
 0 ipset -X test
+# IP: Restore values in order to check sorting
+0 ipset r -f iphash.t.restore
+# IP: Delete test2 set
+0 (ipset -X test2; true)
+# IP: Restore another set for sorting
+0 sed -e 's/test/test2/' -e 's/ 10/ 20/' < iphash.t.restore | ipset r
+# IP: Add more entries to the second set
+0 tail -n +2 iphash.t.restore | sed -e 's/test/test2/' -e 's/ 10/ 30/' | ipset r
+# IP: Save sets
+0 ipset -s -f .foo.1 save
+# IP: Compare sorted save and restore
+0 cmp .foo.1 iphash.t.restore.sorted
+# IP: Delete test set
+0 ipset x test
+# IP: Delete test2 set
+0 ipset x test2
 # IP: Restore, which requires multiple messages
 0 ipset restore < iphash.t.large
 # IP: Save the restored set

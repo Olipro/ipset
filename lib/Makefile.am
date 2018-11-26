@@ -32,6 +32,7 @@ libipset_la_SOURCES = \
 	errcode.c \
 	icmp.c \
 	icmpv6.c \
+	list_sort.c \
 	mnl.c \
 	parse.c \
 	print.c \
