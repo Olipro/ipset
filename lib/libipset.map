@@ -194,3 +194,11 @@ global:
   ipset_session_io_stream;
   ipset_session_io_close;
 } LIBIPSET_4.7;
+
+LIBIPSET_4.9 {
+global:
+  ipset_ignored_optname;
+  list_sort;
+  ipset_session_report_msg;
+  ipset_session_report_type;
+} LIBIPSET_4.8;

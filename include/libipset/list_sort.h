@@ -97,8 +97,7 @@ static inline void list_splice(const struct list_head *list,
 #define unlikely(x)		(!!(x) == 0)
 #endif
 
-extern void
-list_sort(void *priv, struct list_head *head,
-	  int (*cmp)(void *priv, struct list_head *a,
-		     struct list_head *b));
+extern void list_sort(void *priv, struct list_head *head,
+		      int (*cmp)(void *priv, struct list_head *a,
+		      struct list_head *b));
 #endif
