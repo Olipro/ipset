@@ -639,6 +639,16 @@ else
 	AC_SUBST(HAVE_LOCKDEP_NFNL_IS_HELD, undef)
 fi
 
+AC_MSG_CHECKING([kernel source for strscpy() in string.h])
+if test -f $ksourcedir/include/linux/timer.h && \
+   $GREP -q ' strscpy' $ksourcedir/include/linux/string.h; then
+	AC_MSG_RESULT(yes)
+	AC_SUBST(HAVE_STRSCPY, define)
+else
+	AC_MSG_RESULT(no)
+	AC_SUBST(HAVE_STRSCPY, undef)
+fi
+
 AC_MSG_CHECKING([kernel source for struct net_generic])
 if test -f $ksourcedir/include/net/netns/generic.h && \
    $GREP -q 'struct net_generic' $ksourcedir/include/net/netns/generic.h; then

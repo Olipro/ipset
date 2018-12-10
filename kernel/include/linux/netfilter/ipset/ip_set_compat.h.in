@@ -47,6 +47,7 @@
 #@HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS@ HAVE_PASSING_EXTENDED_ACK_TO_CALLBACKS
 #@HAVE_TYPEDEF_SCTP_SCTPHDR_T@ HAVE_TYPEDEF_SCTP_SCTPHDR_T
 #@HAVE_TIMER_SETUP@ HAVE_TIMER_SETUP
+#@HAVE_STRSCPY@ HAVE_STRSCPY
 #@HAVE_LOCKDEP_NFNL_IS_HELD@ HAVE_LOCKDEP_NFNL_IS_HELD
 
 #ifdef HAVE_EXPORT_SYMBOL_GPL_IN_MODULE_H
@@ -375,6 +376,10 @@ static inline u16 nfnl_msg_type(u8 subsys, u8 msg_type)
 #define INIT_GC_VARS(type, var)				\
 	struct ip_set *set = (struct ip_set *)ul_set;	\
 	struct type *var = set->data
+#endif
+
+#ifndef HAVE_STRSCPY
+#define	strscpy(dst, src, n)	(strncpy(dst, src, n) == (dst))
 #endif
 
 #ifndef smp_mb__before_atomic
