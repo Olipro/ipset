@@ -1,3 +1,13 @@
+7.1
+  - Add compatibility support for strscpy()
+  - Correct the manpage about the sort option
+  - Add missing functions to libipset.map
+  - configure.ac: Fix build regression on RHEL/CentOS/SL
+    (Serhey Popovych)
+  - Implement sorting for hash types in the ipset tool
+  - Fix to list/save into file specified by option
+    (reported by Isaac Good)
+
 7.0
   - Introduction of new commands and protocol version 7, updated
     kernel include files

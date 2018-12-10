@@ -1,3 +1,10 @@
+7.1
+  - netfilter/ipset: replace a strncpy() with strscpy() (Qian Cai)
+  - netfilter: ipset: fix ip_set_byindex function (Florent Fourcot)
+  - netfilter: ipset: do not call ipset_nest_end after nla_nest_cancel
+    (Pan Bian)
+  - Correct workaround in patch "Fix calling ip_set() macro at dumping"
+
 7.0
   - Introduction of new commands and protocol version 7
   - License cleanup: add SPDX license identifier to uapi header files with
