@@ -44,9 +44,11 @@ enum ip_set_feature {
 	IPSET_TYPE_MARK = (1 << IPSET_TYPE_MARK_FLAG),
 	IPSET_TYPE_NOMATCH_FLAG = 7,
 	IPSET_TYPE_NOMATCH = (1 << IPSET_TYPE_NOMATCH_FLAG),
+	IPSET_TYPE_PORT2_FLAG = 8,
+	IPSET_TYPE_PORT2 = (1 << IPSET_TYPE_PORT2_FLAG),
 	/* Strictly speaking not a feature, but a flag for dumping:
 	 * this settype must be dumped last */
-	IPSET_DUMP_LAST_FLAG = 8,
+	IPSET_DUMP_LAST_FLAG = 9,
 	IPSET_DUMP_LAST = (1 << IPSET_DUMP_LAST_FLAG),
 };
 

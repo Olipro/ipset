@@ -122,6 +122,9 @@ enum {
 	IPSET_ATTR_SKBMARK,
 	IPSET_ATTR_SKBPRIO,
 	IPSET_ATTR_SKBQUEUE,
+	IPSET_ATTR_PORT2,
+	IPSET_ATTR_PORT2_FROM = IPSET_ATTR_PORT2,
+	IPSET_ATTR_PORT2_TO,
 	IPSET_ATTR_PAD,
 	__IPSET_ATTR_ADT_MAX,
 };
@@ -237,6 +240,7 @@ enum ip_set_dim {
 	IPSET_DIM_ONE,
 	IPSET_DIM_TWO,
 	IPSET_DIM_THREE,
+	IPSET_DIM_FOUR,
 	/* Max dimension in elements.
 	 * If changed, new revision of iptables match/target is required.
 	 */
@@ -251,6 +255,7 @@ enum ip_set_kopt {
 	IPSET_DIM_ONE_SRC = (1 << IPSET_DIM_ONE),
 	IPSET_DIM_TWO_SRC = (1 << IPSET_DIM_TWO),
 	IPSET_DIM_THREE_SRC = (1 << IPSET_DIM_THREE),
+	IPSET_DIM_FOUR_SRC = (1 << IPSET_DIM_FOUR),
 	IPSET_RETURN_NOMATCH = (1 << IPSET_BIT_RETURN_NOMATCH),
 };
 

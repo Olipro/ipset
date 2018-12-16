@@ -44,6 +44,8 @@ struct ipset_data {
 	uint32_t mark;
 	uint16_t port;
 	uint16_t port_to;
+	uint16_t port2;
+	uint16_t port2_to;
 	uint16_t index;
 	union {
 		/* RENAME/SWAP */
@@ -365,6 +367,12 @@ ipset_data_set(struct ipset_data *data, enum ipset_opt opt, const void *value)
 			return -1;
 		copy_addr(data->family, &data->adt.ip2_to, value);
 		break;
+	case IPSET_OPT_PORT2:
+		data->port2 = *(const uint16_t *) value;
+		break;
+	case IPSET_OPT_PORT2_TO:
+		data->port2_to = *(const uint16_t *) value;
+		break;
 	case IPSET_OPT_CIDR2:
 		data->adt.cidr2 = *(const uint8_t *) value;
 		break;
@@ -531,6 +539,10 @@ ipset_data_get(const struct ipset_data *data, enum ipset_opt opt)
 		return &data->adt.ip2;
 	case IPSET_OPT_IP2_TO:
 		return &data->adt.ip2_to;
+	case IPSET_OPT_PORT2:
+		return &data->port2;
+	case IPSET_OPT_PORT2_TO:
+		return &data->port2_to;
 	case IPSET_OPT_CIDR2:
 		return &data->adt.cidr2;
 	case IPSET_OPT_PROTO:
@@ -593,6 +605,8 @@ ipset_data_sizeof(enum ipset_opt opt, uint8_t family)
 		return sizeof(uint32_t);
 	case IPSET_OPT_PORT:
 	case IPSET_OPT_PORT_TO:
+	case IPSET_OPT_PORT2:
+	case IPSET_OPT_PORT2_TO:
 	case IPSET_OPT_SKBQUEUE:
 	case IPSET_OPT_INDEX:
 		return sizeof(uint16_t);

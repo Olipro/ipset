@@ -470,18 +470,24 @@ ipset_print_port(char *buf, unsigned int len,
 	assert(buf);
 	assert(len > 0);
 	assert(data);
-	assert(opt == IPSET_OPT_PORT);
+	assert(opt == IPSET_OPT_PORT || opt == IPSET_OPT_PORT2);
 
 	if (len < 2*strlen("65535") + 2)
 		return -1;
 
-	port = ipset_data_get(data, IPSET_OPT_PORT);
+	port = ipset_data_get(data, opt);
 	assert(port);
 	size = snprintf(buf, len, "%u", *port);
 	SNPRINTF_FAILURE(size, len, offset);
 
 	if (ipset_data_test(data, IPSET_OPT_PORT_TO)) {
 		port = ipset_data_get(data, IPSET_OPT_PORT_TO);
+		size = snprintf(buf + offset, len,
+				"%s%u",
+				IPSET_RANGE_SEPARATOR, *port);
+		SNPRINTF_FAILURE(size, len, offset);
+	} else if (ipset_data_test(data, IPSET_OPT_PORT2_TO)) {
+		port = ipset_data_get(data, IPSET_OPT_PORT2_TO);
 		size = snprintf(buf + offset, len,
 				"%s%u",
 				IPSET_RANGE_SEPARATOR, *port);
@@ -775,7 +781,7 @@ ipset_print_proto_port(char *buf, unsigned int len,
 	assert(buf);
 	assert(len > 0);
 	assert(data);
-	assert(opt == IPSET_OPT_PORT);
+	assert(opt == IPSET_OPT_PORT || opt == IPSET_OPT_PORT2);
 
 	if (ipset_data_flags_test(data, IPSET_FLAG(IPSET_OPT_PROTO))) {
 		uint8_t proto = *(const uint8_t *) ipset_data_get(data,
@@ -795,17 +801,17 @@ ipset_print_proto_port(char *buf, unsigned int len,
 			break;
 		case IPPROTO_ICMP:
 			size = ipset_print_icmp(buf + offset, len, data,
-						IPSET_OPT_PORT, env);
+						opt, env);
 			goto out;
 		case IPPROTO_ICMPV6:
 			size = ipset_print_icmpv6(buf + offset, len, data,
-						  IPSET_OPT_PORT, env);
+						  opt, env);
 			goto out;
 		default:
 			break;
 		}
 	}
-	size = ipset_print_port(buf + offset, len, data, IPSET_OPT_PORT, env);
+	size = ipset_print_port(buf + offset, len, data, opt, env);
 out:
 	SNPRINTF_FAILURE(size, len, offset);
 	return offset;
@@ -871,7 +877,17 @@ ipset_print_elem(char *buf, unsigned int len,
 	size = type->elem[IPSET_DIM_THREE - 1].print(buf + offset, len, data,
 			type->elem[IPSET_DIM_THREE - 1].opt, env);
 	SNPRINTF_FAILURE(size, len, offset);
+	if (type->dimension == IPSET_DIM_THREE ||
+	    (type->last_elem_optional &&
+	     !ipset_data_test(data, type->elem[IPSET_DIM_FOUR - 1].opt)))
+		return offset;
 
+	size = snprintf(buf + offset, len, IPSET_ELEM_SEPARATOR);
+	SNPRINTF_FAILURE(size, len, offset);
+	size = type->elem[IPSET_DIM_FOUR - 1].print(buf + offset, len, data,
+			type->elem[IPSET_DIM_FOUR - 1].opt, env);
+	SNPRINTF_FAILURE(size, len, offset);
+	
 	return offset;
 }
 

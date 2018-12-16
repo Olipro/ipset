@@ -1208,6 +1208,7 @@ ipset_parse_argv(struct ipset *ipset, int oargc, char *oargv[])
 				return ret;
 		}
 		/* Fall through to parse optional setname */
+		__attribute__ ((fallthrough));
 	case IPSET_CMD_DESTROY:
 	case IPSET_CMD_FLUSH:
 		/* Args: [setname] */

@@ -29,7 +29,7 @@ enum {
 };
 
 /* The maximal type dimension userspace supports */
-#define IPSET_DIM_UMAX		3
+#define IPSET_DIM_UMAX		4
 
 /* Parser options */
 enum {

@@ -21,7 +21,7 @@ config IP_SET_MAX
 	  You can define here default value of the maximum number 
 	  of IP sets for the kernel.
 
-	  The value can be overriden by the 'max_sets' module
+	  The value can be overridden by the 'max_sets' module
 	  parameter of the 'ip_set' module.
 
 config IP_SET_BITMAP_IP
@@ -89,6 +89,16 @@ config IP_SET_HASH_IPPORTIP
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
+config IP_SET_HASH_IPPORTIPPORT
+	tristate "hash:ip,port,ip,port set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:ip,port,ip,port set type support, by which
+	  one can store IPv4/IPv6 address, protocol/two ports, and IPv4/IPv6
+	  address quadruples in a set.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
 config IP_SET_HASH_IPPORTNET
 	tristate "hash:ip,port,net set support"
 	depends on IP_SET
@@ -96,6 +106,16 @@ config IP_SET_HASH_IPPORTNET
 	  This option adds the hash:ip,port,net set type support, by which
 	  one can store IPv4/IPv6 address, protocol/port, and IPv4/IPv6
 	  network address/prefix triples in a set.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+config IP_SET_HASH_IPPORTNETPORT
+	tristate "hash:ip,port,net,port set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:ip,port,net,port set type support, by which
+	  one can store IPv4/IPv6 address, protocol/port, and IPv4/IPv6
+	  network address/prefix quadruples in a set.
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
@@ -123,6 +143,15 @@ config IP_SET_HASH_NETPORTNET
 	help
 	  This option adds the hash:net,port,net set type support, by which
 	  one can store two IPv4/IPv6 subnets, and a protocol/port in a set.
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
+config IP_SET_HASH_NETPORTNETPORT
+	tristate "hash:net,port,net,port set support"
+	depends on IP_SET
+	help
+	  This option adds the hash:net,port,net,port set type support, by which
+	  one can store two IPv4/IPv6 subnets, and two protocol/ports in a set.
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 

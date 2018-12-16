@@ -316,7 +316,8 @@ ipset_parse_port(struct ipset_session *session,
 	uint16_t port;
 
 	assert(session);
-	assert(opt == IPSET_OPT_PORT || opt == IPSET_OPT_PORT_TO);
+	assert(opt == IPSET_OPT_PORT || opt == IPSET_OPT_PORT_TO ||
+	       opt == IPSET_OPT_PORT2 || opt == IPSET_OPT_PORT2_TO);
 	assert(str);
 
 	if (parse_portname(session, str, &port, proto) == 0) {
@@ -383,7 +384,7 @@ ipset_parse_tcpudp_port(struct ipset_session *session,
 	int err = 0;
 
 	assert(session);
-	assert(opt == IPSET_OPT_PORT);
+	assert(opt == IPSET_OPT_PORT || opt == IPSET_OPT_PORT2);
 	assert(str);
 
 	saved = tmp = ipset_strdup(session, str);
@@ -399,7 +400,7 @@ ipset_parse_tcpudp_port(struct ipset_session *session,
 	if (a != NULL) {
 		/* port-port */
 		*a++ = '\0';
-		err = ipset_parse_port(session, IPSET_OPT_PORT_TO, a, proto);
+		err = ipset_parse_port(session, opt == IPSET_OPT_PORT ? IPSET_OPT_PORT_TO : IPSET_OPT_PORT2_TO, a, proto);
 		if (err)
 			goto error;
 	}
@@ -446,7 +447,8 @@ ipset_parse_single_tcp_port(struct ipset_session *session,
 			    enum ipset_opt opt, const char *str)
 {
 	assert(session);
-	assert(opt == IPSET_OPT_PORT || opt == IPSET_OPT_PORT_TO);
+	assert(opt == IPSET_OPT_PORT || opt == IPSET_OPT_PORT_TO ||
+	       opt == IPSET_OPT_PORT2 || opt == IPSET_OPT_PORT2_TO);
 	assert(str);
 
 	return ipset_parse_port(session, opt, str, "tcp");
@@ -603,7 +605,7 @@ ipset_parse_proto_port(struct ipset_session *session,
 	int err = 0;
 
 	assert(session);
-	assert(opt == IPSET_OPT_PORT);
+	assert(opt == IPSET_OPT_PORT || opt == IPSET_OPT_PORT2);
 	assert(str);
 
 	data = ipset_session_data(session);
@@ -1962,7 +1964,7 @@ ipset_parse_elem(struct ipset_session *session,
 		 bool optional, const char *str)
 {
 	const struct ipset_type *type;
-	char *a = NULL, *b = NULL, *tmp, *saved;
+	char *a = NULL, *b = NULL, *c = NULL, *tmp, *saved;
 	int ret;
 
 	assert(session);
@@ -2010,9 +2012,22 @@ ipset_parse_elem(struct ipset_session *session,
 		elem_syntax_err("Two elem separators in %s, "
 				"but settype %s supports one.",
 				str, type->name);
-	if (b != NULL && elem_separator(b))
-		elem_syntax_err("Three elem separators in %s, "
-				"but settype %s supports two.",
+	if (b)
+		c = elem_separator(b);
+	if (type->dimension > IPSET_DIM_THREE) {
+		if (c != NULL) {
+			/* elem,elem,elem,elem */
+			*c++ = '\0';
+		} else if (!optional)
+			elem_syntax_err("Fourth element is missing from %s.",
+					str);
+	} else if (c != NULL)
+		elem_syntax_err("Four elem separators in %s, "
+				"but settype %s supports three.",
+				str, type->name);
+	if (c != NULL && elem_separator(c))
+		elem_syntax_err("Five elem separators in %s, "
+				"but settype %s supports four.",
 				str, type->name);
 
 	D("parse elem part one: %s", tmp);
@@ -2025,6 +2040,10 @@ ipset_parse_elem(struct ipset_session *session,
 	if (type->dimension > IPSET_DIM_TWO && b != NULL) {
 		D("parse elem part three: %s", b);
 		parse_elem(session, type, IPSET_DIM_THREE, b);
+	}
+	if (type->dimension > IPSET_DIM_THREE && c != NULL) {
+		D("parse elem part four: %s", c);
+		parse_elem(session, type, IPSET_DIM_FOUR, c);
 	}
 
 	goto out;
